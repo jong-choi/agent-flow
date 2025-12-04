@@ -1,9 +1,3 @@
-## VS Code 설정 가이드
-
-### `.vscode/settings.json`
-
-`files.associations["*.css"] = "tailwindcss"` : vscode unknown at rules 문제를 해결하기 위해 추가된 설정
-
 ### `.vscode/next-js.code-snippets`
 
 - **`tfc`**: 현재 파일명 기반의 기본 TSX 함수형 컴포넌트 템플릿을 생성
