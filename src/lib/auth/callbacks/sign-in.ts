@@ -1,4 +1,4 @@
-import { SignInCallback } from "@/types/next-auth";
+import { SignInCallback } from "@/lib/auth/types/next-auth";
 
 export const signInCallback: SignInCallback = async ({ user, account }) => {
   console.log("signIn user:", user);
