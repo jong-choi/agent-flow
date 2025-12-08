@@ -1,5 +1,3 @@
-import React from "react";
-
 function GoogleIcon(props: React.ComponentProps<"svg">) {
   return (
     <svg
