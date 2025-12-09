@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ModeToggle } from "@/components/theme-toggle-button";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { SignOutForm } from "@/features/auth/components/sign-out-form";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,8 +36,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ModeToggle />
-          <main>{children}</main>
+          <main className="flex min-h-screen flex-col">
+            <div className="flex gap-4">
+              <ModeToggle />
+              <SignOutForm />
+            </div>
+            {children}
+          </main>
         </ThemeProvider>
       </body>
     </html>

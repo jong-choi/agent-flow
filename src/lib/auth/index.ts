@@ -1,11 +1,52 @@
-// auth.ts (혹은 현재 NextAuth 설정 파일)
-import NextAuth from "next-auth";
+import NextAuth, { User } from "next-auth";
+import { Provider } from "next-auth/providers";
+import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/db/client";
 import { accounts, users } from "@/db/schema";
 import { jwtCallback } from "@/lib/auth/callbacks/jwt";
 import { signInCallback } from "@/lib/auth/callbacks/sign-in";
+
+export const ENABLE_DEV_LOGIN =
+  process.env.NODE_ENV !== "production" ||
+  process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === "true";
+
+export const TEST_PASSWORD = process.env.TEST_PASSWORD!;
+
+const providers: Provider[] = [
+  Google({
+    authorization: {
+      params: {
+        access_type: "offline",
+        prompt: "consent",
+      },
+    },
+  }),
+];
+
+if (ENABLE_DEV_LOGIN) {
+  providers.push(
+    Credentials({
+      id: "password",
+      name: "Password",
+      credentials: {
+        password: { label: "Password", type: "password" },
+      },
+      authorize: (credentials) => {
+        if (credentials.password === TEST_PASSWORD) {
+          return {
+            email: "bob@alice.com",
+            name: "Bob Alice",
+            image: "https://avatars.githubusercontent.com/u/67470890?s=200&v=4",
+          } satisfies User;
+        } else {
+          return null;
+        }
+      },
+    }),
+  );
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: DrizzleAdapter(db, {
@@ -15,17 +56,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
     strategy: "jwt",
   },
-  providers: [
-    Google({
-      authorization: {
-        // refresh_token을 항상 받으려면 access_type: "offline" 필요
-        params: {
-          access_type: "offline",
-          prompt: "consent",
-        },
-      },
-    }),
-  ],
+  providers,
   pages: {
     signIn: "/login",
   },
