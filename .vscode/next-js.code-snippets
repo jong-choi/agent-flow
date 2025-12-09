@@ -4,9 +4,18 @@
     "body": [
       "export default function ${TM_FILENAME_BASE/(.+)/${1:/pascalcase}/}() {",
       "  return <div>${TM_FILENAME_BASE/(.+)/${1:/pascalcase}/}</div>;",
-      "}"
+      "}",
     ],
-    "description": "TSX Function Component with File Name for TypeScript"
+    "description": "TSX Function Component with File Name for TypeScript",
+  },
+  "TSX Function Component named Export": {
+    "prefix": "tfce",
+    "body": [
+      "export function ${TM_FILENAME_BASE/(.+)/${1:/pascalcase}/}() {",
+      "  return <div>${TM_FILENAME_BASE/(.+)/${1:/pascalcase}/}</div>;",
+      "}",
+    ],
+    "description": "TSX Function Component named Export with File Name for TypeScript",
   },
   "TSX Function Component for Next.js Page (w)ith Dynamic Params": {
     "prefix": "tfcw",
@@ -25,8 +34,8 @@
       "      <pre>{JSON.stringify(query, null, 2)}</pre>",
       "    </div>",
       "  );",
-      "}"
+      "}",
     ],
-    "description": "TSX Function Component with Directory Name for Next.js 15.5 App Router"
-  }
+    "description": "TSX Function Component with Directory Name for Next.js 15.5 App Router",
+  },
 }
