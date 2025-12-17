@@ -1,16 +1,9 @@
-import { redirect } from "next/navigation";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { DevLoginCardContent } from "@/features/auth/components/dev-login/dev-login-card-content";
 import { GoogleLoginForm } from "@/features/auth/components/google-login-form";
-import { ENABLE_DEV_LOGIN, auth } from "@/lib/auth";
+import { ENABLE_DEV_LOGIN } from "@/lib/auth";
 
 export default async function LoginPage() {
-  const session = await auth();
-
-  if (session) {
-    redirect("/");
-  }
-
   return (
     <div className="flex grow items-center justify-center">
       <Card className="flex w-120 items-center gap-2">

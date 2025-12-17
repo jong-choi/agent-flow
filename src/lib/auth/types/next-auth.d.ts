@@ -12,7 +12,4 @@ declare module "next-auth/jwt" {
   }
 }
 
-type Callbacks = NonNullable<NextAuthConfig["callbacks"]>;
-
-export type SignInCallback = Callbacks["signIn"];
-export type JwtCallback = Callbacks["jwt"];
+type AuthCallbacks = NonNullable<NextAuthConfig["callbacks"]>;

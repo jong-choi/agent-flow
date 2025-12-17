@@ -1,25 +1,8 @@
-import { redirect } from "next/navigation";
-import { AuthError } from "next-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TEST_PASSWORD, signIn } from "@/lib/auth";
-
-const DEV_SIGNIN_ERROR_URL = "/login?error=dev-password";
+import { devPasswordSignIn } from "@/features/auth/utils/auth-actions";
 
 export function DevLoginForm() {
-  async function devPasswordSignIn(formData: FormData) {
-    "use server";
-
-    try {
-      await signIn(TEST_PASSWORD, formData);
-    } catch (error) {
-      if (error instanceof AuthError) {
-        return redirect(`${DEV_SIGNIN_ERROR_URL}&code=${error.type}`);
-      }
-      throw error;
-    }
-  }
-
   return (
     <form
       action={devPasswordSignIn}

@@ -1,15 +1,22 @@
 import { Button } from "@/components/ui/button";
-import { signOut } from "@/lib/auth";
+import { signOutAction } from "@/features/auth/utils/auth-actions";
 
-export function SignOutForm() {
+export function SignOutForm({ children }: { children?: React.ReactNode }) {
   return (
-    <form
-      action={async () => {
-        "use server";
-        await signOut({ redirectTo: "/login" });
-      }}
-    >
-      <Button type="submit">로그아웃</Button>
+    <form action={signOutAction} className="w-full">
+      {children ? (
+        <button
+          type="submit"
+          className="w-full"
+          data-testid="user-signout-button"
+        >
+          {children}
+        </button>
+      ) : (
+        <Button type="submit" data-testid="user-signout-button">
+          로그아웃
+        </Button>
+      )}
     </form>
   );
 }

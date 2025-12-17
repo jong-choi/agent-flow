@@ -1,5 +1,5 @@
 import { GoogleSignInButton } from "@/features/auth/components/ui/google";
-import { continueWithGoogle } from "@/features/auth/utils/google-login-actions";
+import { signInWithGoogleAction } from "@/features/auth/utils/auth-actions";
 import { cn } from "@/lib/utils";
 
 type GoogleLoginFormProps = React.ComponentProps<"form"> & {
@@ -14,7 +14,7 @@ export function GoogleLoginForm({
 }: GoogleLoginFormProps) {
   return (
     <form
-      action={continueWithGoogle}
+      action={signInWithGoogleAction}
       className={cn("mt-8", className)}
       {...formProps}
     >
