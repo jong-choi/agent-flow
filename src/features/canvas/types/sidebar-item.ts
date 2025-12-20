@@ -1,4 +1,4 @@
-import { type NodeType } from "@/features/canvas/utils/flow";
+import { type NodeType } from "@/features/canvas/constants/flow";
 
 export type SidebarItem = {
   id: string;
