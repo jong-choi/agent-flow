@@ -5,12 +5,10 @@ import { DndContext } from "@dnd-kit/core";
 import { CanvasContainer } from "@/features/canvas/components/canvas-container";
 import { CanvasContentContainer } from "@/features/canvas/components/canvas-contant-container";
 import { CanvasSidebar } from "@/features/canvas/components/canvas-sidebar";
-import {
-  DraggableItem,
-  SidebarItem,
-} from "@/features/canvas/dnd/components/draggable-item";
+import { DraggableItem } from "@/features/canvas/dnd/components/draggable-item";
 import { DroppableZone } from "@/features/canvas/dnd/components/droppable-zone";
 import { handleDragEnd } from "@/features/canvas/dnd/utils/handlers";
+import { type SidebarItem } from "@/features/canvas/types/sidebar-item";
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: "card-1", label: "카드 1", description: "카드 1 설명" },

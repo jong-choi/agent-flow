@@ -6,12 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-export type SidebarItem = {
-  id: string;
-  label: string;
-  description: string;
-};
+import { type SidebarItem } from "@/features/canvas/types/sidebar-item";
 
 export function DraggableItem({ item }: { item: SidebarItem }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
