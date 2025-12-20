@@ -1,8 +1,4 @@
-export function CanvasContentContainer({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function CanvasContainer({ children }: { children: React.ReactNode }) {
   return (
     <main className="ml-[18rem] flex-1 p-10">
       <div className="mb-4 flex items-center justify-between">
@@ -11,7 +7,7 @@ export function CanvasContentContainer({
           <p className="text-sm text-muted-foreground">Canvas 설명</p>
         </div>
       </div>
-      {children}
+      <div>{children}</div>
     </main>
   );
 }

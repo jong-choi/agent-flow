@@ -3,18 +3,18 @@ import { useTheme } from "next-themes";
 import {
   type ColorMode,
   type Connection,
-  type Edge,
   type Node,
+  type XYPosition,
   addEdge,
   useEdgesState,
   useNodesState,
   useReactFlow,
 } from "@xyflow/react";
-import { addNodeToCenter } from "@/features/canvas/flow/utils/add-node-with-layout";
 import {
   type SidebarItem,
   type SidebarItemData,
 } from "@/features/canvas/types/sidebar-item";
+import { INITIAL_EDGES, INITIAL_NODES } from "@/features/canvas/utils/flow";
 
 export function useFlowCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
@@ -36,21 +36,21 @@ export function useFlowCanvas() {
   }, [theme]);
 
   const handleAddNode = useCallback(
-    (item: SidebarItem) => {
-      // AddNode 호출하기
-      setNodes((current) =>
-        addNodeToCenter({
-          currentNodes: current,
-          item,
-          flowWrapperRef,
-          screenToFlowPosition,
-        }),
-      );
+    (item: SidebarItem, position: XYPosition) => {
+      const nextNode: Node<SidebarItemData> = {
+        id: `${item.id}-${Date.now()}`,
+        type: item.type,
+        position: position,
+        data: {
+          label: item.label,
+          description: item.description ?? "",
+        },
+      };
 
-      // fitView를 이용해서 카메라 자동 이동
+      setNodes((current) => [...current, nextNode]);
       requestAnimationFrame(() => fitView({ padding: 0.2, duration: 400 }));
     },
-    [fitView, screenToFlowPosition, setNodes],
+    [fitView, setNodes],
   );
 
   return {
@@ -63,19 +63,6 @@ export function useFlowCanvas() {
     flowWrapperRef,
     fitView,
     colorMode,
+    screenToFlowPosition,
   };
 }
-
-const INITIAL_NODES: Node<SidebarItemData>[] = [
-  {
-    id: "start",
-    type: "flowCard",
-    position: { x: 180, y: 140 },
-    data: {
-      label: "시작",
-      description: "첫 노드를 추가했습니다",
-    },
-  },
-];
-
-const INITIAL_EDGES: Edge[] = [];

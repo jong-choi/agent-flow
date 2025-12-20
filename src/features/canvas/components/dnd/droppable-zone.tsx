@@ -10,7 +10,7 @@ export function DroppableZone({ children }: { children: React.ReactNode }) {
     <div
       ref={setNodeRef}
       className={cn(
-        "relative flex h-full min-h-[80vh] w-full items-center justify-center rounded-2xl border-2 border-dashed",
+        "rounded-2xl border-2 border-dashed",
         isOver ? "border-primary bg-muted" : "border-border bg-muted/50",
       )}
     >
