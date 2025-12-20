@@ -35,7 +35,7 @@ export const handleDragEnd = (event: DragEndEvent) => {
 
 `useDraggable`의 파라미터는 `{id, data?, attributes?, disabled?}` 형식의 객체를 받는다.
 id는 고유해야 하며,  
-각 요소마다 useDraggable을 선연해야 한다.
+각 요소마다 useDraggable을 선언해야 한다.
 
 `useDraggable`은 `attributes`, `listeners`, `setNodeRef`, `transform`, `isDragging` 등을 반환한다.  
 드래그할 요소에 `attributes`, `listeners`, `setNodeRef`를 구조분해 할당으로 넘겨주고,  
