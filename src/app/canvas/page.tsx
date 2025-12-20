@@ -91,7 +91,7 @@ export default function CanvasPage() {
       y: rect.top + rect.height / 2,
     });
 
-    return handleAddNode(item, center);
+    handleAddNode(item, center);
   };
 
   return (
