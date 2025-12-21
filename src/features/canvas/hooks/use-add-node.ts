@@ -10,14 +10,12 @@ export function useAddNode() {
 
   const handleAddNode = useCallback(
     (item: SidebarItem, position: XYPosition) => {
+      const { id, type, ...data } = item;
       const nextNode: Node<SidebarItemData> = {
-        id: `${item.id}-${Date.now()}`,
-        type: item.type,
+        id: `${id}-${Date.now()}`,
+        type,
         position,
-        data: {
-          label: item.label,
-          description: item.description ?? "",
-        },
+        data,
       };
 
       setNodes((current) => [...current, nextNode]);

@@ -7,7 +7,7 @@ import { FlowApp } from "@/features/canvas/components/flow/flow-app";
 import { SidebarItemCard } from "@/features/canvas/components/sidebar-item-card";
 import { CanvasContainer } from "@/features/canvas/components/ui/canvas-container";
 import { CanvasSidebar } from "@/features/canvas/components/ui/canvas-sidebar";
-import { SIDEBAR_ITEMS } from "@/features/canvas/constants/flow";
+import { SIDEBAR_ITEMS } from "@/features/canvas/constants/node-data";
 
 export default function CanvasPage() {
   return (
