@@ -19,6 +19,7 @@ type NodeSelectContent = {
   label: string;
   placeholder: string;
   options: string[];
+  value?: string;
 };
 
 export type SidebarItemData = Omit<SidebarItem, "id" | "type">;

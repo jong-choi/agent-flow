@@ -1,4 +1,10 @@
-import { Handle, Position } from "@xyflow/react";
+import {
+  Handle,
+  type Node,
+  type NodeProps,
+  Position,
+  useReactFlow,
+} from "@xyflow/react";
 import {
   Card,
   CardContent,
@@ -17,14 +23,14 @@ import {
 } from "@/components/ui/select";
 import { type SidebarItemData } from "@/features/canvas/types/sidebar-item";
 
-export function FlowNode({ data }: { data: SidebarItemData }) {
+export function FlowNode({ data, id }: NodeProps<Node<SidebarItemData>>) {
   return (
     <Card className="w-48 cursor-pointer p-2 px-0">
       <CardHeader>
         <CardTitle>{data.label}</CardTitle>
         <CardDescription>{data.description}</CardDescription>
       </CardHeader>
-      <FlowNodeContent content={data.content} />
+      <FlowNodeContent content={data.content} id={id} />
       <FlowHandles handle={data.handle} />
     </Card>
   );
@@ -75,13 +81,25 @@ function FlowHandles({ handle }: { handle: SidebarItemData["handle"] }) {
   );
 }
 
-function FlowNodeContent({ content }: { content: SidebarItemData["content"] }) {
+function FlowNodeContent({
+  content,
+  id,
+}: {
+  content: SidebarItemData["content"];
+  id: string;
+}) {
+  const { updateNodeData } = useReactFlow<Node<SidebarItemData>>();
+
   if (!content) return null;
+
+  const handleValueChange = (value: string) => {
+    updateNodeData(id, { content: { ...content, value } });
+  };
 
   if (content.type === "select") {
     return (
       <CardContent className="-mt-4">
-        <Select>
+        <Select onValueChange={handleValueChange} value={content.value}>
           <SelectTrigger>
             <SelectValue placeholder={content.placeholder} />
           </SelectTrigger>
