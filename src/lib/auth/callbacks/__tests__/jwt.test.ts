@@ -1,4 +1,4 @@
-import { Account } from "next-auth";
+import { type Account } from "next-auth";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { jwtCallback } from "@/lib/auth/callbacks/jwt";
 

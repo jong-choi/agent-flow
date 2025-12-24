@@ -40,8 +40,8 @@ function FlowHandles({ handle }: { handle: SidebarItemData["handle"] }) {
   if (!handle) {
     return (
       <>
-        <Handle type="target" position={Position.Left} />
-        <Handle type="source" position={Position.Right} />
+        <Handle type="target" id="target" position={Position.Left} />
+        <Handle type="source" id="source" position={Position.Right} />
       </>
     );
   }
@@ -51,7 +51,9 @@ function FlowHandles({ handle }: { handle: SidebarItemData["handle"] }) {
 
   return (
     <>
-      {!targetArr && <Handle type="target" position={Position.Left} />}
+      {!targetArr && (
+        <Handle type="target" id="target" position={Position.Left} />
+      )}
       {targetArr &&
         targetArr.map((e, i) => {
           const top = `${((i + 1) * 100) / (targetArr.length + 1)}%`;
@@ -59,12 +61,15 @@ function FlowHandles({ handle }: { handle: SidebarItemData["handle"] }) {
             <Handle
               key={i}
               type="target"
+              id={"target" + i}
               position={Position.Left}
               style={{ top }}
             />
           );
         })}
-      {!sourceArr && <Handle type="source" position={Position.Right} />}
+      {!sourceArr && (
+        <Handle type="source" id="source" position={Position.Right} />
+      )}
       {sourceArr &&
         sourceArr.map((e, i) => {
           const top = `${((i + 1) * 100) / (sourceArr.length + 1)}%`;
@@ -72,6 +77,7 @@ function FlowHandles({ handle }: { handle: SidebarItemData["handle"] }) {
             <Handle
               key={i}
               type="source"
+              id={"source" + i}
               position={Position.Right}
               style={{ top }}
             />
