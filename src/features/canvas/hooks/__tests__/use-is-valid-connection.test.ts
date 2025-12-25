@@ -104,4 +104,56 @@ describe("checkValidConnection 함수에 대한 유닛 테스트", () => {
     const result = checkValidConnection(newConnection, existingEdges);
     expect(result).toEqual(true);
   });
+
+  it("이미 연결된 노드 간에 역방향 연결이 발생하는 경우 false를 반환한다.", () => {
+    const existingEdges: Edge[] = [
+      {
+        id: "e1-2",
+        source: "1",
+        target: "2",
+        sourceHandle: "a",
+        targetHandle: "b",
+      },
+    ];
+
+    const newConnection: Connection = {
+      source: "2",
+      target: "1",
+      sourceHandle: "c",
+      targetHandle: "d",
+    };
+
+    const result = checkValidConnection(newConnection, existingEdges);
+    expect(result).toEqual(false);
+  });
+
+  it("사이클을 형성하는 연결이 발생하는 경우 false를 반환한다.", () => {
+    const existingEdges: Edge[] = [
+      {
+        id: "e1-2",
+        source: "1",
+        target: "2",
+        sourceHandle: "a",
+        targetHandle: "b",
+      },
+      {
+        id: "e2-3",
+        source: "2",
+        target: "3",
+        sourceHandle: "c",
+        targetHandle: "d",
+      },
+    ];
+
+    // 3 -> 1 연결 시도 (사이클: 1 -> 2 -> 3 -> 1)
+    const newConnection: Connection = {
+      source: "3",
+      target: "1",
+      sourceHandle: "e",
+      targetHandle: "f",
+    };
+
+    const result = checkValidConnection(newConnection, existingEdges);
+    expect(result).toEqual(false);
+  });
 });
