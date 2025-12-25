@@ -18,6 +18,33 @@ export function useIsValidConnection() {
   return isValidConnection;
 }
 
+const hasCycle = (source: string, target: string, edges: Edge[]): boolean => {
+  const visited = new Set<string>();
+  const stack = [target];
+
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+
+    if (current === source) {
+      return true;
+    }
+
+    if (visited.has(current)) {
+      continue;
+    }
+
+    visited.add(current);
+
+    const neighbors = edges
+      .filter((edge) => edge.source === current)
+      .map((edge) => edge.target);
+
+    stack.push(...neighbors);
+  }
+
+  return false;
+};
+
 export const checkValidConnection = (
   connection: Connection | Edge,
   edges: Edge[],
@@ -38,6 +65,11 @@ export const checkValidConnection = (
       edge.source === connection.source && edge.target === connection.target,
   );
   if (hasDuplicateConnection) {
+    return false;
+  }
+
+  // 사이클 형성 방지
+  if (hasCycle(connection.source, connection.target, edges)) {
     return false;
   }
 
