@@ -18,6 +18,8 @@ export const INITIAL_EDGES: Edge[] = [];
 
 export const NODE_TYPE = {
   flowNode: FlowNode,
+  startNode: FlowNode,
+  endNode: FlowNode,
 };
 
 export type NodeType = keyof typeof NODE_TYPE;

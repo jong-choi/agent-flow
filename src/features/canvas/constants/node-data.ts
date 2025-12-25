@@ -48,7 +48,7 @@ export const StartNodeItem = {
   id: "start",
   label: "시작",
   description: "시작 노드",
-  type: "flowNode",
+  type: "startNode",
   handle: {
     target: {
       count: 0,
@@ -60,7 +60,7 @@ const EndNodeItem = {
   id: "end",
   label: "종료",
   description: "종료 노드",
-  type: "flowNode",
+  type: "endNode",
   handle: {
     source: {
       count: 0,
