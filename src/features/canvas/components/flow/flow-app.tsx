@@ -19,8 +19,9 @@ import {
   INITIAL_NODES,
   NODE_TYPE,
 } from "@/features/canvas/constants/flow";
+import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 import { useIsValidConnection } from "@/features/canvas/hooks/use-is-valid-connection";
-import { useIsValidFlow } from "@/features/canvas/hooks/use-is-valid-flow";
+import { useCanvasStore } from "@/features/canvas/store/providers/canvas-store-provider";
 import { type SidebarItemData } from "@/features/canvas/types/sidebar-item";
 
 const ReactFlow = dynamic<ReactFlowProps<Node<SidebarItemData>, Edge>>(
@@ -31,14 +32,21 @@ const ReactFlow = dynamic<ReactFlowProps<Node<SidebarItemData>, Edge>>(
 export function FlowApp() {
   const [nodes, , onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
+
+  const isValidGraph = useCanvasStore((s) => {
+    return s.isValidGraph;
+  });
+
   const isValidConnection = useIsValidConnection();
-  const isValidFlow = useIsValidFlow();
+  const checkValidGraph = useCheckValidGraph();
 
   const handleOnConnect = useCallback(
     (params: Connection) => {
-      setEdges((eds) => addEdge(params, eds));
+      const newEdges = addEdge(params, edges);
+      checkValidGraph({ edges: newEdges });
+      setEdges(newEdges);
     },
-    [setEdges],
+    [checkValidGraph, edges, setEdges],
   );
 
   const { theme } = useTheme();
@@ -53,7 +61,7 @@ export function FlowApp() {
   return (
     <div className="relative h-full w-full">
       <div className="absolute top-4 left-4 z-10">
-        <Button type="button" disabled={!isValidFlow}>
+        <Button type="button" disabled={!isValidGraph}>
           시작하기
         </Button>
       </div>

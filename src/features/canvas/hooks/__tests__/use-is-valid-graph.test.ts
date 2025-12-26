@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { type Edge, type Node } from "@xyflow/react";
-import { checkValidFlow } from "@/features/canvas/hooks/use-is-valid-flow";
+import { checkValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 
-describe("checkValidFlow 함수에 대한 유닛 테스트", () => {
+describe("checkValidGraph 함수에 대한 유닛 테스트", () => {
   it("시작 노드가 없는 경우 false를 반환한다.", () => {
     // Graph:
     // [1:채팅] ---> [2:종료]
@@ -22,7 +22,7 @@ describe("checkValidFlow 함수에 대한 유닛 테스트", () => {
       },
     ];
     const edges: Edge[] = [{ id: "e1", source: "1", target: "2" }];
-    const result = checkValidFlow(nodes, edges);
+    const result = checkValidGraph(nodes, edges);
     expect(result).toEqual(false);
   });
 
@@ -45,7 +45,7 @@ describe("checkValidFlow 함수에 대한 유닛 테스트", () => {
       },
     ];
     const edges: Edge[] = [{ id: "e1", source: "1", target: "2" }];
-    const result = checkValidFlow(nodes, edges);
+    const result = checkValidGraph(nodes, edges);
     expect(result).toEqual(false);
   });
 
@@ -77,7 +77,7 @@ describe("checkValidFlow 함수에 대한 유닛 테스트", () => {
       { id: "e1", source: "1", target: "2" },
       { id: "e2", source: "2", target: "3" },
     ];
-    const result = checkValidFlow(nodes, edges);
+    const result = checkValidGraph(nodes, edges);
     expect(result).toEqual(true);
   });
 
@@ -114,7 +114,7 @@ describe("checkValidFlow 함수에 대한 유닛 테스트", () => {
       { id: "e1", source: "1", target: "2" },
       { id: "e2", source: "3", target: "4" },
     ];
-    const result = checkValidFlow(nodes, edges);
+    const result = checkValidGraph(nodes, edges);
     expect(result).toEqual(false);
   });
 
@@ -152,7 +152,7 @@ describe("checkValidFlow 함수에 대한 유닛 테스트", () => {
       { id: "e1", source: "1", target: "2" },
       { id: "e2", source: "2", target: "4" },
     ];
-    const result = checkValidFlow(nodes, edges);
+    const result = checkValidGraph(nodes, edges);
     expect(result).toEqual(false);
   });
 
@@ -199,7 +199,7 @@ describe("checkValidFlow 함수에 대한 유닛 테스트", () => {
       { id: "e3", source: "2", target: "4" },
       { id: "e4", source: "3", target: "5" },
     ];
-    const result = checkValidFlow(nodes, edges);
+    const result = checkValidGraph(nodes, edges);
     expect(result).toEqual(false);
   });
 
@@ -239,7 +239,7 @@ describe("checkValidFlow 함수에 대한 유닛 테스트", () => {
       { id: "e2", source: "2", target: "3" },
       { id: "e3", source: "3", target: "4" },
     ];
-    const result = checkValidFlow(nodes, edges);
+    const result = checkValidGraph(nodes, edges);
     expect(result).toEqual(false);
   });
 
@@ -280,7 +280,7 @@ describe("checkValidFlow 함수에 대한 유닛 테스트", () => {
       { id: "e2", source: "2", target: "3" },
       { id: "e3", source: "2", target: "4" },
     ];
-    const result = checkValidFlow(nodes, edges);
+    const result = checkValidGraph(nodes, edges);
     expect(result).toEqual(false);
   });
 
@@ -321,7 +321,7 @@ describe("checkValidFlow 함수에 대한 유닛 테스트", () => {
       { id: "e2", source: "2", target: "3" },
       { id: "e3", source: "3", target: "4" },
     ];
-    const result = checkValidFlow(nodes, edges);
+    const result = checkValidGraph(nodes, edges);
     expect(result).toEqual(false);
   });
 });
