@@ -21,6 +21,7 @@ import {
 } from "@/features/canvas/constants/flow";
 import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 import { useIsValidConnection } from "@/features/canvas/hooks/use-is-valid-connection";
+import { useReconnectEdge } from "@/features/canvas/hooks/use-reconnect-edge";
 import { useCanvasStore } from "@/features/canvas/store/providers/canvas-store-provider";
 import { type SidebarItemData } from "@/features/canvas/types/sidebar-item";
 
@@ -39,6 +40,7 @@ export function FlowApp() {
 
   const isValidConnection = useIsValidConnection();
   const checkValidGraph = useCheckValidGraph();
+  const { handleReconnect, handleReconnectStart } = useReconnectEdge();
 
   const handleOnConnect = useCallback(
     (params: Connection) => {
@@ -77,6 +79,8 @@ export function FlowApp() {
         proOptions={{ hideAttribution: true }}
         style={{ width: "100%", height: "100%" }}
         onConnect={handleOnConnect}
+        onReconnect={handleReconnect}
+        onReconnectStart={handleReconnectStart}
         isValidConnection={isValidConnection}
       >
         <Background gap={16} size={1} color="#e5e7eb" />
