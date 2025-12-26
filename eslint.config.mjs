@@ -15,9 +15,11 @@ const eslintConfig = defineConfig([
           fixStyle: "inline-type-imports",
         },
       ],
-      "import/no-duplicates": "error",
+      // antigravity 사용시 호환성을 위해 import 관련 경고를 제거
+      "import/no-duplicates": "off",
     },
   },
+
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
