@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { X } from "lucide-react";
 import {
   Handle,
@@ -144,7 +145,11 @@ function FlowNodeContent({
 
 function FlowNodeDeleteButton({ id }: { id: string }) {
   const { deleteElements } = useReactFlow();
-  const handleDeleteNode = () => deleteElements({ nodes: [{ id }] });
+
+  const handleDeleteNode = useCallback(
+    () => deleteElements({ nodes: [{ id }] }),
+    [deleteElements, id],
+  );
 
   return (
     <AlertDialog>
@@ -163,13 +168,8 @@ function FlowNodeDeleteButton({ id }: { id: string }) {
           <AlertDialogTitle>노드를 삭제하시겠습니까?</AlertDialogTitle>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel aria-label="alert cancel">취소</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDeleteNode}
-            aria-label="alert action"
-          >
-            삭제
-          </AlertDialogAction>
+          <AlertDialogCancel>취소</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDeleteNode}>삭제</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
