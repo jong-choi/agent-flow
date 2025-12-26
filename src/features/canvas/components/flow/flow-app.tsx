@@ -34,9 +34,7 @@ export function FlowApp() {
   const [nodes, , onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
 
-  const isValidGraph = useCanvasStore((s) => {
-    return s.isValidGraph;
-  });
+  const isValidGraph = useCanvasStore((s) => s.isValidGraph);
 
   const isValidConnection = useIsValidConnection();
   const checkValidGraph = useCheckValidGraph();

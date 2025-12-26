@@ -1,4 +1,4 @@
-import { AuthCallbacks } from "@/lib/auth/types/next-auth";
+import { type AuthCallbacks } from "@/lib/auth/types/next-auth";
 
 export const jwtCallback: AuthCallbacks["jwt"] = async ({ token, account }) => {
   // 최초 로그인 : Google에서 제공하는 정보를 반환
