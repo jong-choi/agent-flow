@@ -26,6 +26,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -34,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { type SidebarItemData } from "@/features/canvas/types/sidebar-item";
 
 export function FlowNode({ data, id }: NodeProps<Node<SidebarItemData>>) {
@@ -116,6 +127,13 @@ function FlowNodeContent({
     updateNodeData(id, { content: { ...content, value } });
   };
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const value = String(formData.get("textValue") ?? "");
+    handleValueChange(value);
+  };
+
   if (content.type === "select") {
     return (
       <CardContent className="-mt-4">
@@ -136,6 +154,41 @@ function FlowNodeContent({
             </SelectGroup>
           </SelectContent>
         </Select>
+      </CardContent>
+    );
+  }
+
+  if (content.type === "dialog") {
+    return (
+      <CardContent className="-mt-4">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">{content.label}</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <DialogHeader>
+                <DialogTitle>{content.dialogTitle}</DialogTitle>
+                <DialogDescription>
+                  {content.dialogDescription}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center gap-2">
+                <div className="grid flex-1 gap-2">
+                  <Textarea name="textValue" defaultValue={content.value} />
+                </div>
+              </div>
+              <DialogFooter className="sm:justify-start">
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">
+                    닫기
+                  </Button>
+                </DialogClose>
+                <Button type="submit">저장하기</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     );
   }

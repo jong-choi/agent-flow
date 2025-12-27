@@ -68,6 +68,20 @@ const EndNodeItem = {
   },
 } satisfies SidebarItem;
 
+export const PromptNodeItem = {
+  id: "prompt",
+  label: "프롬프트",
+  description: "텍스트를 입력",
+  type: "flowNode",
+  content: {
+    type: "dialog",
+    label: "프롬프트 수정",
+    dialogTitle: "프롬프트 입력",
+    dialogDescription: "{input}으로 이전 노드의 결과물을 받을 수 있습니다",
+    value: "{input}을 검색해줘",
+  },
+} satisfies SidebarItem;
+
 export const SIDEBAR_ITEMS: SidebarItem[] = [
   StartNodeItem,
   ChatNodeItem,
@@ -75,4 +89,5 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   SplitNodeItem,
   SearchNodeItem,
   EndNodeItem,
+  PromptNodeItem,
 ];
