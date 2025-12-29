@@ -45,9 +45,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { type SidebarItemData } from "@/features/canvas/types/sidebar-item";
+import { type SidebarNodeData } from "@/features/canvas/schema/sidebar-nodes";
 
-export function FlowNode({ data, id }: NodeProps<Node<SidebarItemData>>) {
+export function FlowNode({ data, id }: NodeProps<Node<SidebarNodeData>>) {
   return (
     <Card className="relative w-48 cursor-pointer p-2 px-0">
       <FlowNodeDeleteButton id={id} />
@@ -61,7 +61,7 @@ export function FlowNode({ data, id }: NodeProps<Node<SidebarItemData>>) {
   );
 }
 
-function FlowHandles({ handle }: { handle: SidebarItemData["handle"] }) {
+function FlowHandles({ handle }: { handle: SidebarNodeData["handle"] }) {
   if (!handle) {
     return (
       <>
@@ -116,10 +116,10 @@ function FlowNodeContent({
   content,
   id,
 }: {
-  content: SidebarItemData["content"];
+  content: SidebarNodeData["content"];
   id: string;
 }) {
-  const { updateNodeData } = useReactFlow<Node<SidebarItemData>>();
+  const { updateNodeData } = useReactFlow<Node<SidebarNodeData>>();
 
   if (!content) return null;
 
@@ -144,7 +144,7 @@ function FlowNodeContent({
           <SelectContent>
             <SelectGroup>
               <SelectLabel>{content.label} </SelectLabel>
-              {content.options.map((value) => {
+              {content.options?.map((value: string) => {
                 return (
                   <SelectItem value={value} key={value}>
                     {value}

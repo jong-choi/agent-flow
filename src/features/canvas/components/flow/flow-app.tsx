@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
@@ -22,10 +24,10 @@ import {
 import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 import { useIsValidConnection } from "@/features/canvas/hooks/use-is-valid-connection";
 import { useReconnectEdge } from "@/features/canvas/hooks/use-reconnect-edge";
+import { type SidebarNodeData } from "@/features/canvas/schema/sidebar-nodes";
 import { useCanvasStore } from "@/features/canvas/store/providers/canvas-store-provider";
-import { type SidebarItemData } from "@/features/canvas/types/sidebar-item";
 
-const ReactFlow = dynamic<ReactFlowProps<Node<SidebarItemData>, Edge>>(
+const ReactFlow = dynamic<ReactFlowProps<Node<SidebarNodeData>, Edge>>(
   () => import("@xyflow/react").then((m) => m.ReactFlow),
   { ssr: false },
 );

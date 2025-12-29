@@ -1,11 +1,11 @@
 import { type Edge, type Node } from "@xyflow/react";
 import { FlowNode } from "@/features/canvas/components/flow/flow-node";
 import { StartNodeItem } from "@/features/canvas/constants/node-data";
-import { type SidebarItemData } from "@/features/canvas/types/sidebar-item";
+import { type SidebarNodeData } from "@/features/canvas/schema/sidebar-nodes";
 
 const { id, type, ...data } = StartNodeItem;
 
-export const INITIAL_NODES: Node<SidebarItemData>[] = [
+export const INITIAL_NODES: Node<SidebarNodeData>[] = [
   {
     id,
     type,

@@ -1,4 +1,4 @@
-import { type SidebarItem } from "@/features/canvas/types/sidebar-item";
+import { type SidebarNode } from "@/features/canvas/schema/sidebar-nodes";
 
 const ChatNodeItem = {
   id: "chat",
@@ -11,14 +11,17 @@ const ChatNodeItem = {
     placeholder: "Agent를 선택하기",
     options: ["gemma-3-3b", "gemma-3-30b", "gemma-3-300b"],
   },
-} satisfies SidebarItem;
+  handle: null,
+} satisfies SidebarNode;
 
 const SearchNodeItem = {
   id: "search",
   label: "검색",
   description: "구글 검색 노드",
   type: "flowNode",
-} satisfies SidebarItem;
+  content: null,
+  handle: null,
+} satisfies SidebarNode;
 
 const MergeNodeItem = {
   id: "merge",
@@ -30,7 +33,8 @@ const MergeNodeItem = {
       count: 3,
     },
   },
-} satisfies SidebarItem;
+  content: null,
+} satisfies SidebarNode;
 
 const SplitNodeItem = {
   id: "split",
@@ -42,7 +46,8 @@ const SplitNodeItem = {
       count: 3,
     },
   },
-} satisfies SidebarItem;
+  content: null,
+} satisfies SidebarNode;
 
 export const StartNodeItem = {
   id: "start",
@@ -54,7 +59,8 @@ export const StartNodeItem = {
       count: 0,
     },
   },
-} satisfies SidebarItem;
+  content: null,
+} satisfies SidebarNode;
 
 const EndNodeItem = {
   id: "end",
@@ -66,7 +72,8 @@ const EndNodeItem = {
       count: 0,
     },
   },
-} satisfies SidebarItem;
+  content: null,
+} satisfies SidebarNode;
 
 export const PromptNodeItem = {
   id: "prompt",
@@ -80,9 +87,10 @@ export const PromptNodeItem = {
     dialogDescription: "{input}으로 이전 노드의 결과물을 받을 수 있습니다",
     value: "{input}을 검색해줘",
   },
-} satisfies SidebarItem;
+  handle: null,
+} satisfies SidebarNode;
 
-export const SIDEBAR_ITEMS: SidebarItem[] = [
+export const SIDEBAR_ITEMS: SidebarNode[] = [
   StartNodeItem,
   ChatNodeItem,
   MergeNodeItem,
