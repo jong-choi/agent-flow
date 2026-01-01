@@ -9,8 +9,8 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useReactFlow } from "@xyflow/react";
+import { type SidebarNode } from "@/db/schema";
 import { useAddNode } from "@/features/canvas/hooks/use-add-node";
-import { type SidebarNode } from "@/features/canvas/schema/sidebar-nodes";
 
 export function CanvasContext({ children }: React.PropsWithChildren) {
   const dndId = useId();

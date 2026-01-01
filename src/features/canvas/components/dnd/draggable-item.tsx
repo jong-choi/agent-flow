@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { type SidebarNode } from "@/features/canvas/schema/sidebar-nodes";
+import { type SidebarNode } from "@/db/schema";
 
 type DraggableItemProps = {
   item: SidebarNode;

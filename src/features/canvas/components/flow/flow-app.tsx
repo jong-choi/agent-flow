@@ -16,6 +16,7 @@ import {
   useNodesState,
 } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
+import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
 import {
   INITIAL_EDGES,
   INITIAL_NODES,
@@ -24,7 +25,6 @@ import {
 import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 import { useIsValidConnection } from "@/features/canvas/hooks/use-is-valid-connection";
 import { useReconnectEdge } from "@/features/canvas/hooks/use-reconnect-edge";
-import { type SidebarNodeData } from "@/features/canvas/schema/sidebar-nodes";
 import { useCanvasStore } from "@/features/canvas/store/providers/canvas-store-provider";
 
 const ReactFlow = dynamic<ReactFlowProps<Node<SidebarNodeData>, Edge>>(
