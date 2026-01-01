@@ -1,0 +1,59 @@
+import {
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
+
+export const sidebarContentType = pgEnum("sidebar_content_type", [
+  "select",
+  "dialog",
+]);
+
+export const sidebarSelectSource = pgEnum("sidebar_options_source", [
+  "ai_models",
+]);
+
+export const sidebarNodes = pgTable("sidebar_nodes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  label: text("label").notNull().unique(),
+  description: text("description").notNull(),
+  type: text("type").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const sidebarNodeContents = pgTable("sidebar_node_contents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  nodeId: uuid("node_id")
+    .notNull()
+    .references(() => sidebarNodes.id, { onDelete: "cascade" })
+    .unique(),
+  type: sidebarContentType("type").notNull(),
+  label: text("label").notNull(),
+  placeholder: text("placeholder"),
+  value: text("value"),
+  optionsSource: sidebarSelectSource("options_source"),
+  dialogTitle: text("dialog_title"),
+  dialogDescription: text("dialog_description"),
+});
+
+export const sidebarNodeHandles = pgTable("sidebar_node_handles", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  nodeId: uuid("node_id")
+    .notNull()
+    .references(() => sidebarNodes.id, { onDelete: "cascade" })
+    .unique(),
+  targetCount: integer("target_count"),
+  sourceCount: integer("source_count"),
+});
+
+export type SidebarNode = typeof sidebarNodes.$inferSelect;
+export type SidebarNodeInsert = typeof sidebarNodes.$inferInsert;
+
+export type SidebarNodeContent = typeof sidebarNodeContents.$inferSelect;
+export type SidebarNodeContentInsert = typeof sidebarNodeContents.$inferInsert;
+
+export type SidebarNodeHandle = typeof sidebarNodeHandles.$inferSelect;
+export type SidebarNodeHandleInsert = typeof sidebarNodeHandles.$inferInsert;

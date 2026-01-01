@@ -1,19 +1,19 @@
 import { useCallback } from "react";
 import { type Node, type XYPosition, useReactFlow } from "@xyflow/react";
-import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 import {
-  type SidebarItem,
-  type SidebarItemData,
-} from "@/features/canvas/types/sidebar-item";
+  type FlowNodeData,
+  type SidebarNodeData,
+} from "@/db/query/sidebar-nodes";
+import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 
 export function useAddNode() {
   const { fitView, setNodes, getNodes } = useReactFlow();
   const checkValidGraph = useCheckValidGraph();
 
   const handleAddNode = useCallback(
-    (item: SidebarItem, position: XYPosition) => {
+    (item: SidebarNodeData, position: XYPosition) => {
       const { id, type, ...data } = item;
-      const nextNode: Node<SidebarItemData> = {
+      const nextNode: Node<FlowNodeData> = {
         id: `${id}-${Date.now()}`,
         type,
         position,

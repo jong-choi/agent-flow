@@ -1,18 +1,8 @@
 import { type Edge, type Node } from "@xyflow/react";
-import { FlowNode } from "@/features/canvas/components/flow/flow-node";
-import { StartNodeItem } from "@/features/canvas/constants/node-data";
-import { type SidebarItemData } from "@/features/canvas/types/sidebar-item";
+import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
+import { FlowNode } from "@/features/canvas/components/flow/flow-node/flow-node";
 
-const { id, type, ...data } = StartNodeItem;
-
-export const INITIAL_NODES: Node<SidebarItemData>[] = [
-  {
-    id,
-    type,
-    data,
-    position: { x: 180, y: 140 },
-  },
-];
+export const INITIAL_NODES: Node<SidebarNodeData>[] = [];
 
 export const INITIAL_EDGES: Edge[] = [];
 

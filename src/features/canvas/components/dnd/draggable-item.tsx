@@ -1,3 +1,5 @@
+"use client";
+
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -6,10 +8,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { type SidebarItem } from "@/features/canvas/types/sidebar-item";
+import { type SidebarNode } from "@/db/schema";
 
 type DraggableItemProps = {
-  item: SidebarItem;
+  item: SidebarNode;
   onClick: React.MouseEventHandler<HTMLDivElement>;
 };
 

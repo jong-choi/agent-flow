@@ -1,3 +1,5 @@
+"use client";
+
 import { useId } from "react";
 import {
   DndContext,
@@ -7,8 +9,8 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useReactFlow } from "@xyflow/react";
+import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
 import { useAddNode } from "@/features/canvas/hooks/use-add-node";
-import { type SidebarItem } from "@/features/canvas/types/sidebar-item";
 
 export function CanvasContext({ children }: React.PropsWithChildren) {
   const dndId = useId();
@@ -31,7 +33,7 @@ export function CanvasContext({ children }: React.PropsWithChildren) {
         y: rect.top + rect.height / 2,
       });
 
-      return addNode(data as SidebarItem, position);
+      return addNode(data as SidebarNodeData, position);
     }
   };
 

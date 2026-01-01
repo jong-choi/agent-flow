@@ -1,9 +1,11 @@
+"use client";
+
+import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
 import { DraggableItem } from "@/features/canvas/components/dnd/draggable-item";
 import { useAddNode } from "@/features/canvas/hooks/use-add-node";
-import { type SidebarItem } from "@/features/canvas/types/sidebar-item";
 
 type SidebarItemCardProps = {
-  item: SidebarItem;
+  item: SidebarNodeData;
 };
 
 export function SidebarItemCard({ item }: SidebarItemCardProps) {
