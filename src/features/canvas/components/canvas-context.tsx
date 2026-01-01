@@ -9,7 +9,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useReactFlow } from "@xyflow/react";
-import { type SidebarNode } from "@/db/schema";
+import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
 import { useAddNode } from "@/features/canvas/hooks/use-add-node";
 
 export function CanvasContext({ children }: React.PropsWithChildren) {
@@ -33,7 +33,7 @@ export function CanvasContext({ children }: React.PropsWithChildren) {
         y: rect.top + rect.height / 2,
       });
 
-      return addNode(data as SidebarNode, position);
+      return addNode(data as SidebarNodeData, position);
     }
   };
 

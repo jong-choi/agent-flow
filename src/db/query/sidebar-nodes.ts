@@ -40,3 +40,5 @@ export type SidebarNodeData = Omit<SelectSidebarNode, "content"> & {
       })
     | null;
 };
+
+export type FlowNodeData = Omit<SidebarNodeData, "id" | "type">;
