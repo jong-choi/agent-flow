@@ -1,5 +1,6 @@
 "use server";
 
+import { unstable_cache } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
@@ -8,7 +9,7 @@ import {
   sidebarNodes,
 } from "@/db/schema";
 
-export const getSidebarNodes = async () => {
+const getSidebarNodesBase = async () => {
   return await db
     .select({
       id: sidebarNodes.id,
@@ -31,7 +32,15 @@ export const getSidebarNodes = async () => {
     .orderBy(sidebarNodes.createdAt);
 };
 
-type SelectSidebarNode = Awaited<ReturnType<typeof getSidebarNodes>>[number];
+export const getSidebarNodes = unstable_cache(
+  getSidebarNodesBase,
+  ["sidebar_nodes"],
+  { tags: ["sidebar_nodes"], revalidate: 60 * 60 * 24 * 30 },
+);
+
+type SelectSidebarNode = Awaited<
+  ReturnType<typeof getSidebarNodesBase>
+>[number];
 
 export type SidebarNodeData = Omit<SelectSidebarNode, "content"> & {
   content:
