@@ -3,9 +3,11 @@
 import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 
+export const CANVAS_DROPPABLE_ID = "canvas-dropzone";
+
 export function DroppableZone({ children }: { children: React.ReactNode }) {
   const { isOver, setNodeRef } = useDroppable({
-    id: "canvas-dropzone",
+    id: CANVAS_DROPPABLE_ID,
   });
 
   return (
