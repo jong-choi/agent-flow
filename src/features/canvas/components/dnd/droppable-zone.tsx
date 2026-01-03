@@ -12,8 +12,8 @@ export function DroppableZone({ children }: { children: React.ReactNode }) {
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-2xl border-2 border-dashed",
-        isOver ? "border-primary bg-muted" : "border-border bg-muted/50",
+        "h-full border-2 border-dashed",
+        isOver ? "border-primary bg-muted/50" : "border-border bg-card",
       )}
     >
       {children}
