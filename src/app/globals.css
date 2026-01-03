@@ -120,3 +120,40 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* 더 얇은 스크롤바 */
+  .scrollbar-slim {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--foreground) 28%, transparent)
+      transparent;
+  }
+
+  /* Chromium / Safari */
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklch, var(--foreground) 22%, transparent);
+    border-radius: 9999px;
+
+    /* 투명 보더 + 클립 */
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .scrollbar-slim:hover::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklch, var(--foreground) 35%, transparent);
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}

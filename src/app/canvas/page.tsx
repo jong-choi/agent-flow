@@ -10,14 +10,18 @@ import { DroppableZone } from "@/features/canvas/components/dnd/droppable-zone";
 import { FlowApp } from "@/features/canvas/components/flow/flow-app";
 import { SidebarContainer } from "@/features/canvas/components/sidebar/sidebar-container";
 import { SidebarContent } from "@/features/canvas/components/sidebar/sidebar-content";
+import { SidebarInfoContent } from "@/features/canvas/components/sidebar/sidebar-info-content";
 
 export default function CanvasPage() {
   return (
     <CanvasContext>
       <div className="flex min-h-0 grow overflow-hidden bg-muted/30 p-4">
-        <SidebarContainer>
-          <SidebarContent />
-        </SidebarContainer>
+        <div className="flex min-w-72 flex-col gap-2">
+          <SidebarContainer>
+            <SidebarContent />
+          </SidebarContainer>
+          <SidebarInfoContent />
+        </div>
         <CanvasContainer>
           <ResizablePanelGroup direction="vertical" className="h-full">
             <ResizablePanel defaultSize={65} minSize={40}>
