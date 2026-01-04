@@ -3,9 +3,11 @@ import { db } from "@/db/client";
 import {
   type SidebarNodeContentInsert,
   type SidebarNodeHandleInsert,
+  type SidebarNodeInformationInsert,
   type SidebarNodeInsert,
   sidebarNodeContents,
   sidebarNodeHandles,
+  sidebarNodeInformation,
   sidebarNodes,
 } from "@/db/schema";
 import { sidebarNodesData } from "@/features/canvas/constants/flow";
@@ -72,6 +74,23 @@ export const seedSidebarNodes = async () => {
             set: {
               targetCount: handleInsert.targetCount,
               sourceCount: handleInsert.sourceCount,
+            },
+          });
+      }
+
+      if (raw.information) {
+        const informationInsert: SidebarNodeInformationInsert = {
+          nodeId,
+          ...raw.information,
+        };
+
+        await tx
+          .insert(sidebarNodeInformation)
+          .values(informationInsert)
+          .onConflictDoUpdate({
+            target: sidebarNodeInformation.nodeId,
+            set: {
+              ...raw.information,
             },
           });
       }

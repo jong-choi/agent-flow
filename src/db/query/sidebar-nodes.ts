@@ -6,6 +6,7 @@ import { db } from "@/db/client";
 import {
   sidebarNodeContents,
   sidebarNodeHandles,
+  sidebarNodeInformation,
   sidebarNodes,
 } from "@/db/schema";
 
@@ -19,6 +20,7 @@ const getSidebarNodesBase = async () => {
       createdAt: sidebarNodes.createdAt,
       content: sidebarNodeContents,
       handle: sidebarNodeHandles,
+      information: sidebarNodeInformation,
     })
     .from(sidebarNodes)
     .leftJoin(
@@ -28,6 +30,10 @@ const getSidebarNodesBase = async () => {
     .leftJoin(
       sidebarNodeHandles,
       eq(sidebarNodeHandles.nodeId, sidebarNodes.id),
+    )
+    .leftJoin(
+      sidebarNodeInformation,
+      eq(sidebarNodeInformation.nodeId, sidebarNodes.id),
     )
     .orderBy(sidebarNodes.createdAt);
 };
@@ -48,6 +54,7 @@ export type SidebarNodeData = Omit<SelectSidebarNode, "content"> & {
         options?: Array<{ id: string; value: string }>;
       })
     | null;
+  information: SelectSidebarNode["information"];
 };
 
 export type FlowNodeData = Omit<SidebarNodeData, "id" | "type">;
