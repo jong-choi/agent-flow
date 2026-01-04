@@ -1,4 +1,5 @@
 import "@xyflow/react/dist/style.css";
+import { Card } from "@/components/ui/card";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -24,9 +25,9 @@ export default function CanvasPage() {
           >
             <SidebarContent />
           </SidebarContainer>
-          <div className="scrollbar-slim h-1/4 overflow-scroll">
+          <Card className="h-1/4">
             <SidebarInfoContent />
-          </div>
+          </Card>
         </div>
         <CanvasContainer>
           <ResizablePanelGroup direction="vertical" className="h-full">

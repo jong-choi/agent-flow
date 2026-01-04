@@ -1,16 +1,14 @@
 import type { StateCreator } from "zustand";
 import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
 
-type SidebarInfo = Omit<
-  NonNullable<SidebarNodeData["information"]>,
-  "id" | "nodeId"
->;
+type SidebarInfo = Omit<NonNullable<SidebarNodeData["information"]>, "id">;
 export type SidebarInfoSlice = {
   selectedInfo: SidebarInfo;
   setSelectedInfo: (selectedInfo: SidebarInfo) => void;
 };
 
 const defaultInformation: SidebarInfo = {
+  nodeId: "0",
   title: "노드 사용 가이드",
   summary: "사이드바의 노드를 캔버스로 드래그하여 배치합니다",
   description: "사이드바의 노드를 캔버스로 드래그하면 추가됩니다.",

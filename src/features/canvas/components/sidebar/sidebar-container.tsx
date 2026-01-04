@@ -4,6 +4,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function SidebarContainer({
   children,
@@ -18,9 +19,12 @@ export function SidebarContainer({
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <div className="scrollbar-slim flex flex-col gap-4 overflow-y-scroll px-2 pb-4">
-        {children}
-      </div>
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="flex flex-col gap-4 overflow-hidden px-2 pb-4">
+          {children}
+          {children}
+        </div>
+      </ScrollArea>
     </Card>
   );
 }
