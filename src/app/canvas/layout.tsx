@@ -1,5 +1,5 @@
 import { ReactFlowProvider } from "@xyflow/react";
-import { CanvasStoreProvider } from "@/features/canvas/store/providers/canvas-store-provider";
+import { CanvasStoreProvider } from "@/features/canvas/store/canvas-store";
 
 type CanvasLayout = {
   children: React.ReactNode;

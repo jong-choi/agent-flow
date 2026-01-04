@@ -5,12 +5,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export function SidebarContainer({ children }: { children: React.ReactNode }) {
+export function SidebarContainer({
+  children,
+  className,
+  title,
+  description,
+  ...props
+}: React.ComponentProps<"div"> & { title: string; description: string }) {
   return (
-    <Card className="min-h-0 shrink">
+    <Card className={className} {...props}>
       <CardHeader className="px-4 py-0">
-        <CardTitle>사이드바</CardTitle>
-        <CardDescription>Draggable 객체의 목록</CardDescription>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <div className="scrollbar-slim flex flex-col gap-4 overflow-y-scroll px-2 pb-4">
         {children}

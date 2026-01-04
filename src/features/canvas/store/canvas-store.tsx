@@ -1,0 +1,48 @@
+"use client";
+
+import { type ReactNode, createContext, useContext, useState } from "react";
+import { useStore } from "zustand";
+import { createStore } from "zustand";
+import {
+  type FlowValidationSlice,
+  createFlowValidationSlice,
+} from "@/features/canvas/store/slices/flow-validation-slice";
+import {
+  type SidebarInfoSlice,
+  createSidebarInfoSlice,
+} from "@/features/canvas/store/slices/sidebar-info-slice";
+
+type CanvasState = FlowValidationSlice & SidebarInfoSlice;
+
+const createCanvasStore = (initialState?: Partial<CanvasState>) =>
+  createStore<CanvasState>()((set, get, api) => ({
+    ...createFlowValidationSlice(set, get, api),
+    ...createSidebarInfoSlice(set, get, api),
+    ...initialState,
+  }));
+
+type CanvasStoreApi = ReturnType<typeof createCanvasStore>;
+
+const CanvasStoreContext = createContext<CanvasStoreApi | undefined>(undefined);
+
+interface CanvasStoreProviderProps {
+  children: ReactNode;
+}
+
+export const CanvasStoreProvider = ({ children }: CanvasStoreProviderProps) => {
+  const [store] = useState(() => createCanvasStore());
+  return (
+    <CanvasStoreContext.Provider value={store}>
+      {children}
+    </CanvasStoreContext.Provider>
+  );
+};
+
+export const useCanvasStore = <T,>(selector: (store: CanvasState) => T): T => {
+  const canvasStoreContext = useContext(CanvasStoreContext);
+  if (!canvasStoreContext) {
+    throw new Error(`useCanvasStore must be used within CanvasStoreProvider`);
+  }
+
+  return useStore(canvasStoreContext, selector);
+};

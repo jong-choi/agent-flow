@@ -25,7 +25,7 @@ import {
 import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 import { useIsValidConnection } from "@/features/canvas/hooks/use-is-valid-connection";
 import { useReconnectEdge } from "@/features/canvas/hooks/use-reconnect-edge";
-import { useCanvasStore } from "@/features/canvas/store/providers/canvas-store-provider";
+import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 const ReactFlow = dynamic<ReactFlowProps<Node<SidebarNodeData>, Edge>>(
   () => import("@xyflow/react").then((m) => m.ReactFlow),

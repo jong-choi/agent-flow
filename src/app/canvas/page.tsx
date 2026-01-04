@@ -15,22 +15,28 @@ import { SidebarInfoContent } from "@/features/canvas/components/sidebar/sidebar
 export default function CanvasPage() {
   return (
     <CanvasContext>
-      <div className="flex min-h-0 grow overflow-hidden bg-muted/30 p-4">
-        <div className="flex min-w-72 flex-col gap-2">
-          <SidebarContainer>
+      <div className="flex h-full min-h-0 flex-1 bg-muted/30 p-4">
+        <div className="flex h-full w-72 flex-col gap-2">
+          <SidebarContainer
+            className="min-h-0 flex-1"
+            title="사이드바"
+            description="draggable 객체의 목록"
+          >
             <SidebarContent />
           </SidebarContainer>
-          <SidebarInfoContent />
+          <div className="scrollbar-slim h-1/4 overflow-scroll">
+            <SidebarInfoContent />
+          </div>
         </div>
         <CanvasContainer>
           <ResizablePanelGroup direction="vertical" className="h-full">
-            <ResizablePanel defaultSize={65} minSize={40}>
+            <ResizablePanel defaultSize={60} minSize={40}>
               <DroppableZone>
                 <FlowApp />
               </DroppableZone>
             </ResizablePanel>
             <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={35} minSize={20}>
+            <ResizablePanel defaultSize={40} minSize={20}>
               <section className="flex h-full flex-col gap-3 p-4">
                 <div className="flex items-center justify-between">
                   <div>

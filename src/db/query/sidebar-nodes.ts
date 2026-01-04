@@ -54,7 +54,6 @@ export type SidebarNodeData = Omit<SelectSidebarNode, "content"> & {
         options?: Array<{ id: string; value: string }>;
       })
     | null;
-  information: SelectSidebarNode["information"];
 };
 
 export type FlowNodeData = Omit<SidebarNodeData, "id" | "type">;
