@@ -1,4 +1,3 @@
-import { cacheLife, cacheTag } from "next/cache";
 import { getActiveAiModels } from "@/db/query/ai-models";
 import {
   type SidebarNodeData,
@@ -7,10 +6,6 @@ import {
 import { SidebarItemCard } from "@/features/canvas/components/sidebar/sidebar-item-card";
 
 export async function SidebarContent() {
-  "use cache";
-  cacheTag("sidebar-nodes", "ai-models");
-  cacheLife("weeks");
-
   const flowNodeList: SidebarNodeData[] = await getSidebarNodes();
 
   for (const node of flowNodeList) {

@@ -24,6 +24,18 @@ export const sidebarNodes = pgTable("sidebar_nodes", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const sidebarNodeInformation = pgTable("sidebar_node_information", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  nodeId: uuid("node_id")
+    .notNull()
+    .references(() => sidebarNodes.id, { onDelete: "cascade" })
+    .unique(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  description: text("description").notNull(),
+  guides: text("guides").array().notNull(),
+});
+
 export const sidebarNodeContents = pgTable("sidebar_node_contents", {
   id: uuid("id").defaultRandom().primaryKey(),
   nodeId: uuid("node_id")
@@ -51,6 +63,11 @@ export const sidebarNodeHandles = pgTable("sidebar_node_handles", {
 
 export type SidebarNode = typeof sidebarNodes.$inferSelect;
 export type SidebarNodeInsert = typeof sidebarNodes.$inferInsert;
+
+export type SidebarNodeInformation =
+  typeof sidebarNodeInformation.$inferSelect;
+export type SidebarNodeInformationInsert =
+  typeof sidebarNodeInformation.$inferInsert;
 
 export type SidebarNodeContent = typeof sidebarNodeContents.$inferSelect;
 export type SidebarNodeContentInsert = typeof sidebarNodeContents.$inferInsert;

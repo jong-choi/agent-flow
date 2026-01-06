@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { type Edge, type Node, useReactFlow } from "@xyflow/react";
-import { useCanvasStore } from "@/features/canvas/store/providers/canvas-store-provider";
+import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function useCheckValidGraph() {
   const { getEdges, getNodes } = useReactFlow();
