@@ -4,11 +4,13 @@ export function CanvasNodePanelContainer({
   defaultSize = 40,
   minSize = 20,
   withHandle = true,
+  order = 2,
   children,
 }: React.PropsWithChildren<{
   defaultSize?: number;
   minSize?: number;
   withHandle?: boolean;
+  order?: number;
 }>) {
   return (
     <>
@@ -17,6 +19,7 @@ export function CanvasNodePanelContainer({
         id="canvas-left-main-bottom"
         defaultSize={defaultSize}
         minSize={minSize}
+        order={order}
       >
         {children}
       </ResizablePanel>

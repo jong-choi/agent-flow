@@ -45,7 +45,12 @@ export default function CanvasLayout({
                 direction="horizontal"
                 className="h-full"
               >
-                <ResizablePanel id="canvas-left" defaultSize={50} minSize={30}>
+                <ResizablePanel
+                  id="canvas-left"
+                  defaultSize={50}
+                  minSize={30}
+                  order={1}
+                >
                   <ResizablePanelGroup
                     id="canvas-left-main"
                     direction="vertical"
@@ -56,6 +61,7 @@ export default function CanvasLayout({
                       id="canvas-left-main-top"
                       defaultSize={60}
                       minSize={40}
+                      order={1}
                     >
                       {children}
                     </ResizablePanel>
