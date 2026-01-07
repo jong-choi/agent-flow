@@ -12,8 +12,12 @@ export function CanvasNodePanelContainer({
 }>) {
   return (
     <>
-      <ResizableHandle withHandle={withHandle} />
-      <ResizablePanel defaultSize={defaultSize} minSize={minSize}>
+      <ResizableHandle id="canvas-left-main-handle" withHandle={withHandle} />
+      <ResizablePanel
+        id="canvas-left-main-bottom"
+        defaultSize={defaultSize}
+        minSize={minSize}
+      >
         {children}
       </ResizablePanel>
     </>

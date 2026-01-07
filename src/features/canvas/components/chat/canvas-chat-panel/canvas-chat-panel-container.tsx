@@ -12,8 +12,12 @@ export function CanvasChatPanelContainer({
 }>) {
   return (
     <>
-      <ResizableHandle withHandle={withHandle} />
-      <ResizablePanel defaultSize={defaultSize} minSize={minSize}>
+      <ResizableHandle id="canvas-right-handle" withHandle={withHandle} />
+      <ResizablePanel
+        id="canvas-right-main"
+        defaultSize={defaultSize}
+        minSize={minSize}
+      >
         {children}
       </ResizablePanel>
     </>

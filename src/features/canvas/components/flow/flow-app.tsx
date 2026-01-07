@@ -25,6 +25,7 @@ import {
 import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 import { useIsValidConnection } from "@/features/canvas/hooks/use-is-valid-connection";
 import { useReconnectEdge } from "@/features/canvas/hooks/use-reconnect-edge";
+import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 const ReactFlow = dynamic<ReactFlowProps<Node<SidebarNodeData>, Edge>>(
@@ -60,10 +61,15 @@ export function FlowApp() {
     return "system";
   }, [theme]);
 
+  const setSearchParams = useSetSearchParams();
+  const handleStart = useCallback(() => {
+    setSearchParams({ chat_id: crypto.randomUUID() });
+  }, [setSearchParams]);
+
   return (
     <div className="relative h-full w-full">
       <div className="absolute top-4 left-4 z-10">
-        <Button type="button" disabled={!isValidGraph}>
+        <Button type="button" disabled={!isValidGraph} onClick={handleStart}>
           시작하기
         </Button>
       </div>

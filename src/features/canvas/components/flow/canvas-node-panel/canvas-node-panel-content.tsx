@@ -1,6 +1,11 @@
-export function CanvasNodePanelContent() {
+"use client";
+
+import { type Node } from "@xyflow/react";
+
+export function CanvasNodePanelContent({ node }: { node: Node }) {
   return (
     <section className="flex h-full flex-col gap-3 p-4">
+      {JSON.stringify(node)}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">

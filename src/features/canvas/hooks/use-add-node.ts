@@ -14,7 +14,7 @@ export function useAddNode() {
     (item: SidebarNodeData, position: XYPosition) => {
       const { id, type, ...data } = item;
       const nextNode: Node<FlowNodeData> = {
-        id: `${id}-${Date.now()}`,
+        id,
         type,
         position,
         data,
