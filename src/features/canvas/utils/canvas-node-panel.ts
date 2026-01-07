@@ -8,20 +8,54 @@ export const pruneEdgesForHandleCount = (
     nextCount,
   }: { nodeId: string; kind: "target" | "source"; nextCount: number },
 ) => {
-  return edges.filter((edge) => {
-    // 무관한 핸들은 통과
+  let shouldUpdate = false;
+
+  const related: { edge: Edge; idx: number }[] = [];
+  const unrelated: Edge[] = [];
+
+  for (const edge of edges) {
     const isRelated =
       kind === "target" ? edge.target === nodeId : edge.source === nodeId;
-    if (!isRelated) return true;
 
-    // 타입 가드
+    if (!isRelated) {
+      unrelated.push(edge);
+      continue;
+    }
+
     const handle = kind === "target" ? edge.targetHandle : edge.sourceHandle;
-    if (!handle) return false;
 
-    // 핸들 이름을 기준으로 edge 제거
-    const num = Number(handle.match(/(\d+)$/)?.[1]) || 0;
-    return num <= nextCount - 1;
+    if (!handle) {
+      shouldUpdate = true;
+      continue;
+    }
+
+    const idx = Number(handle.match(/(\d+)$/)?.[1] ?? 0);
+    related.push({ edge, idx });
+  }
+
+  related.sort((a, b) => a.idx - b.idx);
+
+  // slice 후 재매핑하여 압축
+  const sliced = related.slice(0, nextCount);
+  if (sliced.length !== related.length) {
+    shouldUpdate = true;
+  }
+
+  const kept = sliced.map((item, newIdx) => {
+    const key = kind === "target" ? "targetHandle" : "sourceHandle";
+    const nextHandle = `${kind}${newIdx}`;
+
+    if (!shouldUpdate && item.edge[key] !== nextHandle) {
+      shouldUpdate = true;
+    }
+
+    item.edge[key] = nextHandle;
+    return item.edge;
   });
+
+  const nextEdges = [...unrelated, ...kept];
+
+  return { shouldUpdate, nextEdges };
 };
 
 export const handleCountRefine: (value: string) => boolean = (value) => {

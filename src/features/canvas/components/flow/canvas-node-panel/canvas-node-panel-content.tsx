@@ -92,17 +92,21 @@ export function CanvasNodePanelContent({ node }: { node: Node<FlowNodeData> }) {
 
       const edges = getEdges();
       let nextEdges = edges;
+      let shouldUpdateEdges = false;
 
       let nextTargetCount = targetCount;
       if (nextHandle && targetCountEditable) {
         nextTargetCount = parseInt(values.targetCount);
         nextHandle.targetCount = nextTargetCount;
         if (nextTargetCount < targetCount) {
-          nextEdges = pruneEdgesForHandleCount(nextEdges, {
-            nodeId: node.id,
-            kind: "target",
-            nextCount: nextTargetCount,
-          });
+          const { shouldUpdate, nextEdges: prunedEdges } =
+            pruneEdgesForHandleCount(nextEdges, {
+              nodeId: node.id,
+              kind: "target",
+              nextCount: nextTargetCount,
+            });
+          shouldUpdateEdges = shouldUpdate;
+          nextEdges = prunedEdges;
         }
       }
 
@@ -111,11 +115,14 @@ export function CanvasNodePanelContent({ node }: { node: Node<FlowNodeData> }) {
         nextSourceCount = parseInt(values.sourceCount);
         nextHandle.sourceCount = nextSourceCount;
         if (nextSourceCount < sourceCount) {
-          nextEdges = pruneEdgesForHandleCount(nextEdges, {
-            nodeId: node.id,
-            kind: "source",
-            nextCount: nextSourceCount,
-          });
+          const { shouldUpdate, nextEdges: prunedEdges } =
+            pruneEdgesForHandleCount(nextEdges, {
+              nodeId: node.id,
+              kind: "source",
+              nextCount: nextSourceCount,
+            });
+          shouldUpdateEdges = shouldUpdate;
+          nextEdges = prunedEdges;
         }
       }
 
@@ -126,7 +133,7 @@ export function CanvasNodePanelContent({ node }: { node: Node<FlowNodeData> }) {
         handle: nextHandle,
       });
 
-      if (nextEdges.length !== edges.length) {
+      if (shouldUpdateEdges) {
         setEdges(nextEdges);
         checkValidGraph({ edges: nextEdges });
       }
