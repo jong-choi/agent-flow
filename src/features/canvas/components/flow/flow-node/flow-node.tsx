@@ -11,14 +11,14 @@ import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
 import { FlowNodeContent } from "@/features/canvas/components/flow/flow-node/flow-node-content";
 import { FlowNodeDeleteButton } from "@/features/canvas/components/flow/flow-node/flow-node-delete-button";
 import { FlowNodeHandles } from "@/features/canvas/components/flow/flow-node/flow-node-handles";
-import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
+import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function FlowNode({ data, id }: NodeProps<Node<SidebarNodeData>>) {
-  const setSearchParams = useSetSearchParams();
+  const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
 
   const handleClick = useCallback(() => {
-    setSearchParams({ node_id: id });
-  }, [id, setSearchParams]);
+    setSelectedNodeId(id);
+  }, [id, setSelectedNodeId]);
 
   return (
     <Card

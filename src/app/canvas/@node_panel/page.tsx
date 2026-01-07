@@ -1,16 +1,16 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useReactFlow } from "@xyflow/react";
+import { type Node, useReactFlow } from "@xyflow/react";
+import { type FlowNodeData } from "@/db/query/sidebar-nodes";
 import { CanvasNodePanelContainer } from "@/features/canvas/components/flow/canvas-node-panel/canvas-node-panel-container";
 import { CanvasNodePanelContent } from "@/features/canvas/components/flow/canvas-node-panel/canvas-node-panel-content";
+import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export default function NodePanel() {
-  const searchParams = useSearchParams();
-  const nodeId = searchParams.get("node_id") ?? undefined;
-  const { getNode } = useReactFlow();
+  const selectedNodeId = useCanvasStore((s) => s.selectedNodeId);
+  const { getNode } = useReactFlow<Node<FlowNodeData>>();
 
-  const node = nodeId ? getNode(nodeId) : null;
+  const node = selectedNodeId ? getNode(selectedNodeId) : null;
 
   if (!node) {
     return null;

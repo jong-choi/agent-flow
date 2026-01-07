@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { useReactFlow } from "@xyflow/react";
 import {
@@ -14,20 +13,20 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
+import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function FlowNodeDeleteButton({ id }: { id: string }) {
   const { deleteElements } = useReactFlow();
-  const setSearchParams = useSetSearchParams();
-  const searchParams = useSearchParams();
+  const selectedNodeId = useCanvasStore((s) => s.selectedNodeId);
+  const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
 
   const handleDeleteNode = useCallback(async () => {
     await deleteElements({ nodes: [{ id }] });
 
-    if (searchParams.get("node_id") === id) {
-      setSearchParams({ node_id: null });
+    if (selectedNodeId === id) {
+      setSelectedNodeId(null);
     }
-  }, [deleteElements, id, searchParams, setSearchParams]);
+  }, [deleteElements, id, selectedNodeId, setSelectedNodeId]);
 
   return (
     <AlertDialog>

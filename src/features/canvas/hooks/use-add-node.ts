@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { flushSync } from "react-dom";
 import { type Node, type XYPosition, useReactFlow } from "@xyflow/react";
 import {
   type FlowNodeData,
@@ -23,8 +24,7 @@ export function useAddNode() {
       const newNodes = [...getNodes(), nextNode];
       checkValidGraph({ nodes: newNodes });
       setNodes(newNodes);
-
-      requestAnimationFrame(() => fitView({ padding: 0.2, duration: 400 }));
+      fitView({ padding: 0.2, duration: 400 });
     },
     [checkValidGraph, fitView, getNodes, setNodes],
   );

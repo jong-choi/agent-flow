@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/app/_components/site-header/site-header";
+import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import "./globals.css";
 
@@ -26,6 +27,7 @@ export default function RootLayout({
             <SiteHeader />
             {children}
           </main>
+          <Toaster position="top-right" richColors />
         </ThemeProvider>
       </body>
     </html>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   DndContext,
   type DragEndEvent,
@@ -15,13 +16,13 @@ import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
 import { DraggableItemView } from "@/features/canvas/components/dnd/draggable-item";
 import { CANVAS_DROPPABLE_ID } from "@/features/canvas/components/dnd/droppable-zone";
 import { useAddNode } from "@/features/canvas/hooks/use-add-node";
-import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
+import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function CanvasContext({ children }: React.PropsWithChildren) {
   const dndId = useId();
   const [activeItem, setActiveItem] = useState<SidebarNodeData | null>(null);
 
-  const setSearchParams = useSetSearchParams();
+  const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -38,7 +39,7 @@ export function CanvasContext({ children }: React.PropsWithChildren) {
     }
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     const data = active.data.current;
@@ -51,10 +52,14 @@ export function CanvasContext({ children }: React.PropsWithChildren) {
       });
 
       const nodeData = data as SidebarNodeData;
-      const node_id = crypto.randomUUID();
-      nodeData.id = node_id;
-      addNode(data as SidebarNodeData, position);
-      setSearchParams({ node_id });
+      const nodeId = crypto.randomUUID();
+      nodeData.id = nodeId;
+
+      // addNode를 setSelectedNodeId보다 먼저 실행
+      flushSync(() => {
+        addNode(data as SidebarNodeData, position);
+      });
+      setSelectedNodeId(nodeId);
     }
 
     setActiveItem(null);

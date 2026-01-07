@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useReactFlow } from "@xyflow/react";
 import { type Node } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
@@ -22,16 +23,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
+import { type FlowNodeData } from "@/db/query/sidebar-nodes";
 
 export function FlowNodeContent({
   content,
   id,
 }: {
-  content: SidebarNodeData["content"];
+  content: FlowNodeData["content"];
   id: string;
 }) {
-  const { updateNodeData } = useReactFlow<Node<SidebarNodeData>>();
+  const { updateNodeData } = useReactFlow<Node<FlowNodeData>>();
 
   if (!content) return null;
 
@@ -44,6 +45,7 @@ export function FlowNodeContent({
     const formData = new FormData(e.currentTarget);
     const value = String(formData.get("textValue") ?? "");
     handleValueChange(value);
+    toast.success("저장되었습니다.");
   };
 
   if (content.type === "select") {
@@ -102,7 +104,9 @@ export function FlowNodeContent({
                     닫기
                   </Button>
                 </DialogClose>
-                <Button type="submit">저장하기</Button>
+                <DialogClose asChild>
+                  <Button type="submit">저장하기</Button>
+                </DialogClose>
               </DialogFooter>
             </form>
           </DialogContent>
