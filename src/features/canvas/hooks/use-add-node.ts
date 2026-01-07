@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { flushSync } from "react-dom";
 import { type Node, type XYPosition, useReactFlow } from "@xyflow/react";
 import {
   type FlowNodeData,
