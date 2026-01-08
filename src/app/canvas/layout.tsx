@@ -59,14 +59,14 @@ export default function CanvasLayout({
                     {/* 캔버스 */}
                     <ResizablePanel
                       id="canvas-left-main-top"
-                      defaultSize={60}
+                      defaultSize={70}
                       minSize={40}
                       order={1}
                     >
                       {children}
                     </ResizablePanel>
                     {/* 노드 수정 */}
-                    <Suspense>{nodePanel}</Suspense>
+                    {nodePanel}
                   </ResizablePanelGroup>
                 </ResizablePanel>
                 {/* 우측 영역 */}

@@ -17,7 +17,7 @@ export default function NodePanel() {
   }
 
   return (
-    <CanvasNodePanelContainer>
+    <CanvasNodePanelContainer defaultSize={30} minSize={20}>
       <CanvasNodePanelContent node={node} />
     </CanvasNodePanelContainer>
   );

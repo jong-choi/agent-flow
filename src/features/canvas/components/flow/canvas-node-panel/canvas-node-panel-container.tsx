@@ -1,7 +1,7 @@
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 
 export function CanvasNodePanelContainer({
-  defaultSize = 40,
+  defaultSize = 30,
   minSize = 20,
   withHandle = true,
   order = 2,
