@@ -1,31 +1,16 @@
 "use client";
 
-import { useCallback } from "react";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
+import { Suspense } from "react";
+import { CanvasChatPanelCloseButton } from "@/features/canvas/components/chat/canvas-chat-panel/canvas-chat-panel-close-button";
 
 export function CanvasChatPanelContent() {
-  const setSearchParams = useSetSearchParams();
-
-  const handleClose = useCallback(() => {
-    setSearchParams({ chat_id: null });
-  }, [setSearchParams]);
-
   return (
     <section className="flex h-full flex-col gap-3 p-4">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="mt-0.5 text-muted-foreground"
-            aria-label="close chat panel"
-            onClick={handleClose}
-          >
-            <X />
-          </Button>
+          <Suspense>
+            <CanvasChatPanelCloseButton />
+          </Suspense>
           <div>
             <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
               Three
