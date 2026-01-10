@@ -1,6 +1,6 @@
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 
-export function CanvasChatPanelContainer({
+export function ChatPanelContainer({
   defaultSize = 50,
   minSize = 20,
   withHandle = true,

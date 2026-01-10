@@ -1,21 +1,16 @@
-import { CanvasChatPanelContainer } from "@/features/canvas/components/chat/canvas-chat-panel/canvas-chat-panel-container";
-import { CanvasChatPanelContent } from "@/features/canvas/components/chat/canvas-chat-panel/canvas-chat-panel-content";
+import { Suspense } from "react";
+import { ChatPanelWithSearchParams } from "@/features/canvas/components/chat/chat-panel-with-search-params";
+import { ChatPanelContainer } from "@/features/canvas/components/chat/chat-panel/chat-panel-container";
+import { ChatPanelContent } from "@/features/canvas/components/chat/chat-panel/chat-panel-content";
 
-export default async function ChatPanel({
-  searchParams,
-}: {
-  searchParams: Promise<{ chat_id?: string }>;
-}) {
-  const { chat_id: chatId } = await searchParams;
-  const isRunning = Boolean(chatId);
-
-  if (!isRunning) {
-    return null;
-  }
-
+export default function ChatPanelPage() {
   return (
-    <CanvasChatPanelContainer>
-      <CanvasChatPanelContent />
-    </CanvasChatPanelContainer>
+    <Suspense>
+      <ChatPanelWithSearchParams>
+        <ChatPanelContainer>
+          <ChatPanelContent />
+        </ChatPanelContainer>
+      </ChatPanelWithSearchParams>
+    </Suspense>
   );
 }

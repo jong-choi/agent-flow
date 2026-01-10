@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
 
-export function CanvasChatPanelCloseButton() {
+export function ChatPanelCloseButton() {
   const setSearchParams = useSetSearchParams();
 
   const handleClose = useCallback(() => {

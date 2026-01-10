@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { Card } from "@/components/ui/card";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -70,7 +69,7 @@ export default function CanvasLayout({
                   </ResizablePanelGroup>
                 </ResizablePanel>
                 {/* 우측 영역 */}
-                <Suspense>{chatPanel}</Suspense>
+                {chatPanel}
               </ResizablePanelGroup>
             </CanvasContainer>
           </div>

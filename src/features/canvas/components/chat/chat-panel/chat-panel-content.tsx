@@ -1,15 +1,15 @@
 "use client";
 
 import { Suspense } from "react";
-import { CanvasChatPanelCloseButton } from "@/features/canvas/components/chat/canvas-chat-panel/canvas-chat-panel-close-button";
+import { ChatPanelCloseButton } from "@/features/canvas/components/chat/chat-panel/chat-panel-close-button";
 
-export function CanvasChatPanelContent() {
+export function ChatPanelContent() {
   return (
     <section className="flex h-full flex-col gap-3 p-4">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-2">
           <Suspense>
-            <CanvasChatPanelCloseButton />
+            <ChatPanelCloseButton />
           </Suspense>
           <div>
             <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
