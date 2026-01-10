@@ -1,3 +1,5 @@
+"use client";
+import { useCallback } from "react";
 import { type Node, type NodeProps } from "@xyflow/react";
 import {
   Card,
@@ -9,10 +11,20 @@ import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
 import { FlowNodeContent } from "@/features/canvas/components/flow/flow-node/flow-node-content";
 import { FlowNodeDeleteButton } from "@/features/canvas/components/flow/flow-node/flow-node-delete-button";
 import { FlowNodeHandles } from "@/features/canvas/components/flow/flow-node/flow-node-handles";
+import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function FlowNode({ data, id }: NodeProps<Node<SidebarNodeData>>) {
+  const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
+
+  const handleClick = useCallback(() => {
+    setSelectedNodeId(id);
+  }, [id, setSelectedNodeId]);
+
   return (
-    <Card className="relative w-48 cursor-pointer p-2 px-0">
+    <Card
+      className="relative w-48 cursor-pointer p-2 px-0"
+      onClick={handleClick}
+    >
       <FlowNodeDeleteButton id={id} />
       <CardHeader>
         <CardTitle>{data.label}</CardTitle>

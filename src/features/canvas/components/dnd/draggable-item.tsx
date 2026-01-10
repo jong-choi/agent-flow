@@ -42,6 +42,7 @@ export function DraggableItem({ item, onClick }: DraggableItemProps) {
       {...attributes}
       style={style}
       onClick={onClick}
+      aria-describedby={"draggable item"}
     >
       <DraggableItemView item={item} />
     </div>

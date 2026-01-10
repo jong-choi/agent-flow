@@ -8,16 +8,21 @@ import {
   createFlowValidationSlice,
 } from "@/features/canvas/store/slices/flow-validation-slice";
 import {
+  type SelectedNodeSlice,
+  createSelectedNodeSlice,
+} from "@/features/canvas/store/slices/selected-node-slice";
+import {
   type SidebarInfoSlice,
   createSidebarInfoSlice,
 } from "@/features/canvas/store/slices/sidebar-info-slice";
 
-type CanvasState = FlowValidationSlice & SidebarInfoSlice;
+type CanvasState = FlowValidationSlice & SidebarInfoSlice & SelectedNodeSlice;
 
 const createCanvasStore = (initialState?: Partial<CanvasState>) =>
   createStore<CanvasState>()((set, get, api) => ({
     ...createFlowValidationSlice(set, get, api),
     ...createSidebarInfoSlice(set, get, api),
+    ...createSelectedNodeSlice(set, get, api),
     ...initialState,
   }));
 

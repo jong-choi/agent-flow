@@ -14,7 +14,7 @@ export function useAddNode() {
     (item: SidebarNodeData, position: XYPosition) => {
       const { id, type, ...data } = item;
       const nextNode: Node<FlowNodeData> = {
-        id: `${id}-${Date.now()}`,
+        id,
         type,
         position,
         data,
@@ -23,8 +23,7 @@ export function useAddNode() {
       const newNodes = [...getNodes(), nextNode];
       checkValidGraph({ nodes: newNodes });
       setNodes(newNodes);
-
-      requestAnimationFrame(() => fitView({ padding: 0.2, duration: 400 }));
+      fitView({ padding: 0.2, duration: 400 });
     },
     [checkValidGraph, fitView, getNodes, setNodes],
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { Suspense, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import {
@@ -15,8 +15,8 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { Button } from "@/components/ui/button";
 import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
+import { FlowStartButton } from "@/features/canvas/components/flow/flow-start-button";
 import {
   INITIAL_EDGES,
   INITIAL_NODES,
@@ -25,7 +25,6 @@ import {
 import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 import { useIsValidConnection } from "@/features/canvas/hooks/use-is-valid-connection";
 import { useReconnectEdge } from "@/features/canvas/hooks/use-reconnect-edge";
-import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 const ReactFlow = dynamic<ReactFlowProps<Node<SidebarNodeData>, Edge>>(
   () => import("@xyflow/react").then((m) => m.ReactFlow),
@@ -35,8 +34,6 @@ const ReactFlow = dynamic<ReactFlowProps<Node<SidebarNodeData>, Edge>>(
 export function FlowApp() {
   const [nodes, , onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
-
-  const isValidGraph = useCanvasStore((s) => s.isValidGraph);
 
   const isValidConnection = useIsValidConnection();
   const checkValidGraph = useCheckValidGraph();
@@ -63,9 +60,9 @@ export function FlowApp() {
   return (
     <div className="relative h-full w-full">
       <div className="absolute top-4 left-4 z-10">
-        <Button type="button" disabled={!isValidGraph}>
-          시작하기
-        </Button>
+        <Suspense>
+          <FlowStartButton />
+        </Suspense>
       </div>
       <ReactFlow
         colorMode={colorMode}
