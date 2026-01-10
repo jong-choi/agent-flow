@@ -1,3 +1,4 @@
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import Link from "next/link";
 import { type FallbackProps } from "react-error-boundary";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,13 @@ export function MainErrorFallback({
   error,
   resetErrorBoundary,
 }: FallbackProps) {
+  if (isRedirectError(error)) {
+    // NEXT_REDIRECT는 바이패스로 내보내기
+    throw error;
+  }
+
   const { message } = error;
+
   return (
     <div
       className="flex h-screen w-screen flex-col items-center justify-center"

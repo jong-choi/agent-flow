@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { SessionProvider } from "next-auth/react";
 import { SiteHeader } from "@/app/_components/site-header/site-header";
 import { AppProvider } from "@/app/providers";
 import { Toaster } from "@/components/ui/sonner";

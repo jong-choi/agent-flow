@@ -1,12 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { DropdownContent } from "@/app/_components/site-header/account-menu/dropdown-content";
 import { DropdownTrigger } from "@/app/_components/site-header/account-menu/dropdown-trigger";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { auth } from "@/lib/auth";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export async function AccountMenu() {
-  const session = await auth();
+export function AccountMenu() {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return <Skeleton className="size-8 rounded-full" />;
+  }
 
   if (!session?.user) {
     return (
