@@ -7,13 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
+import { type FlowNodeData } from "@/db/query/sidebar-nodes";
 import { FlowNodeContent } from "@/features/canvas/components/flow/flow-node/flow-node-content";
 import { FlowNodeDeleteButton } from "@/features/canvas/components/flow/flow-node/flow-node-delete-button";
 import { FlowNodeHandles } from "@/features/canvas/components/flow/flow-node/flow-node-handles";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
-export function FlowNode({ data, id }: NodeProps<Node<SidebarNodeData>>) {
+export function FlowNode({ data, id }: NodeProps<Node<FlowNodeData>>) {
   const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
 
   const handleClick = useCallback(() => {
