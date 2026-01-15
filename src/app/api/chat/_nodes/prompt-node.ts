@@ -19,8 +19,6 @@ export const promptNode = async (
     typeof template === "string"
       ? template.replace(/\{input\}/g, input ?? "")
       : (input ?? metadata?.data?.label ?? "promptNode");
-  const outputMap = state.outputMap;
-  outputMap[nodeId] = output;
 
-  return { outputMap };
+  return { outputMap: { [nodeId]: output } };
 };

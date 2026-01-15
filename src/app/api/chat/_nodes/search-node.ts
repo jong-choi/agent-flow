@@ -61,8 +61,5 @@ export const searchNode = async (
       )
       .join("\n");
 
-  const outputMap = state.outputMap;
-  outputMap[nodeId] = resultMessage;
-
-  return { outputMap };
+  return { outputMap: { [nodeId]: resultMessage } };
 };

@@ -15,8 +15,6 @@ export const splitNode = async (
   const input = findSingleNodeInput({ state, config });
 
   const output = input ?? metadata?.data?.label ?? "splitNode";
-  const outputMap = state.outputMap;
-  outputMap[nodeId] = output;
 
-  return { outputMap };
+  return { outputMap: { [nodeId]: output } };
 };

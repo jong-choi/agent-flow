@@ -53,7 +53,5 @@ export const mergeNode = async (
   });
 
   // 상태에 결과를 저장한 후 반환한다
-  outputMap[nodeId] = result;
-
-  return { outputMap };
+  return { outputMap: { [nodeId]: result } };
 };
