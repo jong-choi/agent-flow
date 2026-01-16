@@ -1,3 +1,4 @@
+import { HumanMessage } from "@langchain/core/messages";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import {
   createChatModel,
@@ -36,7 +37,10 @@ export const chatNode = async (
     throw new Error(`지원하지 않는 provider입니다: ${aiModel.provider}`);
   }
 
-  const response = await chatModel.invoke(input);
+  const newMessage = new HumanMessage(input);
+
+  const response = await chatModel.invoke([...state.messages, newMessage]);
+
   const content = response.content;
 
   let output: string;
@@ -50,8 +54,5 @@ export const chatNode = async (
       .join("");
   }
 
-  const outputMap = state.outputMap;
-  outputMap[nodeId] = output;
-
-  return { outputMap };
+  return { messages: [newMessage, response], outputMap: { [nodeId]: output } };
 };

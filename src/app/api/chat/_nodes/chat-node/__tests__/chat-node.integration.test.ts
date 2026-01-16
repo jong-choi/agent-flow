@@ -1,4 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  AIMessage,
+  type BaseMessage,
+  HumanMessage,
+} from "@langchain/core/messages";
 import { ChatGoogle } from "@langchain/google-gauth";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { chatNode } from "@/app/api/chat/_nodes/chat-node";
@@ -26,14 +31,17 @@ const buildState = ({
   nodeId,
   inputNodeId,
   input,
+  messages = [],
 }: {
   nodeId: string;
   inputNodeId: string;
   input: string;
+  messages?: BaseMessage[];
 }): typeof FlowStateAnnotation.State => {
   const state = {
     inputTree: {},
     outputMap: {},
+    messages,
   } as typeof FlowStateAnnotation.State;
 
   state.inputTree[nodeId] = { target: inputNodeId };
@@ -183,7 +191,69 @@ describe("chatNode (integration)", () => {
 
     const result = await chatNode(state, config);
 
-    expect(invoke).toHaveBeenCalledWith(input);
+    const [messagesArg] = invoke.mock.calls[0];
+    expect(messagesArg).toHaveLength(1);
+    expect(messagesArg[0]).toMatchObject({ content: input });
     expect(result.outputMap?.[nodeId]).toBe("hello world");
+  });
+
+  it("멀티턴: 이전 메시지를 포함해 invoke를 호출한다", async () => {
+    const modelId = "gemma-3-1b-it";
+    const input = "새 질문";
+    const previousMessages = [
+      new HumanMessage("이전 질문"),
+      new AIMessage("이전 답변"),
+    ];
+    const state = buildState({
+      nodeId,
+      inputNodeId,
+      input,
+      messages: previousMessages,
+    });
+    const config = buildConfig({ nodeId, modelId });
+
+    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+
+    const invoke = vi.fn().mockResolvedValue({ content: "ok" });
+
+    function MockChatGoogle() {
+      return { invoke };
+    }
+
+    vi.mocked(ChatGoogle).mockImplementation(MockChatGoogle);
+
+    await chatNode(state, config);
+
+    const [messagesArg] = invoke.mock.calls[0];
+    expect(messagesArg).toHaveLength(3);
+    expect(messagesArg[0]).toBe(previousMessages[0]);
+    expect(messagesArg[1]).toBe(previousMessages[1]);
+    expect(messagesArg[2]).toMatchObject({ content: input });
+  });
+
+  it("멀티턴: 응답 문자열을 outputMap에 저장한다", async () => {
+    const modelId = "gemma-3-1b-it";
+    const input = "후속 질문";
+    const state = buildState({
+      nodeId,
+      inputNodeId,
+      input,
+      messages: [new HumanMessage("이전 질문")],
+    });
+    const config = buildConfig({ nodeId, modelId });
+
+    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+
+    const invoke = vi.fn().mockResolvedValue({ content: "최종 응답" });
+
+    function MockChatGoogle() {
+      return { invoke };
+    }
+
+    vi.mocked(ChatGoogle).mockImplementation(MockChatGoogle);
+
+    const result = await chatNode(state, config);
+
+    expect(result.outputMap?.[nodeId]).toBe("최종 응답");
   });
 });
