@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { MemorySaver } from "@langchain/langgraph";
-import { type FlowStateAnnotation } from "@/app/api/chat/flow-state";
+import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 
 const SESSION_IDLE_TIMEOUT_MS = 1000 * 60 * 5; // 5분
 export const checkpointer = new MemorySaver();

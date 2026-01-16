@@ -1,5 +1,5 @@
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
-import { type FlowStateAnnotation } from "@/app/api/chat/flow-state";
+import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 
 /**
  * 머지 노드는 이전 노드의 출력값을 하나의 스트링으로 반환합니다.

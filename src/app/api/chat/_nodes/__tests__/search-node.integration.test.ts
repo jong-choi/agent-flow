@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { searchNode } from "@/app/api/chat/_nodes/search-node";
-import { type FlowStateAnnotation } from "@/app/api/chat/flow-state";
+import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 
 const originalApiKey = process.env.GOOGLE_SEARCH_API_KEY;
 const originalCx = process.env.GOOGLE_SEARCH_CX;

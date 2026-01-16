@@ -1,6 +1,6 @@
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
-import { type FlowStateAnnotation } from "@/app/api/chat/flow-state";
+import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 
 type GoogleSearchItem = {
   title: string;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { mergeNode } from "@/app/api/chat/_nodes/merge-node";
-import { type FlowStateAnnotation } from "@/app/api/chat/flow-state";
+import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 
 describe("mergeNode", () => {
   it("merge 노드는 input-1, input-2, input-3을 찾아서 input1-input2-input3 형태로 저장한다", async () => {

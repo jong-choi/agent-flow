@@ -11,7 +11,7 @@ import {
   createChatModel,
   resolveAiModel,
 } from "@/app/api/chat/_nodes/chat-node/models";
-import { type FlowStateAnnotation } from "@/app/api/chat/flow-state";
+import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import { getActiveAiModels } from "@/db/query/ai-models";
 import { type AiModel } from "@/db/schema";
 

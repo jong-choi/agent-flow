@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { promptNode } from "@/app/api/chat/_nodes/prompt-node";
-import { type FlowStateAnnotation } from "@/app/api/chat/flow-state";
+import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 
 describe("promptNode", () => {
   it("template의 {input}을 입력값으로 치환한다", async () => {

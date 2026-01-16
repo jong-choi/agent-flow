@@ -1,11 +1,11 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
 import * as runnableNodes from "@/app/api/chat/_nodes";
-import { FlowStateAnnotation } from "@/app/api/chat/flow-state";
+import { FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import {
   type FlowEdge,
   type FlowNode,
   isValidNodeType,
-} from "@/app/api/chat/types";
+} from "@/app/api/chat/_types/nodes";
 
 // addEdge가 단일/다중 소스 모두 받도록 타입만 확장한 Graph 래퍼
 type DynamicStateGraph = Omit<

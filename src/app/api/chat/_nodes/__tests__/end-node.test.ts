@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { endNode } from "@/app/api/chat/_nodes/end-node";
-import { type FlowStateAnnotation } from "@/app/api/chat/flow-state";
+import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 
 describe("endNode", () => {
   it("입력이 0개면 에러가 발생한다", async () => {
