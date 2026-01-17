@@ -1,12 +1,17 @@
 import { HumanMessage } from "@langchain/core/messages";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
+import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import {
   createChatModel,
   resolveAiModel,
 } from "@/app/api/chat/_nodes/chat-node/models";
 import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
-import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 
+/**
+ * 채팅 모델 실행 노드
+ * outputMap에 있는 값을 HumanMessage 타입으로 넣어 실행하고,
+ * 실행된 결과값을 Memory 히스토리에 넣는다.
+ */
 export const chatNode = async (
   state: typeof FlowStateAnnotation.State,
   config: FlowRunnableConfig,
@@ -54,5 +59,5 @@ export const chatNode = async (
       .join("");
   }
 
-  return { messages: [newMessage, response], outputMap: { [nodeId]: output } };
+  return { messages: [response], outputMap: { [nodeId]: output } };
 };

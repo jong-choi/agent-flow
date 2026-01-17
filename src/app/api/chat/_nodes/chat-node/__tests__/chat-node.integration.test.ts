@@ -256,4 +256,26 @@ describe("chatNode (integration)", () => {
 
     expect(result.outputMap?.[nodeId]).toBe("최종 응답");
   });
+
+  it("응답 메시지를 messages에 저장한다", async () => {
+    const modelId = "gemma-3-1b-it";
+    const input = "안녕";
+    const state = buildState({ nodeId, inputNodeId, input });
+    const config = buildConfig({ nodeId, modelId });
+
+    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+
+    const response = new AIMessage("ok");
+    const invoke = vi.fn().mockResolvedValue(response);
+
+    function MockChatGoogle() {
+      return { invoke };
+    }
+
+    vi.mocked(ChatGoogle).mockImplementation(MockChatGoogle);
+
+    const result = await chatNode(state, config);
+
+    expect(result.messages).toEqual([response]);
+  });
 });

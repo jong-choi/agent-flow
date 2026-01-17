@@ -1,6 +1,6 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
-import * as runnableNodes from "@/app/api/chat/_nodes";
 import { FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
+import * as runnableNodes from "@/app/api/chat/_nodes";
 import {
   type FlowEdge,
   type FlowNode,
@@ -15,7 +15,13 @@ type DynamicStateGraph = Omit<
   addEdge(source: string | string[], target: string): void;
 };
 
-const buildInputTree = (nodes: FlowNode[], edges: FlowEdge[]) => {
+export const buildInputTree = ({
+  nodes,
+  edges,
+}: {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+}) => {
   const inputTree: Record<string, Record<string, string>> = {};
 
   const nodeIds = new Set(nodes.map((node) => node.id));
@@ -45,7 +51,13 @@ const buildInputTree = (nodes: FlowNode[], edges: FlowEdge[]) => {
   return inputTree;
 };
 
-export const buildStateGraph = (nodes: FlowNode[], edges: FlowEdge[]) => {
+export const buildStateGraph = ({
+  nodes,
+  edges,
+}: {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+}) => {
   // 동적 생성을 위해 그래프를 타입캐스팅
   const graph = new StateGraph(FlowStateAnnotation) as DynamicStateGraph;
 
@@ -59,8 +71,6 @@ export const buildStateGraph = (nodes: FlowNode[], edges: FlowEdge[]) => {
 
   const startNode = nodes.find((node) => node.type === "startNode");
   const endNode = nodes.find((node) => node.type === "endNode");
-
-  const inputTree = buildInputTree(nodes, edges);
 
   // merge 노드로 들어오는 모든 소스를 모아둔다
   const incomingSources = new Map<string, Set<string>>();
@@ -135,5 +145,5 @@ export const buildStateGraph = (nodes: FlowNode[], edges: FlowEdge[]) => {
     throw new Error("종료 노드가 없습니다");
   }
 
-  return { graph, inputTree };
+  return graph;
 };
