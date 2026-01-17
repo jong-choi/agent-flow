@@ -15,7 +15,7 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { type FlowNodeData } from "@/db/query/sidebar-nodes";
+import { type FlowNodeData } from "@/db/types/sidebar-nodes";
 import { FlowStartButton } from "@/features/canvas/components/flow/flow-start-button";
 import {
   INITIAL_EDGES,

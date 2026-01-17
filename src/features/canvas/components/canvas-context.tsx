@@ -12,7 +12,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useReactFlow } from "@xyflow/react";
-import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
+import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 import { DraggableItemView } from "@/features/canvas/components/dnd/draggable-item";
 import { CANVAS_DROPPABLE_ID } from "@/features/canvas/components/dnd/droppable-zone";
 import { useAddNode } from "@/features/canvas/hooks/use-add-node";

@@ -1,6 +1,6 @@
 "use client";
 
-import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
+import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 import { DraggableItem } from "@/features/canvas/components/dnd/draggable-item";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { flowNodeDataSchema } from "@/db/query/sidebar-nodes";
+import { flowNodeDataSchema } from "@/db/types/sidebar-nodes";
 
 export const nodeTypes = [
   "startNode",

@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { type FlowNodeData } from "@/db/query/sidebar-nodes";
+import { type FlowNodeData } from "@/db/types/sidebar-nodes";
 import { FlowNodeContent } from "@/features/canvas/components/flow/flow-node/flow-node-content";
 import { FlowNodeDeleteButton } from "@/features/canvas/components/flow/flow-node/flow-node-delete-button";
 import { FlowNodeHandles } from "@/features/canvas/components/flow/flow-node/flow-node-handles";

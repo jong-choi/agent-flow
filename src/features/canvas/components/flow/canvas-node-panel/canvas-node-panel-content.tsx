@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { type FlowNodeData } from "@/db/query/sidebar-nodes";
+import { type FlowNodeData } from "@/db/types/sidebar-nodes";
 import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 import {
   handleCountRefine,

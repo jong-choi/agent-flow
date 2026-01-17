@@ -53,12 +53,3 @@ export const getSidebarNodes = unstable_cache(
   ["sidebar_nodes"],
   { tags: ["sidebar_nodes"], revalidate: 60 * 60 * 24 * 30 },
 );
-
-export type SidebarNodeData = z.infer<typeof sidebarNodesQuerySchema>;
-
-export const flowNodeDataSchema = sidebarNodesQuerySchema.omit({
-  id: true,
-  type: true,
-});
-
-export type FlowNodeData = Omit<SidebarNodeData, "id" | "type">;

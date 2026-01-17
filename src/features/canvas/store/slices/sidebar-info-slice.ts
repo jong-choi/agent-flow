@@ -1,5 +1,5 @@
 import type { StateCreator } from "zustand";
-import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
+import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 
 type SidebarInfo = Omit<NonNullable<SidebarNodeData["information"]>, "id">;
 export type SidebarInfoSlice = {

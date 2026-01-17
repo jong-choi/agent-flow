@@ -1,8 +1,6 @@
 import { getActiveAiModels } from "@/db/query/ai-models";
-import {
-  type SidebarNodeData,
-  getSidebarNodes,
-} from "@/db/query/sidebar-nodes";
+import { getSidebarNodes } from "@/db/query/sidebar-nodes";
+import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 import { SidebarItemCard } from "@/features/canvas/components/sidebar/sidebar-item-card";
 
 export async function SidebarContent() {

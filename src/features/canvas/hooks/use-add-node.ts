@@ -3,7 +3,7 @@ import { type Node, type XYPosition, useReactFlow } from "@xyflow/react";
 import {
   type FlowNodeData,
   type SidebarNodeData,
-} from "@/db/query/sidebar-nodes";
+} from "@/db/types/sidebar-nodes";
 import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 
 export function useAddNode() {
