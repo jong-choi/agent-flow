@@ -1,6 +1,6 @@
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
-import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
+import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
 
 type GoogleSearchItem = {
   title: string;
@@ -16,8 +16,8 @@ export const searchNode = async (
   state: typeof FlowStateAnnotation.State,
   config: FlowRunnableConfig,
 ): Promise<Partial<typeof state>> => {
-  const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY!;
-  const GOOGLE_SEARCH_CX = process.env.GOOGLE_SEARCH_CX!;
+  const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
+  const GOOGLE_SEARCH_CX = process.env.GOOGLE_SEARCH_CX;
   if (!GOOGLE_SEARCH_API_KEY || !GOOGLE_SEARCH_CX) {
     throw new Error("Google Search API 키가 설정되지 않았습니다.");
   }

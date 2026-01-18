@@ -14,7 +14,6 @@ const chatSessionRunSchema = z.object({
 });
 
 type EmitEventPrams = {
-  controller: ReadableStreamDefaultController;
   name: string;
   event: string;
   message?: string;
@@ -90,18 +89,17 @@ export async function POST(
 
           const event = chunk.event;
           if (event === "on_chat_model_start") {
-            const data = { controller, name: "chatNode", event };
+            const data = { name: "chatNode", event };
             emitEvent(data);
           } else if (event === "on_chat_model_stream") {
             const data = {
-              controller,
               name: "chatNode",
               event,
               chunk: { content: chunk.data.chunk.content },
             };
             emitEvent(data);
           } else if (event === "on_chat_model_end") {
-            const data = { controller, name: "chatNode", event };
+            const data = { name: "chatNode", event };
             emitEvent(data);
           }
         }
