@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import { ChatPanelWithSearchParams } from "@/features/canvas/components/chat/chat-panel-with-search-params";
-import { ChatPanelContainer } from "@/features/canvas/components/chat/chat-panel/chat-panel-container";
-import { ChatPanelContent } from "@/features/canvas/components/chat/chat-panel/chat-panel-content";
+import { ChatPanelContainer } from "@/features/chat/components/chat-panel/chat-panel-container";
+import { ChatPanelContent } from "@/features/chat/components/chat-panel/chat-panel-content";
+import { ChatPanelWithSearchParams } from "@/features/chat/components/chat-panel/chat-panel-with-search-params";
 
 export default function ChatPanelPage() {
   return (

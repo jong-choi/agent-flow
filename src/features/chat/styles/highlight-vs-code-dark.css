@@ -1,0 +1,120 @@
+/*
+  VS Code Dark 스타일 기반 highlight.js 테마
+  @uiw/codemirror-theme-vscode/vscodeDark의 javascript 특징 색 적용
+*/
+
+.hljs {
+  color: #9cdcfe;
+  background: #1e1e1e;
+}
+
+/* 주석 */
+.hljs-comment,
+.hljs-quote {
+  color: #6a9955;
+  font-style: italic;
+}
+
+/* 키워드, 모듈 키워드 등 */
+.hljs-doctag,
+.hljs-keyword,
+.hljs-formula {
+  color: #569cd6;
+}
+
+/* 변수, 이름, 속성 */
+.hljs-name,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-property,
+.hljs-attr,
+.hljs-label {
+  color: #9cdcfe;
+}
+
+/* 함수명 */
+.hljs-title.function_,
+.hljs-title,
+.hljs-title.class_,
+.hljs-class .hljs-title {
+  color: #dcdcaa;
+}
+
+/* 클래스명, 타입, 태그 */
+.hljs-type,
+.hljs-tag,
+.hljs-selector-tag,
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo,
+.hljs-title.class_ {
+  color: #4ec9b0;
+}
+
+/* 리터럴, 상수, 불린 */
+.hljs-literal,
+.hljs-constant,
+.hljs-atom,
+.hljs-bool {
+  color: #569cd6;
+}
+
+/* 숫자 */
+.hljs-number {
+  color: #b5cea8;
+}
+
+/* 문자열 */
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-meta .hljs-string,
+.hljs-attribute {
+  color: #ce9178;
+}
+
+/* 삭제, 변경, 섹션 등 */
+.hljs-deletion,
+.hljs-section,
+.hljs-subst,
+.hljs-name {
+  color: #d16969;
+}
+
+/* 내장 객체 */
+.hljs-built_in {
+  color: #e6c07b;
+}
+
+/* 메타 정보 */
+.hljs-meta {
+  color: #d4d4d4;
+}
+
+/* 링크, 심볼, 선택자 ID 등 */
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-selector-id {
+  color: #d4d4d4;
+}
+
+/* 강조 */
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+.hljs-link {
+  text-decoration: underline;
+}
+
+/* 잘못된 코드 (invalid) */
+.hljs-error,
+.hljs-invalid {
+  color: #ff0000;
+  background-color: #1e1e1e;
+}
