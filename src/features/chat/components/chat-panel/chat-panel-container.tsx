@@ -15,7 +15,7 @@ export function ChatPanelContainer({ children }: React.PropsWithChildren) {
     >
       <DialogTitle className="sr-only">채팅 다이알로그</DialogTitle>
       <DialogContent className="h-[700px] w-[min(1200px,calc(100vw-2rem))] sm:max-w-7xl">
-        <div className="h-full w-4xl overflow-auto">{children}</div>
+        <div className="h-full overflow-auto">{children}</div>
       </DialogContent>
     </Dialog>
   );
