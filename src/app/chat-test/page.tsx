@@ -210,12 +210,12 @@ export default function Page() {
       }
 
       const payload = (await response.json()) as {
-        data?: { threadId?: string };
+        data?: { thread_id?: string };
       };
-      const nextThreadId = payload?.data?.threadId;
+      const nextThreadId = payload?.data?.thread_id;
 
       if (!nextThreadId) {
-        throw new Error("threadId was not returned.");
+        throw new Error("thread_id was not returned.");
       }
 
       setThreadId(nextThreadId);
@@ -313,6 +313,7 @@ export default function Page() {
             event?: string;
             chunk?: { content?: unknown };
           };
+
           if (eventPayload.event === "on_chat_model_stream") {
             appendDelta(extractChunkText(eventPayload.chunk?.content));
           } else if (eventPayload.event === "on_chat_model_end") {
@@ -326,6 +327,7 @@ export default function Page() {
 
       while (true) {
         const { value, done } = await reader.read();
+        console.log(JSON.stringify(value, null, 2));
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -399,7 +401,7 @@ export default function Page() {
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 p-6">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
               Chat Flow Test
             </p>
             <h1 className="text-2xl font-semibold text-foreground">
@@ -429,30 +431,28 @@ export default function Page() {
             </span>
           </div>
           {error ? (
-            <p className="mt-2 text-sm font-medium text-destructive">
-              {error}
-            </p>
+            <p className="mt-2 text-sm font-medium text-destructive">{error}</p>
           ) : null}
         </section>
 
         <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card/80 shadow-sm backdrop-blur">
           <div
             ref={listRef}
-            className="flex-1 space-y-4 overflow-y-auto p-5 scrollbar-slim"
+            className="scrollbar-slim flex-1 space-y-4 overflow-y-auto p-5"
           >
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
                 <p>Send a message to start the conversation.</p>
-                <p>Once the thread is ready, you can test multi-turn replies.</p>
+                <p>
+                  Once the thread is ready, you can test multi-turn replies.
+                </p>
               </div>
             ) : (
               messages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex ${
-                    message.role === "user"
-                      ? "justify-end"
-                      : "justify-start"
+                    message.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
                   <div
@@ -498,7 +498,7 @@ export default function Page() {
               }
               disabled={!threadId || isCreating}
               rows={3}
-              className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground shadow-sm focus:ring-2 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
             />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>
@@ -510,7 +510,9 @@ export default function Page() {
               </span>
               <button
                 type="submit"
-                disabled={!threadId || isStreaming || isCreating || !input.trim()}
+                disabled={
+                  !threadId || isStreaming || isCreating || !input.trim()
+                }
                 className="inline-flex items-center rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Send

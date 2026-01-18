@@ -85,5 +85,5 @@ export const createThread = async ({
     checkpointer.deleteThread(threadId);
     threadContextManager.delete(threadId);
   });
-  return { threadId };
+  return { thread_id: threadId };
 };
