@@ -6,6 +6,8 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 
 export const sidebarContentType = pgEnum("sidebar_content_type", [
   "select",
@@ -74,3 +76,27 @@ export type SidebarNodeContentInsert = typeof sidebarNodeContents.$inferInsert;
 
 export type SidebarNodeHandle = typeof sidebarNodeHandles.$inferSelect;
 export type SidebarNodeHandleInsert = typeof sidebarNodeHandles.$inferInsert;
+
+const sidebarNodesSelectSchema = createSelectSchema(sidebarNodes);
+const sidebarNodeInformationSelectSchema =
+  createSelectSchema(sidebarNodeInformation);
+const sidebarNodeContentsSelectSchema = createSelectSchema(
+  sidebarNodeContents,
+).extend({
+  options: z.array(z.object({ id: z.string(), value: z.string() })).optional(),
+});
+const sidebarNodeHandlesSelectSchema = createSelectSchema(sidebarNodeHandles);
+
+export const sidebarNodesQuerySchema = sidebarNodesSelectSchema
+  .pick({
+    id: true,
+    label: true,
+    description: true,
+    type: true,
+    createdAt: true,
+  })
+  .extend({
+    content: sidebarNodeContentsSelectSchema.nullable(),
+    handle: sidebarNodeHandlesSelectSchema.nullable(),
+    information: sidebarNodeInformationSelectSchema.nullable(),
+  });

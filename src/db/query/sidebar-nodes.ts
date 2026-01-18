@@ -2,16 +2,18 @@
 
 import { unstable_cache } from "next/cache";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/db/client";
 import {
   sidebarNodeContents,
   sidebarNodeHandles,
   sidebarNodeInformation,
   sidebarNodes,
+  sidebarNodesQuerySchema,
 } from "@/db/schema";
 
 const getSidebarNodesBase = async () => {
-  return await db
+  const rows = await db
     .select({
       id: sidebarNodes.id,
       label: sidebarNodes.label,
@@ -36,6 +38,14 @@ const getSidebarNodesBase = async () => {
       eq(sidebarNodeInformation.nodeId, sidebarNodes.id),
     )
     .orderBy(sidebarNodes.createdAt);
+
+  const parsed = z.array(sidebarNodesQuerySchema).safeParse(rows);
+  if (!parsed.success) {
+    console.error("Invalid sidebar nodes data:", parsed.error.issues);
+    throw new Error("Invalid sidebar nodes data");
+  }
+
+  return parsed.data;
 };
 
 export const getSidebarNodes = unstable_cache(
@@ -43,17 +53,3 @@ export const getSidebarNodes = unstable_cache(
   ["sidebar_nodes"],
   { tags: ["sidebar_nodes"], revalidate: 60 * 60 * 24 * 30 },
 );
-
-type SelectSidebarNode = Awaited<
-  ReturnType<typeof getSidebarNodesBase>
->[number];
-
-export type SidebarNodeData = Omit<SelectSidebarNode, "content"> & {
-  content:
-    | (SelectSidebarNode["content"] & {
-        options?: Array<{ id: string; value: string }>;
-      })
-    | null;
-};
-
-export type FlowNodeData = Omit<SidebarNodeData, "id" | "type">;

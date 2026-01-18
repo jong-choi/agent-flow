@@ -1,10 +1,10 @@
 import { Handle, Position } from "@xyflow/react";
-import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
+import { type FlowNodeData } from "@/db/types/sidebar-nodes";
 
 export function FlowNodeHandles({
   handle,
 }: {
-  handle: SidebarNodeData["handle"];
+  handle: FlowNodeData["handle"];
 }) {
   if (!handle) {
     return (

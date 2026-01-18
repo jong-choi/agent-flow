@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { type SidebarNodeData } from "@/db/query/sidebar-nodes";
+import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 
 type DraggableItemProps = {
   item: SidebarNodeData;
