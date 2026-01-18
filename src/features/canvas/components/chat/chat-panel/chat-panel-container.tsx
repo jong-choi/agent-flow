@@ -1,28 +1,22 @@
-import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
+"use client";
 
-export function ChatPanelContainer({
-  defaultSize = 50,
-  minSize = 20,
-  withHandle = true,
-  order = 2,
-  children,
-}: React.PropsWithChildren<{
-  defaultSize?: number;
-  minSize?: number;
-  withHandle?: boolean;
-  order?: number;
-}>) {
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
+
+export function ChatPanelContainer({ children }: React.PropsWithChildren) {
+  const setSearchParams = useSetSearchParams();
+
   return (
-    <>
-      <ResizableHandle id="canvas-right-handle" withHandle={withHandle} />
-      <ResizablePanel
-        id="canvas-right-main"
-        defaultSize={defaultSize}
-        minSize={minSize}
-        order={order}
-      >
-        {children}
-      </ResizablePanel>
-    </>
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) setSearchParams({ thread_id: null });
+      }}
+    >
+      <DialogTitle className="sr-only">채팅 다이알로그</DialogTitle>
+      <DialogContent className="h-[700px] sm:max-w-7xl">
+        <div className="h-full w-4xl overflow-auto">{children}</div>
+      </DialogContent>
+    </Dialog>
   );
 }
