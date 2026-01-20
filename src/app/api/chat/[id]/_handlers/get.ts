@@ -1,17 +1,15 @@
-import { type StreamEvent } from "@langchain/core/tracers/log_stream";
 import { buildStateGraph } from "@/app/api/chat/_engines/build-state-graph";
 import {
   checkpointer,
   resetIdleTimer,
   threadContextManager,
 } from "@/app/api/chat/_engines/handle-connect";
-
-type EmitEventPrams = {
-  name: string;
-  event: string;
-  message?: string;
-  chunk?: Partial<StreamEvent["data"]["chunk"]>;
-};
+import {
+  type ClientStreamEvent,
+  isEventName,
+  langgraphStreamEventSchema,
+} from "@/app/api/chat/_types/chat-events";
+import { isValidNodeType } from "@/app/api/chat/_types/nodes";
 
 /**
  * 채팅 실행 GET 요청
@@ -49,32 +47,60 @@ export async function GET(
 
     const stream = new ReadableStream({
       async start(controller) {
+        const emitEvent = (params: ClientStreamEvent) => {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(params)}\n\n`),
+          );
+        };
         const encoder = new TextEncoder();
         for await (const chunk of app.streamEvents(state, {
           version: "v2",
           configurable: { thread_id: threadId },
           durability: "exit", // 랭그래프 종료 시점에만 상태 업데이트
         })) {
-          const emitEvent = (data: EmitEventPrams) => {
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify(data)}\n\n`),
-            );
-          };
+          if (
+            !isEventName(chunk.event) ||
+            typeof chunk.metadata.type !== "string" ||
+            !isValidNodeType(chunk.metadata.type)
+          ) {
+            continue;
+          }
 
-          const event = chunk.event;
-          if (event === "on_chat_model_start") {
-            const data = { name: "chatNode", event };
-            emitEvent(data);
-          } else if (event === "on_chat_model_stream") {
-            const data = {
-              name: "chatNode",
-              event,
-              chunk: { content: chunk.data.chunk.content },
-            };
-            emitEvent(data);
-          } else if (event === "on_chat_model_end") {
-            const data = { name: "chatNode", event };
-            emitEvent(data);
+          const parsed = langgraphStreamEventSchema.safeParse(chunk);
+          if (!parsed.success) {
+            continue;
+          }
+
+          const event = parsed.data.event;
+          const { type, langgraph_node } = parsed.data.metadata;
+
+          if (type === "startNode") {
+            if (event === "on_chain_start") {
+              emitEvent({ type, event, langgraph_node });
+            }
+          }
+          if (type === "chatNode") {
+            if (event === "on_chat_model_start") {
+              emitEvent({ type, event, langgraph_node });
+            } else if (event === "on_chat_model_stream") {
+              const content = parsed.data.data?.chunk?.content;
+              if (typeof content !== "string") {
+                continue;
+              }
+              emitEvent({
+                type,
+                event,
+                langgraph_node,
+                chunk: { content },
+              });
+            } else if (event === "on_chat_model_end") {
+              emitEvent({ type, event, langgraph_node });
+            }
+          }
+          if (type === "endNode") {
+            if (event === "on_chain_end") {
+              emitEvent({ type, event, langgraph_node });
+            }
           }
         }
       },

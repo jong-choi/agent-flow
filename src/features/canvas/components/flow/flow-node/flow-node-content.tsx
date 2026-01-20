@@ -82,7 +82,11 @@ export function FlowNodeContent({
           <DialogTrigger asChild>
             <Button variant="outline">{content.label}</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogTitle className="sr-only">노드 수정 다이알로그</DialogTitle>
+          <DialogContent
+            className="sm:max-w-md"
+            ariaDescribedby="node edit dialog"
+          >
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <DialogHeader>
                 <DialogTitle>{content.dialogTitle}</DialogTitle>
