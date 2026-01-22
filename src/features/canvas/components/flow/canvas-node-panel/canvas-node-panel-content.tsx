@@ -4,7 +4,7 @@ import { type ReactNode, useCallback, useMemo } from "react";
 import { type Control, useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type Node, useReactFlow, useUpdateNodeInternals } from "@xyflow/react";
+import { useUpdateNodeInternals } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -27,8 +27,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { type FlowNodeData } from "@/db/types/sidebar-nodes";
-import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
+import {
+  type FlowCanvasNode,
+  type FlowNodeData,
+} from "@/db/types/sidebar-nodes";
+import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import {
   handleCountRefine,
   pruneEdgesForHandleCount,
@@ -48,10 +51,8 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function CanvasNodePanelContent({ node }: { node: Node<FlowNodeData> }) {
-  const { updateNodeData, getEdges, setEdges } =
-    useReactFlow<Node<FlowNodeData>>();
-  const checkValidGraph = useCheckValidGraph();
+export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
+  const { updateNodeData, getEdges, setEdges } = useCanvasReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   const data = node.data;
   const { label, description, content, handle } = data;
@@ -135,14 +136,12 @@ export function CanvasNodePanelContent({ node }: { node: Node<FlowNodeData> }) {
 
       if (shouldUpdateEdges) {
         setEdges(nextEdges);
-        checkValidGraph({ edges: nextEdges });
       }
 
       // edge 재졍렬
       updateNodeInternals(node.id);
     },
     [
-      checkValidGraph,
       data.content,
       data.handle,
       getEdges,
@@ -287,7 +286,7 @@ function ContentContentFormField({
             contentInput = (
               <Select
                 onValueChange={field.onChange}
-                value={field.value || undefined}
+                value={content.value || undefined}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={content.placeholder} />

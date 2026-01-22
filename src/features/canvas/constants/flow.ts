@@ -1,15 +1,19 @@
-import { type Edge, type Node } from "@xyflow/react";
-import { type FlowNodeData } from "@/db/types/sidebar-nodes";
+import { type Edge } from "@xyflow/react";
+import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
 import { FlowNode } from "@/features/canvas/components/flow/flow-node/flow-node";
+import {
+  type NodeType,
+  nodeTypes,
+} from "@/features/canvas/constants/node-types";
 
-export const INITIAL_NODES: Node<FlowNodeData>[] = [];
+export const INITIAL_NODES: FlowCanvasNode[] = [];
 
 export const INITIAL_EDGES: Edge[] = [];
 
 type SidebarNodeSeedItem = {
   label: string;
   description: string;
-  type: string;
+  type: NodeType;
   content: null | {
     type: "select" | "dialog";
     label: string;
@@ -55,7 +59,7 @@ const ChatNodeItem: SidebarNodeSeedItem = {
   },
 };
 
-const SearchNodeItem = {
+const SearchNodeItem: SidebarNodeSeedItem = {
   label: "검색",
   description: "구글 검색 노드",
   type: "searchNode",
@@ -74,7 +78,7 @@ const SearchNodeItem = {
   },
 };
 
-const MergeNodeItem = {
+const MergeNodeItem: SidebarNodeSeedItem = {
   label: "병합",
   description: "여러 입력을 병합",
   type: "mergeNode",
@@ -97,7 +101,7 @@ const MergeNodeItem = {
   },
 };
 
-const SplitNodeItem = {
+const SplitNodeItem: SidebarNodeSeedItem = {
   label: "분할",
   description: "하나의 입력을 분할",
   type: "splitNode",
@@ -119,7 +123,7 @@ const SplitNodeItem = {
     ],
   },
 };
-const StartNodeItem = {
+const StartNodeItem: SidebarNodeSeedItem = {
   label: "시작",
   description: "시작 노드",
   type: "startNode",
@@ -142,7 +146,7 @@ const StartNodeItem = {
   },
 };
 
-const EndNodeItem = {
+const EndNodeItem: SidebarNodeSeedItem = {
   label: "종료",
   description: "종료 노드",
   type: "endNode",
@@ -200,11 +204,6 @@ export const sidebarNodesData: SidebarNodeSeedItem[] = [
   PromptNodeItem,
 ];
 
-const SidebarNodeTypes = Array.from(
-  new Set(sidebarNodesData.map((node) => node.type)),
-);
-
-export const NODE_TYPE: Record<
-  (typeof SidebarNodeTypes)[number],
-  typeof FlowNode
-> = Object.fromEntries(SidebarNodeTypes.map((type) => [type, FlowNode]));
+export const NODE_TYPE: Record<NodeType, typeof FlowNode> = Object.fromEntries(
+  nodeTypes.map((type) => [type, FlowNode]),
+) as Record<NodeType, typeof FlowNode>;

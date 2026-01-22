@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { type Edge, type Node } from "@xyflow/react";
-import { checkValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
+import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
+import {
+  checkValidGraph,
+  checkValidNode,
+} from "@/features/canvas/hooks/use-check-valid-graph";
 
 describe("checkValidGraph 함수에 대한 유닛 테스트", () => {
   it("시작 노드가 없는 경우 false를 반환한다.", () => {
@@ -323,5 +327,42 @@ describe("checkValidGraph 함수에 대한 유닛 테스트", () => {
     ];
     const result = checkValidGraph(nodes, edges);
     expect(result).toEqual(false);
+  });
+});
+
+describe("checkValidNode 함수에 대한 유닛 테스트", () => {
+  it("node.type이 없는 경우 isValid는 false이다.", () => {
+    const node = {
+      id: "1",
+      position: { x: 0, y: 0 },
+      data: { label: "시작" },
+    } as FlowCanvasNode;
+
+    const { isValid } = checkValidNode(node);
+    expect(isValid).toEqual(false);
+  });
+
+  it("node.type이 chatNode이고 data.content.value가 없는 경우 isValid는 false이다.", () => {
+    const node = {
+      id: "1",
+      type: "chatNode",
+      position: { x: 0, y: 0 },
+      data: { label: "채팅", content: { id: "hi" } },
+    } as FlowCanvasNode;
+
+    const { isValid } = checkValidNode(node);
+    expect(isValid).toEqual(false);
+  });
+
+  it("node.type이 chatNode이고 data.content.value가 isValid는 true이다.", () => {
+    const node = {
+      id: "1",
+      type: "chatNode",
+      position: { x: 0, y: 0 },
+      data: { label: "채팅", content: { id: "hi", value: "gemma-3-1b-it" } },
+    } as FlowCanvasNode;
+
+    const { isValid } = checkValidNode(node);
+    expect(isValid).toEqual(true);
   });
 });
