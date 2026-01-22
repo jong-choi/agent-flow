@@ -9,13 +9,12 @@ import {
   type Connection,
   Controls,
   type Edge,
-  type Node,
   type ReactFlowProps,
   addEdge,
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { type FlowNodeData } from "@/db/types/sidebar-nodes";
+import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
 import { FlowStartButton } from "@/features/canvas/components/flow/flow-start-button";
 import {
   INITIAL_EDGES,
@@ -28,7 +27,7 @@ import { useReconnectEdge } from "@/features/canvas/hooks/use-reconnect-edge";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { useDebounce } from "@/hooks/use-debounce";
 
-const ReactFlow = dynamic<ReactFlowProps<Node<FlowNodeData>, Edge>>(
+const ReactFlow = dynamic<ReactFlowProps<FlowCanvasNode, Edge>>(
   () => import("@xyflow/react").then((m) => m.ReactFlow),
   { ssr: false },
 );

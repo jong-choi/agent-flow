@@ -1,14 +1,15 @@
 import { useCallback } from "react";
-import { type Edge, type Node, useReactFlow } from "@xyflow/react";
-import { type FlowNodeData } from "@/db/types/sidebar-nodes";
+import { type Edge, type Node } from "@xyflow/react";
+import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
+import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function useCheckValidGraph() {
-  const { getEdges, getNodes } = useReactFlow<Node<FlowNodeData>>();
+  const { getEdges, getNodes } = useCanvasReactFlow();
   const setIsValidGraph = useCanvasStore((s) => s.setIsValidGraph);
 
   const checkIsValidGraph = useCallback(
-    ({ nodes, edges }: { nodes?: Node<FlowNodeData>[]; edges?: Edge[] }) => {
+    ({ nodes, edges }: { nodes?: FlowCanvasNode[]; edges?: Edge[] }) => {
       const isValidGraph = checkValidGraph(
         nodes ?? getNodes(),
         edges ?? getEdges(),
@@ -27,7 +28,7 @@ export function useCheckValidGraph() {
 }
 
 export const checkValidNode = (
-  node: Node<FlowNodeData>,
+  node: FlowCanvasNode,
 ): { isValid: true } | { isValid: false; message: string } => {
   if (!node.type) {
     return { isValid: false, message: "node.type이 지정되지 않았습니다." };

@@ -2,9 +2,10 @@
 
 import { useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { useReactFlow } from "@xyflow/react";
+import { type ChatCreateThreadRequest } from "@/app/api/chat/route";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
@@ -13,7 +14,9 @@ export function FlowStartButton() {
   const loading = useCanvasStore((s) => s.isStartLoading);
   const setLoading = useCanvasStore((s) => s.setIsStartLoading);
   const thread_id = useSearchParams().get("thread_id");
-  const { getEdges, getNodes } = useReactFlow();
+  const { getEdges, getNodes } = useCanvasReactFlow();
+  const PREFERRED_LOCALE = "ko";
+  const locale = PREFERRED_LOCALE;
 
   const disabled = !isValidGraph || !!thread_id || loading;
 
@@ -28,10 +31,12 @@ export function FlowStartButton() {
     const nodes = getNodes();
 
     try {
+      const requestBody: ChatCreateThreadRequest = { nodes, edges, locale };
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nodes, edges }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -59,12 +64,13 @@ export function FlowStartButton() {
       setLoading(false);
     }
   }, [
+    loading,
+    isValidGraph,
     thread_id,
+    setLoading,
     getEdges,
     getNodes,
-    isValidGraph,
-    loading,
-    setLoading,
+    locale,
     setSearchParams,
   ]);
 

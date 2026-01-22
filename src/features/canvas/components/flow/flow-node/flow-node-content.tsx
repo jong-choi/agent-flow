@@ -1,6 +1,4 @@
 import { toast } from "sonner";
-import { useReactFlow } from "@xyflow/react";
-import { type Node } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import {
@@ -24,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { type FlowNodeData } from "@/db/types/sidebar-nodes";
+import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function FlowNodeContent({
@@ -33,7 +32,7 @@ export function FlowNodeContent({
   content: FlowNodeData["content"];
   id: string;
 }) {
-  const { updateNodeData } = useReactFlow<Node<FlowNodeData>>();
+  const { updateNodeData } = useCanvasReactFlow();
   const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
 
   if (!content) return null;

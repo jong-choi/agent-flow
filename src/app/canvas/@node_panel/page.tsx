@@ -1,14 +1,13 @@
 "use client";
 
-import { type Node, useReactFlow } from "@xyflow/react";
-import { type FlowNodeData } from "@/db/types/sidebar-nodes";
 import { CanvasNodePanelContainer } from "@/features/canvas/components/flow/canvas-node-panel/canvas-node-panel-container";
 import { CanvasNodePanelContent } from "@/features/canvas/components/flow/canvas-node-panel/canvas-node-panel-content";
+import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export default function NodePanel() {
   const selectedNodeId = useCanvasStore((s) => s.selectedNodeId);
-  const { getNode } = useReactFlow<Node<FlowNodeData>>();
+  const { getNode } = useCanvasReactFlow();
 
   const node = selectedNodeId ? getNode(selectedNodeId) : null;
 

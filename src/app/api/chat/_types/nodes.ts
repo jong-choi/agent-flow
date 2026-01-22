@@ -1,26 +1,16 @@
 import { z } from "zod";
 import { flowNodeDataSchema } from "@/db/types/sidebar-nodes";
-
-export const nodeTypes = [
-  "startNode",
-  "splitNode",
-  "promptNode",
-  "chatNode",
-  "searchNode",
-  "mergeNode",
-  "endNode",
-] as const;
-
-const flowNodeDataApiSchema = flowNodeDataSchema.extend({
-  createdAt: z.iso.datetime(),
-});
+import {
+  type NodeType,
+  nodeTypes,
+} from "@/features/canvas/constants/node-types";
 
 export const flowNodeSchema = z
   .object({
     id: z.string(),
     type: z.enum(nodeTypes),
     position: z.object({ x: z.number(), y: z.number() }),
-    data: flowNodeDataApiSchema,
+    data: flowNodeDataSchema,
   })
   .loose();
 
@@ -37,8 +27,6 @@ export const flowEdgeSchema = z
 // 주의 : xyflow의 nodes/edges 타입 중 중 일부만 가지고 있음
 export type FlowNode = z.infer<typeof flowNodeSchema>;
 export type FlowEdge = z.infer<typeof flowEdgeSchema>;
-
-type NodeType = (typeof nodeTypes)[number];
 
 export const isValidNodeType = (type: string): type is NodeType => {
   const nodeTypeSet = new Set<string>(nodeTypes);

@@ -1,13 +1,9 @@
 import { useCallback } from "react";
-import {
-  type Connection,
-  type Edge,
-  addEdge,
-  useReactFlow,
-} from "@xyflow/react";
+import { type Connection, type Edge, addEdge } from "@xyflow/react";
+import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 
 export function useReconnectEdge() {
-  const { setEdges, getEdges } = useReactFlow();
+  const { setEdges, getEdges } = useCanvasReactFlow();
 
   const handleReconnectStart = useCallback(
     (event: React.MouseEvent<Element, MouseEvent>, edge: Edge) => {

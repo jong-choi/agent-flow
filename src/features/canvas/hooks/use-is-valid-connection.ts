@@ -1,12 +1,8 @@
-import {
-  type Connection,
-  type Edge,
-  type IsValidConnection,
-  useReactFlow,
-} from "@xyflow/react";
+import { type Connection, type Edge, type IsValidConnection } from "@xyflow/react";
+import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 
 export function useIsValidConnection() {
-  const { getEdges } = useReactFlow();
+  const { getEdges } = useCanvasReactFlow();
 
   const isValidConnection: IsValidConnection = (
     connection: Connection | Edge,

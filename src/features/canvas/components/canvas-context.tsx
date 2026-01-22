@@ -11,11 +11,11 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useReactFlow } from "@xyflow/react";
 import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 import { DraggableItemView } from "@/features/canvas/components/dnd/draggable-item";
 import { CANVAS_DROPPABLE_ID } from "@/features/canvas/components/dnd/droppable-zone";
 import { useAddNode } from "@/features/canvas/hooks/use-add-node";
+import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function CanvasContext({ children }: React.PropsWithChildren) {
@@ -29,7 +29,7 @@ export function CanvasContext({ children }: React.PropsWithChildren) {
   );
 
   const addNode = useAddNode();
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition } = useCanvasReactFlow();
 
   const handleDragStart = (event: DragStartEvent) => {
     const data = event.active.data.current;

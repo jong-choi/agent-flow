@@ -8,11 +8,14 @@ import {
 } from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import { nodeTypes } from "@/features/canvas/constants/node-types";
 
 export const sidebarContentType = pgEnum("sidebar_content_type", [
   "select",
   "dialog",
 ]);
+
+export const sidebarNodeType = pgEnum("sidebar_node_type", nodeTypes);
 
 export const sidebarSelectSource = pgEnum("sidebar_options_source", [
   "ai_models",
@@ -22,7 +25,7 @@ export const sidebarNodes = pgTable("sidebar_nodes", {
   id: uuid("id").defaultRandom().primaryKey(),
   label: text("label").notNull().unique(),
   description: text("description").notNull(),
-  type: text("type").notNull(),
+  type: sidebarNodeType("type").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -66,8 +69,7 @@ export const sidebarNodeHandles = pgTable("sidebar_node_handles", {
 export type SidebarNode = typeof sidebarNodes.$inferSelect;
 export type SidebarNodeInsert = typeof sidebarNodes.$inferInsert;
 
-export type SidebarNodeInformation =
-  typeof sidebarNodeInformation.$inferSelect;
+export type SidebarNodeInformation = typeof sidebarNodeInformation.$inferSelect;
 export type SidebarNodeInformationInsert =
   typeof sidebarNodeInformation.$inferInsert;
 
@@ -78,8 +80,9 @@ export type SidebarNodeHandle = typeof sidebarNodeHandles.$inferSelect;
 export type SidebarNodeHandleInsert = typeof sidebarNodeHandles.$inferInsert;
 
 const sidebarNodesSelectSchema = createSelectSchema(sidebarNodes);
-const sidebarNodeInformationSelectSchema =
-  createSelectSchema(sidebarNodeInformation);
+const sidebarNodeInformationSelectSchema = createSelectSchema(
+  sidebarNodeInformation,
+);
 const sidebarNodeContentsSelectSchema = createSelectSchema(
   sidebarNodeContents,
 ).extend({

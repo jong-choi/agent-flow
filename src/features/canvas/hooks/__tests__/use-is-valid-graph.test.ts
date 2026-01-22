@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Edge, type Node } from "@xyflow/react";
-import { type FlowNodeData } from "@/db/types/sidebar-nodes";
+import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
 import {
   checkValidGraph,
   checkValidNode,
@@ -336,7 +336,7 @@ describe("checkValidNode 함수에 대한 유닛 테스트", () => {
       id: "1",
       position: { x: 0, y: 0 },
       data: { label: "시작" },
-    } as Node<FlowNodeData>;
+    } as FlowCanvasNode;
 
     const { isValid } = checkValidNode(node);
     expect(isValid).toEqual(false);
@@ -348,7 +348,7 @@ describe("checkValidNode 함수에 대한 유닛 테스트", () => {
       type: "chatNode",
       position: { x: 0, y: 0 },
       data: { label: "채팅", content: { id: "hi" } },
-    } as Node<FlowNodeData>;
+    } as FlowCanvasNode;
 
     const { isValid } = checkValidNode(node);
     expect(isValid).toEqual(false);
@@ -360,7 +360,7 @@ describe("checkValidNode 함수에 대한 유닛 테스트", () => {
       type: "chatNode",
       position: { x: 0, y: 0 },
       data: { label: "채팅", content: { id: "hi", value: "gemma-3-1b-it" } },
-    } as Node<FlowNodeData>;
+    } as FlowCanvasNode;
 
     const { isValid } = checkValidNode(node);
     expect(isValid).toEqual(true);

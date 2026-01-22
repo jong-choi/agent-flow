@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { nodeTypes } from "@/app/api/chat/_types/nodes";
+import { nodeTypes } from "@/features/canvas/constants/node-types";
 
 type RunnableType = "llm" | "chat_model" | "prompt" | "tool" | "chain";
 type Phase = "start" | "stream" | "end";
