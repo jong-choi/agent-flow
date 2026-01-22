@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 export function ChatPanelWithSearchParams({
   children,
 }: React.PropsWithChildren) {
-  const chatId = useSearchParams().get("chat_id");
+  const chatId = useSearchParams().get("thread_id");
   const isRunning = Boolean(chatId);
 
   if (!isRunning) {

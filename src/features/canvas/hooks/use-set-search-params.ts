@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-type SearchParamKeys = "chat_id";
+type SearchParamKeys = "thread_id";
 type Entries = Partial<Record<SearchParamKeys, string | null | undefined>>;
 
 export function useSetSearchParams() {

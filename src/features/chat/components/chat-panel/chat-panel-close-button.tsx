@@ -9,7 +9,7 @@ export function ChatPanelCloseButton() {
   const setSearchParams = useSetSearchParams();
 
   const handleClose = useCallback(() => {
-    setSearchParams({ chat_id: null });
+    setSearchParams({ thread_id: null });
   }, [setSearchParams]);
 
   return (

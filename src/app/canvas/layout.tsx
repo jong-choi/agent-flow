@@ -38,15 +38,15 @@ export default function CanvasLayout({
               </Card>
             </div>
             <CanvasContainer>
-              {/* 중앙 영역 */}
               <ResizablePanelGroup
                 id="canvas-root-h"
                 direction="horizontal"
                 className="h-full"
               >
+                {/* 왼쪽 패널 */}
                 <ResizablePanel
                   id="canvas-left"
-                  defaultSize={50}
+                  defaultSize={80}
                   minSize={30}
                   order={1}
                 >
@@ -55,23 +55,14 @@ export default function CanvasLayout({
                     direction="vertical"
                     className="h-full"
                   >
-                    {/* 캔버스 */}
-                    <ResizablePanel
-                      id="canvas-left-main-top"
-                      defaultSize={70}
-                      minSize={40}
-                      order={1}
-                    >
-                      {children}
-                    </ResizablePanel>
-                    {/* 노드 수정 */}
-                    {nodePanel}
+                    {children}
                   </ResizablePanelGroup>
                 </ResizablePanel>
-                {/* 우측 영역 */}
-                {chatPanel}
+                {/* 오른쪽 패널 */}
+                {nodePanel}
               </ResizablePanelGroup>
             </CanvasContainer>
+            {chatPanel}
           </div>
         </CanvasContext>
       </CanvasStoreProvider>
