@@ -2,7 +2,7 @@ export type ClientChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
-  createdAt: string;
+  createdAt: string | null;
 };
 
 type MessageConstructorParams =

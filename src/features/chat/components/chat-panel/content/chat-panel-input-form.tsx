@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useChatEvent } from "@/features/chat/hooks/use-chat-event";
 import { useChatStore } from "@/features/chat/store/chat-store";
@@ -44,31 +45,29 @@ export function ChatPanelInputForm() {
   };
 
   return (
-    <div className="border-t border-border/50 bg-background/95 px-4 py-4 backdrop-blur-sm sm:px-6">
-      <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
-        <Textarea
-          ref={textareaRef}
-          onChange={(event) => setIsMessage(Boolean(event.target.value.trim()))}
-          onKeyDown={handleKeyDown}
-          placeholder="메시지를 입력하세요..."
-          className="h-24"
-          disabled={isStreaming}
-          onCompositionStart={handleCompositionStart}
-          onCompositionEnd={handleCompositionEnd}
-        />
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            {isStreaming ? "응답 생성 중..." : "대기 중"}
-          </span>
-          <Button
-            type="submit"
-            className="self-end-safe"
-            disabled={!isSendingAvailable}
-          >
-            전송
-          </Button>
-        </div>
-      </form>
-    </div>
+    <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
+      <Textarea
+        ref={textareaRef}
+        onChange={(event) => setIsMessage(Boolean(event.target.value.trim()))}
+        onKeyDown={handleKeyDown}
+        placeholder="메시지를 입력하세요..."
+        className="h-24"
+        disabled={isStreaming}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
+      />
+      <div className="flex justify-between">
+        <span className="text-xs text-muted-foreground">
+          {isStreaming ? <Spinner className="size-4" /> : "대기 중"}
+        </span>
+        <Button
+          type="submit"
+          className="self-end-safe"
+          disabled={!isSendingAvailable}
+        >
+          전송
+        </Button>
+      </div>
+    </form>
   );
 }
