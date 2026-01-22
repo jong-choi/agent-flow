@@ -12,15 +12,15 @@ export function FlowStartButton() {
   const isValidGraph = useCanvasStore((s) => s.isValidGraph);
   const loading = useCanvasStore((s) => s.isStartLoading);
   const setLoading = useCanvasStore((s) => s.setIsStartLoading);
-  const chatId = useSearchParams().get("thread_id");
+  const thread_id = useSearchParams().get("thread_id");
   const { getEdges, getNodes } = useReactFlow();
 
-  const disabled = !isValidGraph || !!chatId || loading;
+  const disabled = !isValidGraph || !!thread_id || loading;
 
   const setSearchParams = useSetSearchParams();
 
   const handleStart = useCallback(async () => {
-    if (loading || !isValidGraph || chatId) return;
+    if (loading || !isValidGraph || thread_id) return;
 
     setLoading(true);
 
@@ -59,7 +59,7 @@ export function FlowStartButton() {
       setLoading(false);
     }
   }, [
-    chatId,
+    thread_id,
     getEdges,
     getNodes,
     isValidGraph,
