@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessages } from "@/features/chat/components/chat-panel/content/chat-messages/chat-messages";
+import { ChatNoMessage } from "@/features/chat/components/chat-panel/content/chat-messages/chat-no-message";
 import { ChatStreamingMessages } from "@/features/chat/components/chat-panel/content/chat-messages/chat-streaming-messages";
 import { ChatPanelInputForm } from "@/features/chat/components/chat-panel/content/chat-panel-input-form";
 import { useChatStore } from "@/features/chat/store/chat-store";
@@ -10,6 +11,7 @@ import { useChatStore } from "@/features/chat/store/chat-store";
 export function ChatPanelContent() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const setLastMessageHeight = useChatStore((s) => s.setLastMessageHeight);
+  const isMessage = useChatStore((s) => Boolean(s.messages.length));
   const isStreaming = useChatStore((s) => s.isStreaming);
   const SCROLL_OFFSET = 80;
 
@@ -30,11 +32,14 @@ export function ChatPanelContent() {
   }, [isStreaming, setLastMessageHeight]);
 
   return (
-    <div className="flex h-full flex-col p-2">
-      <ScrollArea className="min-h-0 flex-1 px-4" ref={scrollAreaRef}>
-        <ChatMessages />
-        <ChatStreamingMessages />
-      </ScrollArea>
+    <div className="flex h-full flex-col justify-center p-2">
+      {isMessage && (
+        <ScrollArea className="min-h-0 flex-1 px-4" ref={scrollAreaRef}>
+          <ChatMessages />
+          <ChatStreamingMessages />
+        </ScrollArea>
+      )}
+      {!isMessage && <ChatNoMessage />}
       <div className="shrink-0">
         <ChatPanelInputForm />
       </div>
