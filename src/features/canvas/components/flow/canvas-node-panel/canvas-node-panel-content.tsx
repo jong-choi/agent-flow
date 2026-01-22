@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { type FlowNodeData } from "@/db/types/sidebar-nodes";
-import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 import {
   handleCountRefine,
   pruneEdgesForHandleCount,
@@ -51,7 +50,6 @@ type FormValues = z.infer<typeof formSchema>;
 export function CanvasNodePanelContent({ node }: { node: Node<FlowNodeData> }) {
   const { updateNodeData, getEdges, setEdges } =
     useReactFlow<Node<FlowNodeData>>();
-  const checkValidGraph = useCheckValidGraph();
   const updateNodeInternals = useUpdateNodeInternals();
   const data = node.data;
   const { label, description, content, handle } = data;
@@ -135,14 +133,12 @@ export function CanvasNodePanelContent({ node }: { node: Node<FlowNodeData> }) {
 
       if (shouldUpdateEdges) {
         setEdges(nextEdges);
-        checkValidGraph({ edges: nextEdges });
       }
 
       // edge 재졍렬
       updateNodeInternals(node.id);
     },
     [
-      checkValidGraph,
       data.content,
       data.handle,
       getEdges,
@@ -287,7 +283,7 @@ function ContentContentFormField({
             contentInput = (
               <Select
                 onValueChange={field.onChange}
-                value={field.value || undefined}
+                value={content.value || undefined}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={content.placeholder} />

@@ -4,11 +4,9 @@ import {
   type FlowNodeData,
   type SidebarNodeData,
 } from "@/db/types/sidebar-nodes";
-import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
 
 export function useAddNode() {
-  const { fitView, setNodes, getNodes } = useReactFlow();
-  const checkValidGraph = useCheckValidGraph();
+  const { fitView, setNodes, getNodes } = useReactFlow<Node<FlowNodeData>>();
 
   const handleAddNode = useCallback(
     (item: SidebarNodeData, position: XYPosition) => {
@@ -21,11 +19,11 @@ export function useAddNode() {
       };
 
       const newNodes = [...getNodes(), nextNode];
-      checkValidGraph({ nodes: newNodes });
+
       setNodes(newNodes);
       fitView({ padding: 0.2, duration: 400 });
     },
-    [checkValidGraph, fitView, getNodes, setNodes],
+    [fitView, getNodes, setNodes],
   );
 
   return handleAddNode;

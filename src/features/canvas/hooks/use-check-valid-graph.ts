@@ -1,22 +1,42 @@
 import { useCallback } from "react";
 import { type Edge, type Node, useReactFlow } from "@xyflow/react";
+import { type FlowNodeData } from "@/db/types/sidebar-nodes";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function useCheckValidGraph() {
-  const { getEdges, getNodes } = useReactFlow();
+  const { getEdges, getNodes } = useReactFlow<Node<FlowNodeData>>();
   const setIsValidGraph = useCanvasStore((s) => s.setIsValidGraph);
 
   const checkIsValidGraph = useCallback(
-    ({ nodes, edges }: { nodes?: Node[]; edges?: Edge[] }) => {
-      setIsValidGraph(
-        checkValidGraph(nodes ?? getNodes(), edges ?? getEdges()),
+    ({ nodes, edges }: { nodes?: Node<FlowNodeData>[]; edges?: Edge[] }) => {
+      const isValidGraph = checkValidGraph(
+        nodes ?? getNodes(),
+        edges ?? getEdges(),
       );
+
+      const isValidNodes = (nodes ?? getNodes()).every((node) => {
+        return checkValidNode(node).isValid;
+      });
+
+      setIsValidGraph(isValidGraph && isValidNodes);
     },
     [getEdges, getNodes, setIsValidGraph],
   );
 
   return checkIsValidGraph;
 }
+
+export const checkValidNode = (
+  node: Node<FlowNodeData>,
+): { isValid: true } | { isValid: false; message: string } => {
+  if (!node.type) {
+    return { isValid: false, message: "node.type이 지정되지 않았습니다." };
+  }
+  if (node.type === "chatNode" && !node.data.content?.value) {
+    return { isValid: false, message: "chatNode의 value가 없습니다." };
+  }
+  return { isValid: true };
+};
 
 export const checkValidGraph = (nodes: Node[], edges: Edge[]): boolean => {
   const startNodes = nodes.filter((node) => node.type === "startNode");

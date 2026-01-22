@@ -1,17 +1,19 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useReactFlow } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function FlowStartButton() {
   const isValidGraph = useCanvasStore((s) => s.isValidGraph);
+  const loading = useCanvasStore((s) => s.isStartLoading);
+  const setLoading = useCanvasStore((s) => s.setIsStartLoading);
   const chatId = useSearchParams().get("thread_id");
   const { getEdges, getNodes } = useReactFlow();
-  const [loading, setLoading] = useState(false);
 
   const disabled = !isValidGraph || !!chatId || loading;
 
@@ -56,7 +58,15 @@ export function FlowStartButton() {
     } finally {
       setLoading(false);
     }
-  }, [chatId, getEdges, getNodes, isValidGraph, loading, setSearchParams]);
+  }, [
+    chatId,
+    getEdges,
+    getNodes,
+    isValidGraph,
+    loading,
+    setLoading,
+    setSearchParams,
+  ]);
 
   return (
     <Button
@@ -65,7 +75,7 @@ export function FlowStartButton() {
       disabled={disabled}
       onClick={handleStart}
     >
-      채팅하기
+      {loading ? <Spinner className="size-4" /> : "채팅하기"}
     </Button>
   );
 }

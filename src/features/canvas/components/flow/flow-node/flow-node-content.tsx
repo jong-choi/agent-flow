@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { type FlowNodeData } from "@/db/types/sidebar-nodes";
+import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function FlowNodeContent({
   content,
@@ -33,10 +34,12 @@ export function FlowNodeContent({
   id: string;
 }) {
   const { updateNodeData } = useReactFlow<Node<FlowNodeData>>();
+  const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
 
   if (!content) return null;
 
   const handleValueChange = (value: string) => {
+    setSelectedNodeId(null);
     updateNodeData(id, { content: { ...content, value } });
   };
 
