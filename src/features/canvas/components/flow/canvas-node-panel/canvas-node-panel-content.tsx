@@ -286,7 +286,7 @@ function ContentContentFormField({
             contentInput = (
               <Select
                 onValueChange={field.onChange}
-                value={content.value || undefined}
+                value={field.value || undefined}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={content.placeholder} />

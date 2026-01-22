@@ -51,10 +51,10 @@ export async function POST(request: Request) {
     }
 
     const graph: ThreadContext["graph"] = { nodes, edges };
-    const iniitalMessage = SYSTEM_MESSAGES[locale || "ko"];
+    const initialMessage = SYSTEM_MESSAGES[locale || "ko"];
 
     const state: ThreadContext["state"] = {
-      messages: [new SystemMessage(iniitalMessage)],
+      messages: [new SystemMessage(initialMessage)],
       initialInput: "",
       outputMap: {},
       inputTree: buildInputTree(graph),
