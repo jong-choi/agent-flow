@@ -77,6 +77,8 @@ export function FlowApp() {
         </Suspense>
       </div>
       <ReactFlow
+        snapToGrid
+        snapGrid={[16, 16]}
         colorMode={colorMode}
         nodes={nodes}
         edges={edges}

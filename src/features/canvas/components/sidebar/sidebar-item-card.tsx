@@ -10,11 +10,11 @@ type SidebarItemCardProps = {
 
 export function SidebarItemCard({ item }: SidebarItemCardProps) {
   const setSelectedInfo = useCanvasStore((s) => s.setSelectedInfo);
-  const handleOnClick = () => {
+  const handleOnMouseDown = () => {
     if (item.information) {
       setSelectedInfo(item.information);
     }
   };
 
-  return <DraggableItem item={item} onClick={handleOnClick} />;
+  return <DraggableItem item={item} onMouseDown={handleOnMouseDown} />;
 }
