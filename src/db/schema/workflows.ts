@@ -19,6 +19,9 @@ export const workflowNodes = pgTable("workflow_nodes", {
   workflowId: uuid("workflow_id")
     .notNull()
     .references(() => workflows.id, { onDelete: "cascade" }),
+  ownerId: text("owner_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   type: sidebarNodeType("type").notNull(),
   posX: integer("pos_x").notNull(),
   posY: integer("pos_y").notNull(),
@@ -34,6 +37,9 @@ export const workflowEdges = pgTable("workflow_edges", {
   workflowId: uuid("workflow_id")
     .notNull()
     .references(() => workflows.id, { onDelete: "cascade" }),
+  ownerId: text("owner_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   source: text("source").notNull(),
   target: text("target").notNull(),
   sourceHandle: text("sourceHandle").notNull(),
