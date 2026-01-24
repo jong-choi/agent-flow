@@ -16,6 +16,7 @@ export const workflows = pgTable("workflows", {
 
 export const workflowNodes = pgTable("workflow_nodes", {
   id: uuid("id").defaultRandom().primaryKey(),
+  nodeId: text("node_id").notNull(),
   workflowId: uuid("workflow_id")
     .notNull()
     .references(() => workflows.id, { onDelete: "cascade" }),
@@ -34,6 +35,7 @@ export const workflowNodes = pgTable("workflow_nodes", {
 
 export const workflowEdges = pgTable("workflow_edges", {
   id: text("id").primaryKey(),
+  edgeId: text("edge_id").notNull(),
   workflowId: uuid("workflow_id")
     .notNull()
     .references(() => workflows.id, { onDelete: "cascade" }),
@@ -45,3 +47,12 @@ export const workflowEdges = pgTable("workflow_edges", {
   sourceHandle: text("sourceHandle").notNull(),
   targetHandle: text("targetHandle").notNull(),
 });
+
+export type Workflow = typeof workflows.$inferSelect;
+export type WorkflowInsert = typeof workflows.$inferInsert;
+
+export type WorkflowNode = typeof workflowNodes.$inferSelect;
+export type WorkflowNodeInsert = typeof workflowNodes.$inferInsert;
+
+export type WorkflowEdge = typeof workflowEdges.$inferSelect;
+export type WorkflowEdgeInsert = typeof workflowEdges.$inferInsert;

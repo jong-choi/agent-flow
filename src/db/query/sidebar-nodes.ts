@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db/client";
+import { getActiveAiModels } from "@/db/query/ai-models";
 import {
   sidebarNodeContents,
   sidebarNodeHandles,
@@ -11,6 +12,7 @@ import {
   sidebarNodes,
   sidebarNodesQuerySchema,
 } from "@/db/schema";
+import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 
 const getSidebarNodesBase = async () => {
   const rows = await db
@@ -53,3 +55,42 @@ export const getSidebarNodes = unstable_cache(
   ["sidebar_nodes"],
   { tags: ["sidebar_nodes"], revalidate: 60 * 60 * 24 * 30 },
 );
+
+const hydrateSidebarNodeOptions = async (
+  nodes: SidebarNodeData[],
+): Promise<SidebarNodeData[]> => {
+  const needsAiModels = nodes.some(
+    (node) =>
+      node.content?.type === "select" &&
+      node.content.optionsSource === "ai_models",
+  );
+
+  const aiModelOptions = needsAiModels
+    ? (await getActiveAiModels()).map((aiModel) => ({
+        id: aiModel.id,
+        value: aiModel.modelId,
+      }))
+    : null;
+
+  return nodes.map((node) => {
+    if (
+      node.content?.type === "select" &&
+      node.content.optionsSource === "ai_models"
+    ) {
+      return {
+        ...node,
+        content: {
+          ...node.content,
+          options: aiModelOptions ?? [],
+        },
+      };
+    }
+
+    return node;
+  });
+};
+
+export const getSidebarNodesWithOptions = async () => {
+  const nodes = await getSidebarNodes();
+  return hydrateSidebarNodeOptions(nodes);
+};
