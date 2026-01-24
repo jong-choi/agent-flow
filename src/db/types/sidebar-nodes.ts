@@ -8,8 +8,8 @@ export type SidebarNodeData = z.infer<typeof sidebarNodesQuerySchema>;
 export const flowNodeDataSchema = sidebarNodesQuerySchema.omit({
   id: true,
   type: true,
+  createdAt: true,
 });
 
-export type FlowNodeData = Omit<SidebarNodeData, "id" | "type">;
-
+export type FlowNodeData = z.infer<typeof flowNodeDataSchema>;
 export type FlowCanvasNode = Node<FlowNodeData, (typeof nodeTypes)[number]>;

@@ -37,7 +37,7 @@ export const sidebarNodeInformation = pgTable("sidebar_node_information", {
     .unique(),
   title: text("title").notNull(),
   summary: text("summary").notNull(),
-  description: text("description").notNull(),
+  description: text("description"),
   guides: text("guides").array().notNull(),
 });
 

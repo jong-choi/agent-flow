@@ -42,6 +42,8 @@ export async function POST(request: Request) {
     }
 
     const { nodes, edges, locale } = parsed.data;
+    console.log(JSON.stringify(nodes, null, 2));
+    console.log(JSON.stringify(edges, null, 2));
 
     if (!Array.isArray(nodes) || !Array.isArray(edges)) {
       return Response.json(
