@@ -15,6 +15,7 @@ import {
   useNodesState,
 } from "@xyflow/react";
 import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
+import { FlowSaveButton } from "@/features/canvas/components/flow/flow-save-button";
 import { FlowStartButton } from "@/features/canvas/components/flow/flow-start-button";
 import {
   INITIAL_EDGES,
@@ -25,6 +26,10 @@ import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-grap
 import { useIsValidConnection } from "@/features/canvas/hooks/use-is-valid-connection";
 import { useReconnectEdge } from "@/features/canvas/hooks/use-reconnect-edge";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+import {
+  type WorkflowState,
+  defaultWorkflowState,
+} from "@/features/canvas/store/slices/workflow-slice";
 import { useDebounce } from "@/hooks/use-debounce";
 
 const ReactFlow = dynamic<ReactFlowProps<FlowCanvasNode, Edge>>(
@@ -32,11 +37,22 @@ const ReactFlow = dynamic<ReactFlowProps<FlowCanvasNode, Edge>>(
   { ssr: false },
 );
 
-export function FlowApp() {
-  const [nodes, , onNodesChange] = useNodesState(INITIAL_NODES);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
+type FlowAppProps = {
+  initialNodes?: FlowCanvasNode[];
+  initialEdges?: Edge[];
+  workflow?: WorkflowState;
+};
+
+export function FlowApp({
+  initialNodes = INITIAL_NODES,
+  initialEdges = INITIAL_EDGES,
+  workflow,
+}: FlowAppProps) {
+  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const checkValidGraph = useCheckValidGraph();
   const setLoading = useCanvasStore((s) => s.setIsStartLoading);
+  const setWorkflow = useCanvasStore((s) => s.setWorkflow);
 
   const isValidConnection = useIsValidConnection();
 
@@ -69,12 +85,17 @@ export function FlowApp() {
     debouncedCheckValidGraph();
   }, [nodes, edges, debouncedCheckValidGraph, setLoading]);
 
+  useEffect(() => {
+    setWorkflow(workflow ?? defaultWorkflowState);
+  }, [setWorkflow, workflow]);
+
   return (
     <div className="relative h-full w-full">
-      <div className="absolute top-4 left-4 z-10">
+      <div className="absolute top-4 left-4 z-10 flex gap-2">
         <Suspense>
           <FlowStartButton />
         </Suspense>
+        <FlowSaveButton />
       </div>
       <ReactFlow
         snapToGrid
