@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,32 +13,35 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { db } from "@/db/client";
-import { getOwnedPresets, getPurchasedPresets } from "@/db/query/presets";
+import {
+  getOwnedPresets,
+  getPresetLibrary,
+  getPurchasedPresets,
+} from "@/db/query/presets";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { formatKoreanDate } from "@/lib/utils";
 
 const libraryFilters = [
-  { label: "전체", active: true },
-  { label: "최근 사용" },
-  { label: "업데이트 있음" },
-  { label: "즐겨찾기" },
+  { label: "전체", value: "all" },
+  { label: "최근 사용", value: "recent" },
+  { label: "즐겨찾기", value: "favorite" },
 ];
 
 const categoryFilters = [
-  { label: "전체", active: true },
-  { label: "영업" },
-  { label: "고객지원" },
-  { label: "마케팅" },
-  { label: "데이터" },
-  { label: "운영" },
-  { label: "개발" },
+  { label: "전체", value: "all" },
+  { label: "영업", value: "영업" },
+  { label: "고객지원", value: "고객지원" },
+  { label: "마케팅", value: "마케팅" },
+  { label: "데이터", value: "데이터" },
+  { label: "운영", value: "운영" },
+  { label: "개발", value: "개발" },
 ];
 
 const sortOptions = [
-  { label: "최근 사용순", active: true },
-  { label: "구매일순" },
-  { label: "이름순" },
+  { label: "최근 사용순", value: "recent" },
+  { label: "구매일순", value: "purchase" },
+  { label: "이름순", value: "name" },
 ];
 
 const formatPrice = (price: number) =>
@@ -46,22 +50,43 @@ const formatPrice = (price: number) =>
 const formatDate = (value: Date | string | null | undefined) =>
   formatKoreanDate(value, "날짜 없음");
 
-type LibraryPreset = {
-  id: string;
-  workflowId: string;
-  ownerId: string;
-  ownerName: string | null;
-  title: string;
-  description: string | null;
-  summary: string | null;
-  category: string | null;
-  price: number;
-  source: "created" | "purchased";
-  displayDate?: Date | string | null;
-  isPublished?: boolean;
+type PresetsLibrarySearchParams = {
+  q?: string | string[];
+  category?: string | string[];
+  status?: string | string[];
+  sort?: string | string[];
 };
 
-export default async function PurchasedPresetsPage() {
+const resolveParam = (value: string | string[] | undefined, fallback: string) =>
+  (Array.isArray(value) ? value[0] : value) ?? fallback;
+
+const buildQueryString = (
+  base: { [key: string]: string },
+  overrides: Partial<{ [key: string]: string }>,
+) => {
+  const params = new URLSearchParams();
+  const next = { ...base, ...overrides };
+
+  Object.entries(next).forEach(([key, value]) => {
+    if (!value) return;
+    if (key === "category" && value === "all") return;
+    if (key === "status" && value === "all") return;
+    if (key === "sort" && value === "recent") return;
+    if (key === "q" && value.trim() === "") return;
+    params.set(key, value);
+  });
+
+  const query = params.toString();
+  return query ? `?${query}` : "";
+};
+
+export default async function PurchasedPresetsPage({
+  searchParams,
+}: {
+  searchParams?:
+    | Promise<PresetsLibrarySearchParams>
+    | PresetsLibrarySearchParams;
+}) {
   const session = await auth();
   const email = session?.user?.email;
 
@@ -79,45 +104,47 @@ export default async function PurchasedPresetsPage() {
     notFound();
   }
 
-  const [purchasedPresets, ownedPresets] = await Promise.all([
+  const resolvedSearchParams = await searchParams;
+  const rawStatus = resolveParam(resolvedSearchParams?.status, "all");
+  const allowedStatuses = new Set(["all", "recent", "favorite"]);
+  const selectedStatus = allowedStatuses.has(rawStatus)
+    ? (rawStatus as "all" | "recent" | "favorite")
+    : "all";
+  const selectedCategory = resolveParam(resolvedSearchParams?.category, "all");
+  const selectedSort = resolveParam(resolvedSearchParams?.sort, "recent");
+  const query = resolveParam(resolvedSearchParams?.q, "");
+
+  const [purchasedPresets, ownedPresets, libraryPresets] = await Promise.all([
     getPurchasedPresets(user.id),
     getOwnedPresets(user.id),
+    getPresetLibrary(user.id, {
+      query,
+      category: selectedCategory === "all" ? null : selectedCategory,
+      status: selectedStatus,
+      sort:
+        selectedSort === "name" || selectedSort === "purchase"
+          ? selectedSort
+          : "recent",
+    }),
   ]);
 
   const ownedIds = new Set(ownedPresets.map((preset) => preset.id));
   const purchasedOnly = purchasedPresets.filter(
     (preset) => !ownedIds.has(preset.id),
   );
-
-  const libraryPresets: LibraryPreset[] = [
-    ...ownedPresets.map((preset) => ({
-      ...preset,
-      source: "created" as const,
-      displayDate: preset.updatedAt ?? preset.createdAt,
-    })),
-    ...purchasedOnly.map((preset) => ({
-      ...preset,
-      source: "purchased" as const,
-      displayDate: preset.purchasedAt,
-    })),
-  ];
-
-  const toTimestamp = (value: Date | string | null | undefined) => {
-    if (!value) return 0;
-    const date = value instanceof Date ? value : new Date(value);
-    const time = date.getTime();
-    return Number.isNaN(time) ? 0 : time;
-  };
-
-  libraryPresets.sort(
-    (a, b) => toTimestamp(b.displayDate) - toTimestamp(a.displayDate),
-  );
-
+  const totalPresetsCount = ownedPresets.length + purchasedOnly.length;
   const createdCount = ownedPresets.length;
   const purchasedCount = purchasedOnly.length;
-  const freeCount = libraryPresets.filter(
+  const freeCount = [...ownedPresets, ...purchasedOnly].filter(
     (preset) => preset.price === 0,
   ).length;
+
+  const baseParams = {
+    q: query,
+    category: selectedCategory,
+    status: selectedStatus,
+    sort: selectedSort,
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
@@ -145,7 +172,7 @@ export default async function PurchasedPresetsPage() {
             <div className="space-y-1">
               <p className="text-sm font-medium">내 프리셋 라이브러리</p>
               <p className="text-sm text-muted-foreground">
-                전체 {libraryPresets.length}개 · 만든 {createdCount}개 · 구매{" "}
+                전체 {totalPresetsCount}개 · 만든 {createdCount}개 · 구매{" "}
                 {purchasedCount}개 · 무료 {freeCount}개
               </p>
             </div>
@@ -163,15 +190,30 @@ export default async function PurchasedPresetsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <form
+              action="/presets/purchased"
+              method="get"
+              className="flex flex-col gap-3 md:flex-row md:items-center"
+            >
               <div className="flex-1">
-                <Input placeholder="프리셋 이름이나 키워드로 검색" />
+                <Input
+                  name="q"
+                  defaultValue={query}
+                  placeholder="프리셋 이름이나 키워드로 검색"
+                />
               </div>
+              <input type="hidden" name="category" value={selectedCategory} />
+              <input type="hidden" name="status" value={selectedStatus} />
+              <input type="hidden" name="sort" value={selectedSort} />
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary">검색</Button>
-                <Button variant="outline">필터 초기화</Button>
+                <Button type="submit" variant="secondary">
+                  검색
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/presets/purchased">필터 초기화</Link>
+                </Button>
               </div>
-            </div>
+            </form>
 
             <div className="space-y-3">
               <div className="space-y-2">
@@ -182,11 +224,23 @@ export default async function PurchasedPresetsPage() {
                   {libraryFilters.map((filter) => (
                     <Button
                       key={filter.label}
-                      variant={filter.active ? "secondary" : "outline"}
+                      variant={
+                        filter.value === selectedStatus
+                          ? "secondary"
+                          : "outline"
+                      }
                       size="sm"
                       className="rounded-full"
+                      asChild
                     >
-                      {filter.label}
+                      <Link
+                        href={`/presets/purchased${buildQueryString(
+                          baseParams,
+                          { status: filter.value },
+                        )}`}
+                      >
+                        {filter.label}
+                      </Link>
                     </Button>
                   ))}
                 </div>
@@ -199,11 +253,23 @@ export default async function PurchasedPresetsPage() {
                   {categoryFilters.map((filter) => (
                     <Button
                       key={filter.label}
-                      variant={filter.active ? "secondary" : "outline"}
+                      variant={
+                        filter.value === selectedCategory
+                          ? "secondary"
+                          : "outline"
+                      }
                       size="sm"
                       className="rounded-full"
+                      asChild
                     >
-                      {filter.label}
+                      <Link
+                        href={`/presets/purchased${buildQueryString(
+                          baseParams,
+                          { category: filter.value },
+                        )}`}
+                      >
+                        {filter.label}
+                      </Link>
                     </Button>
                   ))}
                 </div>
@@ -220,16 +286,25 @@ export default async function PurchasedPresetsPage() {
             {sortOptions.map((option) => (
               <Button
                 key={option.label}
-                variant={option.active ? "secondary" : "outline"}
+                variant={
+                  option.value === selectedSort ? "secondary" : "outline"
+                }
                 size="sm"
+                asChild
               >
-                {option.label}
+                <Link
+                  href={`/presets/purchased${buildQueryString(baseParams, {
+                    sort: option.value,
+                  })}`}
+                >
+                  {option.label}
+                </Link>
               </Button>
             ))}
           </div>
         </div>
 
-        {libraryPresets.length === 0 ? (
+        {totalPresetsCount === 0 ? (
           <Card className="border-dashed">
             <CardHeader>
               <CardTitle>내 프리셋이 없습니다</CardTitle>
@@ -243,6 +318,20 @@ export default async function PurchasedPresetsPage() {
               </Button>
             </CardContent>
           </Card>
+        ) : libraryPresets.length === 0 ? (
+          <Card className="border-dashed">
+            <CardHeader>
+              <CardTitle>필터 결과가 없습니다</CardTitle>
+              <CardDescription>
+                선택한 조건에 맞는 프리셋이 없습니다. 필터를 변경해 주세요.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="secondary" asChild>
+                <Link href="/presets/purchased">필터 초기화</Link>
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {libraryPresets.map((preset) => {
@@ -251,6 +340,8 @@ export default async function PurchasedPresetsPage() {
               const canvasHref = isCreated
                 ? `/canvas/${preset.workflowId}`
                 : "/canvas";
+              const visibleTags = preset.tags.slice(0, 5);
+              const hasMoreTags = preset.tags.length > 5;
 
               return (
                 <Card key={preset.id} className="h-full">
@@ -283,6 +374,18 @@ export default async function PurchasedPresetsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {visibleTags.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {visibleTags.map((tag) => (
+                          <Badge key={tag} variant="secondary">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {hasMoreTags ? (
+                          <Badge variant="secondary">...</Badge>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                       <span>가격 {formatPrice(preset.price)}</span>
                       <span>제작자 {preset.ownerName ?? "알 수 없음"}</span>

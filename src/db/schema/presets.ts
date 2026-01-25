@@ -50,8 +50,52 @@ export const presetPurchases = pgTable(
   ],
 );
 
+export const presetTags = pgTable(
+  "preset_tags",
+  {
+    presetId: uuid("preset_id")
+      .notNull()
+      .references(() => presets.id, { onDelete: "cascade" }),
+    tag: text("tag").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    {
+      pk: primaryKey({
+        columns: [table.presetId, table.tag],
+      }),
+    },
+  ],
+);
+
+export const presetFavorites = pgTable(
+  "preset_favorites",
+  {
+    presetId: uuid("preset_id")
+      .notNull()
+      .references(() => presets.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    {
+      pk: primaryKey({
+        columns: [table.presetId, table.userId],
+      }),
+    },
+  ],
+);
+
 export type Preset = typeof presets.$inferSelect;
 export type PresetInsert = typeof presets.$inferInsert;
 
 export type PresetPurchase = typeof presetPurchases.$inferSelect;
 export type PresetPurchaseInsert = typeof presetPurchases.$inferInsert;
+
+export type PresetTag = typeof presetTags.$inferSelect;
+export type PresetTagInsert = typeof presetTags.$inferInsert;
+
+export type PresetFavorite = typeof presetFavorites.$inferSelect;
+export type PresetFavoriteInsert = typeof presetFavorites.$inferInsert;
