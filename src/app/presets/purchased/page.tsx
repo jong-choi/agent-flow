@@ -19,6 +19,7 @@ import {
   getPurchasedPresets,
 } from "@/db/query/presets";
 import { users } from "@/db/schema";
+import { categoryFilters } from "@/features/preset/constants/category-options";
 import { auth } from "@/lib/auth";
 import { formatKoreanDate } from "@/lib/utils";
 
@@ -26,16 +27,6 @@ const libraryFilters = [
   { label: "전체", value: "all" },
   { label: "최근 사용", value: "recent" },
   { label: "즐겨찾기", value: "favorite" },
-];
-
-const categoryFilters = [
-  { label: "전체", value: "all" },
-  { label: "영업", value: "영업" },
-  { label: "고객지원", value: "고객지원" },
-  { label: "마케팅", value: "마케팅" },
-  { label: "데이터", value: "데이터" },
-  { label: "운영", value: "운영" },
-  { label: "개발", value: "개발" },
 ];
 
 const sortOptions = [

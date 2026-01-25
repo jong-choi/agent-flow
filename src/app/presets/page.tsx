@@ -14,18 +14,9 @@ import { Input } from "@/components/ui/input";
 import { db } from "@/db/client";
 import { getPresets } from "@/db/query/presets";
 import { users } from "@/db/schema";
+import { categoryFilters } from "@/features/preset/constants/category-options";
 import { auth } from "@/lib/auth";
 import { formatKoreanDate } from "@/lib/utils";
-
-const categoryFilters = [
-  { label: "전체", value: "all" },
-  { label: "마케팅", value: "마케팅" },
-  { label: "영업", value: "영업" },
-  { label: "고객지원", value: "고객지원" },
-  { label: "데이터", value: "데이터" },
-  { label: "운영", value: "운영" },
-  { label: "개발", value: "개발" },
-];
 
 const priceFilters = [
   { label: "전체", value: "all" },
@@ -54,10 +45,8 @@ type PresetsPageSearchParams = {
   sort?: string | string[];
 };
 
-const resolveParam = (
-  value: string | string[] | undefined,
-  fallback: string,
-) => (Array.isArray(value) ? value[0] : value) ?? fallback;
+const resolveParam = (value: string | string[] | undefined, fallback: string) =>
+  (Array.isArray(value) ? value[0] : value) ?? fallback;
 
 const buildQueryString = (
   base: { [key: string]: string },
@@ -239,9 +228,7 @@ export default async function TemplateMarketPage({
                     <Button
                       key={filter.label}
                       variant={
-                        filter.value === selectedPrice
-                          ? "secondary"
-                          : "outline"
+                        filter.value === selectedPrice ? "secondary" : "outline"
                       }
                       size="sm"
                       className="rounded-full"
@@ -293,8 +280,7 @@ export default async function TemplateMarketPage({
             <CardHeader>
               <CardTitle>공개된 프리셋이 없습니다</CardTitle>
               <CardDescription>
-                아직 공개된 프리셋이 없어요. 곧 새로운 프리셋이
-                추가됩니다.
+                아직 공개된 프리셋이 없어요. 곧 새로운 프리셋이 추가됩니다.
               </CardDescription>
             </CardHeader>
             <CardContent>
