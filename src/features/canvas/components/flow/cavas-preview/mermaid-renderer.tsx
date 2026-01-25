@@ -12,15 +12,15 @@ export function MermaidRenderer({ chart }: { chart: string }) {
     (async () => {
       if (ref.current) {
         ref.current.innerHTML = chart;
-        try {
-          requestAnimationFrame(async () => {
-            if (ref.current) {
+        requestAnimationFrame(async () => {
+          if (ref.current) {
+            try {
               await mermaid.run({ nodes: [ref.current] });
+            } catch (e) {
+              console.error("Mermaid rendering failed:", e);
             }
-          });
-        } catch {
-          // no-op
-        }
+          }
+        });
       }
     })();
   }, [chart]);
