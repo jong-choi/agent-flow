@@ -9,17 +9,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { categoryOptions } from "@/features/preset/constants/category-options";
 import { formatKoreanDate } from "@/lib/utils";
-
-const categoryOptions = [
-  { label: "선택 안함", value: "" },
-  { label: "영업", value: "영업" },
-  { label: "고객지원", value: "고객지원" },
-  { label: "마케팅", value: "마케팅" },
-  { label: "데이터", value: "데이터" },
-  { label: "운영", value: "운영" },
-  { label: "개발", value: "개발" },
-];
 
 const selectClassName =
   "border-input h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50";
@@ -62,7 +53,7 @@ export function PresetEditForm({
                 {preset.workflowTitle ?? "워크플로우"}
               </p>
               <p className="text-xs text-muted-foreground">
-                최근 업데이트 {" "}
+                최근 업데이트{" "}
                 {formatKoreanDate(preset.workflowUpdatedAt, "날짜 없음")}
               </p>
             </div>
