@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,6 +12,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { db } from "@/db/client";
 import { getPresets } from "@/db/query/presets";
 import { users } from "@/db/schema";
@@ -32,6 +42,8 @@ const sortOptions = [
   { label: "가격 낮은 순", value: "price-asc" },
 ];
 
+const PAGE_SIZE = 50;
+
 const formatPrice = (price: number) =>
   price === 0 ? "무료" : `${price} 크레딧`;
 
@@ -43,10 +55,16 @@ type PresetsPageSearchParams = {
   category?: string | string[];
   price?: string | string[];
   sort?: string | string[];
+  page?: string | string[];
 };
 
 const resolveParam = (value: string | string[] | undefined, fallback: string) =>
   (Array.isArray(value) ? value[0] : value) ?? fallback;
+
+const resolvePage = (value: string | string[] | undefined) => {
+  const parsed = Number.parseInt(resolveParam(value, "1"), 10);
+  return Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
+};
 
 const buildQueryString = (
   base: { [key: string]: string },
@@ -60,12 +78,45 @@ const buildQueryString = (
     if (key === "category" && value === "all") return;
     if (key === "price" && value === "all") return;
     if (key === "sort" && value === "popular") return;
+    if (key === "page" && value === "1") return;
     if (key === "q" && value.trim() === "") return;
     params.set(key, value);
   });
 
   const query = params.toString();
   return query ? `?${query}` : "";
+};
+
+const buildPaginationItems = (currentPage: number, totalPages: number) => {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pages = new Set<number>([1, totalPages, currentPage]);
+  if (currentPage - 1 > 1) {
+    pages.add(currentPage - 1);
+  }
+  if (currentPage + 1 < totalPages) {
+    pages.add(currentPage + 1);
+  }
+
+  const sortedPages = Array.from(pages).sort((a, b) => a - b);
+  const items: Array<number | "ellipsis"> = [];
+  let lastPage = 0;
+
+  sortedPages.forEach((page) => {
+    if (page - lastPage > 1) {
+      if (page - lastPage === 2) {
+        items.push(lastPage + 1);
+      } else {
+        items.push("ellipsis");
+      }
+    }
+    items.push(page);
+    lastPage = page;
+  });
+
+  return items;
 };
 
 export default async function TemplateMarketPage({
@@ -92,6 +143,7 @@ export default async function TemplateMarketPage({
   const selectedPrice = resolveParam(resolvedSearchParams?.price, "all");
   const selectedSort = resolveParam(resolvedSearchParams?.sort, "popular");
   const query = resolveParam(resolvedSearchParams?.q, "");
+  const currentPage = resolvePage(resolvedSearchParams?.page);
 
   const priceRange =
     selectedPrice === "free"
@@ -102,25 +154,41 @@ export default async function TemplateMarketPage({
           ? { min: 3, max: 5 }
           : null;
 
-  const presets = await getPresets(viewerId, {
-    query,
-    category: selectedCategory === "all" ? null : selectedCategory,
-    priceMin: priceRange?.min,
-    priceMax: priceRange?.max,
-    sort:
-      selectedSort === "latest" ||
-      selectedSort === "rating" ||
-      selectedSort === "price-asc"
-        ? selectedSort
-        : "popular",
-  });
-
   const baseParams = {
     q: query,
     category: selectedCategory,
     price: selectedPrice,
     sort: selectedSort,
   };
+
+  const { presets, totalCount } = await getPresets(
+    viewerId,
+    {
+      query,
+      category: selectedCategory === "all" ? null : selectedCategory,
+      priceMin: priceRange?.min,
+      priceMax: priceRange?.max,
+      sort:
+        selectedSort === "latest" ||
+        selectedSort === "rating" ||
+        selectedSort === "price-asc"
+          ? selectedSort
+          : "popular",
+    },
+    { page: currentPage, pageSize: PAGE_SIZE },
+  );
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  if (currentPage > totalPages) {
+    redirect(
+      `/presets${buildQueryString(baseParams, {
+        page: String(totalPages),
+      })}`,
+    );
+  }
+
+  const paginationItems = buildPaginationItems(currentPage, totalPages);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
@@ -251,7 +319,7 @@ export default async function TemplateMarketPage({
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            추천 {presets.length}개 프리셋
+            추천 {totalCount}개 프리셋
           </p>
           <div className="flex flex-wrap gap-2">
             {sortOptions.map((option) => (
@@ -275,7 +343,7 @@ export default async function TemplateMarketPage({
           </div>
         </div>
 
-        {presets.length === 0 ? (
+        {totalCount === 0 ? (
           <Card className="border-dashed">
             <CardHeader>
               <CardTitle>공개된 프리셋이 없습니다</CardTitle>
@@ -290,68 +358,112 @@ export default async function TemplateMarketPage({
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {presets.map((preset) => {
-              const actionLabel = preset.isPurchased
-                ? "이미 보유함"
-                : preset.price === 0
-                  ? "무료로 받기"
-                  : "구매하기";
-              const actionVariant = preset.isPurchased
-                ? "secondary"
-                : preset.price === 0
+          <>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {presets.map((preset) => {
+                const actionLabel = preset.isPurchased
+                  ? "이미 보유함"
+                  : preset.price === 0
+                    ? "무료로 받기"
+                    : "구매하기";
+                const actionVariant = preset.isPurchased
                   ? "secondary"
-                  : "default";
+                  : preset.price === 0
+                    ? "secondary"
+                    : "default";
 
-              return (
-                <Card key={preset.id} className="h-full">
-                  <CardHeader>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-                        {preset.category ?? "미분류"}
-                      </span>
-                      <span>업데이트 {formatDate(preset.updatedAt)}</span>
-                    </div>
-                    <CardTitle className="text-lg">{preset.title}</CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {preset.summary ??
-                        preset.description ??
-                        "설명이 없습니다."}
-                    </CardDescription>
-                    <CardAction>
-                      <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
-                        {formatPrice(preset.price)}
-                      </span>
-                    </CardAction>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      <span>구매 {preset.purchaseCount}</span>
-                      <span>제작자 {preset.ownerName ?? "알 수 없음"}</span>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="gap-2 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      asChild
-                    >
-                      <Link href={`/presets/${preset.id}`}>상세 보기</Link>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={actionVariant}
-                      className="flex-1"
-                      disabled={preset.isPurchased}
-                    >
-                      {actionLabel}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              );
-            })}
-          </div>
+                return (
+                  <Card key={preset.id} className="h-full">
+                    <CardHeader>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                          {preset.category ?? "미분류"}
+                        </span>
+                        <span>업데이트 {formatDate(preset.updatedAt)}</span>
+                      </div>
+                      <CardTitle className="text-lg">{preset.title}</CardTitle>
+                      <CardDescription className="line-clamp-2">
+                        {preset.summary ??
+                          preset.description ??
+                          "설명이 없습니다."}
+                      </CardDescription>
+                      <CardAction>
+                        <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
+                          {formatPrice(preset.price)}
+                        </span>
+                      </CardAction>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        <span>구매 {preset.purchaseCount}</span>
+                        <span>제작자 {preset.ownerName ?? "알 수 없음"}</span>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="gap-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        asChild
+                      >
+                        <Link href={`/presets/${preset.id}`}>상세 보기</Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={actionVariant}
+                        className="flex-1"
+                        disabled={preset.isPurchased}
+                      >
+                        {actionLabel}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+            {totalPages > 1 ? (
+              <Pagination>
+                <PaginationContent>
+                  {currentPage > 1 ? (
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href={`/presets${buildQueryString(baseParams, {
+                          page: String(currentPage - 1),
+                        })}`}
+                      />
+                    </PaginationItem>
+                  ) : null}
+                  {paginationItems.map((item, index) =>
+                    item === "ellipsis" ? (
+                      <PaginationItem key={`ellipsis-${index}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={item}>
+                        <PaginationLink
+                          href={`/presets${buildQueryString(baseParams, {
+                            page: String(item),
+                          })}`}
+                          isActive={item === currentPage}
+                        >
+                          {item}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ),
+                  )}
+                  {currentPage < totalPages ? (
+                    <PaginationItem>
+                      <PaginationNext
+                        href={`/presets${buildQueryString(baseParams, {
+                          page: String(currentPage + 1),
+                        })}`}
+                      />
+                    </PaginationItem>
+                  ) : null}
+                </PaginationContent>
+              </Pagination>
+            ) : null}
+          </>
         )}
       </div>
     </div>

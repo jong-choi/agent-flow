@@ -73,9 +73,64 @@ type PresetLibraryFilters = {
   sort?: "recent" | "purchase" | "name";
 };
 
+type PaginationOptions = {
+  page?: number;
+  pageSize?: number;
+};
+
+const resolvePagination = (options?: PaginationOptions) => {
+  const page = Math.max(1, options?.page ?? 1);
+  const pageSize = options?.pageSize ?? 50;
+  const offset = (page - 1) * pageSize;
+
+  return { page, pageSize, offset };
+};
+
+const getPresetTagsMap = async (presetIds: string[]) => {
+  if (presetIds.length === 0) {
+    return new Map<string, string[]>();
+  }
+
+  const presetTagRows = await db
+    .select({
+      presetId: presetTags.presetId,
+      tag: presetTags.tag,
+    })
+    .from(presetTags)
+    .where(inArray(presetTags.presetId, presetIds))
+    .orderBy(asc(presetTags.tag));
+
+  const tagsByPresetId = new Map<string, string[]>();
+  presetTagRows.forEach((row) => {
+    const tags = tagsByPresetId.get(row.presetId) ?? [];
+    tags.push(row.tag);
+    tagsByPresetId.set(row.presetId, tags);
+  });
+
+  return tagsByPresetId;
+};
+
+const attachPresetTags = async <T extends { id: string }>(
+  presetsList: T[],
+): Promise<Array<T & { tags: string[] }>> => {
+  if (presetsList.length === 0) {
+    return [];
+  }
+
+  const tagsByPresetId = await getPresetTagsMap(
+    presetsList.map((preset) => preset.id),
+  );
+
+  return presetsList.map((preset) => ({
+    ...preset,
+    tags: tagsByPresetId.get(preset.id) ?? [],
+  }));
+};
+
 export const getPresets = async (
   viewerId?: string,
   filters?: PresetListFilters,
+  pagination?: PaginationOptions,
 ) => {
   const purchaseCount = buildPurchaseCount();
   const isPurchased = buildIsPurchased(viewerId);
@@ -126,26 +181,43 @@ export const getPresets = async (
         ? [asc(presets.price), desc(presets.updatedAt)]
         : [desc(presets.updatedAt)];
 
-  return db
-    .select({
-      id: presets.id,
-      workflowId: presets.workflowId,
-      ownerId: presets.ownerId,
-      ownerName: users.name,
-      title: presets.title,
-      description: presets.description,
-      summary: presets.summary,
-      category: presets.category,
-      price: presets.price,
-      createdAt: presets.createdAt,
-      updatedAt: presets.updatedAt,
-      purchaseCount,
-      isPurchased,
-    })
-    .from(presets)
-    .leftJoin(users, eq(users.id, presets.ownerId))
-    .where(whereClause)
-    .orderBy(...orderBy);
+  const { pageSize, offset } = resolvePagination(pagination);
+
+  const [presetsList, [countRow]] = await Promise.all([
+    db
+      .select({
+        id: presets.id,
+        workflowId: presets.workflowId,
+        ownerId: presets.ownerId,
+        ownerName: users.name,
+        title: presets.title,
+        description: presets.description,
+        summary: presets.summary,
+        category: presets.category,
+        price: presets.price,
+        createdAt: presets.createdAt,
+        updatedAt: presets.updatedAt,
+        purchaseCount,
+        isPurchased,
+      })
+      .from(presets)
+      .leftJoin(users, eq(users.id, presets.ownerId))
+      .where(whereClause)
+      .orderBy(...orderBy)
+      .limit(pageSize)
+      .offset(offset),
+    db
+      .select({
+        count: sql<number>`count(*)`.mapWith(Number),
+      })
+      .from(presets)
+      .where(whereClause),
+  ]);
+
+  return {
+    presets: presetsList,
+    totalCount: countRow?.count ?? 0,
+  };
 };
 
 const getPresetDetailBase = async (presetId: string) => {
@@ -209,30 +281,127 @@ export const getPresetPurchaseStatus = async (
   return Boolean(purchase);
 };
 
-export const getPurchasedPresets = async (buyerId: string) => {
-  return db
+export const getPurchasedPresetsSummary = async (buyerId: string) => {
+  const baseWhere = and(
+    eq(presetPurchases.buyerId, buyerId),
+    ne(presets.ownerId, buyerId),
+  );
+
+  const [row] = await db
     .select({
-      id: presets.id,
-      workflowId: presets.workflowId,
-      ownerId: presets.ownerId,
-      ownerName: users.name,
-      title: presets.title,
-      description: presets.description,
-      summary: presets.summary,
-      category: presets.category,
-      price: presets.price,
-      updatedAt: presets.updatedAt,
-      purchasedAt: presetPurchases.purchasedAt,
+      totalCount: sql<number>`count(*)`.mapWith(Number),
+      freeCount: sql<number>`
+        sum(case when ${presets.price} = 0 then 1 else 0 end)
+      `.mapWith(Number),
     })
     .from(presetPurchases)
     .innerJoin(presets, eq(presets.id, presetPurchases.presetId))
-    .leftJoin(users, eq(users.id, presets.ownerId))
-    .where(eq(presetPurchases.buyerId, buyerId))
-    .orderBy(desc(presetPurchases.purchasedAt));
+    .where(baseWhere);
+
+  return {
+    totalCount: row?.totalCount ?? 0,
+    freeCount: row?.freeCount ?? 0,
+  };
+};
+
+type PurchasedPresetFilters = PresetLibraryFilters & PaginationOptions;
+
+export const getPurchasedPresets = async (
+  buyerId: string,
+  filters?: PurchasedPresetFilters,
+) => {
+  const isFavorite = buildIsFavorite(buyerId);
+  const trimmedQuery = filters?.query?.trim();
+  const searchPattern = trimmedQuery ? `%${trimmedQuery}%` : null;
+
+  const clauses = [
+    eq(presetPurchases.buyerId, buyerId),
+    ne(presets.ownerId, buyerId),
+  ];
+
+  if (filters?.category) {
+    clauses.push(eq(presets.category, filters.category));
+  }
+
+  if (searchPattern) {
+    const tagSearchClause = sql<boolean>`
+      exists(
+        select 1
+        from ${presetTags}
+        where ${presetTags.presetId} = ${presets.id}
+          and ${presetTags.tag} ilike ${searchPattern}
+      )
+    `;
+    const searchClause = or(
+      ilike(presets.title, searchPattern),
+      ilike(presets.summary, searchPattern),
+      ilike(presets.description, searchPattern),
+      tagSearchClause,
+    );
+    if (searchClause) {
+      clauses.push(searchClause);
+    }
+  }
+
+  if (filters?.status === "recent") {
+    clauses.push(gte(presetPurchases.purchasedAt, RECENT_WINDOW_SQL));
+  }
+
+  if (filters?.status === "favorite") {
+    clauses.push(isFavorite);
+  }
+
+  const whereClause = clauses.length === 1 ? clauses[0] : and(...clauses);
+  const sort = filters?.sort ?? "recent";
+  const orderBy =
+    sort === "name"
+      ? [asc(presets.title), desc(presetPurchases.purchasedAt)]
+      : [desc(presetPurchases.purchasedAt)];
+  const { pageSize, offset } = resolvePagination(filters);
+
+  const [purchasedPresets, [countRow]] = await Promise.all([
+    db
+      .select({
+        id: presets.id,
+        workflowId: presets.workflowId,
+        ownerId: presets.ownerId,
+        ownerName: users.name,
+        title: presets.title,
+        description: presets.description,
+        summary: presets.summary,
+        category: presets.category,
+        price: presets.price,
+        isPublished: presets.isPublished,
+        updatedAt: presets.updatedAt,
+        purchasedAt: presetPurchases.purchasedAt,
+        isFavorite,
+      })
+      .from(presetPurchases)
+      .innerJoin(presets, eq(presets.id, presetPurchases.presetId))
+      .leftJoin(users, eq(users.id, presets.ownerId))
+      .where(whereClause)
+      .orderBy(...orderBy)
+      .limit(pageSize)
+      .offset(offset),
+    db
+      .select({
+        count: sql<number>`count(*)`.mapWith(Number),
+      })
+      .from(presetPurchases)
+      .innerJoin(presets, eq(presets.id, presetPurchases.presetId))
+      .where(whereClause),
+  ]);
+
+  const presetsWithTags = await attachPresetTags(purchasedPresets);
+
+  return {
+    presets: presetsWithTags,
+    totalCount: countRow?.count ?? 0,
+  };
 };
 
 export const getOwnedPresets = async (ownerId: string) => {
-  return db
+  const ownedPresets = await db
     .select({
       id: presets.id,
       workflowId: presets.workflowId,
@@ -251,6 +420,8 @@ export const getOwnedPresets = async (ownerId: string) => {
     .leftJoin(users, eq(users.id, presets.ownerId))
     .where(eq(presets.ownerId, ownerId))
     .orderBy(desc(presets.updatedAt));
+
+  return attachPresetTags(ownedPresets);
 };
 
 const createdSource = sql<string>`'created'`.mapWith(String);
