@@ -135,6 +135,28 @@ export const getPurchasedPresets = async (buyerId: string) => {
     .orderBy(desc(presetPurchases.purchasedAt));
 };
 
+export const getOwnedPresets = async (ownerId: string) => {
+  return db
+    .select({
+      id: presets.id,
+      workflowId: presets.workflowId,
+      ownerId: presets.ownerId,
+      ownerName: users.name,
+      title: presets.title,
+      description: presets.description,
+      summary: presets.summary,
+      category: presets.category,
+      price: presets.price,
+      isPublished: presets.isPublished,
+      createdAt: presets.createdAt,
+      updatedAt: presets.updatedAt,
+    })
+    .from(presets)
+    .leftJoin(users, eq(users.id, presets.ownerId))
+    .where(eq(presets.ownerId, ownerId))
+    .orderBy(desc(presets.updatedAt));
+};
+
 export const createPreset = async ({
   ownerId,
   workflowId,
@@ -176,6 +198,57 @@ export const createPreset = async ({
       price,
       isPublished,
     })
+    .returning({ id: presets.id });
+
+  return preset ?? null;
+};
+
+export const updatePreset = async ({
+  presetId,
+  ownerId,
+  title,
+  description,
+  summary,
+  category,
+  price,
+  isPublished,
+}: {
+  presetId: string;
+  ownerId: string;
+  title: string;
+  description: string | null;
+  summary: string | null;
+  category: string | null;
+  price: number;
+  isPublished: boolean;
+}) => {
+  const [preset] = await db
+    .update(presets)
+    .set({
+      title,
+      description,
+      summary,
+      category,
+      price,
+      isPublished,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(presets.id, presetId), eq(presets.ownerId, ownerId)))
+    .returning({ id: presets.id });
+
+  return preset ?? null;
+};
+
+export const deletePreset = async ({
+  presetId,
+  ownerId,
+}: {
+  presetId: string;
+  ownerId: string;
+}) => {
+  const [preset] = await db
+    .delete(presets)
+    .where(and(eq(presets.id, presetId), eq(presets.ownerId, ownerId)))
     .returning({ id: presets.id });
 
   return preset ?? null;

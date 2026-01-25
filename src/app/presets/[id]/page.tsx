@@ -221,9 +221,13 @@ export default async function PresetDetailPage({
                     <Button asChild>
                       <Link href={canvasHref}>캔버스에서 열기</Link>
                     </Button>
-                    <Button variant="outline" size="sm">
-                      업데이트 확인
-                    </Button>
+                    {isOwner ? (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/presets/${preset.id}/edit`}>
+                          프리셋 수정
+                        </Link>
+                      </Button>
+                    ) : null}
                   </>
                 ) : (
                   <>
