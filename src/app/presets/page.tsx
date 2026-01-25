@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { eq } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,6 +11,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { db } from "@/db/client";
+import { getPresets } from "@/db/query/presets";
+import { users } from "@/db/schema";
+import { auth } from "@/lib/auth";
 
 const categoryFilters = [
   { label: "전체", active: true },
@@ -35,85 +40,29 @@ const sortOptions = [
   { label: "가격 낮은 순" },
 ];
 
-const presetList = [
-  {
-    id: "preset-sales-001",
-    title: "세일즈 리드 수집 자동화",
-    description: "폼 응답을 분류하고 CRM에 등록하는 B2B 리드 파이프라인.",
-    category: "영업",
-    price: 3,
-    rating: 4.8,
-    purchases: 128,
-    tags: ["CRM", "Slack", "이메일"],
-    updatedAt: "2일 전",
-    author: "민아",
-  },
-  {
-    id: "preset-support-002",
-    title: "고객 문의 분류 + 답변 초안",
-    description: "고객 문의를 자동으로 분류하고 답변 초안을 준비합니다.",
-    category: "고객지원",
-    price: 2,
-    rating: 4.6,
-    purchases: 92,
-    tags: ["FAQ", "분류", "Zendesk"],
-    updatedAt: "5일 전",
-    author: "지훈",
-  },
-  {
-    id: "preset-marketing-003",
-    title: "콘텐츠 캘린더 생성기",
-    description: "SNS 채널별 콘텐츠 캘린더를 자동으로 생성합니다.",
-    category: "마케팅",
-    price: 1,
-    rating: 4.5,
-    purchases: 76,
-    tags: ["Notion", "SNS", "캘린더"],
-    updatedAt: "1주 전",
-    author: "서연",
-  },
-  {
-    id: "preset-data-004",
-    title: "리포트 자동 요약 배포",
-    description: "주간 리포트를 요약해 팀 채널로 공유합니다.",
-    category: "데이터",
-    price: 5,
-    rating: 4.9,
-    purchases: 212,
-    tags: ["Google Sheets", "요약", "Slack"],
-    updatedAt: "3일 전",
-    author: "도현",
-  },
-  {
-    id: "preset-ops-005",
-    title: "신규 멤버 온보딩 플로우",
-    description: "온보딩 체크리스트와 계정 세팅을 자동화합니다.",
-    category: "운영",
-    price: 0,
-    rating: 4.4,
-    purchases: 310,
-    tags: ["온보딩", "Notion", "Slack"],
-    updatedAt: "2주 전",
-    author: "민수",
-  },
-  {
-    id: "preset-dev-006",
-    title: "앱 로그 이상 탐지 알림",
-    description: "에러 로그를 감지해 즉시 알림을 전송합니다.",
-    category: "개발",
-    price: 4,
-    rating: 4.7,
-    purchases: 54,
-    tags: ["Sentry", "Webhook", "알림"],
-    updatedAt: "4일 전",
-    author: "지민",
-  },
-];
-
 const formatPrice = (price: number) =>
   price === 0 ? "무료" : `${price} 크레딧`;
 
-export default function TemplateMarketPage() {
+const formatDate = (value: Date) =>
+  new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(value);
+
+export default async function TemplateMarketPage() {
+  const session = await auth();
+  const email = session?.user?.email;
+  let viewerId: string | undefined;
+
+  if (email) {
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    viewerId = user?.id;
+  }
+
+  const presets = await getPresets(viewerId);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
@@ -208,7 +157,7 @@ export default function TemplateMarketPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            추천 {presetList.length}개 프리셋
+            추천 {presets.length}개 프리셋
           </p>
           <div className="flex flex-wrap gap-2">
             {sortOptions.map((option) => (
@@ -223,58 +172,85 @@ export default function TemplateMarketPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {presetList.map((preset) => (
-            <Card key={preset.id} className="h-full">
-              <CardHeader>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-                    {preset.category}
-                  </span>
-                  <span>업데이트 {preset.updatedAt}</span>
-                </div>
-                <CardTitle className="text-lg">{preset.title}</CardTitle>
-                <CardDescription className="line-clamp-2">
-                  {preset.description}
-                </CardDescription>
-                <CardAction>
-                  <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
-                    {formatPrice(preset.price)}
-                  </span>
-                </CardAction>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                  <span>평점 {preset.rating}</span>
-                  <span>구매 {preset.purchases}</span>
-                  <span>제작자 {preset.author}</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {preset.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground"
+        {presets.length === 0 ? (
+          <Card className="border-dashed">
+            <CardHeader>
+              <CardTitle>공개된 프리셋이 없습니다</CardTitle>
+              <CardDescription>
+                아직 공개된 프리셋이 없어요. 곧 새로운 프리셋이
+                추가됩니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="secondary" asChild>
+                <Link href="/canvas">첫 프리셋 만들기</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {presets.map((preset) => {
+              const actionLabel = preset.isPurchased
+                ? "이미 보유함"
+                : preset.price === 0
+                  ? "무료로 받기"
+                  : "구매하기";
+              const actionVariant = preset.isPurchased
+                ? "secondary"
+                : preset.price === 0
+                  ? "secondary"
+                  : "default";
+
+              return (
+                <Card key={preset.id} className="h-full">
+                  <CardHeader>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                        {preset.category ?? "미분류"}
+                      </span>
+                      <span>업데이트 {formatDate(preset.updatedAt)}</span>
+                    </div>
+                    <CardTitle className="text-lg">{preset.title}</CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {preset.summary ??
+                        preset.description ??
+                        "설명이 없습니다."}
+                    </CardDescription>
+                    <CardAction>
+                      <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
+                        {formatPrice(preset.price)}
+                      </span>
+                    </CardAction>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      <span>구매 {preset.purchaseCount}</span>
+                      <span>제작자 {preset.ownerName ?? "알 수 없음"}</span>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="gap-2 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      asChild
                     >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </CardContent>
-              <CardFooter className="gap-2 border-t">
-                <Button variant="outline" size="sm" className="flex-1" asChild>
-                  <Link href={`/presets/${preset.id}`}>상세 보기</Link>
-                </Button>
-                <Button
-                  size="sm"
-                  variant={preset.price === 0 ? "secondary" : "default"}
-                  className="flex-1"
-                >
-                  {preset.price === 0 ? "무료로 받기" : "구매하기"}
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                      <Link href={`/presets/${preset.id}`}>상세 보기</Link>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={actionVariant}
+                      className="flex-1"
+                      disabled={preset.isPurchased}
+                    >
+                      {actionLabel}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
