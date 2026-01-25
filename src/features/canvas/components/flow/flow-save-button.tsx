@@ -22,8 +22,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import {
-  defaultWorkflowState,
   type WorkflowState,
+  defaultWorkflowState,
 } from "@/features/canvas/store/slices/workflow-slice";
 
 export function FlowSaveButton() {
@@ -97,7 +97,8 @@ export function FlowSaveButton() {
         setWorkflow({
           id: nextId ?? workflowId,
           title: payload?.data?.title ?? trimmedTitle,
-          description: payload?.data?.description ?? requestBody.description,
+          description:
+            payload?.data?.description ?? requestBody.description ?? null,
         });
 
         setOpen(false);
@@ -138,7 +139,10 @@ export function FlowSaveButton() {
           저장
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="sm:max-w-lg"
+        ariaDescribedby="workflow save dialog"
+      >
         <DialogHeader>
           <DialogTitle>워크플로우 저장</DialogTitle>
           <DialogDescription>
