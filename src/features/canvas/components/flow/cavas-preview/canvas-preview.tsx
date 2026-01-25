@@ -8,7 +8,14 @@ type CanvasSsrPreviewProps = {
 
 export function CanvasPreview({ nodes, edges }: CanvasSsrPreviewProps) {
   const chart = buildMermaidCode(nodes, edges);
-  return <MermaidRenderer chart={chart} />;
+  return (
+    <div
+      className="flex items-center justify-center overflow-auto"
+      style={{ height: 200 }}
+    >
+      <MermaidRenderer chart={chart} />
+    </div>
+  );
 }
 
 const escapeMermaidLabel = (value: string) =>

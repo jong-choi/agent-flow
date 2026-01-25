@@ -9,13 +9,21 @@ export function MermaidRenderer({ chart }: { chart: string }) {
   useEffect(() => {
     mermaid.initialize({ startOnLoad: false });
 
-    if (ref.current) {
-      ref.current.innerHTML = chart;
-      mermaid.run({
-        querySelector: ".mermaid",
-      });
-    }
+    (async () => {
+      if (ref.current) {
+        ref.current.innerHTML = chart;
+        try {
+          requestAnimationFrame(async () => {
+            if (ref.current) {
+              await mermaid.run({ nodes: [ref.current] });
+            }
+          });
+        } catch {
+          // no-op
+        }
+      }
+    })();
   }, [chart]);
 
-  return <div className="mermaid" ref={ref} />;
+  return <div ref={ref} className="mermaid" />;
 }

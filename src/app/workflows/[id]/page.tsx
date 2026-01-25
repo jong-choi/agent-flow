@@ -82,7 +82,6 @@ export default async function WorkflowDetailPage({
               <CanvasPreview nodes={nodes} edges={edges} />
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>노드 목록</CardTitle>
