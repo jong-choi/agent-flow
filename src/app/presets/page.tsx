@@ -88,9 +88,9 @@ export default async function TemplateMarketPage() {
         <Card className="py-4">
           <CardContent className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
-              <p className="text-sm font-medium">구매한 프리셋</p>
+              <p className="text-sm font-medium">내 프리셋</p>
               <p className="text-sm text-muted-foreground">
-                구매한 프리셋은 캔버스에서 바로 불러올 수 있습니다.
+                구매하거나 만든 프리셋은 캔버스에서 바로 불러올 수 있습니다.
               </p>
             </div>
             <Button variant="secondary" size="sm" asChild>

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { db } from "@/db/client";
-import { getPurchasedPresets } from "@/db/query/presets";
+import { getOwnedPresets, getPurchasedPresets } from "@/db/query/presets";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { formatKoreanDate } from "@/lib/utils";
@@ -46,6 +46,21 @@ const formatPrice = (price: number) =>
 const formatDate = (value: Date | string | null | undefined) =>
   formatKoreanDate(value, "날짜 없음");
 
+type LibraryPreset = {
+  id: string;
+  workflowId: string;
+  ownerId: string;
+  ownerName: string | null;
+  title: string;
+  description: string | null;
+  summary: string | null;
+  category: string | null;
+  price: number;
+  source: "created" | "purchased";
+  displayDate?: Date | string | null;
+  isPublished?: boolean;
+};
+
 export default async function PurchasedPresetsPage() {
   const session = await auth();
   const email = session?.user?.email;
@@ -64,8 +79,43 @@ export default async function PurchasedPresetsPage() {
     notFound();
   }
 
-  const purchasedPresets = await getPurchasedPresets(user.id);
-  const freeCount = purchasedPresets.filter(
+  const [purchasedPresets, ownedPresets] = await Promise.all([
+    getPurchasedPresets(user.id),
+    getOwnedPresets(user.id),
+  ]);
+
+  const ownedIds = new Set(ownedPresets.map((preset) => preset.id));
+  const purchasedOnly = purchasedPresets.filter(
+    (preset) => !ownedIds.has(preset.id),
+  );
+
+  const libraryPresets: LibraryPreset[] = [
+    ...ownedPresets.map((preset) => ({
+      ...preset,
+      source: "created" as const,
+      displayDate: preset.updatedAt ?? preset.createdAt,
+    })),
+    ...purchasedOnly.map((preset) => ({
+      ...preset,
+      source: "purchased" as const,
+      displayDate: preset.purchasedAt,
+    })),
+  ];
+
+  const toTimestamp = (value: Date | string | null | undefined) => {
+    if (!value) return 0;
+    const date = value instanceof Date ? value : new Date(value);
+    const time = date.getTime();
+    return Number.isNaN(time) ? 0 : time;
+  };
+
+  libraryPresets.sort(
+    (a, b) => toTimestamp(b.displayDate) - toTimestamp(a.displayDate),
+  );
+
+  const createdCount = ownedPresets.length;
+  const purchasedCount = purchasedOnly.length;
+  const freeCount = libraryPresets.filter(
     (preset) => preset.price === 0,
   ).length;
 
@@ -75,9 +125,9 @@ export default async function PurchasedPresetsPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">내 라이브러리</p>
-            <h1 className="text-2xl font-semibold">구매한 프리셋</h1>
+            <h1 className="text-2xl font-semibold">내 프리셋</h1>
             <p className="text-sm text-muted-foreground">
-              구매한 프리셋을 관리하고 캔버스에서 바로 불러옵니다.
+              구매하거나 만든 프리셋을 관리하고 캔버스에서 바로 불러옵니다.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -95,7 +145,8 @@ export default async function PurchasedPresetsPage() {
             <div className="space-y-1">
               <p className="text-sm font-medium">내 프리셋 라이브러리</p>
               <p className="text-sm text-muted-foreground">
-                구매 {purchasedPresets.length}개 · 무료 프리셋 {freeCount}개
+                전체 {libraryPresets.length}개 · 만든 {createdCount}개 · 구매{" "}
+                {purchasedCount}개 · 무료 {freeCount}개
               </p>
             </div>
             <Button variant="secondary" size="sm" asChild>
@@ -163,7 +214,7 @@ export default async function PurchasedPresetsPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            내 프리셋 {purchasedPresets.length}개
+            내 프리셋 {libraryPresets.length}개
           </p>
           <div className="flex flex-wrap gap-2">
             {sortOptions.map((option) => (
@@ -178,12 +229,12 @@ export default async function PurchasedPresetsPage() {
           </div>
         </div>
 
-        {purchasedPresets.length === 0 ? (
+        {libraryPresets.length === 0 ? (
           <Card className="border-dashed">
             <CardHeader>
-              <CardTitle>구매한 프리셋이 없습니다</CardTitle>
+              <CardTitle>내 프리셋이 없습니다</CardTitle>
               <CardDescription>
-                프리셋 마켓에서 필요한 워크플로우를 구매해 보세요.
+                프리셋 마켓에서 구매하거나 직접 만들어 보세요.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -194,41 +245,65 @@ export default async function PurchasedPresetsPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {purchasedPresets.map((preset) => (
-              <Card key={preset.id} className="h-full">
-                <CardHeader>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-                      {preset.category ?? "미분류"}
-                    </span>
-                    <span>구매 {formatDate(preset.purchasedAt)}</span>
-                  </div>
-                  <CardTitle className="text-lg">{preset.title}</CardTitle>
-                  <CardDescription className="line-clamp-2">
-                    {preset.description ?? "설명이 없습니다."}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    <span>가격 {formatPrice(preset.price)}</span>
-                    <span>제작자 {preset.ownerName ?? "알 수 없음"}</span>
-                  </div>
-                </CardContent>
-                <CardFooter className="gap-2 border-t">
-                  <Button size="sm" className="flex-1" asChild>
-                    <Link href="/canvas">캔버스에서 열기</Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    asChild
-                  >
-                    <Link href={`/presets/${preset.id}`}>상세 보기</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+            {libraryPresets.map((preset) => {
+              const isCreated = preset.source === "created";
+              const dateLabel = isCreated ? "업데이트" : "구매";
+              const canvasHref = isCreated
+                ? `/canvas/${preset.workflowId}`
+                : "/canvas";
+
+              return (
+                <Card key={preset.id} className="h-full">
+                  <CardHeader>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                        {preset.category ?? "미분류"}
+                      </span>
+                      {isCreated ? (
+                        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                          내가 만든
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                          구매
+                        </span>
+                      )}
+                      <span>
+                        {dateLabel} {formatDate(preset.displayDate)}
+                      </span>
+                      {isCreated && preset.isPublished === false ? (
+                        <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                          비공개
+                        </span>
+                      ) : null}
+                    </div>
+                    <CardTitle className="text-lg">{preset.title}</CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {preset.description ?? "설명이 없습니다."}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      <span>가격 {formatPrice(preset.price)}</span>
+                      <span>제작자 {preset.ownerName ?? "알 수 없음"}</span>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="gap-2 border-t">
+                    <Button size="sm" className="flex-1" asChild>
+                      <Link href={canvasHref}>캔버스에서 열기</Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      asChild
+                    >
+                      <Link href={`/presets/${preset.id}`}>상세 보기</Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>

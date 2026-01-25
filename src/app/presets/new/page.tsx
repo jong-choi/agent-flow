@@ -1,21 +1,21 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { db } from "@/db/client";
-import { createPreset } from "@/db/query/presets";
 import { users, workflows } from "@/db/schema";
-import { PresetCreateForm } from "@/features/preset/components/preset-create-form";
 import { auth } from "@/lib/auth";
+import { formatKoreanDate } from "@/lib/utils";
 
-const normalizeOptionalText = (value: FormDataEntryValue | null) => {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed === "" ? null : trimmed;
-};
+const formatDate = (value: Date | string | null | undefined) =>
+  formatKoreanDate(value, "날짜 없음");
 
 export default async function PresetCreatePage() {
   const session = await auth();
@@ -46,76 +46,15 @@ export default async function PresetCreatePage() {
     .where(eq(workflows.ownerId, user.id))
     .orderBy(desc(workflows.updatedAt));
 
-  const createPresetAction = async (formData: FormData) => {
-    "use server";
-
-    const session = await auth();
-    const email = session?.user?.email;
-
-    if (!email) {
-      notFound();
-    }
-
-    const [user] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    if (!user) {
-      notFound();
-    }
-
-    const workflowIdValue = formData.get("workflowId");
-    const titleValue = formData.get("title");
-
-    if (typeof workflowIdValue !== "string" || workflowIdValue === "") {
-      return;
-    }
-
-    if (typeof titleValue !== "string" || titleValue.trim() === "") {
-      return;
-    }
-
-    const description = normalizeOptionalText(formData.get("description"));
-    const summary = normalizeOptionalText(formData.get("summary"));
-    const category = normalizeOptionalText(formData.get("category"));
-    const priceValue = formData.get("price");
-    const isPublished = formData.get("isPublished") === "on";
-
-    let price = 0;
-    if (typeof priceValue === "string" && priceValue.trim() !== "") {
-      const parsed = Number(priceValue);
-      price = Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : 0;
-    }
-
-    const preset = await createPreset({
-      ownerId: user.id,
-      workflowId: workflowIdValue,
-      title: titleValue.trim(),
-      description,
-      summary,
-      category,
-      price,
-      isPublished,
-    });
-
-    if (!preset) {
-      notFound();
-    }
-
-    redirect(`/presets/${preset.id}`);
-  };
-
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">내 프리셋</p>
-            <h1 className="text-2xl font-semibold">프리셋 만들기</h1>
+            <p className="text-sm text-muted-foreground">내 프리셋 · 1/2</p>
+            <h1 className="text-2xl font-semibold">워크플로우 선택</h1>
             <p className="text-sm text-muted-foreground">
-              워크플로우를 선택하고 프리셋 정보를 입력하세요.
+              프리셋으로 저장할 워크플로우를 선택하세요.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -128,10 +67,50 @@ export default async function PresetCreatePage() {
           </div>
         </div>
 
-        <PresetCreateForm
-          workflows={workflowList}
-          action={createPresetAction}
-        />
+        {workflowList.length === 0 ? (
+          <Card className="border-dashed">
+            <CardHeader>
+              <CardTitle>워크플로우가 없습니다</CardTitle>
+              <CardDescription>
+                캔버스에서 워크플로우를 만든 뒤 프리셋을 생성해 주세요.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="secondary" asChild>
+                <Link href="/canvas">워크플로우 만들기</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {workflowList.map((workflow) => (
+              <Link
+                key={workflow.id}
+                href={`/presets/new/${workflow.id}`}
+                className="group"
+              >
+                <Card className="h-full transition-shadow group-hover:shadow-md">
+                  <CardHeader>
+                    <CardTitle className="text-lg">
+                      {workflow.title}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {workflow.description ?? "설명이 없습니다."}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>
+                        최근 업데이트 {formatDate(workflow.updatedAt)}
+                      </span>
+                      <span className="text-primary">선택하기</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
