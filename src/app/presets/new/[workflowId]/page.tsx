@@ -95,6 +95,16 @@ export default async function PresetCreateDetailPage({
     const category = normalizeOptionalText(formData.get("category"));
     const priceValue = formData.get("price");
     const isPublished = formData.get("isPublished") === "on";
+    const tagValues = formData.getAll("tags");
+    const tags = Array.from(
+      new Map(
+        tagValues
+          .filter((value): value is string => typeof value === "string")
+          .map((value) => value.trim())
+          .filter((value) => value !== "")
+          .map((value) => [value.toLowerCase(), value]),
+      ).values(),
+    );
 
     let price = 0;
     if (typeof priceValue === "string" && priceValue.trim() !== "") {
@@ -111,6 +121,7 @@ export default async function PresetCreateDetailPage({
       category,
       price,
       isPublished,
+      tags,
     });
 
     if (!preset) {

@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PresetCreateSubmitButton } from "@/features/preset/components/preset-create-submit-button";
+import { PresetTagInput } from "@/features/preset/components/preset-tag-input";
 import { categoryOptions } from "@/features/preset/constants/category-options";
 
 const selectClassName =
@@ -89,6 +90,7 @@ export function PresetCreateForm({
               ))}
             </select>
           </div>
+          <PresetTagInput />
         </CardContent>
       </Card>
 
