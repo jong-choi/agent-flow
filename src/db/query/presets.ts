@@ -6,6 +6,7 @@ import { db } from "@/db/client";
 import { getWorkflowWithGraph } from "@/db/query/workflows";
 import { users } from "@/db/schema/auth";
 import { presetPurchases, presets } from "@/db/schema/presets";
+import { workflows } from "@/db/schema/workflows";
 
 const buildPurchaseCount = () =>
   sql<number>`
@@ -132,4 +133,50 @@ export const getPurchasedPresets = async (buyerId: string) => {
     .leftJoin(users, eq(users.id, presets.ownerId))
     .where(eq(presetPurchases.buyerId, buyerId))
     .orderBy(desc(presetPurchases.purchasedAt));
+};
+
+export const createPreset = async ({
+  ownerId,
+  workflowId,
+  title,
+  description,
+  summary,
+  category,
+  price,
+  isPublished,
+}: {
+  ownerId: string;
+  workflowId: string;
+  title: string;
+  description: string | null;
+  summary: string | null;
+  category: string | null;
+  price: number;
+  isPublished: boolean;
+}) => {
+  const [workflow] = await db
+    .select({ id: workflows.id })
+    .from(workflows)
+    .where(and(eq(workflows.id, workflowId), eq(workflows.ownerId, ownerId)))
+    .limit(1);
+
+  if (!workflow) {
+    return null;
+  }
+
+  const [preset] = await db
+    .insert(presets)
+    .values({
+      ownerId,
+      workflowId,
+      title,
+      description,
+      summary,
+      category,
+      price,
+      isPublished,
+    })
+    .returning({ id: presets.id });
+
+  return preset ?? null;
 };
