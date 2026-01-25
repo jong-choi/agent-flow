@@ -4,7 +4,7 @@ import { sidebarNodeType } from "@/db/schema/sidebar-nodes";
 
 export const workflows = pgTable("workflows", {
   id: uuid("id").defaultRandom().primaryKey(),
-  title: text("source").notNull(),
+  title: text("title").notNull(),
   description: text("description"),
   ownerId: text("owner_id")
     .notNull()
