@@ -13,3 +13,22 @@ export function formatYMDT(str: string) {
 export function formatHHMM(str: string) {
   return dayjs(str).format("HH:mm");
 }
+
+export function formatKoreanDate(
+  value: Date | string | null | undefined,
+  fallback = "-",
+) {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = dayjs(value);
+
+  if (!parsed.isValid()) {
+    return fallback;
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(
+    parsed.toDate(),
+  );
+}

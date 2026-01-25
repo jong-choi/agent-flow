@@ -15,6 +15,7 @@ import { db } from "@/db/client";
 import { getPurchasedPresets } from "@/db/query/presets";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { formatKoreanDate } from "@/lib/utils";
 
 const libraryFilters = [
   { label: "전체", active: true },
@@ -42,8 +43,8 @@ const sortOptions = [
 const formatPrice = (price: number) =>
   price === 0 ? "무료" : `${price} 크레딧`;
 
-const formatDate = (value: Date) =>
-  new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(value);
+const formatDate = (value: Date | string | null | undefined) =>
+  formatKoreanDate(value, "날짜 없음");
 
 export default async function PurchasedPresetsPage() {
   const session = await auth();

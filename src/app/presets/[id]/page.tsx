@@ -17,12 +17,13 @@ import { getPresetDetail, getPresetPurchaseStatus } from "@/db/query/presets";
 import { users } from "@/db/schema";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
 import { auth } from "@/lib/auth";
+import { formatKoreanDate } from "@/lib/utils";
 
 const formatPrice = (price: number) =>
   price === 0 ? "무료" : `${price} 크레딧`;
 
-const formatDate = (value: Date) =>
-  new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(value);
+const formatDate = (value: Date | string | null | undefined) =>
+  formatKoreanDate(value, "날짜 없음");
 
 export default async function PresetDetailPage({
   params,
