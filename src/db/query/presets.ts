@@ -463,6 +463,7 @@ export const createPreset = async ({
   category,
   price,
   isPublished,
+  tags = [],
 }: {
   ownerId: string;
   workflowId: string;
@@ -472,6 +473,7 @@ export const createPreset = async ({
   category: string | null;
   price: number;
   isPublished: boolean;
+  tags?: string[];
 }) => {
   const [workflow] = await db
     .select({ id: workflows.id })
@@ -496,6 +498,29 @@ export const createPreset = async ({
       isPublished,
     })
     .returning({ id: presets.id });
+
+  if (preset && tags.length > 0) {
+    const normalizedTags = Array.from(
+      new Map(
+        tags
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0)
+          .map((tag) => [tag.toLowerCase(), tag]),
+      ).values(),
+    );
+
+    if (normalizedTags.length > 0) {
+      await db
+        .insert(presetTags)
+        .values(
+          normalizedTags.map((tag) => ({
+            presetId: preset.id,
+            tag,
+          })),
+        )
+        .onConflictDoNothing();
+    }
+  }
 
   return preset ?? null;
 };
