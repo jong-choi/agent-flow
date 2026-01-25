@@ -11,7 +11,7 @@ import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 
 type DraggableItemProps = {
   item: SidebarNodeData;
-  onClick: React.MouseEventHandler<HTMLDivElement>;
+  onMouseDown: React.MouseEventHandler<HTMLDivElement>;
 };
 
 export function DraggableItemView({ item }: { item: SidebarNodeData }) {
@@ -25,7 +25,7 @@ export function DraggableItemView({ item }: { item: SidebarNodeData }) {
   );
 }
 
-export function DraggableItem({ item, onClick }: DraggableItemProps) {
+export function DraggableItem({ item, onMouseDown }: DraggableItemProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.id,
     data: item,
@@ -41,7 +41,7 @@ export function DraggableItem({ item, onClick }: DraggableItemProps) {
       {...listeners}
       {...attributes}
       style={style}
-      onClick={onClick}
+      onMouseDown={onMouseDown}
       aria-describedby={"draggable item"}
     >
       <DraggableItemView item={item} />

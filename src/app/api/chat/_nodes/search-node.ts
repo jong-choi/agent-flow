@@ -33,13 +33,21 @@ export const searchNode = async (
     throw new Error("검색 노드에 input이 주어지지 않았습니다.");
   }
 
-  const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_CX}&q=${encodeURIComponent(input)}`;
+  const params = new URLSearchParams({
+    key: GOOGLE_SEARCH_API_KEY,
+    cx: GOOGLE_SEARCH_CX,
+    q: input,
+    num: String(20),
+    fields: "items(title,link,snippet),searchInformation(totalResults)",
+  });
+
+  const searchUrl = `https://www.googleapis.com/customsearch/v1?${params}`;
 
   const response = await fetch(searchUrl);
   if (!response.ok) {
-    throw new Error(
-      `Google Search API 오류: ${response.status} ${response.statusText}`,
-    );
+    const errText = await response.text();
+    console.error("Google Search API error:", response.status, errText);
+    return { outputMap: { [nodeId]: "Google Search Error" } };
   }
 
   const data: GoogleSearchResponse = await response.json();

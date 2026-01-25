@@ -53,55 +53,69 @@ export async function GET(
           );
         };
         const encoder = new TextEncoder();
-        for await (const chunk of app.streamEvents(state, {
-          version: "v2",
-          configurable: { thread_id: threadId },
-          durability: "exit", // 랭그래프 종료 시점에만 상태 업데이트
-        })) {
-          if (
-            !isEventName(chunk.event) ||
-            typeof chunk.metadata.type !== "string" ||
-            !isValidNodeType(chunk.metadata.type)
-          ) {
-            continue;
-          }
 
-          const parsed = langgraphStreamEventSchema.safeParse(chunk);
-          if (!parsed.success) {
-            continue;
-          }
-
-          const event = parsed.data.event;
-          const { type, langgraph_node } = parsed.data.metadata;
-
-          if (type === "startNode") {
-            if (event === "on_chain_start") {
-              emitEvent({ type, event, langgraph_node });
+        try {
+          for await (const chunk of app.streamEvents(state, {
+            version: "v2",
+            configurable: { thread_id: threadId },
+            durability: "exit", // 랭그래프 종료 시점에만 상태 업데이트
+          })) {
+            if (
+              !isEventName(chunk.event) ||
+              typeof chunk.metadata.type !== "string" ||
+              !isValidNodeType(chunk.metadata.type)
+            ) {
+              continue;
             }
-          }
-          if (type === "chatNode") {
-            if (event === "on_chat_model_start") {
-              emitEvent({ type, event, langgraph_node });
-            } else if (event === "on_chat_model_stream") {
-              const content = parsed.data.data?.chunk?.content;
-              if (typeof content !== "string") {
-                continue;
+
+            const parsed = langgraphStreamEventSchema.safeParse(chunk);
+            if (!parsed.success) {
+              continue;
+            }
+
+            const event = parsed.data.event;
+            const { type, langgraph_node } = parsed.data.metadata;
+
+            if (type === "startNode") {
+              if (event === "on_chain_start") {
+                emitEvent({ type, event, langgraph_node });
               }
-              emitEvent({
-                type,
-                event,
-                langgraph_node,
-                chunk: { content },
-              });
-            } else if (event === "on_chat_model_end") {
-              emitEvent({ type, event, langgraph_node });
+            }
+            if (type === "chatNode") {
+              if (event === "on_chat_model_start") {
+                emitEvent({ type, event, langgraph_node });
+              } else if (event === "on_chat_model_stream") {
+                const content = parsed.data.data?.chunk?.content;
+                if (typeof content !== "string") {
+                  continue;
+                }
+                emitEvent({
+                  type,
+                  event,
+                  langgraph_node,
+                  chunk: { content },
+                });
+              } else if (event === "on_chat_model_end") {
+                emitEvent({ type, event, langgraph_node });
+              }
+            }
+            if (type === "endNode") {
+              if (event === "on_chain_end") {
+                emitEvent({ type, event, langgraph_node });
+              }
             }
           }
-          if (type === "endNode") {
-            if (event === "on_chain_end") {
-              emitEvent({ type, event, langgraph_node });
-            }
-          }
+        } catch (error) {
+          console.error("SSE stream error:", error);
+          emitEvent({
+            type: "endNode",
+            event: "on_chain_end",
+          });
+          controller.close();
+          return Response.json(
+            { error: "Internal Server Error" },
+            { status: 500 },
+          );
         }
       },
     });

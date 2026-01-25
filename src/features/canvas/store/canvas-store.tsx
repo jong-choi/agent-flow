@@ -15,14 +15,22 @@ import {
   type SidebarInfoSlice,
   createSidebarInfoSlice,
 } from "@/features/canvas/store/slices/sidebar-info-slice";
+import {
+  type WorkflowSlice,
+  createWorkflowSlice,
+} from "@/features/canvas/store/slices/workflow-slice";
 
-type CanvasState = FlowValidationSlice & SidebarInfoSlice & SelectedNodeSlice;
+type CanvasState = FlowValidationSlice &
+  SidebarInfoSlice &
+  SelectedNodeSlice &
+  WorkflowSlice;
 
 const createCanvasStore = (initialState?: Partial<CanvasState>) =>
   createStore<CanvasState>()((set, get, api) => ({
     ...createFlowValidationSlice(set, get, api),
     ...createSidebarInfoSlice(set, get, api),
     ...createSelectedNodeSlice(set, get, api),
+    ...createWorkflowSlice(set, get, api),
     ...initialState,
   }));
 
