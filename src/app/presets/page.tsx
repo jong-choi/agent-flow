@@ -18,27 +18,27 @@ import { auth } from "@/lib/auth";
 import { formatKoreanDate } from "@/lib/utils";
 
 const categoryFilters = [
-  { label: "전체", active: true },
-  { label: "마케팅" },
-  { label: "영업" },
-  { label: "고객지원" },
-  { label: "데이터" },
-  { label: "운영" },
-  { label: "개발" },
+  { label: "전체", value: "all" },
+  { label: "마케팅", value: "마케팅" },
+  { label: "영업", value: "영업" },
+  { label: "고객지원", value: "고객지원" },
+  { label: "데이터", value: "데이터" },
+  { label: "운영", value: "운영" },
+  { label: "개발", value: "개발" },
 ];
 
 const priceFilters = [
-  { label: "전체", active: true },
-  { label: "무료" },
-  { label: "1~2 크레딧" },
-  { label: "3~5 크레딧" },
+  { label: "전체", value: "all" },
+  { label: "무료", value: "free" },
+  { label: "1~2 크레딧", value: "1-2" },
+  { label: "3~5 크레딧", value: "3-5" },
 ];
 
 const sortOptions = [
-  { label: "인기순", active: true },
-  { label: "최신순" },
-  { label: "평점순" },
-  { label: "가격 낮은 순" },
+  { label: "인기순", value: "popular" },
+  { label: "최신순", value: "latest" },
+  { label: "평점순", value: "rating" },
+  { label: "가격 낮은 순", value: "price-asc" },
 ];
 
 const formatPrice = (price: number) =>
@@ -47,7 +47,43 @@ const formatPrice = (price: number) =>
 const formatDate = (value: Date | string | null | undefined) =>
   formatKoreanDate(value, "날짜 없음");
 
-export default async function TemplateMarketPage() {
+type PresetsPageSearchParams = {
+  q?: string | string[];
+  category?: string | string[];
+  price?: string | string[];
+  sort?: string | string[];
+};
+
+const resolveParam = (
+  value: string | string[] | undefined,
+  fallback: string,
+) => (Array.isArray(value) ? value[0] : value) ?? fallback;
+
+const buildQueryString = (
+  base: { [key: string]: string },
+  overrides: Partial<{ [key: string]: string }>,
+) => {
+  const params = new URLSearchParams();
+  const next = { ...base, ...overrides };
+
+  Object.entries(next).forEach(([key, value]) => {
+    if (!value) return;
+    if (key === "category" && value === "all") return;
+    if (key === "price" && value === "all") return;
+    if (key === "sort" && value === "popular") return;
+    if (key === "q" && value.trim() === "") return;
+    params.set(key, value);
+  });
+
+  const query = params.toString();
+  return query ? `?${query}` : "";
+};
+
+export default async function TemplateMarketPage({
+  searchParams,
+}: {
+  searchParams?: Promise<PresetsPageSearchParams> | PresetsPageSearchParams;
+}) {
   const session = await auth();
   const email = session?.user?.email;
   let viewerId: string | undefined;
@@ -62,7 +98,40 @@ export default async function TemplateMarketPage() {
     viewerId = user?.id;
   }
 
-  const presets = await getPresets(viewerId);
+  const resolvedSearchParams = await searchParams;
+  const selectedCategory = resolveParam(resolvedSearchParams?.category, "all");
+  const selectedPrice = resolveParam(resolvedSearchParams?.price, "all");
+  const selectedSort = resolveParam(resolvedSearchParams?.sort, "popular");
+  const query = resolveParam(resolvedSearchParams?.q, "");
+
+  const priceRange =
+    selectedPrice === "free"
+      ? { min: 0, max: 0 }
+      : selectedPrice === "1-2"
+        ? { min: 1, max: 2 }
+        : selectedPrice === "3-5"
+          ? { min: 3, max: 5 }
+          : null;
+
+  const presets = await getPresets(viewerId, {
+    query,
+    category: selectedCategory === "all" ? null : selectedCategory,
+    priceMin: priceRange?.min,
+    priceMax: priceRange?.max,
+    sort:
+      selectedSort === "latest" ||
+      selectedSort === "rating" ||
+      selectedSort === "price-asc"
+        ? selectedSort
+        : "popular",
+  });
+
+  const baseParams = {
+    q: query,
+    category: selectedCategory,
+    price: selectedPrice,
+    sort: selectedSort,
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
@@ -107,15 +176,30 @@ export default async function TemplateMarketPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <form
+              action="/presets"
+              method="get"
+              className="flex flex-col gap-3 md:flex-row md:items-center"
+            >
               <div className="flex-1">
-                <Input placeholder="워크플로우, 기능, 키워드로 검색" />
+                <Input
+                  name="q"
+                  defaultValue={query}
+                  placeholder="워크플로우, 기능, 키워드로 검색"
+                />
               </div>
+              <input type="hidden" name="category" value={selectedCategory} />
+              <input type="hidden" name="price" value={selectedPrice} />
+              <input type="hidden" name="sort" value={selectedSort} />
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary">검색</Button>
-                <Button variant="outline">필터 초기화</Button>
+                <Button type="submit" variant="secondary">
+                  검색
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/presets">필터 초기화</Link>
+                </Button>
               </div>
-            </div>
+            </form>
 
             <div className="space-y-3">
               <div className="space-y-2">
@@ -126,11 +210,22 @@ export default async function TemplateMarketPage() {
                   {categoryFilters.map((filter) => (
                     <Button
                       key={filter.label}
-                      variant={filter.active ? "secondary" : "outline"}
+                      variant={
+                        filter.value === selectedCategory
+                          ? "secondary"
+                          : "outline"
+                      }
                       size="sm"
                       className="rounded-full"
+                      asChild
                     >
-                      {filter.label}
+                      <Link
+                        href={`/presets${buildQueryString(baseParams, {
+                          category: filter.value,
+                        })}`}
+                      >
+                        {filter.label}
+                      </Link>
                     </Button>
                   ))}
                 </div>
@@ -143,11 +238,22 @@ export default async function TemplateMarketPage() {
                   {priceFilters.map((filter) => (
                     <Button
                       key={filter.label}
-                      variant={filter.active ? "secondary" : "outline"}
+                      variant={
+                        filter.value === selectedPrice
+                          ? "secondary"
+                          : "outline"
+                      }
                       size="sm"
                       className="rounded-full"
+                      asChild
                     >
-                      {filter.label}
+                      <Link
+                        href={`/presets${buildQueryString(baseParams, {
+                          price: filter.value,
+                        })}`}
+                      >
+                        {filter.label}
+                      </Link>
                     </Button>
                   ))}
                 </div>
@@ -164,10 +270,19 @@ export default async function TemplateMarketPage() {
             {sortOptions.map((option) => (
               <Button
                 key={option.label}
-                variant={option.active ? "secondary" : "outline"}
+                variant={
+                  option.value === selectedSort ? "secondary" : "outline"
+                }
                 size="sm"
+                asChild
               >
-                {option.label}
+                <Link
+                  href={`/presets${buildQueryString(baseParams, {
+                    sort: option.value,
+                  })}`}
+                >
+                  {option.label}
+                </Link>
               </Button>
             ))}
           </div>
