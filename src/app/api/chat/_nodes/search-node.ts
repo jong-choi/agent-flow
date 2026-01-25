@@ -47,7 +47,6 @@ export const searchNode = async (
   if (!response.ok) {
     const errText = await response.text();
     console.error("Google Search API error:", response.status, errText);
-    console.error(response.status, errText);
     return { outputMap: { [nodeId]: "Google Search Error" } };
   }
 
