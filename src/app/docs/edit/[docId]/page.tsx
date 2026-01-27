@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ArrowLeft, Calendar, FileText, Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { use, useState } from "react";
+import { ArrowLeft, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { ReactMarkdownApp } from "@/features/chat/components/markdown/react-markdown-app";
 import "@/features/chat/styles/small-header-markdown.css";
 import { formatKoreanDate } from "@/lib/utils";
@@ -31,7 +35,7 @@ const documents: DocumentDetail[] = [
     title: "Drizzle 초기 세팅 메모",
     summary: "프로젝트 초기 설정과 마이그레이션 규칙을 정리한 문서입니다.",
     content:
-      '# Drizzle 기본 세팅\n\n프로젝트에서 사용하는 드리즐 설정과 팀 규칙을 정리합니다.\n\n## 체크리스트\n\n- [x] 데이터베이스 연결\n- [x] 스키마 파일 구조\n- [ ] 마이그레이션 자동화\n\n## 기본 스키마 예시\n\n```ts\nimport { pgTable, text } from "drizzle-orm/pg-core";\n\nexport const users = pgTable("users", {\n  id: text("id").primaryKey(),\n});\n```\n\n## 참고 사항\n\n- 스키마 변경 시 `drizzle-kit` 마이그레이션 실행\n- 배포 전 로컬에서 한번씩 테스트\n',
+      "# Drizzle 기본 세팅\n\n프로젝트에서 사용하는 드리즐 설정과 팀 규칙을 정리합니다.\n\n## 체크리스트\n\n- [x] 데이터베이스 연결\n- [x] 스키마 파일 구조\n- [ ] 마이그레이션 자동화\n\n## 기본 스키마 예시\n\n```ts\nimport { pgTable, text } from \"drizzle-orm/pg-core\";\n\nexport const users = pgTable(\"users\", {\n  id: text(\"id\").primaryKey(),\n});\n```\n\n## 참고 사항\n\n- 스키마 변경 시 `drizzle-kit` 마이그레이션 실행\n- 배포 전 로컬에서 한번씩 테스트\n",
     updatedAt: "2026-01-22",
     status: "draft",
     tags: ["세팅", "DB"],
@@ -61,14 +65,37 @@ const documents: DocumentDetail[] = [
 const statusLabel = (status: DocumentDetail["status"]) =>
   status === "published" ? "공개" : "초안";
 
-export default async function DocumentViewPage({
+type EditorTab = "raw" | "preview";
+
+export default function DocumentEditPage({
   params,
-}: PageProps<"/docs/[docId]">) {
-  const { docId } = await params;
+}: PageProps<"/docs/edit/[docId]">) {
+  const router = useRouter();
+  const { docId } = use(params);
   const document = documents.find((doc) => doc.id === docId);
+  const [activeTab, setActiveTab] = useState<EditorTab>("raw");
+  const [content, setContent] = useState(document?.content ?? "");
 
   if (!document) {
-    notFound();
+    return (
+      <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
+        <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
+          <Card className="max-w-xl">
+            <CardHeader>
+              <CardTitle>문서를 찾을 수 없습니다.</CardTitle>
+              <CardDescription>
+                목록으로 돌아가 다른 문서를 선택해 주세요.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild>
+                <Link href="/docs">목록으로</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -77,13 +104,13 @@ export default async function DocumentViewPage({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-3">
             <Button variant="outline" size="sm" asChild>
-              <Link href="/docs">
+              <Link href={`/docs/${document.id}`}>
                 <ArrowLeft className="size-4" />
-                목록으로
+                문서로 돌아가기
               </Link>
             </Button>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">내 문서</p>
+              <p className="text-sm text-muted-foreground">문서 편집</p>
               <h1 className="text-2xl font-semibold">{document.title}</h1>
               <p className="text-sm text-muted-foreground">
                 {document.summary}
@@ -94,10 +121,6 @@ export default async function DocumentViewPage({
                 <Calendar className="size-3" />
                 업데이트 {formatKoreanDate(document.updatedAt)}
               </span>
-              <span className="inline-flex items-center gap-1">
-                <FileText className="size-3" />
-                문서 ID {document.id}
-              </span>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -107,11 +130,11 @@ export default async function DocumentViewPage({
                 {tag}
               </Badge>
             ))}
-            <Button variant="outline" size="sm" asChild className="ml-auto">
-              <Link href={`/docs/edit/${document.id}`}>
-                <Pencil className="size-4" />
-                수정
-              </Link>
+            <Button
+              onClick={() => router.push(`/docs/${document.id}`)}
+              className="ml-auto"
+            >
+              저장
             </Button>
           </div>
         </div>
@@ -120,15 +143,42 @@ export default async function DocumentViewPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>문서 내용</CardTitle>
+            <CardTitle>문서 편집</CardTitle>
             <CardDescription>
-              마크다운으로 저장된 내용을 렌더링합니다.
+              Raw에서 편집하고 Preview로 미리 보기 합니다.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="new-york-small leading-relaxed">
-              <ReactMarkdownApp>{document.content}</ReactMarkdownApp>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={activeTab === "raw" ? "secondary" : "outline"}
+                onClick={() => setActiveTab("raw")}
+              >
+                raw
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={activeTab === "preview" ? "secondary" : "outline"}
+                onClick={() => setActiveTab("preview")}
+              >
+                preview
+              </Button>
             </div>
+            {activeTab === "raw" ? (
+              <Textarea
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                className="min-h-[320px] font-mono"
+                placeholder="마크다운 내용을 입력하세요."
+              />
+            ) : (
+              <div className="new-york-small min-h-[320px] rounded-md border bg-background/70 p-4 leading-relaxed">
+                <ReactMarkdownApp>{content}</ReactMarkdownApp>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
