@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/db/client";
-import { getCreditSummary } from "@/db/query/credit";
+import { getCreditSummary, getDailyAttendanceStatus } from "@/db/query/credit";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
@@ -76,7 +76,10 @@ export default async function CreditsPage() {
     notFound();
   }
 
-  const summary = await getCreditSummary(user.id);
+  const [summary, attendanceStatus] = await Promise.all([
+    getCreditSummary(user.id),
+    getDailyAttendanceStatus(user.id),
+  ]);
 
   const CREDIT_STATS = [
     {
@@ -138,16 +141,22 @@ export default async function CreditsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent/50">
-            <div>
-              <div className="font-medium">출석 체크</div>
-              <div className="text-sm text-muted-foreground">
-                매일 100 크레딧 획득
-              </div>
+          <div>
+            <div className="font-medium">출석 체크</div>
+            <div className="text-sm text-muted-foreground">
+              매일 {attendanceStatus.dailyReward.toLocaleString()} 크레딧 획득
             </div>
+          </div>
+          {attendanceStatus.hasCheckedToday ? (
+            <Button disabled variant="secondary">
+              출석 완료
+            </Button>
+          ) : (
             <Link href="/credits/attendance">
               <Button>체크하기</Button>
             </Link>
-          </div>
+          )}
+        </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent/50">
             <div>

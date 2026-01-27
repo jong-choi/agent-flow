@@ -32,6 +32,17 @@ export async function POST() {
     const claimResult = await claimDailyAttendance(user.id);
     const attendance = await getCreditAttendanceSummary(user.id);
 
+    if (!claimResult.credited && claimResult.reason === "already_claimed") {
+      return Response.json(
+        {
+          error: "이미 오늘 출석체크를 완료했습니다.",
+          attendance,
+          balance: claimResult.balance,
+        },
+        { status: 409 },
+      );
+    }
+
     return Response.json({
       credited: claimResult.credited,
       reward: claimResult.reward,

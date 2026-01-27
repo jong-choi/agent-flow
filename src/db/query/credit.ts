@@ -73,6 +73,25 @@ export type CreditAttendanceSummary = {
   dailyReward: number;
 };
 
+export type CreditAttendanceStatus = {
+  hasCheckedToday: boolean;
+  dailyReward: number;
+};
+
+type AttendanceClaimResult = {
+  credited: boolean;
+  reward: number;
+  balance: number;
+  reason: "already_claimed" | null;
+};
+
+const CREDIT_TIME_ZONE = "Asia/Seoul";
+
+const toDateKey = (value: Date) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: CREDIT_TIME_ZONE }).format(
+    value,
+  );
+
 const normalizeHistoryRange = (filters?: CreditHistoryFilters) => {
   const now = new Date();
   let to = filters?.to ? new Date(filters.to) : now;
@@ -111,11 +130,21 @@ const ensureCreditAccount = async (userId: string) => {
   return account;
 };
 
+/**
+ * 크레딧 잔액 단일 조회.
+ * - 화면: 현재 직접 호출처 없음 (결제/차감 전 잔액 검증 등 공용 용도).
+ * - 반환: credit_accounts.balance
+ */
 export const getCreditBalance = async (userId: string) => {
   const account = await ensureCreditAccount(userId);
   return account.balance;
 };
 
+/**
+ * 크레딧 메인(/credits) 화면에 필요한 요약 정보 조회.
+ * - 표시 데이터: 현재 잔액, 이번 달 획득/사용, 누적 획득, 최근 거래 5건.
+ * - 사용처: src/app/credits/page.tsx
+ */
 export const getCreditSummary = async (
   userId: string,
 ): Promise<CreditSummary> => {
@@ -185,6 +214,12 @@ export const getCreditSummary = async (
   };
 };
 
+/**
+ * 크레딧 거래 내역(/credits/history)용 리스트 조회.
+ * - 표시 데이터: 기간/유형 필터 결과 목록.
+ * - 제약: 조회 기간은 최대 6개월로 자동 보정.
+ * - 사용처: src/app/credits/history/page.tsx
+ */
 export const getCreditHistory = async (
   userId: string,
   filters?: CreditHistoryFilters,
@@ -226,11 +261,17 @@ export const getCreditHistory = async (
   };
 };
 
+/**
+ * 출석 체크(/credits/attendance) 화면용 요약 데이터 조회.
+ * - 표시 데이터: 주간 출석 그리드, 연속/최고/총 출석, 오늘 출석 여부/보상.
+ * - 사용처: src/app/credits/attendance/page.tsx
+ * - 참고: 출석 여부는 Korea(Asia/Seoul) 기준 날짜로 계산.
+ */
 export const getCreditAttendanceSummary = async (
   userId: string,
 ): Promise<CreditAttendanceSummary> => {
-  const today = startOfDay(new Date());
-  const todayKey = format(today, "yyyy-MM-dd");
+  const todayKey = toDateKey(new Date());
+  const today = startOfDay(parseISO(todayKey));
   const weekStartDate = startOfWeek(today, { weekStartsOn: 1 });
   const weekEndDate = addDays(weekStartDate, 6);
   const weekStart = format(weekStartDate, "yyyy-MM-dd");
@@ -316,12 +357,72 @@ export const getCreditAttendanceSummary = async (
   };
 };
 
-export const claimDailyAttendance = async (userId: string) => {
-  const today = startOfDay(new Date());
-  const todayKey = format(today, "yyyy-MM-dd");
+/**
+ * 크레딧 메인(/credits)에서 출석 버튼 상태 확인용 경량 조회.
+ * - 표시 데이터: 오늘 출석 여부 + 일일 보상 금액 문구.
+ * - 사용처: src/app/credits/page.tsx
+ */
+export const getDailyAttendanceStatus = async (
+  userId: string,
+): Promise<CreditAttendanceStatus> => {
+  const todayKey = toDateKey(new Date());
+  const [event] = await db
+    .select({ eventDate: creditDailyEvents.eventDate })
+    .from(creditDailyEvents)
+    .where(
+      and(
+        eq(creditDailyEvents.userId, userId),
+        eq(creditDailyEvents.eventDate, todayKey),
+      ),
+    )
+    .limit(1);
+
+  return {
+    hasCheckedToday: Boolean(event),
+    dailyReward: DAILY_ATTENDANCE_REWARD,
+  };
+};
+
+/**
+ * 출석 체크 이벤트 처리(일일 1회).
+ * - 사용처: src/app/api/credits/attendance/route.ts (POST)
+ * - 동작: 오늘 출석 기록이 없을 때만 이벤트/거래/잔액을 생성·갱신.
+ * - 중복 요청: 이미 출석한 경우 credited=false + reason="already_claimed".
+ * - 참고: 날짜 기준은 Korea(Asia/Seoul).
+ */
+export const claimDailyAttendance = async (
+  userId: string,
+): Promise<AttendanceClaimResult> => {
+  const todayKey = toDateKey(new Date());
 
   return db.transaction(async (tx) => {
     await tx.insert(creditAccounts).values({ userId }).onConflictDoNothing();
+
+    const [accountSnapshot] = await tx
+      .select({ balance: creditAccounts.balance })
+      .from(creditAccounts)
+      .where(eq(creditAccounts.userId, userId))
+      .limit(1);
+
+    const existingEvent = await tx
+      .select({ eventDate: creditDailyEvents.eventDate })
+      .from(creditDailyEvents)
+      .where(
+        and(
+          eq(creditDailyEvents.userId, userId),
+          eq(creditDailyEvents.eventDate, todayKey),
+        ),
+      )
+      .limit(1);
+
+    if (existingEvent.length > 0) {
+      return {
+        credited: false,
+        reward: 0,
+        balance: accountSnapshot?.balance ?? 0,
+        reason: "already_claimed",
+      };
+    }
 
     const [event] = await tx
       .insert(creditDailyEvents)
@@ -334,16 +435,11 @@ export const claimDailyAttendance = async (userId: string) => {
       .returning({ eventDate: creditDailyEvents.eventDate });
 
     if (!event) {
-      const [account] = await tx
-        .select({ balance: creditAccounts.balance })
-        .from(creditAccounts)
-        .where(eq(creditAccounts.userId, userId))
-        .limit(1);
-
       return {
         credited: false,
         reward: 0,
-        balance: account?.balance ?? 0,
+        balance: accountSnapshot?.balance ?? 0,
+        reason: "already_claimed",
       };
     }
 
@@ -371,6 +467,7 @@ export const claimDailyAttendance = async (userId: string) => {
       credited: true,
       reward: DAILY_ATTENDANCE_REWARD,
       balance: account?.balance ?? 0,
+      reason: null,
     };
   });
 };
