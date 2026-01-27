@@ -1,298 +1,65 @@
-"use client";
+import { notFound } from "next/navigation";
+import { eq } from "drizzle-orm";
+import { db } from "@/db/client";
+import { createUntitledDocument, getDocumentsByOwner } from "@/db/query/documents";
+import { users } from "@/db/schema/auth";
+import { DocumentsClient } from "@/app/docs/documents-client";
+import { auth } from "@/lib/auth";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowUpRight, Clock, FileText, Search } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { useDebounce } from "@/hooks/use-debounce";
-import { formatKoreanDate } from "@/lib/utils";
+export default async function DocumentsPage() {
+  const session = await auth();
+  const email = session?.user?.email;
 
-type DocumentSummary = {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-  status: "draft" | "published";
-  tags: string[];
-};
-
-const documents: DocumentSummary[] = [
-  {
-    id: "drizzle-setup-note",
-    title: "Drizzle 초기 세팅 메모",
-    content:
-      '# Drizzle 기본 세팅\n\n- 데이터베이스 연결 설정\n- 스키마 작성 규칙\n- 마이그레이션 절차 정리\n\n```ts\nexport const users = pgTable("users", {\n  id: text("id").primaryKey(),\n});\n```\n',
-    createdAt: "2026-01-10",
-    updatedAt: "2026-01-22",
-    status: "draft",
-    tags: ["세팅", "DB"],
-  },
-  {
-    id: "markdown-guideline",
-    title: "문서 마크다운 가이드",
-    content:
-      "# 마크다운 작성 규칙\n\n1. 제목은 # ~ ### 까지만 사용\n2. 코드 블록에는 언어 태그 추가\n3. 체크리스트는 - [ ] 형식 사용\n\n> 팀에서 사용하는 공통 규칙을 정리합니다.\n",
-    createdAt: "2026-01-12",
-    updatedAt: "2026-01-20",
-    status: "published",
-    tags: ["가이드", "문서"],
-  },
-  {
-    id: "release-note-draft",
-    title: "1월 릴리즈 노트 초안",
-    content:
-      "# 1월 릴리즈 노트\n\n- 문서 편집 화면 개선\n- 프리셋 탐색 필터 추가\n- 버그 수정 및 성능 최적화\n\n다음 릴리즈에서 포함될 주요 변경 사항을 정리합니다.\n",
-    createdAt: "2026-01-05",
-    updatedAt: "2026-01-18",
-    status: "draft",
-    tags: ["릴리즈", "초안"],
-  },
-];
-
-const buildPreview = (content: string) => {
-  const trimmed = content.replace(/\s+/g, " ").trim();
-  if (trimmed.length <= 50) {
-    return trimmed;
+  if (!email) {
+    notFound();
   }
-  return `${trimmed.slice(0, 50)}…`;
-};
 
-const statusLabel = (status: DocumentSummary["status"]) =>
-  status === "published" ? "공개" : "초안";
+  const [user] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
 
-const sortOptions = [
-  { label: "최근 업데이트 순", value: "recent" },
-  { label: "최신순", value: "latest" },
-  { label: "오래된 순", value: "oldest" },
-  { label: "이름 순", value: "name" },
-] as const;
+  if (!user) {
+    notFound();
+  }
 
-const getDocTimestamp = (value: string) => new Date(value).getTime();
+  const documents = await getDocumentsByOwner(user.id);
 
-export default function DocumentsPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const appliedQuery = searchParams.get("q") ?? "";
-  const rawSort = searchParams.get("sort");
-  const appliedSort = (
-    sortOptions.some((option) => option.value === rawSort) ? rawSort : "recent"
-  ) as "recent" | "latest" | "oldest" | "name";
+  const createDocumentAction = async () => {
+    "use server";
 
-  const [searchText, setSearchText] = useState(appliedQuery);
-  const [suggestions, setSuggestions] = useState<DocumentSummary[]>([]);
-  const [isSuggestOpen, setIsSuggestOpen] = useState(false);
+    const session = await auth();
+    const email = session?.user?.email;
 
-  useEffect(() => {
-    setSearchText(appliedQuery);
-  }, [appliedQuery]);
-
-  const buildQueryString = (overrides: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    Object.entries(overrides).forEach(([key, value]) => {
-      if (!value) {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    });
-
-    return params.toString();
-  };
-
-  const debouncedSuggest = useDebounce((value: string) => {
-    const normalized = value.trim().toLowerCase();
-    if (!normalized) {
-      setSuggestions([]);
-      setIsSuggestOpen(false);
-      return;
+    if (!email) {
+      notFound();
     }
 
-    const matches = documents
-      .filter((doc) => doc.title.toLowerCase().includes(normalized))
-      .slice(0, 6);
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
 
-    setSuggestions(matches);
-    setIsSuggestOpen(true);
-  }, 500);
+    if (!user) {
+      notFound();
+    }
 
-  const handleSortChange = (value: "recent" | "latest" | "oldest" | "name") => {
-    const query = buildQueryString({ sort: value === "recent" ? null : value });
-    router.push(query ? `/docs?${query}` : "/docs");
+    const created = await createUntitledDocument(user.id);
+    return created?.id ?? null;
   };
 
-  const handleSearchSubmit = (event?: FormEvent<HTMLFormElement>) => {
-    event?.preventDefault();
-    const trimmed = searchText.trim();
-    const query = buildQueryString({ q: trimmed || null });
-    router.push(query ? `/docs?${query}` : "/docs");
-    setIsSuggestOpen(false);
-  };
-
-  const filteredDocuments = useMemo(() => {
-    const normalized = appliedQuery.trim().toLowerCase();
-    const result = documents.filter((doc) =>
-      normalized ? doc.title.toLowerCase().includes(normalized) : true,
-    );
-
-    return result.sort((a, b) => {
-      if (appliedSort === "name") {
-        return a.title.localeCompare(b.title, "ko-KR");
-      }
-      if (appliedSort === "recent") {
-        const diff =
-          getDocTimestamp(a.updatedAt) - getDocTimestamp(b.updatedAt);
-        return -diff;
-      }
-      const createdDiff =
-        getDocTimestamp(a.createdAt) - getDocTimestamp(b.createdAt);
-      return appliedSort === "latest" ? -createdDiff : createdDiff;
-    });
-  }, [appliedQuery, appliedSort]);
+  const serializableDocuments = documents.map((doc) => ({
+    ...doc,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString(),
+  }));
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
-      <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">내 문서</p>
-          <h1 className="text-2xl font-semibold">문서 관리</h1>
-          <p className="text-sm text-muted-foreground">
-            작성한 문서와 최신 내용을 빠르게 확인하세요.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">정렬</p>
-            <div className="flex flex-wrap gap-2">
-              {sortOptions.map((option) => (
-                <Button
-                  key={option.value}
-                  variant={
-                    appliedSort === option.value ? "secondary" : "outline"
-                  }
-                  size="sm"
-                  onClick={() => handleSortChange(option.value)}
-                >
-                  {option.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <form
-            className="relative w-full max-w-md"
-            onSubmit={handleSearchSubmit}
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchText}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setSearchText(value);
-                    debouncedSuggest(value);
-                  }}
-                  placeholder="문서 제목으로 검색"
-                  className="pl-9"
-                />
-              </div>
-              <Button type="submit">검색</Button>
-            </div>
-            {isSuggestOpen ? (
-              <div className="absolute top-full right-0 left-0 z-20 mt-2 overflow-hidden rounded-lg border bg-background shadow-md">
-                {suggestions.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-muted-foreground">
-                    검색 결과가 없습니다.
-                  </div>
-                ) : (
-                  <div className="max-h-64 overflow-y-auto">
-                    {suggestions.map((doc) => (
-                      <Link
-                        key={doc.id}
-                        href={`/docs/${doc.id}`}
-                        className="flex w-full flex-col gap-1 border-b px-4 py-3 text-left text-sm transition hover:bg-accent"
-                        onClick={() => setIsSuggestOpen(false)}
-                      >
-                        <span className="font-medium">{doc.title}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {buildPreview(doc.content)}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : null}
-          </form>
-        </div>
-
-        <Separator />
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          {filteredDocuments.length === 0 ? (
-            <Card className="bg-background">
-              <CardHeader>
-                <CardTitle>검색 결과 없음</CardTitle>
-                <CardDescription>
-                  다른 키워드로 다시 검색해 주세요.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          ) : (
-            filteredDocuments.map((doc) => (
-              <Card key={doc.id} className="bg-background">
-                <CardHeader>
-                  <div className="space-y-2">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <FileText className="size-4 text-muted-foreground" />
-                      {doc.title}
-                    </CardTitle>
-                    <CardDescription>
-                      {buildPreview(doc.content)}
-                    </CardDescription>
-                  </div>
-                  <CardAction>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/docs/${doc.id}`}>
-                        보기
-                        <ArrowUpRight className="size-4" />
-                      </Link>
-                    </Button>
-                  </CardAction>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="size-3" />
-                    <span>업데이트 {formatKoreanDate(doc.updatedAt)}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">{statusLabel(doc.status)}</Badge>
-                    {doc.tags.map((tag) => (
-                      <Badge key={tag} variant="outline">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      </div>
-    </div>
+    <DocumentsClient
+      documents={serializableDocuments}
+      createDocument={createDocumentAction}
+    />
   );
 }
