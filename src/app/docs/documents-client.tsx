@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type FormEvent,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from "react";
+import { type FormEvent, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowUpRight, Clock, FileText, Plus, Search } from "lucide-react";
@@ -20,6 +14,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -36,6 +39,8 @@ type DocumentSummary = {
 type DocumentsClientProps = {
   documents: DocumentSummary[];
   createDocument: () => Promise<string | null>;
+  currentPage: number;
+  totalPages: number;
 };
 
 const sortOptions = [
@@ -44,8 +49,6 @@ const sortOptions = [
   { label: "오래된 순", value: "oldest" },
   { label: "이름 순", value: "name" },
 ] as const;
-
-const getDocTimestamp = (value: string) => new Date(value).getTime();
 
 const buildPreview = (content: string) => {
   const trimmed = content.replace(/\s+/g, " ").trim();
@@ -58,6 +61,8 @@ const buildPreview = (content: string) => {
 export function DocumentsClient({
   documents,
   createDocument,
+  currentPage,
+  totalPages,
 }: DocumentsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -107,7 +112,10 @@ export function DocumentsClient({
   }, 500);
 
   const handleSortChange = (value: "recent" | "latest" | "oldest" | "name") => {
-    const query = buildQueryString({ sort: value === "recent" ? null : value });
+    const query = buildQueryString({
+      sort: value === "recent" ? null : value,
+      page: null,
+    });
     router.push(query ? `/docs?${query}` : "/docs");
   };
 
@@ -119,10 +127,51 @@ export function DocumentsClient({
   const handleSearchSubmit = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
     const trimmed = searchText.trim();
-    const query = buildQueryString({ q: trimmed || null });
+    const query = buildQueryString({ q: trimmed || null, page: null });
     router.push(query ? `/docs?${query}` : "/docs");
     setIsSuggestOpen(false);
   };
+
+  const handlePageChange = (nextPage: number) => {
+    const query = buildQueryString({
+      page: nextPage === 1 ? null : String(nextPage),
+    });
+    router.push(query ? `/docs?${query}` : "/docs");
+  };
+
+  const buildPaginationItems = (current: number, total: number) => {
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, index) => index + 1);
+    }
+
+    const pages = new Set<number>([1, total, current]);
+    if (current - 1 > 1) {
+      pages.add(current - 1);
+    }
+    if (current + 1 < total) {
+      pages.add(current + 1);
+    }
+
+    const sortedPages = Array.from(pages).sort((a, b) => a - b);
+    const items: Array<number | "ellipsis"> = [];
+    let lastPage = 0;
+
+    sortedPages.forEach((page) => {
+      if (page - lastPage > 1) {
+        if (page - lastPage === 2) {
+          items.push(lastPage + 1);
+        } else {
+          items.push("ellipsis");
+        }
+      }
+      items.push(page);
+      lastPage = page;
+    });
+
+    return items;
+  };
+
+  const paginationItems = buildPaginationItems(currentPage, totalPages);
 
   const handleCreate = () => {
     startCreateTransition(async () => {
@@ -132,27 +181,6 @@ export function DocumentsClient({
       }
     });
   };
-
-  const filteredDocuments = useMemo(() => {
-    const normalized = appliedQuery.trim().toLowerCase();
-    const result = documents.filter((doc) =>
-      normalized ? doc.title.toLowerCase().includes(normalized) : true,
-    );
-
-    return result.sort((a, b) => {
-      if (appliedSort === "name") {
-        return a.title.localeCompare(b.title, "ko-KR");
-      }
-      if (appliedSort === "recent") {
-        const diff =
-          getDocTimestamp(a.updatedAt) - getDocTimestamp(b.updatedAt);
-        return -diff;
-      }
-      const createdDiff =
-        getDocTimestamp(a.createdAt) - getDocTimestamp(b.createdAt);
-      return appliedSort === "latest" ? -createdDiff : createdDiff;
-    });
-  }, [appliedQuery, appliedSort, documents]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
@@ -260,7 +288,7 @@ export function DocumentsClient({
         <Separator />
 
         <div className="grid gap-4 lg:grid-cols-2">
-          {filteredDocuments.length === 0 ? (
+          {documents.length === 0 ? (
             <Card className="col-span-2 bg-background">
               <CardHeader>
                 <CardTitle>
@@ -274,7 +302,7 @@ export function DocumentsClient({
               </CardHeader>
             </Card>
           ) : (
-            filteredDocuments.map((doc) => (
+            documents.map((doc) => (
               <Card key={doc.id} className="bg-background">
                 <CardHeader>
                   <div className="space-y-2">
@@ -305,6 +333,60 @@ export function DocumentsClient({
             ))
           )}
         </div>
+        {totalPages > 1 ? (
+          <Pagination>
+            <PaginationContent>
+              {currentPage > 1 ? (
+                <PaginationItem>
+                  <PaginationPrevious
+                    href={`/docs${buildQueryString({
+                      page: String(currentPage - 1),
+                    })}`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handlePageChange(currentPage - 1);
+                    }}
+                  />
+                </PaginationItem>
+              ) : null}
+              {paginationItems.map((item, index) =>
+                item === "ellipsis" ? (
+                  <PaginationItem key={`ellipsis-${index}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={item}>
+                    <PaginationLink
+                      href={`/docs${buildQueryString({
+                        page: item === 1 ? null : String(item),
+                      })}`}
+                      isActive={item === currentPage}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        handlePageChange(item);
+                      }}
+                    >
+                      {item}
+                    </PaginationLink>
+                  </PaginationItem>
+                ),
+              )}
+              {currentPage < totalPages ? (
+                <PaginationItem>
+                  <PaginationNext
+                    href={`/docs${buildQueryString({
+                      page: String(currentPage + 1),
+                    })}`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handlePageChange(currentPage + 1);
+                    }}
+                  />
+                </PaginationItem>
+              ) : null}
+            </PaginationContent>
+          </Pagination>
+        ) : null}
       </div>
     </div>
   );

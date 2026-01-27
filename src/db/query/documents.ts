@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { and, desc, eq, ilike, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { documents } from "@/db/schema/documents";
 import { users } from "@/db/schema/auth";
@@ -39,24 +39,85 @@ const resolveNextUntitledTitle = async (ownerId: string) => {
   return `${untitledPrefix}${maxIndex + 1}`;
 };
 
+type DocumentListFilters = {
+  query?: string;
+  sort?: "recent" | "latest" | "oldest" | "name";
+};
+
+type PaginationOptions = {
+  page?: number;
+  pageSize?: number;
+};
+
+const resolvePagination = (options?: PaginationOptions) => {
+  const page = Math.max(1, options?.page ?? 1);
+  const pageSize = Math.max(1, options?.pageSize ?? 10);
+  const offset = (page - 1) * pageSize;
+
+  return { page, pageSize, offset };
+};
+
 /**
  * 사용자 문서 목록 조회.
  * - 표시 데이터: id/title/content/createdAt/updatedAt
- * - 정렬: 최근 업데이트 순
+ * - 정렬: recent(updatedAt), latest(createdAt), oldest(createdAt), name(title)
+ * - 페이지네이션: page * pageSize 만큼 누적 로드
  * - 사용처: src/app/docs/page.tsx
  */
-export const getDocumentsByOwner = async (ownerId: string) => {
-  return db
-    .select({
-      id: documents.id,
-      title: documents.title,
-      content: documents.content,
-      createdAt: documents.createdAt,
-      updatedAt: documents.updatedAt,
-    })
-    .from(documents)
-    .where(and(eq(documents.ownerId, ownerId), isNull(documents.deletedAt)))
-    .orderBy(desc(documents.updatedAt));
+export const getDocumentsByOwner = async (
+  ownerId: string,
+  filters?: DocumentListFilters,
+  pagination?: PaginationOptions,
+) => {
+  const clauses = [
+    eq(documents.ownerId, ownerId),
+    isNull(documents.deletedAt),
+  ];
+
+  const trimmedQuery = filters?.query?.trim();
+  if (trimmedQuery) {
+    clauses.push(ilike(documents.title, `%${trimmedQuery}%`));
+  }
+
+  const whereClause = clauses.length === 1 ? clauses[0] : and(...clauses);
+  const sort = filters?.sort ?? "recent";
+  const orderBy =
+    sort === "name"
+      ? [asc(documents.title)]
+      : sort === "latest"
+        ? [desc(documents.createdAt)]
+        : sort === "oldest"
+          ? [asc(documents.createdAt)]
+          : [desc(documents.updatedAt)];
+
+  const { offset, pageSize } = resolvePagination(pagination);
+
+  const [documentsList, [countRow]] = await Promise.all([
+    db
+      .select({
+        id: documents.id,
+        title: documents.title,
+        content: documents.content,
+        createdAt: documents.createdAt,
+        updatedAt: documents.updatedAt,
+      })
+      .from(documents)
+      .where(whereClause)
+      .orderBy(...orderBy)
+      .limit(pageSize)
+      .offset(offset),
+    db
+      .select({
+        totalCount: sql<number>`count(*)`.mapWith(Number),
+      })
+      .from(documents)
+      .where(whereClause),
+  ]);
+
+  return {
+    documents: documentsList,
+    totalCount: countRow?.totalCount ?? 0,
+  };
 };
 
 /**
