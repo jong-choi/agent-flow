@@ -65,6 +65,9 @@ export function AttendanceClient({ summary }: AttendanceClientProps) {
 
       if (!response.ok) {
         console.error("출석 체크 실패:", data?.error ?? data);
+        if (response.status === 409 && data?.attendance) {
+          setAttendance(data.attendance as AttendanceSummary);
+        }
         return;
       }
 

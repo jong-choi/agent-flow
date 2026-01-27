@@ -127,6 +127,13 @@ const attachPresetTags = async <T extends { id: string }>(
   }));
 };
 
+/**
+ * 프리셋 마켓(/presets) 리스트 조회.
+ * - 표시 데이터: 카드 목록(제목/요약/카테고리/가격/제작자/구매수),
+ *   로그인 사용자는 isPurchased로 CTA 상태 표시.
+ * - 기능: 검색/카테고리/가격 필터, 정렬, 페이지네이션.
+ * - 사용처: src/app/presets/page.tsx
+ */
 export const getPresets = async (
   viewerId?: string,
   filters?: PresetListFilters,
@@ -170,8 +177,7 @@ export const getPresets = async (
     clauses.push(lte(presets.price, filters.priceMax));
   }
 
-  const whereClause =
-    clauses.length === 1 ? clauses[0] : and(...clauses);
+  const whereClause = clauses.length === 1 ? clauses[0] : and(...clauses);
 
   const sort = filters?.sort ?? "latest";
   const orderBy =
@@ -257,12 +263,23 @@ const getPresetDetailBase = async (presetId: string) => {
   };
 };
 
+/**
+ * 프리셋 상세(/presets/[id]) 화면용 데이터 조회.
+ * - 표시 데이터: 프리셋 메타 + 워크플로우(노드/엣지) 미리보기.
+ * - 캐시: 30일 revalidate (상세 페이지 렌더 성능 최적화).
+ * - 사용처: src/app/presets/[id]/page.tsx
+ */
 export const getPresetDetail = unstable_cache(
   getPresetDetailBase,
   ["preset_detail"],
   { tags: ["preset_detail"], revalidate: 60 * 60 * 24 * 30 },
 );
 
+/**
+ * 프리셋 상세(/presets/[id])에서 구매 여부 확인.
+ * - 표시/동작: 구매/열기 CTA 라벨 결정에 사용.
+ * - 사용처: src/app/presets/[id]/page.tsx
+ */
 export const getPresetPurchaseStatus = async (
   presetId: string,
   buyerId: string,
@@ -281,6 +298,11 @@ export const getPresetPurchaseStatus = async (
   return Boolean(purchase);
 };
 
+/**
+ * 내 프리셋(/presets/purchased) 요약 통계 조회.
+ * - 표시 데이터: 구매한 총 개수/무료 개수(통계 카드).
+ * - 사용처: src/app/presets/purchased/page.tsx
+ */
 export const getPurchasedPresetsSummary = async (buyerId: string) => {
   const baseWhere = and(
     eq(presetPurchases.buyerId, buyerId),
@@ -306,6 +328,12 @@ export const getPurchasedPresetsSummary = async (buyerId: string) => {
 
 type PurchasedPresetFilters = PresetLibraryFilters & PaginationOptions;
 
+/**
+ * 내 프리셋(/presets/purchased) - 구매한 프리셋 목록 조회.
+ * - 표시 데이터: 리스트 카드(제목/요약/가격/구매일/즐겨찾기/태그).
+ * - 기능: 검색/카테고리/상태(최근/즐겨찾기)/정렬/페이지네이션.
+ * - 사용처: src/app/presets/purchased/page.tsx
+ */
 export const getPurchasedPresets = async (
   buyerId: string,
   filters?: PurchasedPresetFilters,
@@ -400,6 +428,11 @@ export const getPurchasedPresets = async (
   };
 };
 
+/**
+ * 내 프리셋(/presets/purchased) - 내가 만든 프리셋 목록 조회.
+ * - 표시/통계: 생성한 프리셋 수, 무료 프리셋 수 계산에 사용.
+ * - 사용처: src/app/presets/purchased/page.tsx
+ */
 export const getOwnedPresets = async (ownerId: string) => {
   const ownedPresets = await db
     .select({
@@ -427,6 +460,11 @@ export const getOwnedPresets = async (ownerId: string) => {
 const createdSource = sql<string>`'created'`.mapWith(String);
 const purchasedSource = sql<string>`'purchased'`.mapWith(String);
 
+/**
+ * 내가 만든 프리셋 + 구매 프리셋을 통합한 라이브러리 목록.
+ * - 표시 데이터: 통합 리스트(소스: created/purchased), 태그 포함.
+ * - 상태: 현재 직접 호출처 없음(향후 라이브러리 화면/선택 모달 등 재사용 예정).
+ */
 export const getPresetLibrary = async (
   userId: string,
   filters?: PresetLibraryFilters,
@@ -561,8 +599,7 @@ export const getPresetLibrary = async (
   if (sort === "name") {
     libraryWithTags.sort((a, b) => a.title.localeCompare(b.title));
   } else {
-    const toTimestamp = (value: Date | null) =>
-      value ? value.getTime() : 0;
+    const toTimestamp = (value: Date | null) => (value ? value.getTime() : 0);
     libraryWithTags.sort(
       (a, b) => toTimestamp(b.displayDate) - toTimestamp(a.displayDate),
     );
@@ -571,6 +608,11 @@ export const getPresetLibrary = async (
   return libraryWithTags;
 };
 
+/**
+ * 프리셋 즐겨찾기 추가.
+ * - 용도: 내 프리셋 페이지의 즐겨찾기 토글/필터와 연결.
+ * - 상태: 현재 직접 호출처 없음.
+ */
 export const addPresetFavorite = async ({
   presetId,
   userId,
@@ -587,6 +629,11 @@ export const addPresetFavorite = async ({
   return favorite ?? null;
 };
 
+/**
+ * 프리셋 즐겨찾기 제거.
+ * - 용도: 내 프리셋 페이지의 즐겨찾기 토글/필터와 연결.
+ * - 상태: 현재 직접 호출처 없음.
+ */
 export const removePresetFavorite = async ({
   presetId,
   userId,
@@ -607,6 +654,11 @@ export const removePresetFavorite = async ({
   return favorite ?? null;
 };
 
+/**
+ * 프리셋 즐겨찾기 여부 조회.
+ * - 용도: 즐겨찾기 버튼 상태 표시.
+ * - 상태: 현재 직접 호출처 없음.
+ */
 export const getPresetFavoriteStatus = async (
   presetId: string,
   userId: string,
@@ -625,6 +677,11 @@ export const getPresetFavoriteStatus = async (
   return Boolean(favorite);
 };
 
+/**
+ * 프리셋 생성.
+ * - 사용처: src/app/presets/new/[workflowId]/page.tsx
+ * - 동작: 워크플로우 소유자 검증 후 프리셋 생성 + 태그 저장.
+ */
 export const createPreset = async ({
   ownerId,
   workflowId,
@@ -696,6 +753,11 @@ export const createPreset = async ({
   return preset ?? null;
 };
 
+/**
+ * 프리셋 수정.
+ * - 사용처: src/app/presets/[id]/edit/page.tsx
+ * - 동작: 소유자 검증 후 메타 정보 업데이트.
+ */
 export const updatePreset = async ({
   presetId,
   ownerId,
@@ -732,6 +794,11 @@ export const updatePreset = async ({
   return preset ?? null;
 };
 
+/**
+ * 프리셋 삭제.
+ * - 사용처: src/app/presets/[id]/edit/page.tsx
+ * - 동작: 소유자 검증 후 프리셋 삭제.
+ */
 export const deletePreset = async ({
   presetId,
   ownerId,
