@@ -1,8 +1,4 @@
 import type { Metadata } from "next";
-import { SiteHeader } from "@/app/_components/site-header/site-header";
-import { AppProvider } from "@/app/providers";
-import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/ui/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,22 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AppProvider>
-            <main className="flex h-screen flex-col">
-              <SiteHeader />
-              {children}
-            </main>
-            <Toaster position="top-right" richColors />
-          </AppProvider>
-        </ThemeProvider>
-      </body>
+      <body className={`font-sans antialiased`}>{children}</body>
     </html>
   );
 }
