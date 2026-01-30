@@ -77,7 +77,7 @@ export default function AppLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="flex h-screen" id={id}>
-      <aside className="flex w-20 flex-col items-center gap-2 border-r border-border bg-card bg-gradient-to-br from-pink-500 via-purple-500 to-violet-600 py-6 dark:border-neutral-800 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-800">
+      <aside className="flex w-20 flex-col items-center gap-2 border-r border-border bg-card bg-gradient-to-br from-fuchsia-900 via-purple-900 to-indigo-900 py-6 dark:border-neutral-800 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-800">
         <Link href="/" className="mb-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl">
             LOGO
@@ -108,8 +108,8 @@ export default function AppLayout({ children }: MainLayoutProps) {
                   className={cn(
                     "h-8 w-8 cursor-pointer bg-transparent text-neutral-50 dark:text-neutral-200",
                     isActive
-                      ? "bg-neutral-700/30 group-hover:bg-neutral-700/30 hover:bg-neutral-700/30 dark:bg-neutral-600"
-                      : "bg-transparent group-hover:bg-neutral-700/20 hover:bg-neutral-700/20 dark:group-hover:bg-neutral-700 dark:hover:bg-neutral-700",
+                      ? "bg-neutral-300/30 group-hover:bg-neutral-300/30 hover:bg-neutral-300/30 dark:bg-neutral-600"
+                      : "bg-transparent group-hover:bg-neutral-400/20 hover:bg-neutral-400/20 dark:group-hover:bg-neutral-700 dark:hover:bg-neutral-700",
                   )}
                 >
                   <item.icon className="size-5" strokeWidth={1.75} />
@@ -136,41 +136,42 @@ export default function AppLayout({ children }: MainLayoutProps) {
         </div>
       </aside>
 
-      {activeNavItem?.children?.length ? (
-        <aside className="w-52 border-r border-border bg-background/80 px-4 py-6 backdrop-blur">
-          <div className="flex items-center gap-2 text-xs font-extrabold text-muted-foreground">
-            <activeNavItem.icon className="size-4" strokeWidth={1.75} />
-            {activeNavItem.name}
-          </div>
-          <nav className="mt-4 flex flex-col gap-1">
-            {activeNavItem.children.map((child) => {
-              const isRoot = child.href === activeNavItem.href;
-              const isActive = isRoot
-                ? pathname === child.href
-                : pathname?.startsWith(child.href);
-
-              return (
-                <Link
-                  key={child.href}
-                  href={child.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className={cn(
-                    "rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted",
-                    isActive && "bg-muted text-foreground",
-                  )}
-                >
-                  {child.name}
-                </Link>
-              );
-            })}
-          </nav>
-        </aside>
-      ) : null}
-
       {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-background">
+      <main className="flex flex-1 flex-col overflow-auto bg-background">
         <SiteHeader />
-        {children}
+        <div className="flex h-full w-full overflow-auto">
+          {activeNavItem?.children?.length ? (
+            <aside className="fixed h-full w-52 border-r border-border bg-background/80 px-4 py-6 backdrop-blur">
+              <div className="flex items-center gap-2 text-xs font-extrabold text-muted-foreground">
+                <activeNavItem.icon className="size-4" strokeWidth={1.75} />
+                {activeNavItem.name}
+              </div>
+              <nav className="mt-4 flex flex-col gap-1">
+                {activeNavItem.children.map((child) => {
+                  const isRoot = child.href === activeNavItem.href;
+                  const isActive = isRoot
+                    ? pathname === child.href
+                    : pathname?.startsWith(child.href);
+
+                  return (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
+                        "rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted",
+                        isActive && "bg-muted text-foreground",
+                      )}
+                    >
+                      {child.name}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </aside>
+          ) : null}
+          {children}
+        </div>
       </main>
     </div>
   );

@@ -1,8 +1,4 @@
-import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
-import { db } from "@/db/client";
 import { getCreditAttendanceSummary } from "@/db/query/credit";
-import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { AttendanceClient } from "./attendance-client";
 

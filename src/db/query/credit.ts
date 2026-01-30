@@ -28,20 +28,22 @@ export type CreditTransactionCategory =
 
 const DAILY_ATTENDANCE_REWARD = 100;
 
+export type TransactionResult = {
+  id: string;
+  type: CreditTransactionType;
+  category: CreditTransactionCategory;
+  title: string;
+  description: string | null;
+  amount: number;
+  occurredAt: string;
+};
+
 type CreditSummary = {
   balance: number;
   monthlyEarned: number;
   monthlySpent: number;
   totalEarned: number;
-  recentTransactions: Array<{
-    id: string;
-    type: CreditTransactionType;
-    category: CreditTransactionCategory;
-    title: string;
-    description: string | null;
-    amount: number;
-    occurredAt: string;
-  }>;
+  recentTransactions: Array<TransactionResult>;
 };
 
 export type CreditHistoryFilters = {
@@ -52,7 +54,7 @@ export type CreditHistoryFilters = {
 };
 
 export type CreditHistoryResult = {
-  transactions: CreditSummary["recentTransactions"];
+  transactions: Array<TransactionResult>;
   range: { from: Date; to: Date };
 };
 
