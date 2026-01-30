@@ -4,6 +4,7 @@ import {
   type ForwardRefExoticComponent,
   type ReactNode,
   type RefAttributes,
+  useId,
 } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,26 +25,40 @@ type LucideIcon = ForwardRefExoticComponent<
   Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
 >;
 
-type NavType =
-  | {
-      type: "Item";
-      name: string;
-      href: string;
-      icon: LucideIcon;
-    }
-  | {
-      type: "Separator";
-      name?: undefined;
-      href?: undefined;
-      icon?: undefined;
-    };
+type NavItem = {
+  type: "Item";
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  children?: Array<{
+    name: string;
+    href: string;
+  }>;
+};
+
+type NavSeparator = {
+  type: "Separator";
+};
+
+type NavType = NavItem | NavSeparator;
 
 const navigation: NavType[] = [
   { type: "Item", name: "워크플로우", href: "/app", icon: Workflow },
   { type: "Item", name: "마켓플레이스", href: "/presets", icon: Store },
   { type: "Separator" },
   { type: "Item", name: "문서", href: "/docs", icon: StickyNote },
-  { type: "Item", name: "크레딧", href: "/credits", icon: HandCoins },
+
+  {
+    type: "Item",
+    name: "크레딧",
+    href: "/credits",
+    icon: HandCoins,
+    children: [
+      { name: "홈", href: "/credits" },
+      { name: "출석", href: "/credits/attendance" },
+      { name: "히스토리", href: "/credits/history" },
+    ],
+  },
 ];
 
 interface MainLayoutProps {
@@ -52,9 +67,16 @@ interface MainLayoutProps {
 
 export default function AppLayout({ children }: MainLayoutProps) {
   const pathname = usePathname();
+  const id = useId();
+  const activeNavItem = navigation.find(
+    (item): item is NavItem =>
+      item.type === "Item" &&
+      Boolean(item.children?.length) &&
+      pathname?.startsWith(item.href),
+  );
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen" id={id}>
       <aside className="flex w-20 flex-col items-center gap-2 border-r border-border bg-card bg-gradient-to-br from-pink-500 via-purple-500 to-violet-600 py-6 dark:border-neutral-800 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-800">
         <Link href="/" className="mb-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl">
@@ -113,6 +135,37 @@ export default function AppLayout({ children }: MainLayoutProps) {
           </div>
         </div>
       </aside>
+
+      {activeNavItem?.children?.length ? (
+        <aside className="w-52 border-r border-border bg-background/80 px-4 py-6 backdrop-blur">
+          <div className="flex items-center gap-2 text-xs font-extrabold text-muted-foreground">
+            <activeNavItem.icon className="size-4" strokeWidth={1.75} />
+            {activeNavItem.name}
+          </div>
+          <nav className="mt-4 flex flex-col gap-1">
+            {activeNavItem.children.map((child) => {
+              const isRoot = child.href === activeNavItem.href;
+              const isActive = isRoot
+                ? pathname === child.href
+                : pathname?.startsWith(child.href);
+
+              return (
+                <Link
+                  key={child.href}
+                  href={child.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted",
+                    isActive && "bg-muted text-foreground",
+                  )}
+                >
+                  {child.name}
+                </Link>
+              );
+            })}
+          </nav>
+        </aside>
+      ) : null}
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto bg-background">
