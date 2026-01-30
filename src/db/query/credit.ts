@@ -94,24 +94,6 @@ const toDateKey = (value: Date) =>
     value,
   );
 
-const normalizeHistoryRange = (filters?: CreditHistoryFilters) => {
-  const now = new Date();
-  let to = filters?.to ? new Date(filters.to) : now;
-  const defaultFrom = subMonths(to, 6);
-  let from = filters?.from ? new Date(filters.from) : defaultFrom;
-
-  if (from > to) {
-    [from, to] = [to, from];
-  }
-
-  const maxFrom = subMonths(to, 6);
-  if (from < maxFrom) {
-    from = maxFrom;
-  }
-
-  return { from, to };
-};
-
 const ensureCreditAccount = async (userId: string) => {
   await db.insert(creditAccounts).values({ userId }).onConflictDoNothing();
 
@@ -226,7 +208,9 @@ export const getCreditHistory = async (
   userId: string,
   filters?: CreditHistoryFilters,
 ): Promise<CreditHistoryResult> => {
-  const { from, to } = normalizeHistoryRange(filters);
+  const to = filters?.to ? new Date(filters.to) : new Date();
+  const from = filters?.from ? new Date(filters.from) : subMonths(to, 6);
+
   const clauses = [
     eq(creditTransactions.userId, userId),
     gte(creditTransactions.occurredAt, startOfDay(from)),

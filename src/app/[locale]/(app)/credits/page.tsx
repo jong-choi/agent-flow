@@ -39,11 +39,6 @@ export default async function CreditsPage() {
       value: `-${summary.monthlySpent.toLocaleString()}`,
       color: "text-chart-1",
     },
-    {
-      label: "총 획득",
-      value: summary.totalEarned.toLocaleString(),
-      color: "text-muted-foreground",
-    },
   ];
 
   return (
@@ -59,7 +54,7 @@ export default async function CreditsPage() {
           </PageDescription>
         </PageHeader>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
           <div>
             <PageContentTitle>크레딧 잔액</PageContentTitle>
             <div className="text-4xl font-extralight tracking-tighter">
