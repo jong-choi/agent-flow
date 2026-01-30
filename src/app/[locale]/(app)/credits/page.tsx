@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { eq } from "drizzle-orm";
-import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,9 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { db } from "@/db/client";
 import { getCreditSummary, getDailyAttendanceStatus } from "@/db/query/credit";
-import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 type CreditTransactionType = "earn" | "spend";
@@ -31,7 +27,10 @@ type TransactionTypeMeta = {
   amountClass: string;
 };
 
-const TRANSACTION_TYPE_META: Record<CreditTransactionType, TransactionTypeMeta> = {
+const TRANSACTION_TYPE_META: Record<
+  CreditTransactionType,
+  TransactionTypeMeta
+> = {
   earn: {
     label: "획득",
     badgeClass: "border border-chart-2/30 bg-chart-2/10 text-chart-2",
@@ -60,25 +59,15 @@ const formatDate = (value: string) =>
 
 export default async function CreditsPage() {
   const session = await auth();
-  const email = session?.user?.email;
+  const userId = session?.user?.id;
 
-  if (!email) {
-    notFound();
-  }
-
-  const [user] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
-
-  if (!user) {
-    notFound();
+  if (!userId) {
+    throw new Error("사용자 정보를 불러올 수 없습니다.");
   }
 
   const [summary, attendanceStatus] = await Promise.all([
-    getCreditSummary(user.id),
-    getDailyAttendanceStatus(user.id),
+    getCreditSummary(userId),
+    getDailyAttendanceStatus(userId),
   ]);
 
   const CREDIT_STATS = [
@@ -109,7 +98,7 @@ export default async function CreditsPage() {
       </div>
       <Card className="mb-8 border-2">
         <CardHeader>
-        <CardTitle className="text-lg">현재 잔액</CardTitle>
+          <CardTitle className="text-lg">현재 잔액</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-baseline justify-between">
@@ -141,22 +130,22 @@ export default async function CreditsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent/50">
-          <div>
-            <div className="font-medium">출석 체크</div>
-            <div className="text-sm text-muted-foreground">
-              매일 {attendanceStatus.dailyReward.toLocaleString()} 크레딧 획득
+            <div>
+              <div className="font-medium">출석 체크</div>
+              <div className="text-sm text-muted-foreground">
+                매일 {attendanceStatus.dailyReward.toLocaleString()} 크레딧 획득
+              </div>
             </div>
+            {attendanceStatus.hasCheckedToday ? (
+              <Button disabled variant="secondary">
+                출석 완료
+              </Button>
+            ) : (
+              <Link href="/credits/attendance">
+                <Button>체크하기</Button>
+              </Link>
+            )}
           </div>
-          {attendanceStatus.hasCheckedToday ? (
-            <Button disabled variant="secondary">
-              출석 완료
-            </Button>
-          ) : (
-            <Link href="/credits/attendance">
-              <Button>체크하기</Button>
-            </Link>
-          )}
-        </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent/50">
             <div>
@@ -192,10 +181,7 @@ export default async function CreditsPage() {
               {summary.recentTransactions.map((transaction) => {
                 const typeMeta = TRANSACTION_TYPE_META[transaction.type];
                 return (
-                  <div
-                    key={transaction.id}
-                    className="rounded-lg border p-4"
-                  >
+                  <div key={transaction.id} className="rounded-lg border p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -209,11 +195,7 @@ export default async function CreditsPage() {
                             variant="outline"
                             className="text-xs text-muted-foreground"
                           >
-                            {
-                              TRANSACTION_CATEGORY_LABELS[
-                                transaction.category
-                              ]
-                            }
+                            {TRANSACTION_CATEGORY_LABELS[transaction.category]}
                           </Badge>
                           <span className="font-medium">
                             {transaction.title}
