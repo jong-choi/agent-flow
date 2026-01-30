@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { TransactionItem } from "@/app/[locale]/(app)/credits/_components/transaction-item";
 import {
+  PageContainer,
   PageDescription,
   PageHeader,
   PageHeading,
@@ -15,13 +16,15 @@ export default async function CreditsHistoryPage(
   props: PageProps<"/[locale]/credits/history">,
 ) {
   return (
-    <PageStack>
-      <PageHeader>
-        <PageHeading>크레딧 내역</PageHeading>
-        <PageDescription>최대 조회 가능 기간은 6개월입니다.</PageDescription>
-      </PageHeader>
-      <CreditHistory {...props} />
-    </PageStack>
+    <PageContainer>
+      <PageStack>
+        <PageHeader>
+          <PageHeading>크레딧 내역</PageHeading>
+          <PageDescription>최대 조회 가능 기간은 6개월입니다.</PageDescription>
+        </PageHeader>
+        <CreditHistory {...props} />
+      </PageStack>
+    </PageContainer>
   );
 }
 

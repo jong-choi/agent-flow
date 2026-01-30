@@ -4,7 +4,7 @@ function PageContainer({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "container mx-auto max-w-5xl items-center px-4 py-8",
+        "container mx-auto max-w-5xl items-center px-4 pt-8 pb-32",
         className,
       )}
       {...props}

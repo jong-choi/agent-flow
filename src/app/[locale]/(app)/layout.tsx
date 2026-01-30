@@ -55,8 +55,8 @@ const navigation: NavType[] = [
     icon: HandCoins,
     children: [
       { name: "홈", href: "/credits" },
-      { name: "출석", href: "/credits/attendance" },
-      { name: "히스토리", href: "/credits/history" },
+      { name: "내역", href: "/credits/history" },
+      { name: "출석 체크", href: "/credits/attendance" },
     ],
   },
 ];

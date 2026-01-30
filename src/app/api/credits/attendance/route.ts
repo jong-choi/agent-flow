@@ -1,11 +1,19 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
+  type CreditAttendanceSummary,
   claimDailyAttendance,
   getCreditAttendanceSummary,
 } from "@/db/query/credit";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
+
+export type AttendanceResult = {
+  credited: boolean;
+  reward: number;
+  balance: number;
+  attendance: CreditAttendanceSummary;
+};
 
 export async function POST() {
   try {

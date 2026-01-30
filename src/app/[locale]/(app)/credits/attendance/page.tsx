@@ -1,6 +1,6 @@
+import { AttendanceClient } from "@/app/[locale]/(app)/credits/attendance/_components/attendance-client";
 import { getCreditAttendanceSummary } from "@/db/query/credit";
 import { auth } from "@/lib/auth";
-import { AttendanceClient } from "./attendance-client";
 
 export default async function AttendancePage() {
   const session = await auth();
