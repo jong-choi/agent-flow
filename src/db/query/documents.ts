@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { and, asc, desc, eq, ilike, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { documents } from "@/db/schema/documents";
-import { users } from "@/db/schema/auth";
 import { auth } from "@/lib/auth";
 
 const untitledPrefix = "untitled-";
@@ -69,10 +68,7 @@ export const getDocumentsByOwner = async (
   filters?: DocumentListFilters,
   pagination?: PaginationOptions,
 ) => {
-  const clauses = [
-    eq(documents.ownerId, ownerId),
-    isNull(documents.deletedAt),
-  ];
+  const clauses = [eq(documents.ownerId, ownerId), isNull(documents.deletedAt)];
 
   const trimmedQuery = filters?.query?.trim();
   if (trimmedQuery) {
@@ -118,6 +114,47 @@ export const getDocumentsByOwner = async (
     documents: documentsList,
     totalCount: countRow?.totalCount ?? 0,
   };
+};
+
+type DocumentSearchResult = {
+  id: string;
+  title: string;
+  content: string;
+};
+
+export const searchDocumentsByTitle = async (
+  query: string,
+  limit = 6,
+): Promise<DocumentSearchResult[]> => {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    throw new Error("사용자 정보를 찾을 수 없습니다");
+  }
+
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) {
+    return [];
+  }
+
+  const safeLimit = Math.min(Math.max(limit, 1), 20);
+
+  return db
+    .select({
+      id: documents.id,
+      title: documents.title,
+      content: documents.content,
+    })
+    .from(documents)
+    .where(
+      and(
+        eq(documents.ownerId, userId),
+        ilike(documents.title, `%${trimmedQuery}%`),
+        isNull(documents.deletedAt),
+      ),
+    )
+    .orderBy(desc(documents.updatedAt))
+    .limit(safeLimit);
 };
 
 /**
@@ -247,25 +284,14 @@ export const deleteDocumentAction = async (formData: FormData) => {
   }
 
   const session = await auth();
-  const email = session?.user?.email;
-
-  if (!email) {
-    return;
-  }
-
-  const [user] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
-
-  if (!user) {
-    return;
+  const userId = session?.user?.id;
+  if (!userId) {
+    throw new Error("사용자 정보를 찾을 수 없습니다");
   }
 
   const deleted = await deleteDocument({
     docId: docIdValue,
-    ownerId: user.id,
+    ownerId: userId,
   });
 
   if (!deleted) {
@@ -273,4 +299,18 @@ export const deleteDocumentAction = async (formData: FormData) => {
   }
 
   redirect("/docs");
+};
+
+export const createDocumentAction = async () => {
+  "use server";
+
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    throw new Error("사용자 정보를 찾을 수 없습니다");
+  }
+
+  const created = await createUntitledDocument(userId);
+  return created?.id ?? null;
 };
