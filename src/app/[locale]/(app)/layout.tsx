@@ -43,7 +43,8 @@ type NavSeparator = {
 type NavType = NavItem | NavSeparator;
 
 const navigation: NavType[] = [
-  { type: "Item", name: "워크플로우", href: "/app", icon: Workflow },
+  { type: "Item", name: "캔버스", href: "/canvas", icon: Workflow },
+  { type: "Item", name: "워크플로우", href: "/workflows", icon: Workflow },
   {
     type: "Item",
     name: "프리셋",

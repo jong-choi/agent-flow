@@ -80,13 +80,9 @@ export default async function PurchasedPresetsPage({
       }),
     ]);
 
-  const ownedFreeCount = ownedPresets.filter(
-    (preset) => preset.price === 0,
-  ).length;
   const totalPresetsCount = ownedPresets.length + purchasedSummary.totalCount;
   const createdCount = ownedPresets.length;
   const purchasedCount = purchasedSummary.totalCount;
-  const freeCount = ownedFreeCount + purchasedSummary.freeCount;
 
   const baseParams = {
     q: query,
@@ -141,7 +137,7 @@ export default async function PurchasedPresetsPage({
                 <p className="text-sm font-medium">내 프리셋 라이브러리</p>
                 <p className="text-sm text-muted-foreground">
                   전체 {totalPresetsCount}개 · 만든 {createdCount}개 · 구매{" "}
-                  {purchasedCount}개 · 무료 {freeCount}개
+                  {purchasedCount}개
                 </p>
               </div>
               <Button variant="secondary" size="sm" asChild>
@@ -150,63 +146,9 @@ export default async function PurchasedPresetsPage({
             </CardContent>
           </Card>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
-              구매한 프리셋 {purchasedPageResult.totalCount}개
-            </p>
-          </div>
-
-          {!hasPurchasedPresets ? (
-            <Card className="border-dashed">
-              <CardHeader>
-                <CardTitle>구매한 프리셋이 없습니다</CardTitle>
-                <CardDescription>
-                  프리셋 마켓에서 새로운 프리셋을 둘러보세요.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="secondary" asChild>
-                  <Link href="/presets">프리셋 마켓 보기</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : purchasedPageResult.totalCount === 0 ? (
-            <Card className="border-dashed">
-              <CardHeader>
-                <CardTitle>필터 결과가 없습니다</CardTitle>
-                <CardDescription>
-                  선택한 조건에 맞는 구매 프리셋이 없습니다. 필터를 변경해
-                  주세요.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="secondary" asChild>
-                  <Link href="/presets/purchased">필터 초기화</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <PresetsList
-                items={purchasedPageResult.presets}
-                variant="library"
-              />
-              <PresetsPagination
-                basePath="/presets/purchased"
-                currentPage={currentPage}
-                totalPages={totalPages}
-                params={baseParams}
-                defaults={paginationDefaults}
-              />
-            </>
-          )}
-
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader>
               <CardTitle className="text-base">내가 만든 프리셋</CardTitle>
-              <CardDescription>
-                필터 없이 만들어 둔 프리셋을 스크롤로 바로 확인합니다.
-              </CardDescription>
             </CardHeader>
             <CardContent>
               {ownedPresets.length === 0 ? (
@@ -224,8 +166,8 @@ export default async function PurchasedPresetsPage({
                   </CardContent>
                 </Card>
               ) : (
-                <ScrollArea className="h-[520px] pr-4">
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <ScrollArea className="h-[450px]">
+                  <div className="grid gap-4 pb-14 md:grid-cols-2 xl:grid-cols-3">
                     {ownedPresets.map((preset) => {
                       const visibleTags = preset.tags.slice(0, 5);
                       const hasMoreTags = preset.tags.length > 5;
@@ -301,6 +243,55 @@ export default async function PurchasedPresetsPage({
               )}
             </CardContent>
           </Card>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              구매한 프리셋 {purchasedPageResult.totalCount}개
+            </p>
+          </div>
+          {!hasPurchasedPresets ? (
+            <Card className="border-dashed">
+              <CardHeader>
+                <CardTitle>구매한 프리셋이 없습니다</CardTitle>
+                <CardDescription>
+                  프리셋 마켓에서 새로운 프리셋을 둘러보세요.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="secondary" asChild>
+                  <Link href="/presets">프리셋 마켓 보기</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : purchasedPageResult.totalCount === 0 ? (
+            <Card className="border-dashed">
+              <CardHeader>
+                <CardTitle>필터 결과가 없습니다</CardTitle>
+                <CardDescription>
+                  선택한 조건에 맞는 구매 프리셋이 없습니다. 필터를 변경해
+                  주세요.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="secondary" asChild>
+                  <Link href="/presets/purchased">필터 초기화</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <PresetsList
+                items={purchasedPageResult.presets}
+                variant="library"
+              />
+              <PresetsPagination
+                basePath="/presets/purchased"
+                currentPage={currentPage}
+                totalPages={totalPages}
+                params={baseParams}
+                defaults={paginationDefaults}
+              />
+            </>
+          )}
         </div>
       </PageContainer>
       <aside className="fixed top-20 right-10 w-full shrink-0 lg:w-72">

@@ -65,41 +65,37 @@ export default async function PresetDetailPage({
   const canvasHref = isOwner ? `/canvas/${preset.workflowId}` : "/canvas";
 
   return (
-    <PageContainer>
-      <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-3">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/presets">마켓으로</Link>
-            </Button>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">
-                {preset.category ?? "미분류"} 프리셋
-              </p>
-              <h1 className="text-2xl font-semibold">{preset.title}</h1>
-              <p className="text-sm text-muted-foreground">
-                {preset.description ?? "설명이 없습니다."}
-              </p>
+    <>
+      <PageContainer>
+        <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-3">
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/presets">마켓으로</Link>
+              </Button>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  {preset.category ?? "미분류"} 프리셋
+                </p>
+                <h1 className="text-2xl font-semibold">{preset.title}</h1>
+                <p className="text-sm text-muted-foreground">
+                  {preset.description ?? "설명이 없습니다."}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                <span>구매 {preset.purchaseCount}</span>
+                <span>업데이트 {formatDate(preset.updatedAt)}</span>
+                {workflow?.title ? (
+                  <span>워크플로우 {workflow.title}</span>
+                ) : null}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-              <span>구매 {preset.purchaseCount}</span>
-              <span>업데이트 {formatDate(preset.updatedAt)}</span>
-              {workflow?.title ? (
-                <span>워크플로우 {workflow.title}</span>
-              ) : null}
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" asChild>
+                <Link href="/presets/purchased">내 프리셋</Link>
+              </Button>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" asChild>
-              <Link href="/presets/purchased">내 프리셋</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/canvas">캔버스 열기</Link>
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div className="flex flex-col gap-6">
             <Card>
               <CardHeader>
@@ -180,100 +176,32 @@ export default async function PresetDetailPage({
               </CardContent>
             </Card>
           </div>
-
-          <div className="flex flex-col gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>가격 및 구매</CardTitle>
-                <CardDescription>
-                  프리셋은 크레딧으로 결제합니다.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-1">
-                  <p className="text-3xl font-semibold">
-                    {formatPrice(preset.price)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    구매 {preset.purchaseCount} · 업데이트{" "}
-                    {formatDate(preset.updatedAt)}
-                  </p>
+        </div>
+      </PageContainer>
+      <aside className="fixed top-20 right-10 w-full shrink-0 lg:w-72">
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>가격 및 구매</CardTitle>
+              <CardDescription>프리셋은 크레딧으로 결제합니다.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1">
+                <p className="text-3xl font-semibold">
+                  {formatPrice(preset.price)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  구매 {preset.purchaseCount} · 업데이트{" "}
+                  {formatDate(preset.updatedAt)}
+                </p>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">제작자</span>
+                  <span className="font-medium">
+                    {preset.ownerName ?? "알 수 없음"}
+                  </span>
                 </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">제작자</span>
-                    <span className="font-medium">
-                      {preset.ownerName ?? "알 수 없음"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">노드</span>
-                    <span className="font-medium">{nodes.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">엣지</span>
-                    <span className="font-medium">{edges.length}</span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex flex-col items-stretch gap-2 border-t">
-                {canOpen ? (
-                  <>
-                    <Button asChild>
-                      <Link href={canvasHref}>캔버스에서 열기</Link>
-                    </Button>
-                    {isOwner ? (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/presets/${preset.id}/edit`}>
-                          프리셋 수정
-                        </Link>
-                      </Button>
-                    ) : null}
-                  </>
-                ) : (
-                  <>
-                    <Button>{actionLabel}</Button>
-                    <Button variant="outline" size="sm">
-                      찜하기
-                    </Button>
-                  </>
-                )}
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>제작자</CardTitle>
-                <CardDescription>프리셋을 만든 전문가</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-10">
-                    <AvatarFallback>
-                      {(preset.ownerName ?? "?").slice(0, 1)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {preset.ownerName ?? "알 수 없음"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {preset.category ?? "미분류"}
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm">
-                  프로필 보기
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>프리셋 정보</CardTitle>
-                <CardDescription>워크플로우 구성 요약</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">노드</span>
                   <span className="font-medium">{nodes.length}</span>
@@ -282,26 +210,93 @@ export default async function PresetDetailPage({
                   <span className="text-muted-foreground">엣지</span>
                   <span className="font-medium">{edges.length}</span>
                 </div>
-                <Separator />
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">생성</span>
-                    <span className="font-medium">
-                      {formatDate(preset.createdAt)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">최근 업데이트</span>
-                    <span className="font-medium">
-                      {formatDate(preset.updatedAt)}
-                    </span>
-                  </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col items-stretch gap-2 border-t">
+              {canOpen ? (
+                <>
+                  <Button asChild>
+                    <Link href={canvasHref}>캔버스에서 열기</Link>
+                  </Button>
+                  {isOwner ? (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/presets/${preset.id}/edit`}>
+                        프리셋 수정
+                      </Link>
+                    </Button>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <Button>{actionLabel}</Button>
+                  <Button variant="outline" size="sm">
+                    찜하기
+                  </Button>
+                </>
+              )}
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>제작자</CardTitle>
+              <CardDescription>프리셋을 만든 전문가</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Avatar className="size-10">
+                  <AvatarFallback>
+                    {(preset.ownerName ?? "?").slice(0, 1)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">
+                    {preset.ownerName ?? "알 수 없음"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {preset.category ?? "미분류"}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+              <Button variant="outline" size="sm">
+                프로필 보기
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>프리셋 정보</CardTitle>
+              <CardDescription>워크플로우 구성 요약</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">노드</span>
+                <span className="font-medium">{nodes.length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">엣지</span>
+                <span className="font-medium">{edges.length}</span>
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">생성</span>
+                  <span className="font-medium">
+                    {formatDate(preset.createdAt)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">최근 업데이트</span>
+                  <span className="font-medium">
+                    {formatDate(preset.updatedAt)}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-    </PageContainer>
+      </aside>
+    </>
   );
 }
