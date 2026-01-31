@@ -14,7 +14,7 @@ export function CreateDocumentButton() {
     startCreateTransition(async () => {
       const id = await createDocumentAction();
       if (id) {
-        router.push(`/docs/edit/${id}`);
+        router.push(`/docs/${id}?edit=true`);
       }
     });
   };

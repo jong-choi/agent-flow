@@ -314,3 +314,34 @@ export const createDocumentAction = async () => {
   const created = await createUntitledDocument(userId);
   return created?.id ?? null;
 };
+
+export const updateDocumentAction = async ({
+  docId,
+  title,
+  content = "",
+}: {
+  docId: string;
+  title: string;
+  content?: string;
+}) => {
+  "use server";
+
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    throw new Error("사용자 정보를 찾을 수 없습니다");
+  }
+
+  const updated = await updateDocument({
+    docId,
+    ownerId: userId,
+    title,
+    content,
+  });
+
+  if (!updated) {
+    throw new Error("업데이트에 실패하였습니다.");
+  }
+
+  redirect(`/docs/${docId}`);
+};

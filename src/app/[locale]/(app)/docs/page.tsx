@@ -2,13 +2,17 @@ import { CreateDocumentButton } from "@/app/[locale]/(app)/docs/_components/crea
 import { DocumentsGrid } from "@/app/[locale]/(app)/docs/_components/documents-grid";
 import { DocumentsSearch } from "@/app/[locale]/(app)/docs/_components/documents-search";
 import { DocumentsSort } from "@/app/[locale]/(app)/docs/_components/documents-sort";
-import { PageContainer } from "@/components/page-template";
-import { Button } from "@/components/ui/button";
+import {
+  PageContainer,
+  PageDescription,
+  PageHeader,
+  PageHeading,
+} from "@/components/page-template";
 import { Separator } from "@/components/ui/separator";
 import { getDocumentsByOwner } from "@/db/query/documents";
 import { auth } from "@/lib/auth";
 
-export default async function Page({
+export default async function DocsPage({
   searchParams,
 }: PageProps<"/[locale]/docs">) {
   const session = await auth();
@@ -33,14 +37,14 @@ export default async function Page({
 
   return (
     <PageContainer>
-      <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-6 pb-16">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold">문서 관리</h1>
-            <p className="text-sm text-muted-foreground">
+          <PageHeader>
+            <PageHeading>문서 관리</PageHeading>
+            <PageDescription>
               문서는 캔버스에서 불러와 활용할 수 있습니다.
-            </p>
-          </div>
+            </PageDescription>
+          </PageHeader>
           <CreateDocumentButton />
         </div>
         <Separator />

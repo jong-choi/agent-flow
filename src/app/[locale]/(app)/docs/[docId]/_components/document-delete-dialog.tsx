@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,33 +13,31 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { deleteDocumentAction } from "@/db/query/documents";
 
 type DocumentDeleteDialogProps = {
   docId: string;
-  deleteAction: (formData: FormData) => void | Promise<void>;
 };
 
-export function DocumentDeleteDialog({
-  docId,
-  deleteAction,
-}: DocumentDeleteDialogProps) {
+export function DocumentDeleteDialog({ docId }: DocumentDeleteDialogProps) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size="sm" type="button">
-          삭제
+          <Trash2 className="size-4" />
+          삭제하기
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>문서를 삭제하시겠어요?</AlertDialogTitle>
           <AlertDialogDescription>
-            삭제하면 문서 목록에서 숨겨집니다.
+            삭제하면 되돌릴 수 없습니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>취소</AlertDialogCancel>
-          <form action={deleteAction}>
+          <form action={deleteDocumentAction}>
             <input type="hidden" name="docId" value={docId} />
             <AlertDialogAction type="submit">삭제</AlertDialogAction>
           </form>
