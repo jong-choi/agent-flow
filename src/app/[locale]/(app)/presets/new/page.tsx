@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
+import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,9 +14,6 @@ import { db } from "@/db/client";
 import { users, workflows } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { formatKoreanDate } from "@/lib/utils";
-
-const formatDate = (value: Date | string | null | undefined) =>
-  formatKoreanDate(value, "날짜 없음");
 
 export default async function PresetCreatePage() {
   const session = await auth();
@@ -47,7 +45,7 @@ export default async function PresetCreatePage() {
     .orderBy(desc(workflows.updatedAt));
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
+    <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
@@ -91,9 +89,7 @@ export default async function PresetCreatePage() {
               >
                 <Card className="h-full transition-shadow group-hover:shadow-md">
                   <CardHeader>
-                    <CardTitle className="text-lg">
-                      {workflow.title}
-                    </CardTitle>
+                    <CardTitle className="text-lg">{workflow.title}</CardTitle>
                     <CardDescription className="line-clamp-2">
                       {workflow.description ?? "설명이 없습니다."}
                     </CardDescription>
@@ -101,7 +97,7 @@ export default async function PresetCreatePage() {
                   <CardContent>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>
-                        최근 업데이트 {formatDate(workflow.updatedAt)}
+                        최근 업데이트 {formatKoreanDate(workflow.updatedAt)}
                       </span>
                       <span className="text-primary">선택하기</span>
                     </div>
@@ -112,6 +108,6 @@ export default async function PresetCreatePage() {
           </div>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

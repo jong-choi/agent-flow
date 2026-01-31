@@ -68,26 +68,6 @@ export const presetTags = pgTable(
   ],
 );
 
-export const presetFavorites = pgTable(
-  "preset_favorites",
-  {
-    presetId: uuid("preset_id")
-      .notNull()
-      .references(() => presets.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-  },
-  (table) => [
-    {
-      pk: primaryKey({
-        columns: [table.presetId, table.userId],
-      }),
-    },
-  ],
-);
-
 export type Preset = typeof presets.$inferSelect;
 export type PresetInsert = typeof presets.$inferInsert;
 
@@ -96,6 +76,3 @@ export type PresetPurchaseInsert = typeof presetPurchases.$inferInsert;
 
 export type PresetTag = typeof presetTags.$inferSelect;
 export type PresetTagInsert = typeof presetTags.$inferInsert;
-
-export type PresetFavorite = typeof presetFavorites.$inferSelect;
-export type PresetFavoriteInsert = typeof presetFavorites.$inferInsert;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
+import { PageContainer } from "@/components/page-template";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +28,7 @@ const formatDate = (value: Date | string | null | undefined) =>
 
 export default async function PresetDetailPage({
   params,
-}: PageProps<"/presets/[id]">) {
+}: PageProps<"/[locale]/presets/[id]">) {
   const session = await auth();
   const email = session?.user?.email;
   let viewerId: string | undefined;
@@ -64,7 +65,7 @@ export default async function PresetDetailPage({
   const canvasHref = isOwner ? `/canvas/${preset.workflowId}` : "/canvas";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
+    <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-3">
@@ -301,6 +302,6 @@ export default async function PresetDetailPage({
           </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

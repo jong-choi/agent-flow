@@ -18,12 +18,12 @@ import { db } from "@/db/client";
 import { getWorkflowWithGraph } from "@/db/query/workflows";
 import { users } from "@/db/schema/auth";
 import {
-  presetFavorites,
   presetPurchases,
   presetTags,
   presets,
 } from "@/db/schema/presets";
 import { workflows } from "@/db/schema/workflows";
+import { auth } from "@/lib/auth";
 
 const buildPurchaseCount = () =>
   sql<number>`
@@ -44,20 +44,6 @@ const buildIsPurchased = (buyerId?: string) =>
       `.mapWith(Boolean)
     : sql<boolean>`false`.mapWith(Boolean);
 
-const buildIsFavorite = (userId?: string) =>
-  userId
-    ? sql<boolean>`
-        exists(
-          select 1
-          from ${presetFavorites}
-          where ${presetFavorites.presetId} = ${presets.id}
-            and ${presetFavorites.userId} = ${userId}
-        )
-      `.mapWith(Boolean)
-    : sql<boolean>`false`.mapWith(Boolean);
-
-const RECENT_WINDOW_SQL = sql`now() - interval '14 days'`;
-
 type PresetListFilters = {
   query?: string;
   category?: string | null;
@@ -69,8 +55,7 @@ type PresetListFilters = {
 type PresetLibraryFilters = {
   query?: string;
   category?: string | null;
-  status?: "all" | "recent" | "favorite";
-  sort?: "recent" | "purchase" | "name";
+  sort?: "latest" | "purchase" | "name";
 };
 
 type PaginationOptions = {
@@ -135,12 +120,13 @@ const attachPresetTags = async <T extends { id: string }>(
  * - 사용처: src/app/presets/page.tsx
  */
 export const getPresets = async (
-  viewerId?: string,
   filters?: PresetListFilters,
   pagination?: PaginationOptions,
 ) => {
+  const session = await auth();
+  const userId = session?.user?.id;
   const purchaseCount = buildPurchaseCount();
-  const isPurchased = buildIsPurchased(viewerId);
+  const isPurchased = buildIsPurchased(userId);
   const clauses = [eq(presets.isPublished, true)];
 
   if (filters?.category) {
@@ -303,7 +289,13 @@ export const getPresetPurchaseStatus = async (
  * - 표시 데이터: 구매한 총 개수/무료 개수(통계 카드).
  * - 사용처: src/app/presets/purchased/page.tsx
  */
-export const getPurchasedPresetsSummary = async (buyerId: string) => {
+export const getPurchasedPresetsSummary = async () => {
+  const session = await auth();
+  const buyerId = session?.user?.id;
+  if (!buyerId) {
+    throw new Error("사용자 정보를 찾을 수 없습니다.");
+  }
+
   const baseWhere = and(
     eq(presetPurchases.buyerId, buyerId),
     ne(presets.ownerId, buyerId),
@@ -330,15 +322,16 @@ type PurchasedPresetFilters = PresetLibraryFilters & PaginationOptions;
 
 /**
  * 내 프리셋(/presets/purchased) - 구매한 프리셋 목록 조회.
- * - 표시 데이터: 리스트 카드(제목/요약/가격/구매일/즐겨찾기/태그).
- * - 기능: 검색/카테고리/상태(최근/즐겨찾기)/정렬/페이지네이션.
+ * - 표시 데이터: 리스트 카드(제목/요약/가격/구매일/태그).
+ * - 기능: 검색/카테고리/정렬/페이지네이션.
  * - 사용처: src/app/presets/purchased/page.tsx
  */
-export const getPurchasedPresets = async (
-  buyerId: string,
-  filters?: PurchasedPresetFilters,
-) => {
-  const isFavorite = buildIsFavorite(buyerId);
+export const getPurchasedPresets = async (filters?: PurchasedPresetFilters) => {
+  const session = await auth();
+  const buyerId = session?.user?.id;
+  if (!buyerId) {
+    throw new Error("사용자 정보를 찾을 수 없습니다.");
+  }
   const trimmedQuery = filters?.query?.trim();
   const searchPattern = trimmedQuery ? `%${trimmedQuery}%` : null;
 
@@ -371,20 +364,14 @@ export const getPurchasedPresets = async (
     }
   }
 
-  if (filters?.status === "recent") {
-    clauses.push(gte(presetPurchases.purchasedAt, RECENT_WINDOW_SQL));
-  }
-
-  if (filters?.status === "favorite") {
-    clauses.push(isFavorite);
-  }
-
   const whereClause = clauses.length === 1 ? clauses[0] : and(...clauses);
-  const sort = filters?.sort ?? "recent";
+  const sort = filters?.sort ?? "latest";
   const orderBy =
     sort === "name"
       ? [asc(presets.title), desc(presetPurchases.purchasedAt)]
-      : [desc(presetPurchases.purchasedAt)];
+      : sort === "purchase"
+        ? [desc(presetPurchases.purchasedAt)]
+        : [desc(presets.updatedAt), desc(presetPurchases.purchasedAt)];
   const { pageSize, offset } = resolvePagination(filters);
 
   const [purchasedPresets, [countRow]] = await Promise.all([
@@ -402,7 +389,6 @@ export const getPurchasedPresets = async (
         isPublished: presets.isPublished,
         updatedAt: presets.updatedAt,
         purchasedAt: presetPurchases.purchasedAt,
-        isFavorite,
       })
       .from(presetPurchases)
       .innerJoin(presets, eq(presets.id, presetPurchases.presetId))
@@ -433,7 +419,13 @@ export const getPurchasedPresets = async (
  * - 표시/통계: 생성한 프리셋 수, 무료 프리셋 수 계산에 사용.
  * - 사용처: src/app/presets/purchased/page.tsx
  */
-export const getOwnedPresets = async (ownerId: string) => {
+export const getOwnedPresets = async () => {
+  const session = await auth();
+  const ownerId = session?.user?.id;
+  if (!ownerId) {
+    throw new Error("사용자 정보를 찾을 수 없습니다.");
+  }
+
   const ownedPresets = await db
     .select({
       id: presets.id,
@@ -469,7 +461,6 @@ export const getPresetLibrary = async (
   userId: string,
   filters?: PresetLibraryFilters,
 ) => {
-  const isFavorite = buildIsFavorite(userId);
   const trimmedQuery = filters?.query?.trim();
   const searchPattern = trimmedQuery ? `%${trimmedQuery}%` : null;
 
@@ -505,16 +496,6 @@ export const getPresetLibrary = async (
     }
   }
 
-  if (filters?.status === "recent") {
-    ownedClauses.push(gte(presets.updatedAt, RECENT_WINDOW_SQL));
-    purchasedClauses.push(gte(presetPurchases.purchasedAt, RECENT_WINDOW_SQL));
-  }
-
-  if (filters?.status === "favorite") {
-    ownedClauses.push(isFavorite);
-    purchasedClauses.push(isFavorite);
-  }
-
   const ownedWhere =
     ownedClauses.length === 1 ? ownedClauses[0] : and(...ownedClauses);
   const purchasedWhere =
@@ -536,7 +517,6 @@ export const getPresetLibrary = async (
       isPublished: presets.isPublished,
       displayDate: presets.updatedAt,
       source: createdSource,
-      isFavorite,
     })
     .from(presets)
     .leftJoin(users, eq(users.id, presets.ownerId))
@@ -556,7 +536,6 @@ export const getPresetLibrary = async (
       isPublished: presets.isPublished,
       displayDate: presetPurchases.purchasedAt,
       source: purchasedSource,
-      isFavorite,
     })
     .from(presetPurchases)
     .innerJoin(presets, eq(presets.id, presetPurchases.presetId))
@@ -594,7 +573,7 @@ export const getPresetLibrary = async (
     ...preset,
     tags: tagsByPresetId.get(preset.id) ?? [],
   }));
-  const sort = filters?.sort ?? "recent";
+  const sort = filters?.sort ?? "latest";
 
   if (sort === "name") {
     libraryWithTags.sort((a, b) => a.title.localeCompare(b.title));
@@ -606,75 +585,6 @@ export const getPresetLibrary = async (
   }
 
   return libraryWithTags;
-};
-
-/**
- * 프리셋 즐겨찾기 추가.
- * - 용도: 내 프리셋 페이지의 즐겨찾기 토글/필터와 연결.
- * - 상태: 현재 직접 호출처 없음.
- */
-export const addPresetFavorite = async ({
-  presetId,
-  userId,
-}: {
-  presetId: string;
-  userId: string;
-}) => {
-  const [favorite] = await db
-    .insert(presetFavorites)
-    .values({ presetId, userId })
-    .onConflictDoNothing()
-    .returning({ presetId: presetFavorites.presetId });
-
-  return favorite ?? null;
-};
-
-/**
- * 프리셋 즐겨찾기 제거.
- * - 용도: 내 프리셋 페이지의 즐겨찾기 토글/필터와 연결.
- * - 상태: 현재 직접 호출처 없음.
- */
-export const removePresetFavorite = async ({
-  presetId,
-  userId,
-}: {
-  presetId: string;
-  userId: string;
-}) => {
-  const [favorite] = await db
-    .delete(presetFavorites)
-    .where(
-      and(
-        eq(presetFavorites.presetId, presetId),
-        eq(presetFavorites.userId, userId),
-      ),
-    )
-    .returning({ presetId: presetFavorites.presetId });
-
-  return favorite ?? null;
-};
-
-/**
- * 프리셋 즐겨찾기 여부 조회.
- * - 용도: 즐겨찾기 버튼 상태 표시.
- * - 상태: 현재 직접 호출처 없음.
- */
-export const getPresetFavoriteStatus = async (
-  presetId: string,
-  userId: string,
-) => {
-  const [favorite] = await db
-    .select({ presetId: presetFavorites.presetId })
-    .from(presetFavorites)
-    .where(
-      and(
-        eq(presetFavorites.presetId, presetId),
-        eq(presetFavorites.userId, userId),
-      ),
-    )
-    .limit(1);
-
-  return Boolean(favorite);
 };
 
 /**

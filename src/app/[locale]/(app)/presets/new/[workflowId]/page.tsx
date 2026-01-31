@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
+import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,22 +16,11 @@ import { users, workflows } from "@/db/schema";
 import { PresetCreateForm } from "@/features/preset/components/preset-create-form";
 import { auth } from "@/lib/auth";
 import { formatKoreanDate } from "@/lib/utils";
-
-const formatDate = (value: Date | string | null | undefined) =>
-  formatKoreanDate(value, "날짜 없음");
-
-const normalizeOptionalText = (value: FormDataEntryValue | null) => {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed === "" ? null : trimmed;
-};
+import { normalizeOptionalText } from "@/app/[locale]/(app)/presets/_utils/form-utils";
 
 export default async function PresetCreateDetailPage({
   params,
-}: PageProps<"/presets/new/[workflowId]">) {
+}: PageProps<"/[locale]/presets/new/[workflowId]">) {
   const session = await auth();
   const email = session?.user?.email;
 
@@ -132,7 +122,7 @@ export default async function PresetCreateDetailPage({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
+    <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
@@ -166,7 +156,7 @@ export default async function PresetCreateDetailPage({
                 {workflow.description ?? "설명이 없습니다."}
               </p>
               <p className="text-xs text-muted-foreground">
-                최근 업데이트 {formatDate(workflow.updatedAt)}
+                최근 업데이트 {formatKoreanDate(workflow.updatedAt)}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -185,6 +175,6 @@ export default async function PresetCreateDetailPage({
           cancelHref="/presets/new"
         />
       </div>
-    </div>
+    </PageContainer>
   );
 }

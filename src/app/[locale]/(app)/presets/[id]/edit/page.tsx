@@ -2,25 +2,18 @@ import { revalidateTag } from "next/cache";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
+import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db/client";
 import { deletePreset, updatePreset } from "@/db/query/presets";
 import { presets, users, workflows } from "@/db/schema";
 import { PresetEditForm } from "@/features/preset/components/preset-edit-form";
 import { auth } from "@/lib/auth";
-
-const normalizeOptionalText = (value: FormDataEntryValue | null) => {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed === "" ? null : trimmed;
-};
+import { normalizeOptionalText } from "@/app/[locale]/(app)/presets/_utils/form-utils";
 
 export default async function PresetEditPage({
   params,
-}: PageProps<"/presets/[id]/edit">) {
+}: PageProps<"/[locale]/presets/[id]/edit">) {
   const session = await auth();
   const email = session?.user?.email;
 
@@ -149,7 +142,7 @@ export default async function PresetEditPage({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
+    <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
@@ -175,6 +168,6 @@ export default async function PresetEditPage({
           deleteAction={deletePresetAction}
         />
       </div>
-    </div>
+    </PageContainer>
   );
 }

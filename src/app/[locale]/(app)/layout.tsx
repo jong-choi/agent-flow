@@ -9,10 +9,10 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Blocks,
   HandCoins,
   type LucideProps,
   StickyNote,
-  Store,
   Workflow,
 } from "lucide-react";
 import { SiteHeader } from "@/app/_components/site-header/site-header";
@@ -44,10 +44,19 @@ type NavType = NavItem | NavSeparator;
 
 const navigation: NavType[] = [
   { type: "Item", name: "워크플로우", href: "/app", icon: Workflow },
-  { type: "Item", name: "마켓플레이스", href: "/presets", icon: Store },
+  {
+    type: "Item",
+    name: "프리셋",
+    href: "/presets",
+    icon: Blocks,
+    children: [
+      { name: "마켓", href: "/presets" },
+      { name: "내 프리셋", href: "/presets/purchased" },
+      { name: "프리셋 만들기", href: "/presets/new" },
+    ],
+  },
   { type: "Separator" },
   { type: "Item", name: "문서", href: "/docs", icon: StickyNote },
-
   {
     type: "Item",
     name: "크레딧",
