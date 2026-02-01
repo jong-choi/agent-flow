@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
 import { Calendar, ChevronLeft } from "lucide-react";
 import "@xyflow/react/dist/style.css";
 import {
@@ -16,11 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { db } from "@/db/client";
 import { getWorkflowWithGraph } from "@/db/query/workflows";
-import { users } from "@/db/schema";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
-import { auth } from "@/lib/auth";
 
 const formatDateTime = (value: Date) =>
   new Intl.DateTimeFormat("ko-KR", {
@@ -31,25 +27,8 @@ const formatDateTime = (value: Date) =>
 export default async function WorkflowDetailPage({
   params,
 }: PageProps<"/[locale]/presets/workflows/[id]">) {
-  const session = await auth();
-  const email = session?.user?.email;
-
-  if (!email) {
-    notFound();
-  }
-
-  const [user] = await db
-    .select({ id: users.id, name: users.name })
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
-
-  if (!user) {
-    notFound();
-  }
-
   const { id } = await params;
-  const workflowData = await getWorkflowWithGraph(id, user.id);
+  const workflowData = await getWorkflowWithGraph(id);
 
   if (!workflowData) {
     notFound();

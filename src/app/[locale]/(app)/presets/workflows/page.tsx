@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
 import {
   PageContainer,
   PageDescription,
@@ -14,42 +12,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { db } from "@/db/client";
-import { users, workflows } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { getOwnedWorkflows } from "@/db/query/workflows";
 
 const formatDate = (value: Date) =>
   new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(value);
 
 export default async function WorkflowsPage() {
-  const session = await auth();
-  const email = session?.user?.email;
-
-  if (!email) {
-    notFound();
-  }
-
-  const [user] = await db
-    .select({ id: users.id, name: users.name })
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
-
-  if (!user) {
-    notFound();
-  }
-
-  const workflowList = await db
-    .select({
-      id: workflows.id,
-      title: workflows.title,
-      description: workflows.description,
-      createdAt: workflows.createdAt,
-      updatedAt: workflows.updatedAt,
-    })
-    .from(workflows)
-    .where(eq(workflows.ownerId, user.id))
-    .orderBy(desc(workflows.updatedAt));
+  const workflowList = await getOwnedWorkflows();
 
   return (
     <PageContainer>

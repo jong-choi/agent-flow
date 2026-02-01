@@ -71,6 +71,7 @@ export function PresetEditForm({
             <CardDescription>마켓에 보여질 정보를 수정합니다.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <input type="hidden" name="presetId" value={preset.id} />
             <div className="grid gap-2">
               <label htmlFor="title" className="text-sm font-medium">
                 프리셋 이름
@@ -172,6 +173,7 @@ export function PresetEditForm({
       </form>
 
       <form action={deleteAction}>
+        <input type="hidden" name="presetId" value={preset.id} />
         <Card className="border-destructive/40 bg-destructive/5">
           <CardHeader>
             <CardTitle className="text-destructive">프리셋 삭제</CardTitle>

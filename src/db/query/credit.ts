@@ -21,6 +21,7 @@ import {
   type creditTransactionTypes,
   creditTransactions,
 } from "@/db/schema/credit";
+import { getUserId } from "@/db/query/auth";
 
 export type CreditTransactionType = (typeof creditTransactionTypes)[number];
 export type CreditTransactionCategory =
@@ -119,7 +120,8 @@ const ensureCreditAccount = async (userId: string) => {
  * - 화면: 현재 직접 호출처 없음 (결제/차감 전 잔액 검증 등 공용 용도).
  * - 반환: credit_accounts.balance
  */
-export const getCreditBalance = async (userId: string) => {
+export const getCreditBalance = async () => {
+  const userId = await getUserId();
   const account = await ensureCreditAccount(userId);
   return account.balance;
 };
@@ -129,9 +131,8 @@ export const getCreditBalance = async (userId: string) => {
  * - 표시 데이터: 현재 잔액, 이번 달 획득/사용, 누적 획득, 최근 거래 5건.
  * - 사용처: src/app/credits/page.tsx
  */
-export const getCreditSummary = async (
-  userId: string,
-): Promise<CreditSummary> => {
+export const getCreditSummary = async (): Promise<CreditSummary> => {
+  const userId = await getUserId();
   const account = await ensureCreditAccount(userId);
   const monthStart = startOfMonth(new Date());
 
@@ -205,9 +206,9 @@ export const getCreditSummary = async (
  * - 사용처: src/app/credits/history/page.tsx
  */
 export const getCreditHistory = async (
-  userId: string,
   filters?: CreditHistoryFilters,
 ): Promise<CreditHistoryResult> => {
+  const userId = await getUserId();
   const to = filters?.to ? new Date(filters.to) : new Date();
   const from = filters?.from ? new Date(filters.from) : subMonths(to, 6);
 
@@ -253,9 +254,8 @@ export const getCreditHistory = async (
  * - 사용처: src/app/credits/attendance/page.tsx
  * - 참고: 출석 여부는 Korea(Asia/Seoul) 기준 날짜로 계산.
  */
-export const getCreditAttendanceSummary = async (
-  userId: string,
-): Promise<CreditAttendanceSummary> => {
+export const getCreditAttendanceSummary = async (): Promise<CreditAttendanceSummary> => {
+  const userId = await getUserId();
   const todayKey = toDateKey(new Date());
   const today = startOfDay(parseISO(todayKey));
   const weekStartDate = startOfWeek(today, { weekStartsOn: 1 });
@@ -348,9 +348,8 @@ export const getCreditAttendanceSummary = async (
  * - 표시 데이터: 오늘 출석 여부 + 일일 보상 금액 문구.
  * - 사용처: src/app/credits/page.tsx
  */
-export const getDailyAttendanceStatus = async (
-  userId: string,
-): Promise<CreditAttendanceStatus> => {
+export const getDailyAttendanceStatus = async (): Promise<CreditAttendanceStatus> => {
+  const userId = await getUserId();
   const todayKey = toDateKey(new Date());
   const [event] = await db
     .select({ eventDate: creditDailyEvents.eventDate })
@@ -376,9 +375,8 @@ export const getDailyAttendanceStatus = async (
  * - 중복 요청: 이미 출석한 경우 credited=false + reason="already_claimed".
  * - 참고: 날짜 기준은 Korea(Asia/Seoul).
  */
-export const claimDailyAttendance = async (
-  userId: string,
-): Promise<AttendanceClaimResult> => {
+export const claimDailyAttendance = async (): Promise<AttendanceClaimResult> => {
+  const userId = await getUserId();
   const todayKey = toDateKey(new Date());
 
   return db.transaction(async (tx) => {

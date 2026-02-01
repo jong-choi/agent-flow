@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { notFound } from "next/navigation";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,116 +9,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { db } from "@/db/client";
-import { createPreset } from "@/db/query/presets";
-import { users, workflows } from "@/db/schema";
+import { createPresetAction } from "@/db/query/presets";
+import { getOwnedWorkflowById } from "@/db/query/workflows";
 import { PresetCreateForm } from "@/features/preset/components/preset-create-form";
-import { auth } from "@/lib/auth";
 import { formatKoreanDate } from "@/lib/utils";
-import { normalizeOptionalText } from "@/app/[locale]/(app)/presets/_utils/form-utils";
 
 export default async function PresetCreateDetailPage({
   params,
 }: PageProps<"/[locale]/presets/new/[workflowId]">) {
-  const session = await auth();
-  const email = session?.user?.email;
-
-  if (!email) {
-    notFound();
-  }
-
-  const [user] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
-
-  if (!user) {
-    notFound();
-  }
-
   const { workflowId } = await params;
-  const [workflow] = await db
-    .select({
-      id: workflows.id,
-      title: workflows.title,
-      description: workflows.description,
-      updatedAt: workflows.updatedAt,
-    })
-    .from(workflows)
-    .where(and(eq(workflows.id, workflowId), eq(workflows.ownerId, user.id)))
-    .limit(1);
+  const workflow = await getOwnedWorkflowById(workflowId);
 
   if (!workflow) {
     notFound();
   }
-
-  const createPresetAction = async (formData: FormData) => {
-    "use server";
-
-    const session = await auth();
-    const email = session?.user?.email;
-
-    if (!email) {
-      notFound();
-    }
-
-    const [user] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    if (!user) {
-      notFound();
-    }
-
-    const titleValue = formData.get("title");
-
-    if (typeof titleValue !== "string" || titleValue.trim() === "") {
-      return;
-    }
-
-    const description = normalizeOptionalText(formData.get("description"));
-    const summary = normalizeOptionalText(formData.get("summary"));
-    const category = normalizeOptionalText(formData.get("category"));
-    const priceValue = formData.get("price");
-    const isPublished = formData.get("isPublished") === "on";
-    const tagValues = formData.getAll("tags");
-    const tags = Array.from(
-      new Map(
-        tagValues
-          .filter((value): value is string => typeof value === "string")
-          .map((value) => value.trim())
-          .filter((value) => value !== "")
-          .map((value) => [value.toLowerCase(), value]),
-      ).values(),
-    );
-
-    let price = 0;
-    if (typeof priceValue === "string" && priceValue.trim() !== "") {
-      const parsed = Number(priceValue);
-      price = Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : 0;
-    }
-
-    const preset = await createPreset({
-      ownerId: user.id,
-      workflowId: workflow.id,
-      title: titleValue.trim(),
-      description,
-      summary,
-      category,
-      price,
-      isPublished,
-      tags,
-    });
-
-    if (!preset) {
-      notFound();
-    }
-
-    redirect(`/presets/${preset.id}`);
-  };
 
   return (
     <PageContainer>
@@ -172,6 +75,7 @@ export default async function PresetCreateDetailPage({
 
         <PresetCreateForm
           action={createPresetAction}
+          workflowId={workflow.id}
           cancelHref="/presets/new"
         />
       </div>

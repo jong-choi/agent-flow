@@ -17,22 +17,14 @@ import { Separator } from "@/components/ui/separator";
 import { getDocumentById } from "@/db/query/documents";
 import { ReactMarkdownApp } from "@/features/chat/components/markdown/react-markdown-app";
 import "@/features/chat/styles/small-header-markdown.css";
-import { auth } from "@/lib/auth";
 import { formatKoreanDate } from "@/lib/utils";
 
 export default async function DocumentViewPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/docs/[docId]">) {
-  const session = await auth();
-  const userId = session?.user?.id;
-
-  if (!userId) {
-    throw new Error("사용자 정보를 찾을 수 없습니다.");
-  }
-
   const { docId } = await params;
-  const document = await getDocumentById({ docId, ownerId: userId });
+  const document = await getDocumentById({ docId });
 
   if (!document) {
     notFound();

@@ -49,13 +49,12 @@ const buildWorkflowEdgeValue = (
   targetHandle: normalizeHandle(edge.targetHandle, "target"),
 });
 
-export const getWorkflowWithGraph = async (
-  workflowId: string,
-  ownerId?: string,
-) => {
-  const whereClause = ownerId
-    ? and(eq(workflows.id, workflowId), eq(workflows.ownerId, ownerId))
-    : eq(workflows.id, workflowId);
+export const getWorkflowWithGraph = async (workflowId: string) => {
+  const ownerId = await getUserId();
+  const whereClause = and(
+    eq(workflows.id, workflowId),
+    eq(workflows.ownerId, ownerId),
+  );
 
   const [workflow] = await db
     .select()
@@ -104,17 +103,49 @@ export const getRecentWorkflows = async (
   return { data: data.slice(0, limit), hasMore };
 };
 
+export const getOwnedWorkflows = async () => {
+  const ownerId = await getUserId();
+
+  return db
+    .select({
+      id: workflows.id,
+      title: workflows.title,
+      description: workflows.description,
+      createdAt: workflows.createdAt,
+      updatedAt: workflows.updatedAt,
+    })
+    .from(workflows)
+    .where(eq(workflows.ownerId, ownerId))
+    .orderBy(desc(workflows.updatedAt));
+};
+
+export const getOwnedWorkflowById = async (workflowId: string) => {
+  const ownerId = await getUserId();
+
+  const [workflow] = await db
+    .select({
+      id: workflows.id,
+      title: workflows.title,
+      description: workflows.description,
+      updatedAt: workflows.updatedAt,
+    })
+    .from(workflows)
+    .where(and(eq(workflows.id, workflowId), eq(workflows.ownerId, ownerId)))
+    .limit(1);
+
+  return workflow ?? null;
+};
+
 export const createWorkflowGraph = async ({
-  ownerId,
   title,
   description,
   nodes,
   edges,
 }: {
-  ownerId: string;
   title: string;
   description: string | null;
 } & WorkflowGraphInput) => {
+  const ownerId = await getUserId();
   return db.transaction(async (tx) => {
     const [workflow] = await tx
       .insert(workflows)
@@ -158,18 +189,17 @@ export const createWorkflowGraph = async ({
 };
 
 export const updateWorkflowGraph = async ({
-  ownerId,
   workflowId,
   title,
   description,
   nodes,
   edges,
 }: {
-  ownerId: string;
   workflowId: string;
   title: string;
   description: string | null;
 } & WorkflowGraphInput) => {
+  const ownerId = await getUserId();
   return db.transaction(async (tx) => {
     const [workflow] = await tx
       .update(workflows)

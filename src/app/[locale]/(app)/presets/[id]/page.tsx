@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
 import { PageContainer } from "@/components/page-template";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,11 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { db } from "@/db/client";
+import { getUserId } from "@/db/query/auth";
 import { getPresetDetail, getPresetPurchaseStatus } from "@/db/query/presets";
-import { users } from "@/db/schema";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
-import { auth } from "@/lib/auth";
 import { formatKoreanDate } from "@/lib/utils";
 
 const formatPrice = (price: number) =>
@@ -29,19 +26,7 @@ const formatDate = (value: Date | string | null | undefined) =>
 export default async function PresetDetailPage({
   params,
 }: PageProps<"/[locale]/presets/[id]">) {
-  const session = await auth();
-  const email = session?.user?.email;
-  let viewerId: string | undefined;
-
-  if (email) {
-    const [user] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    viewerId = user?.id;
-  }
+  const viewerId = (await getUserId({ throwOnError: false })) || undefined;
 
   const { id } = await params;
   const presetDetail = await getPresetDetail(id);
@@ -53,9 +38,7 @@ export default async function PresetDetailPage({
   const { preset, nodes, edges, workflow } = presetDetail;
   const isOwner = viewerId ? viewerId === preset.ownerId : false;
   const isPurchased =
-    viewerId && !isOwner
-      ? await getPresetPurchaseStatus(preset.id, viewerId)
-      : false;
+    viewerId && !isOwner ? await getPresetPurchaseStatus(preset.id) : false;
   const canOpen = isOwner || isPurchased;
   const actionLabel = canOpen
     ? "캔버스에서 열기"

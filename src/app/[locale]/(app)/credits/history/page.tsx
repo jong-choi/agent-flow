@@ -10,7 +10,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { type TransactionResult, getCreditHistory } from "@/db/query/credit";
-import { auth } from "@/lib/auth";
 
 export default async function CreditsHistoryPage(
   props: PageProps<"/[locale]/credits/history">,
@@ -32,19 +31,10 @@ export async function CreditHistory({
   searchParams,
 }: PageProps<"/[locale]/credits/history">) {
   const awaitedSearchParams = await searchParams;
-  const session = await auth();
-  const userId = session?.user?.id;
-
-  if (!userId) {
-    throw new Error("사용자 정보를 불러올 수 없습니다.");
-  }
 
   const type = awaitedSearchParams?.type;
 
-  const { transactions, range } = await getCreditHistory(
-    userId,
-    awaitedSearchParams,
-  );
+  const { transactions, range } = await getCreditHistory(awaitedSearchParams);
 
   const rangeLabel = `${format(range.from, "yy.MM.dd")} ~ ${format(
     range.to,

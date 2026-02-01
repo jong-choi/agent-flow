@@ -10,24 +10,16 @@ import {
 } from "@/components/page-template";
 import { Separator } from "@/components/ui/separator";
 import { getDocumentsByOwner } from "@/db/query/documents";
-import { auth } from "@/lib/auth";
 
 export default async function DocsPage({
   searchParams,
 }: PageProps<"/[locale]/docs">) {
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) {
-    throw new Error("사용자 정보를 찾을 수 없습니다");
-  }
-
   const { q, sort: rawSort, page: rawPage } = await searchParams;
   const query = typeof q === "string" ? q : "";
   const sort = isSort(rawSort) ? rawSort : "recent";
   const page = toPageNumber(rawPage);
 
   const { documents } = await getDocumentsByOwner(
-    userId,
     {
       query,
       sort,

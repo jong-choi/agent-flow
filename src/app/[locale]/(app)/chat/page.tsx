@@ -3,7 +3,7 @@ import { ChevronRight, Play } from "lucide-react";
 import { PageHeading } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { getRecentWorkflows } from "@/db/query/workflows";
-import { cn, formatKoreanDate } from "@/lib/utils";
+import { formatKoreanDate } from "@/lib/utils";
 
 export default async function Page() {
   const { data, hasMore } = await getRecentWorkflows();

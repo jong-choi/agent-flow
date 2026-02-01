@@ -3,8 +3,8 @@
 import { redirect } from "next/navigation";
 import { and, asc, desc, eq, ilike, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
+import { getUserId } from "@/db/query/auth";
 import { documents } from "@/db/schema/documents";
-import { auth } from "@/lib/auth";
 
 const untitledPrefix = "untitled-";
 
@@ -16,26 +16,6 @@ const parseUntitledIndex = (title: string) => {
 
   const parsed = Number(match[1]);
   return Number.isFinite(parsed) ? parsed : null;
-};
-
-const resolveNextUntitledTitle = async (ownerId: string) => {
-  const rows = await db
-    .select({ title: documents.title })
-    .from(documents)
-    .where(
-      and(
-        eq(documents.ownerId, ownerId),
-        ilike(documents.title, "untitled-%"),
-        isNull(documents.deletedAt),
-      ),
-    );
-
-  const maxIndex = rows.reduce((max, row) => {
-    const index = parseUntitledIndex(row.title);
-    return index && index > max ? index : max;
-  }, 0);
-
-  return `${untitledPrefix}${maxIndex + 1}`;
 };
 
 type DocumentListFilters = {
@@ -64,10 +44,10 @@ const resolvePagination = (options?: PaginationOptions) => {
  * - 사용처: src/app/docs/page.tsx
  */
 export const getDocumentsByOwner = async (
-  ownerId: string,
   filters?: DocumentListFilters,
   pagination?: PaginationOptions,
 ) => {
+  const ownerId = await getUserId();
   const clauses = [eq(documents.ownerId, ownerId), isNull(documents.deletedAt)];
 
   const trimmedQuery = filters?.query?.trim();
@@ -126,11 +106,7 @@ export const searchDocumentsByTitle = async (
   query: string,
   limit = 6,
 ): Promise<DocumentSearchResult[]> => {
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) {
-    throw new Error("사용자 정보를 찾을 수 없습니다");
-  }
+  const userId = await getUserId();
 
   const trimmedQuery = query.trim();
   if (!trimmedQuery) {
@@ -164,11 +140,10 @@ export const searchDocumentsByTitle = async (
  */
 export const getDocumentById = async ({
   docId,
-  ownerId,
 }: {
   docId: string;
-  ownerId: string;
 }) => {
+  const ownerId = await getUserId();
   const [document] = await db
     .select({
       id: documents.id,
@@ -196,8 +171,25 @@ export const getDocumentById = async ({
  * - 내용: 빈 문자열
  * - 사용처: src/app/docs/page.tsx
  */
-export const createUntitledDocument = async (ownerId: string) => {
-  const title = await resolveNextUntitledTitle(ownerId);
+export const createUntitledDocument = async () => {
+  const ownerId = await getUserId();
+  const rows = await db
+    .select({ title: documents.title })
+    .from(documents)
+    .where(
+      and(
+        eq(documents.ownerId, ownerId),
+        ilike(documents.title, "untitled-%"),
+        isNull(documents.deletedAt),
+      ),
+    );
+
+  const maxIndex = rows.reduce((max, row) => {
+    const index = parseUntitledIndex(row.title);
+    return index && index > max ? index : max;
+  }, 0);
+
+  const title = `${untitledPrefix}${maxIndex + 1}`;
 
   const [document] = await db
     .insert(documents)
@@ -214,15 +206,14 @@ export const createUntitledDocument = async (ownerId: string) => {
  */
 export const updateDocument = async ({
   docId,
-  ownerId,
   title,
   content,
 }: {
   docId: string;
-  ownerId: string;
   title: string;
   content: string;
 }) => {
+  const ownerId = await getUserId();
   const [document] = await db
     .update(documents)
     .set({
@@ -249,11 +240,10 @@ export const updateDocument = async ({
  */
 export const deleteDocument = async ({
   docId,
-  ownerId,
 }: {
   docId: string;
-  ownerId: string;
 }) => {
+  const ownerId = await getUserId();
   const [document] = await db
     .update(documents)
     .set({
@@ -283,15 +273,8 @@ export const deleteDocumentAction = async (formData: FormData) => {
     return;
   }
 
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) {
-    throw new Error("사용자 정보를 찾을 수 없습니다");
-  }
-
   const deleted = await deleteDocument({
     docId: docIdValue,
-    ownerId: userId,
   });
 
   if (!deleted) {
@@ -304,14 +287,7 @@ export const deleteDocumentAction = async (formData: FormData) => {
 export const createDocumentAction = async () => {
   "use server";
 
-  const session = await auth();
-  const userId = session?.user?.id;
-
-  if (!userId) {
-    throw new Error("사용자 정보를 찾을 수 없습니다");
-  }
-
-  const created = await createUntitledDocument(userId);
+  const created = await createUntitledDocument();
   return created?.id ?? null;
 };
 
@@ -326,15 +302,8 @@ export const updateDocumentAction = async ({
 }) => {
   "use server";
 
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) {
-    throw new Error("사용자 정보를 찾을 수 없습니다");
-  }
-
   const updated = await updateDocument({
     docId,
-    ownerId: userId,
     title,
     content,
   });

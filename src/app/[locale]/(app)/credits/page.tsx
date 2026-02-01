@@ -13,19 +13,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getCreditSummary, getDailyAttendanceStatus } from "@/db/query/credit";
-import { auth } from "@/lib/auth";
 
 export default async function CreditsPage() {
-  const session = await auth();
-  const userId = session?.user?.id;
-
-  if (!userId) {
-    throw new Error("사용자 정보를 불러올 수 없습니다.");
-  }
-
   const [summary, attendanceStatus] = await Promise.all([
-    getCreditSummary(userId),
-    getDailyAttendanceStatus(userId),
+    getCreditSummary(),
+    getDailyAttendanceStatus(),
   ]);
 
   const CREDIT_STATS = [
