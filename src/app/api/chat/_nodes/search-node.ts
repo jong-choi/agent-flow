@@ -12,19 +12,6 @@ type GoogleSearchResponse = {
   items?: GoogleSearchItem[];
 };
 
-type NaverBlogItem = {
-  title: string;
-  link: string;
-  description: string;
-  bloggername: string;
-  bloggerlink: string;
-  postdate: string;
-};
-
-type NaverBlogResponse = {
-  items: NaverBlogItem[];
-};
-
 export const searchNode = async (
   state: typeof FlowStateAnnotation.State,
   config: FlowRunnableConfig,
@@ -44,9 +31,25 @@ export const searchNode = async (
   let errMessage: string = "";
 
   try {
-    searchResults = await googleSearch(input);
+    searchResults = await searxngSearch(input);
   } catch {
-    errMessage = "구글 검색 중 에러가 발생하였습니다.";
+    errMessage = "메타검색 중 에러가 발생하였습니다.";
+  }
+
+  if (!searchResults.length) {
+    try {
+      searchResults = await googleSearch(input);
+    } catch {
+      errMessage = "구글 검색 중 에러가 발생하였습니다.";
+    }
+  }
+
+  if (!searchResults.length) {
+    try {
+      searchResults = await braveSearch(input);
+    } catch {
+      errMessage = "Brave 검색 중 에러가 발생하였습니다.";
+    }
   }
 
   if (!searchResults.length) {
@@ -72,6 +75,47 @@ export const searchNode = async (
       .join("\n");
 
   return { outputMap: { [nodeId]: resultMessage } };
+};
+
+type SearxngResponse = {
+  results?: Array<{
+    title?: string;
+    url?: string;
+    content?: string;
+  }>;
+};
+
+const searxngSearch = async (input: string): Promise<GoogleSearchItem[]> => {
+  const baseUrl = process.env.SEARXNG_BASE_URL;
+
+  const url = new URL("/search", baseUrl);
+  url.searchParams.set("q", input);
+  url.searchParams.set("format", "json");
+  url.searchParams.set("categories", "general");
+  url.searchParams.set("language", "ko-KR");
+  url.searchParams.set("pageno", "1");
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Accept: "application/json",
+      "X-API-Key": process.env.SEARXNG_API_KEY!,
+    },
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`SearXNG error: ${response.status} ${body}`);
+  }
+
+  const data: SearxngResponse = await response.json();
+
+  return (
+    data.results?.map((res) => ({
+      title: (res.title ?? "").trim(),
+      link: (res.url ?? "").trim(),
+      snippet: (res.content ?? "").trim(),
+    })) ?? []
+  ).filter((res) => res.title && res.link);
 };
 
 const googleSearch = async (input: string) => {
@@ -106,6 +150,61 @@ const googleSearch = async (input: string) => {
     })) || [];
 
   return searchResults;
+};
+
+type BraveSearchResponse = {
+  web?: {
+    results?: Array<{
+      title: string;
+      url: string;
+      description: string;
+    }>;
+  };
+};
+
+const braveSearch = async (input: string): Promise<GoogleSearchItem[]> => {
+  const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
+  if (!BRAVE_API_KEY) {
+    throw new Error("Brave Search API 키가 설정되지 않았습니다.");
+  }
+
+  const url = new URL("https://api.search.brave.com/res/v1/web/search");
+  url.searchParams.set("q", input);
+  url.searchParams.set("count", "10"); // 결과 개수 제한
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Accept: "application/json",
+      "X-Subscription-Token": BRAVE_API_KEY,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Brave API error: ${response.status}`);
+  }
+
+  const data: BraveSearchResponse = await response.json();
+
+  return (
+    data.web?.results?.map((item) => ({
+      title: item.title,
+      link: item.url,
+      snippet: item.description,
+    })) || []
+  );
+};
+
+type NaverBlogItem = {
+  title: string;
+  link: string;
+  description: string;
+  bloggername: string;
+  bloggerlink: string;
+  postdate: string;
+};
+
+type NaverBlogResponse = {
+  items: NaverBlogItem[];
 };
 
 const naverSearch = async (input: string) => {
