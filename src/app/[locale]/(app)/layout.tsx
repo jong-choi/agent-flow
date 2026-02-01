@@ -10,6 +10,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Blocks,
+  BotMessageSquare,
   HandCoins,
   type LucideProps,
   StickyNote,
@@ -44,6 +45,8 @@ type NavType = NavItem | NavSeparator;
 
 const navigation: NavType[] = [
   { type: "Item", name: "캔버스", href: "/canvas", icon: Workflow },
+  { type: "Item", name: "채팅", href: "/chat", icon: BotMessageSquare },
+  { type: "Separator" },
   {
     type: "Item",
     name: "프리셋",
@@ -56,8 +59,8 @@ const navigation: NavType[] = [
       { name: "프리셋 만들기", href: "/presets/new" },
     ],
   },
-  { type: "Separator" },
   { type: "Item", name: "문서", href: "/docs", icon: StickyNote },
+  { type: "Separator" },
   {
     type: "Item",
     name: "크레딧",
@@ -69,7 +72,6 @@ const navigation: NavType[] = [
       { name: "출석 체크", href: "/credits/attendance" },
     ],
   },
-  { type: "Separator" },
 ];
 
 interface MainLayoutProps {

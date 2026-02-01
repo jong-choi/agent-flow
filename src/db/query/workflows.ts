@@ -1,13 +1,10 @@
 "use server";
 
-import { and, eq, inArray } from "drizzle-orm";
-import { db } from "@/db/client";
-import {
-  workflowEdges,
-  workflowNodes,
-  workflows,
-} from "@/db/schema/workflows";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { type FlowEdge, type FlowNode } from "@/app/api/chat/_types/nodes";
+import { db } from "@/db/client";
+import { getUserId } from "@/db/query/auth";
+import { workflowEdges, workflowNodes, workflows } from "@/db/schema/workflows";
 
 type WorkflowGraphInput = {
   nodes: FlowNode[];
@@ -83,6 +80,30 @@ export const getWorkflowWithGraph = async (
   return { workflow, nodes, edges };
 };
 
+export const getRecentWorkflows = async (
+  {
+    limit,
+  }: {
+    limit: number;
+  } = { limit: 6 },
+) => {
+  const ownerId = await getUserId();
+
+  const data = await db
+    .select()
+    .from(workflows)
+    .where(eq(workflows.ownerId, ownerId))
+    .orderBy(desc(workflows.updatedAt))
+    .limit(limit + 1);
+
+  let hasMore = false;
+  if (data.length > limit) {
+    hasMore = true;
+  }
+
+  return { data: data.slice(0, limit), hasMore };
+};
+
 export const createWorkflowGraph = async ({
   ownerId,
   title,
@@ -111,11 +132,13 @@ export const createWorkflowGraph = async ({
     const workflowId = workflow.id;
 
     if (nodes.length > 0) {
-      await tx.insert(workflowNodes).values(
-        nodes.map((node) =>
-          buildWorkflowNodeValue(node, workflowId, ownerId),
-        ),
-      );
+      await tx
+        .insert(workflowNodes)
+        .values(
+          nodes.map((node) =>
+            buildWorkflowNodeValue(node, workflowId, ownerId),
+          ),
+        );
     }
 
     if (edges.length > 0) {
