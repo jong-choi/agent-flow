@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
+import { Calendar, ChevronLeft } from "lucide-react";
 import "@xyflow/react/dist/style.css";
+import {
+  PageContainer,
+  PageContentTitle,
+  PageDescription,
+} from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,7 +30,7 @@ const formatDateTime = (value: Date) =>
 
 export default async function WorkflowDetailPage({
   params,
-}: PageProps<"/workflows/[id]">) {
+}: PageProps<"/[locale]/presets/workflows/[id]">) {
   const session = await auth();
   const email = session?.user?.email;
 
@@ -52,18 +58,25 @@ export default async function WorkflowDetailPage({
   const { workflow, nodes, edges } = workflowData;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
+    <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-3">
             <Button variant="outline" size="sm" asChild>
-              <Link href="/workflows">목록으로</Link>
+              <Link href="/presets/workflows">
+                <ChevronLeft />
+                목록으로
+              </Link>
             </Button>
-            <div className="space-y-1">
-              <h1 className="text-2xl font-semibold">{workflow.title}</h1>
-              <p className="text-sm text-muted-foreground">
+            <div className="w-full space-y-1 pt-4 pl-4">
+              <PageContentTitle>{workflow.title}</PageContentTitle>
+              <PageDescription>
                 {workflow.description ?? "설명이 없습니다."}
-              </p>
+              </PageDescription>
+              <div className="flex w-full items-center gap-1 pt-4 text-xs text-muted-foreground">
+                <Calendar className="size-3.5" />
+                <div>최근 업데이트 {formatDateTime(workflow.updatedAt)}</div>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -133,14 +146,10 @@ export default async function WorkflowDetailPage({
                   <span className="font-medium">{edges.length}</span>
                 </div>
               </div>
-              <div className="border-t pt-4 text-xs text-muted-foreground">
-                <div>생성 {formatDateTime(workflow.createdAt)}</div>
-                <div>최근 업데이트 {formatDateTime(workflow.updatedAt)}</div>
-              </div>
             </CardContent>
           </Card>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

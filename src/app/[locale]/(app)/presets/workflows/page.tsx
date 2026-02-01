@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
+import {
+  PageContainer,
+  PageDescription,
+  PageHeading,
+} from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,15 +52,14 @@ export default async function WorkflowsPage() {
     .orderBy(desc(workflows.updatedAt));
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
+    <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">내 워크플로우</p>
-            <h1 className="text-2xl font-semibold">워크플로우</h1>
-            <p className="text-sm text-muted-foreground">
-              플로우 캔버스에서 만든 그래프를 모아봅니다.
-            </p>
+            <PageHeading>내 워크플로우</PageHeading>
+            <PageDescription>
+              플로우 캔버스에서 만든 그래프입니다.
+            </PageDescription>
           </div>
           <Button asChild>
             <Link href="/canvas">새 워크플로우</Link>
@@ -105,6 +109,6 @@ export default async function WorkflowsPage() {
           </div>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }
