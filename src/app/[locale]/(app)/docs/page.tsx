@@ -50,7 +50,7 @@ export default async function DocsPage({
   );
 }
 
-const sortValues = ["latest", "oldest", "name"] as const;
+const sortValues = ["recent", "latest", "oldest", "name"] as const;
 type Sort = (typeof sortValues)[number];
 function isSort(value: unknown): value is Sort {
   return (
