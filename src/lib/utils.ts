@@ -10,6 +10,10 @@ export function formatYMDT(str: string) {
   return dayjs(str).format("YYYY-MM-DD HH:mm:ss");
 }
 
+export function formatYMD(str: string) {
+  return dayjs(str).format("YYYY.MM.DD");
+}
+
 export function formatHHMM(str: string) {
   return dayjs(str).format("HH:mm");
 }

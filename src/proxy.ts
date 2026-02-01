@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import createMiddleware from "next-intl/middleware";
 import { auth } from "@/lib/auth";
+import { routing } from "@/lib/i18n/routing";
 
 const publicPaths = ["/", "/login"];
+const intlMiddleware = createMiddleware(routing);
 
 export const proxy = auth((req) => {
+  const intlResponse = intlMiddleware(req);
+  if (intlResponse) return intlResponse;
+
   const { pathname } = req.nextUrl;
   const isPublicPath = publicPaths.includes(pathname);
 

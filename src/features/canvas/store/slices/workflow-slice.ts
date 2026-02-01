@@ -3,7 +3,7 @@ import { type StateCreator } from "zustand";
 export type WorkflowState = {
   id: string;
   title: string;
-  description: string | null;
+  description?: string | null;
 };
 
 export const defaultWorkflowState: WorkflowState = {
@@ -13,8 +13,8 @@ export const defaultWorkflowState: WorkflowState = {
 };
 
 export type WorkflowSlice = {
-  workflow: WorkflowState | null;
-  setWorkflow: (workflow: WorkflowState | null) => void;
+  workflow: WorkflowState;
+  setWorkflow: (workflow: WorkflowState) => void;
 };
 
 export const createWorkflowSlice: StateCreator<WorkflowSlice> = (set) => ({

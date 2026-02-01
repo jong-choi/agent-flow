@@ -20,12 +20,14 @@ type PresetCreateFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   cancelHref?: string;
   submitLabel?: string;
+  workflowId: string;
 };
 
 export function PresetCreateForm({
   action,
   cancelHref = "/presets",
   submitLabel = "프리셋 생성",
+  workflowId,
 }: PresetCreateFormProps) {
   return (
     <form action={action} className="space-y-6">
@@ -37,6 +39,7 @@ export function PresetCreateForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <input type="hidden" name="workflowId" value={workflowId} />
           <div className="grid gap-2">
             <label htmlFor="title" className="text-sm font-medium">
               프리셋 이름

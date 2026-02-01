@@ -1,13 +1,10 @@
 "use server";
 
-import { and, eq, inArray } from "drizzle-orm";
-import { db } from "@/db/client";
-import {
-  workflowEdges,
-  workflowNodes,
-  workflows,
-} from "@/db/schema/workflows";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { type FlowEdge, type FlowNode } from "@/app/api/chat/_types/nodes";
+import { db } from "@/db/client";
+import { getUserId } from "@/db/query/auth";
+import { workflowEdges, workflowNodes, workflows } from "@/db/schema/workflows";
 
 type WorkflowGraphInput = {
   nodes: FlowNode[];
@@ -52,13 +49,12 @@ const buildWorkflowEdgeValue = (
   targetHandle: normalizeHandle(edge.targetHandle, "target"),
 });
 
-export const getWorkflowWithGraph = async (
-  workflowId: string,
-  ownerId?: string,
-) => {
-  const whereClause = ownerId
-    ? and(eq(workflows.id, workflowId), eq(workflows.ownerId, ownerId))
-    : eq(workflows.id, workflowId);
+export const getWorkflowWithGraph = async (workflowId: string) => {
+  const ownerId = await getUserId();
+  const whereClause = and(
+    eq(workflows.id, workflowId),
+    eq(workflows.ownerId, ownerId),
+  );
 
   const [workflow] = await db
     .select()
@@ -83,17 +79,73 @@ export const getWorkflowWithGraph = async (
   return { workflow, nodes, edges };
 };
 
+export const getRecentWorkflows = async (
+  {
+    limit,
+  }: {
+    limit: number;
+  } = { limit: 6 },
+) => {
+  const ownerId = await getUserId();
+
+  const data = await db
+    .select()
+    .from(workflows)
+    .where(eq(workflows.ownerId, ownerId))
+    .orderBy(desc(workflows.updatedAt))
+    .limit(limit + 1);
+
+  let hasMore = false;
+  if (data.length > limit) {
+    hasMore = true;
+  }
+
+  return { data: data.slice(0, limit), hasMore };
+};
+
+export const getOwnedWorkflows = async () => {
+  const ownerId = await getUserId();
+
+  return db
+    .select({
+      id: workflows.id,
+      title: workflows.title,
+      description: workflows.description,
+      createdAt: workflows.createdAt,
+      updatedAt: workflows.updatedAt,
+    })
+    .from(workflows)
+    .where(eq(workflows.ownerId, ownerId))
+    .orderBy(desc(workflows.updatedAt));
+};
+
+export const getOwnedWorkflowById = async (workflowId: string) => {
+  const ownerId = await getUserId();
+
+  const [workflow] = await db
+    .select({
+      id: workflows.id,
+      title: workflows.title,
+      description: workflows.description,
+      updatedAt: workflows.updatedAt,
+    })
+    .from(workflows)
+    .where(and(eq(workflows.id, workflowId), eq(workflows.ownerId, ownerId)))
+    .limit(1);
+
+  return workflow ?? null;
+};
+
 export const createWorkflowGraph = async ({
-  ownerId,
   title,
   description,
   nodes,
   edges,
 }: {
-  ownerId: string;
   title: string;
   description: string | null;
 } & WorkflowGraphInput) => {
+  const ownerId = await getUserId();
   return db.transaction(async (tx) => {
     const [workflow] = await tx
       .insert(workflows)
@@ -111,11 +163,13 @@ export const createWorkflowGraph = async ({
     const workflowId = workflow.id;
 
     if (nodes.length > 0) {
-      await tx.insert(workflowNodes).values(
-        nodes.map((node) =>
-          buildWorkflowNodeValue(node, workflowId, ownerId),
-        ),
-      );
+      await tx
+        .insert(workflowNodes)
+        .values(
+          nodes.map((node) =>
+            buildWorkflowNodeValue(node, workflowId, ownerId),
+          ),
+        );
     }
 
     if (edges.length > 0) {
@@ -135,18 +189,17 @@ export const createWorkflowGraph = async ({
 };
 
 export const updateWorkflowGraph = async ({
-  ownerId,
   workflowId,
   title,
   description,
   nodes,
   edges,
 }: {
-  ownerId: string;
   workflowId: string;
   title: string;
   description: string | null;
 } & WorkflowGraphInput) => {
+  const ownerId = await getUserId();
   return db.transaction(async (tx) => {
     const [workflow] = await tx
       .update(workflows)

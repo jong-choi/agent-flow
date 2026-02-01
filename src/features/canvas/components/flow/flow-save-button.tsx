@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { type WorkflowSaveRequest } from "@/app/api/workflows/_types";
@@ -21,23 +21,18 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
-import {
-  type WorkflowState,
-  defaultWorkflowState,
-} from "@/features/canvas/store/slices/workflow-slice";
 
 export function FlowSaveButton() {
   const router = useRouter();
   const { getEdges, getNodes } = useCanvasReactFlow();
   const workflow = useCanvasStore((s) => s.workflow);
+  const title = useCanvasStore((s) => s.workflow.title.trim());
+  const isValidGraph = useCanvasStore((s) => s.isValidGraph);
+  const description = useCanvasStore((s) => s.workflow.description?.trim());
+
   const setWorkflow = useCanvasStore((s) => s.setWorkflow);
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  const safeWorkflow: WorkflowState = useMemo(
-    () => workflow ?? defaultWorkflowState,
-    [workflow],
-  );
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -47,8 +42,11 @@ export function FlowSaveButton() {
         return;
       }
 
-      const trimmedTitle = safeWorkflow.title.trim();
-      if (!trimmedTitle) {
+      if (!isValidGraph) {
+        return;
+      }
+
+      if (!title) {
         toast.error("워크플로우 이름을 입력해주세요.");
         return;
       }
@@ -57,8 +55,8 @@ export function FlowSaveButton() {
       const edges = getEdges();
 
       const requestBody: WorkflowSaveRequest = {
-        title: trimmedTitle,
-        description: safeWorkflow.description?.trim() || null,
+        title,
+        description,
         nodes,
         edges,
       };
@@ -66,7 +64,7 @@ export function FlowSaveButton() {
       try {
         setIsSaving(true);
 
-        const workflowId = safeWorkflow.id;
+        const workflowId = workflow.id;
         const target = workflowId
           ? `/api/workflows/${workflowId}`
           : "/api/workflows";
@@ -96,7 +94,7 @@ export function FlowSaveButton() {
 
         setWorkflow({
           id: nextId ?? workflowId,
-          title: payload?.data?.title ?? trimmedTitle,
+          title: payload?.data?.title ?? title,
           description:
             payload?.data?.description ?? requestBody.description ?? null,
         });
@@ -113,29 +111,30 @@ export function FlowSaveButton() {
       }
     },
     [
+      description,
       getEdges,
       getNodes,
       isSaving,
+      isValidGraph,
       router,
-      safeWorkflow.description,
-      safeWorkflow.id,
-      safeWorkflow.title,
       setWorkflow,
+      title,
+      workflow.id,
     ],
   );
 
   const handleTitleChange = (value: string) => {
-    setWorkflow({ ...safeWorkflow, title: value });
+    setWorkflow({ ...workflow, title: value });
   };
 
   const handleDescriptionChange = (value: string) => {
-    setWorkflow({ ...safeWorkflow, description: value });
+    setWorkflow({ ...workflow, description: value });
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline">
+        <Button type="button" variant="outline" disabled={!isValidGraph}>
           저장
         </Button>
       </DialogTrigger>
@@ -155,7 +154,7 @@ export function FlowSaveButton() {
             <Input
               id="workflow-dialog-title"
               name="title"
-              value={safeWorkflow.title}
+              value={title}
               onChange={(event) => handleTitleChange(event.target.value)}
               placeholder="워크플로우 이름"
               autoComplete="off"
@@ -166,7 +165,7 @@ export function FlowSaveButton() {
             <Textarea
               id="workflow-dialog-description"
               name="description"
-              value={safeWorkflow.description ?? ""}
+              value={description ?? ""}
               onChange={(event) => handleDescriptionChange(event.target.value)}
               placeholder="워크플로우 설명"
             />
@@ -177,7 +176,10 @@ export function FlowSaveButton() {
                 닫기
               </Button>
             </DialogClose>
-            <Button type="submit" disabled={isSaving}>
+            <Button
+              type="submit"
+              disabled={isSaving || !title || !isValidGraph}
+            >
               {isSaving ? <Spinner className="size-4" /> : "저장"}
             </Button>
           </DialogFooter>
