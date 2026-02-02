@@ -17,20 +17,18 @@ import {
 } from "@/components/ui/card";
 import { getWorkflowWithGraph } from "@/db/query/workflows";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
-
-const formatDateTime = (value: Date) =>
-  new Intl.DateTimeFormat("ko-KR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(value);
+import { auth } from "@/lib/auth";
+import { formatKoreanDate } from "@/lib/utils";
 
 export default async function WorkflowDetailPage({
   params,
 }: PageProps<"/[locale]/presets/workflows/[id]">) {
   const { id } = await params;
   const workflowData = await getWorkflowWithGraph(id);
+  const session = await auth();
+  const userId = session?.user?.id;
 
-  if (!workflowData) {
+  if (!workflowData || workflowData.workflow.ownerId !== userId) {
     notFound();
   }
 
@@ -54,7 +52,7 @@ export default async function WorkflowDetailPage({
               </PageDescription>
               <div className="flex w-full items-center gap-1 pt-4 text-xs text-muted-foreground">
                 <Calendar className="size-3.5" />
-                <div>최근 업데이트 {formatDateTime(workflow.updatedAt)}</div>
+                <div>최근 업데이트 {formatKoreanDate(workflow.updatedAt)}</div>
               </div>
             </div>
           </div>

@@ -20,8 +20,14 @@ import { db } from "@/db/client";
 import { getUserId } from "@/db/query/auth";
 import { getWorkflowWithGraph } from "@/db/query/workflows";
 import { users } from "@/db/schema/auth";
+import { creditAccounts, creditTransactions } from "@/db/schema/credit";
 import { presetPurchases, presetTags, presets } from "@/db/schema/presets";
 import { workflows } from "@/db/schema/workflows";
+
+const PRESET_TAGS_MAP = {
+  presetById: (presetId: string) => `preset:detail:${presetId}`,
+  presetListByUserId: (userId: string) => `preset:list:${userId}`,
+} as const;
 
 const buildPurchaseCount = () =>
   sql<number>`
@@ -247,11 +253,15 @@ const getPresetDetailBase = async (presetId: string) => {
  * - 캐시: 30일 revalidate (상세 페이지 렌더 성능 최적화).
  * - 사용처: src/app/presets/[id]/page.tsx
  */
-const getPresetDetailCached = unstable_cache(
-  getPresetDetailBase,
-  ["preset_detail"],
-  { tags: ["preset_detail"], revalidate: 60 * 60 * 24 * 30 },
-);
+const getPresetDetailCached = (presetId: string) =>
+  unstable_cache(
+    () => getPresetDetailBase(presetId),
+    [PRESET_TAGS_MAP.presetById(presetId)],
+    {
+      tags: [PRESET_TAGS_MAP.presetById(presetId)],
+      revalidate: 60 * 60 * 24 * 30,
+    },
+  )();
 
 export const getPresetDetail = async (presetId: string) => {
   const base = await getPresetDetailCached(presetId);
@@ -259,10 +269,7 @@ export const getPresetDetail = async (presetId: string) => {
     return null;
   }
 
-  const viewerId = await getUserId({ throwOnError: false });
-  const workflowData = viewerId
-    ? await getWorkflowWithGraph(base.preset.workflowId)
-    : null;
+  const workflowData = await getWorkflowWithGraph(base.preset.workflowId);
 
   return {
     preset: base.preset,
@@ -295,6 +302,145 @@ export const getPresetPurchaseStatus = async (presetId: string) => {
     .limit(1);
 
   return Boolean(purchase);
+};
+
+export type PresetPurchaseStatus =
+  | "success"
+  | "already_purchased"
+  | "insufficient_credit"
+  | "owned"
+  | "not_available";
+
+export type PresetPurchaseResult = {
+  status: PresetPurchaseStatus;
+  price: number;
+};
+
+export const purchasePresetAction = async (
+  presetId: string,
+): Promise<PresetPurchaseResult> => {
+  "use server";
+
+  const buyerId = await getUserId();
+  let priceSnapshot = 0;
+
+  try {
+    const result = await db.transaction(async (tx) => {
+      const [preset] = await tx
+        .select({
+          id: presets.id,
+          ownerId: presets.ownerId,
+          title: presets.title,
+          price: presets.price,
+          isPublished: presets.isPublished,
+        })
+        .from(presets)
+        .where(eq(presets.id, presetId))
+        .limit(1);
+
+      if (!preset || !preset.isPublished) {
+        return { status: "not_available", price: 0 };
+      }
+
+      const price = Math.max(0, preset.price);
+      priceSnapshot = price;
+
+      if (preset.ownerId === buyerId) {
+        return { status: "owned", price };
+      }
+
+      await tx
+        .insert(creditAccounts)
+        .values({ userId: buyerId })
+        .onConflictDoNothing();
+
+      const [purchase] = await tx
+        .insert(presetPurchases)
+        .values({
+          presetId,
+          buyerId,
+          price,
+          purchasedAt: new Date(),
+        })
+        .onConflictDoNothing()
+        .returning({ presetId: presetPurchases.presetId });
+
+      if (!purchase) {
+        return { status: "already_purchased", price };
+      }
+
+      if (price > 0) {
+        const [account] = await tx
+          .update(creditAccounts)
+          .set({
+            balance: sql`${creditAccounts.balance} - ${price}`,
+            totalSpent: sql`${creditAccounts.totalSpent} + ${price}`,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(creditAccounts.userId, buyerId),
+              gte(creditAccounts.balance, price),
+            ),
+          )
+          .returning({ balance: creditAccounts.balance });
+
+        if (!account) {
+          throw new Error("INSUFFICIENT_CREDIT");
+        }
+
+        await tx.insert(creditTransactions).values({
+          userId: buyerId,
+          type: "spend",
+          category: "preset_purchase",
+          title: "프리셋 구매",
+          description: preset.title,
+          amount: -price,
+          occurredAt: new Date(),
+        });
+
+        await tx
+          .insert(creditAccounts)
+          .values({ userId: preset.ownerId })
+          .onConflictDoNothing();
+
+        await tx.insert(creditTransactions).values({
+          userId: preset.ownerId,
+          type: "earn",
+          category: "preset_sale",
+          title: "프리셋 판매",
+          description: preset.title,
+          amount: price,
+          occurredAt: new Date(),
+        });
+
+        await tx
+          .update(creditAccounts)
+          .set({
+            balance: sql`${creditAccounts.balance} + ${price}`,
+            totalEarned: sql`${creditAccounts.totalEarned} + ${price}`,
+            updatedAt: new Date(),
+          })
+          .where(eq(creditAccounts.userId, preset.ownerId));
+      }
+
+      return { status: "success", price };
+    });
+
+    if (result.status === "success" || result.status === "already_purchased") {
+      revalidateTag(PRESET_TAGS_MAP.presetListByUserId(buyerId), "default");
+      revalidateTag(PRESET_TAGS_MAP.presetById(presetId), "default");
+    }
+
+    return result as PresetPurchaseResult;
+  } catch (error) {
+    if (error instanceof Error && error.message === "INSUFFICIENT_CREDIT") {
+      return { status: "insufficient_credit", price: priceSnapshot };
+    }
+
+    console.error("프리셋 구매 실패:", error);
+    throw error;
+  }
 };
 
 /**
@@ -335,8 +481,13 @@ type PurchasedPresetFilters = PresetLibraryFilters & PaginationOptions;
  * - 기능: 검색/카테고리/정렬/페이지네이션.
  * - 사용처: src/app/presets/purchased/page.tsx
  */
-export const getPurchasedPresets = async (filters?: PurchasedPresetFilters) => {
-  const buyerId = await getUserId();
+const getPurchasedPresetsBase = async ({
+  filters,
+  buyerId,
+}: {
+  filters?: PurchasedPresetFilters;
+  buyerId: string;
+}) => {
   const trimmedQuery = filters?.query?.trim();
   const searchPattern = trimmedQuery ? `%${trimmedQuery}%` : null;
 
@@ -419,14 +570,27 @@ export const getPurchasedPresets = async (filters?: PurchasedPresetFilters) => {
   };
 };
 
+export const getPurchasedPresets = async (filters?: PurchasedPresetFilters) => {
+  const buyerId = await getUserId();
+
+  const getPurchasedPresetsCached = unstable_cache(
+    () => getPurchasedPresetsBase({ filters, buyerId }),
+    [PRESET_TAGS_MAP.presetListByUserId(buyerId)],
+    {
+      revalidate: 60 * 60 * 24 * 7,
+      tags: [PRESET_TAGS_MAP.presetListByUserId(buyerId)],
+    },
+  );
+
+  return getPurchasedPresetsCached();
+};
+
 /**
  * 내 프리셋(/presets/purchased) - 내가 만든 프리셋 목록 조회.
  * - 표시/통계: 생성한 프리셋 수, 무료 프리셋 수 계산에 사용.
  * - 사용처: src/app/presets/purchased/page.tsx
  */
-export const getOwnedPresets = async () => {
-  const ownerId = await getUserId();
-
+const getOwnedPresetsBase = async (ownerId: string) => {
   const ownedPresets = await db
     .select({
       id: presets.id,
@@ -450,140 +614,19 @@ export const getOwnedPresets = async () => {
   return attachPresetTags(ownedPresets);
 };
 
-const createdSource = sql<string>`'created'`.mapWith(String);
-const purchasedSource = sql<string>`'purchased'`.mapWith(String);
+export const getOwnedPresets = async () => {
+  const ownerId = await getUserId();
 
-/**
- * 내가 만든 프리셋 + 구매 프리셋을 통합한 라이브러리 목록.
- * - 표시 데이터: 통합 리스트(소스: created/purchased), 태그 포함.
- * - 상태: 현재 직접 호출처 없음(향후 라이브러리 화면/선택 모달 등 재사용 예정).
- */
-export const getPresetLibrary = async (filters?: PresetLibraryFilters) => {
-  const userId = await getUserId();
-  const trimmedQuery = filters?.query?.trim();
-  const searchPattern = trimmedQuery ? `%${trimmedQuery}%` : null;
+  const getOwnedPresetsCached = unstable_cache(
+    () => getOwnedPresetsBase(ownerId),
+    [PRESET_TAGS_MAP.presetListByUserId(ownerId)],
+    {
+      revalidate: 60 * 60 * 24 * 7,
+      tags: [PRESET_TAGS_MAP.presetListByUserId(ownerId)],
+    },
+  );
 
-  const ownedClauses = [eq(presets.ownerId, userId)];
-  const purchasedClauses = [
-    eq(presetPurchases.buyerId, userId),
-    ne(presets.ownerId, userId),
-  ];
-
-  if (filters?.category) {
-    ownedClauses.push(eq(presets.category, filters.category));
-    purchasedClauses.push(eq(presets.category, filters.category));
-  }
-
-  if (searchPattern) {
-    const tagSearchClause = sql<boolean>`
-      exists(
-        select 1
-        from ${presetTags}
-        where ${presetTags.presetId} = ${presets.id}
-          and ${presetTags.tag} ilike ${searchPattern}
-      )
-    `;
-    const searchClause = or(
-      ilike(presets.title, searchPattern),
-      ilike(presets.summary, searchPattern),
-      ilike(presets.description, searchPattern),
-      tagSearchClause,
-    );
-    if (searchClause) {
-      ownedClauses.push(searchClause);
-      purchasedClauses.push(searchClause);
-    }
-  }
-
-  const ownedWhere =
-    ownedClauses.length === 1 ? ownedClauses[0] : and(...ownedClauses);
-  const purchasedWhere =
-    purchasedClauses.length === 1
-      ? purchasedClauses[0]
-      : and(...purchasedClauses);
-
-  const ownedQuery = db
-    .select({
-      id: presets.id,
-      workflowId: presets.workflowId,
-      ownerId: presets.ownerId,
-      ownerName: users.name,
-      title: presets.title,
-      description: presets.description,
-      summary: presets.summary,
-      category: presets.category,
-      price: presets.price,
-      isPublished: presets.isPublished,
-      displayDate: presets.updatedAt,
-      source: createdSource,
-    })
-    .from(presets)
-    .leftJoin(users, eq(users.id, presets.ownerId))
-    .where(ownedWhere);
-
-  const purchasedQuery = db
-    .select({
-      id: presets.id,
-      workflowId: presets.workflowId,
-      ownerId: presets.ownerId,
-      ownerName: users.name,
-      title: presets.title,
-      description: presets.description,
-      summary: presets.summary,
-      category: presets.category,
-      price: presets.price,
-      isPublished: presets.isPublished,
-      displayDate: presetPurchases.purchasedAt,
-      source: purchasedSource,
-    })
-    .from(presetPurchases)
-    .innerJoin(presets, eq(presets.id, presetPurchases.presetId))
-    .leftJoin(users, eq(users.id, presets.ownerId))
-    .where(purchasedWhere);
-
-  const [ownedPresets, purchasedPresets] = await Promise.all([
-    ownedQuery,
-    purchasedQuery,
-  ]);
-
-  const libraryPresets = [...ownedPresets, ...purchasedPresets];
-  if (libraryPresets.length === 0) {
-    return [];
-  }
-
-  const presetIds = libraryPresets.map((preset) => preset.id);
-  const presetTagRows = await db
-    .select({
-      presetId: presetTags.presetId,
-      tag: presetTags.tag,
-    })
-    .from(presetTags)
-    .where(inArray(presetTags.presetId, presetIds))
-    .orderBy(asc(presetTags.tag));
-
-  const tagsByPresetId = new Map<string, string[]>();
-  presetTagRows.forEach((row) => {
-    const tags = tagsByPresetId.get(row.presetId) ?? [];
-    tags.push(row.tag);
-    tagsByPresetId.set(row.presetId, tags);
-  });
-
-  const libraryWithTags = libraryPresets.map((preset) => ({
-    ...preset,
-    tags: tagsByPresetId.get(preset.id) ?? [],
-  }));
-  const sort = filters?.sort ?? "latest";
-
-  if (sort === "name") {
-    libraryWithTags.sort((a, b) => a.title.localeCompare(b.title));
-  } else {
-    const toTimestamp = (value: Date | null) => (value ? value.getTime() : 0);
-    libraryWithTags.sort(
-      (a, b) => toTimestamp(b.displayDate) - toTimestamp(a.displayDate),
-    );
-  }
-
-  return libraryWithTags;
+  return getOwnedPresetsCached();
 };
 
 /**
@@ -658,6 +701,7 @@ export const createPreset = async ({
     }
   }
 
+  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), "default");
   return preset ?? null;
 };
 
@@ -698,6 +742,8 @@ export const updatePreset = async ({
     .where(and(eq(presets.id, presetId), eq(presets.ownerId, ownerId)))
     .returning({ id: presets.id });
 
+  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), "default");
+  revalidateTag(PRESET_TAGS_MAP.presetById(presetId), "default");
   return preset ?? null;
 };
 
@@ -713,6 +759,8 @@ export const deletePreset = async ({ presetId }: { presetId: string }) => {
     .where(and(eq(presets.id, presetId), eq(presets.ownerId, ownerId)))
     .returning({ id: presets.id });
 
+  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), "default");
+  revalidateTag(PRESET_TAGS_MAP.presetById(presetId), "default");
   return preset ?? null;
 };
 
@@ -833,7 +881,6 @@ export const updatePresetAction = async (formData: FormData) => {
     throw new Error("프리셋 업데이트에 실패하였습니다.");
   }
 
-  revalidateTag("preset_detail", "default");
   redirect(`/presets/${presetId}`);
 };
 
@@ -849,6 +896,5 @@ export const deletePresetAction = async (formData: FormData) => {
     throw new Error("프리셋 삭제에 실패하였습니다.");
   }
 
-  revalidateTag("preset_detail", "default");
   redirect("/presets");
 };

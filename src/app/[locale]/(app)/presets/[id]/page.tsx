@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { getUserId } from "@/db/query/auth";
 import { getPresetDetail, getPresetPurchaseStatus } from "@/db/query/presets";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
+import { PresetPurchaseDialog } from "@/features/preset/components/preset-purchase-dialog";
 import { formatKoreanDate } from "@/lib/utils";
 
 const formatPrice = (price: number) =>
@@ -40,11 +41,6 @@ export default async function PresetDetailPage({
   const isPurchased =
     viewerId && !isOwner ? await getPresetPurchaseStatus(preset.id) : false;
   const canOpen = isOwner || isPurchased;
-  const actionLabel = canOpen
-    ? "캔버스에서 열기"
-    : preset.price === 0
-      ? "무료로 받기"
-      : "구매하기";
   const canvasHref = isOwner ? `/canvas/${preset.workflowId}` : "/canvas";
 
   return (
@@ -53,9 +49,16 @@ export default async function PresetDetailPage({
         <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-3">
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/presets">마켓으로</Link>
-              </Button>
+              {isOwner ? (
+                <Button variant="outline" asChild>
+                  <Link href="/presets/purchased">내 프리셋</Link>
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/presets">마켓으로</Link>
+                </Button>
+              )}
+
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">
                   {preset.category ?? "미분류"} 프리셋
@@ -72,11 +75,6 @@ export default async function PresetDetailPage({
                   <span>워크플로우 {workflow.title}</span>
                 ) : null}
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" asChild>
-                <Link href="/presets/purchased">내 프리셋</Link>
-              </Button>
             </div>
           </div>
           <div className="flex flex-col gap-6">
@@ -211,10 +209,10 @@ export default async function PresetDetailPage({
                 </>
               ) : (
                 <>
-                  <Button>{actionLabel}</Button>
-                  <Button variant="outline" size="sm">
-                    찜하기
-                  </Button>
+                  <PresetPurchaseDialog
+                    presetId={preset.id}
+                    price={preset.price}
+                  />
                 </>
               )}
             </CardFooter>

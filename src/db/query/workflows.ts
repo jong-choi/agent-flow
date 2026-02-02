@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidateTag, unstable_cache } from "next/cache";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { type FlowEdge, type FlowNode } from "@/app/api/chat/_types/nodes";
 import { db } from "@/db/client";
@@ -49,12 +50,8 @@ const buildWorkflowEdgeValue = (
   targetHandle: normalizeHandle(edge.targetHandle, "target"),
 });
 
-export const getWorkflowWithGraph = async (workflowId: string) => {
-  const ownerId = await getUserId();
-  const whereClause = and(
-    eq(workflows.id, workflowId),
-    eq(workflows.ownerId, ownerId),
-  );
+const getWorkflowWithGraphBase = async (workflowId: string) => {
+  const whereClause = and(eq(workflows.id, workflowId));
 
   const [workflow] = await db
     .select()
@@ -79,15 +76,32 @@ export const getWorkflowWithGraph = async (workflowId: string) => {
   return { workflow, nodes, edges };
 };
 
-export const getRecentWorkflows = async (
+export const getWorkflowWithGraph = async (workflowId: string) => {
+  const getWorkflowWithGraphCached = unstable_cache(
+    () => getWorkflowWithGraphBase(workflowId),
+
+    ["workflow_graph", workflowId],
+    {
+      revalidate: 60 * 60 * 24 * 7,
+      tags: [`workflow_graph:${workflowId}`],
+    },
+  );
+
+  return getWorkflowWithGraphCached();
+};
+
+const getRecentWorkflowsBase = async (
   {
     limit,
+    ownerId,
   }: {
     limit: number;
-  } = { limit: 6 },
+    ownerId: string;
+  } = { limit: 6, ownerId: "" },
 ) => {
-  const ownerId = await getUserId();
-
+  if (!ownerId) {
+    throw new Error("사용자 정보를 불러올 수 없습니다.");
+  }
   const data = await db
     .select()
     .from(workflows)
@@ -103,9 +117,25 @@ export const getRecentWorkflows = async (
   return { data: data.slice(0, limit), hasMore };
 };
 
-export const getOwnedWorkflows = async () => {
+export const getRecentWorkflows = async (
+  params: {
+    limit: number;
+  } = { limit: 6 },
+) => {
   const ownerId = await getUserId();
+  const getRecentWorkflowsCached = unstable_cache(
+    () => getRecentWorkflowsBase({ ...params, ownerId }),
+    ["workflow_graph", ownerId, String(params.limit)],
+    {
+      revalidate: 60 * 60 * 24 * 7,
+      tags: [`workflow_graph:list:${ownerId}`],
+    },
+  );
 
+  return getRecentWorkflowsCached();
+};
+
+const getOwnedWorkflowsBase = async (ownerId: string) => {
   return db
     .select({
       id: workflows.id,
@@ -117,6 +147,20 @@ export const getOwnedWorkflows = async () => {
     .from(workflows)
     .where(eq(workflows.ownerId, ownerId))
     .orderBy(desc(workflows.updatedAt));
+};
+
+export const getOwnedWorkflows = async () => {
+  const ownerId = await getUserId();
+  const getOwnedWorkflowsCached = unstable_cache(
+    () => getOwnedWorkflowsBase(ownerId),
+    ["workflow_graph", ownerId],
+    {
+      revalidate: 60 * 60 * 24 * 7,
+      tags: [`workflow_graph:list:${ownerId}`],
+    },
+  );
+
+  return getOwnedWorkflowsCached();
 };
 
 export const getOwnedWorkflowById = async (workflowId: string) => {
@@ -184,6 +228,7 @@ export const createWorkflowGraph = async ({
       );
     }
 
+    revalidateTag(`workflow_graph:list:${ownerId}`, "default");
     return workflow;
   });
 };
@@ -288,6 +333,9 @@ export const updateWorkflowGraph = async ({
         .delete(workflowEdges)
         .where(inArray(workflowEdges.id, removedEdgeIds));
     }
+
+    revalidateTag(`workflow_graph:${workflowId}`, "default");
+    revalidateTag(`workflow_graph:list:${ownerId}`, "default");
 
     return workflow;
   });

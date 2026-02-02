@@ -13,9 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getOwnedWorkflows } from "@/db/query/workflows";
-
-const formatDate = (value: Date) =>
-  new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(value);
+import { formatKoreanDate } from "@/lib/utils";
 
 export default async function WorkflowsPage() {
   const workflowList = await getOwnedWorkflows();
@@ -54,7 +52,7 @@ export default async function WorkflowsPage() {
             {workflowList.map((workflow) => (
               <Link
                 key={workflow.id}
-                href={`/workflows/${workflow.id}`}
+                href={`/presets/workflows/${workflow.id}`}
                 className="group"
               >
                 <Card className="h-full transition-shadow group-hover:shadow-md">
@@ -67,9 +65,9 @@ export default async function WorkflowsPage() {
                   <CardContent>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                       <span>
-                        최근 업데이트 {formatDate(workflow.updatedAt)}
+                        최근 업데이트 {formatKoreanDate(workflow.updatedAt)}
                       </span>
-                      <span>생성 {formatDate(workflow.createdAt)}</span>
+                      <span>생성 {formatKoreanDate(workflow.createdAt)}</span>
                     </div>
                   </CardContent>
                 </Card>

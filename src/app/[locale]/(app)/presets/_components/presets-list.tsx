@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PresetPurchaseDialog } from "@/features/preset/components/preset-purchase-dialog";
 import { formatKoreanDate } from "@/lib/utils";
 
 type PresetsListVariant = "market" | "library";
@@ -37,24 +38,6 @@ const formatPrice = (price: number) =>
 const formatDate = (value: Date | string | null | undefined) =>
   formatKoreanDate(value, "날짜 없음");
 
-const resolveActionState = (
-  preset: PresetListItem,
-  variant: PresetsListVariant,
-) => {
-  const isOwned = variant === "library" ? true : Boolean(preset.isPurchased);
-  const isFree = preset.price === 0;
-
-  const actionLabel = isOwned
-    ? "이미 보유함"
-    : isFree
-      ? "무료로 받기"
-      : "구매하기";
-  const actionVariant: "default" | "secondary" =
-    isOwned || isFree ? "secondary" : "default";
-
-  return { actionLabel, actionVariant, isOwned };
-};
-
 export function PresetsCard({
   preset,
   variant = "market",
@@ -62,10 +45,7 @@ export function PresetsCard({
   preset: PresetListItem;
   variant?: PresetsListVariant;
 }) {
-  const { actionLabel, actionVariant, isOwned } = resolveActionState(
-    preset,
-    variant,
-  );
+  const isOwned = variant === "library" ? true : Boolean(preset.isPurchased);
   const showPurchaseCount = typeof preset.purchaseCount === "number";
 
   return (
@@ -97,14 +77,13 @@ export function PresetsCard({
         <Button variant="outline" size="sm" className="flex-1" asChild>
           <Link href={`/presets/${preset.id}`}>상세 보기</Link>
         </Button>
-        <Button
+        <PresetPurchaseDialog
+          presetId={preset.id}
+          price={preset.price}
+          isOwned={isOwned}
           size="sm"
-          variant={actionVariant}
           className="flex-1"
-          disabled={isOwned}
-        >
-          {actionLabel}
-        </Button>
+        />
       </CardFooter>
     </Card>
   );
