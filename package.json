@@ -11,6 +11,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed/index.ts",
+    "db:push:langgraph": "tsx src/db/script/index.ts",
     "test": "vitest",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui"
@@ -22,6 +23,7 @@
     "@langchain/core": "^1.1.12",
     "@langchain/google-gauth": "^2.1.7",
     "@langchain/langgraph": "^1.0.15",
+    "@langchain/langgraph-checkpoint-postgres": "^1.0.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
