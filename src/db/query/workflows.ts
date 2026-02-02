@@ -228,7 +228,7 @@ export const createWorkflowGraph = async ({
       );
     }
 
-    revalidateTag(`workflow_graph:list:${ownerId}`, "default");
+    revalidateTag(`workflow_graph:list:${ownerId}`, { expire: 0 });
     return workflow;
   });
 };
@@ -334,8 +334,8 @@ export const updateWorkflowGraph = async ({
         .where(inArray(workflowEdges.id, removedEdgeIds));
     }
 
-    revalidateTag(`workflow_graph:${workflowId}`, "default");
-    revalidateTag(`workflow_graph:list:${ownerId}`, "default");
+    revalidateTag(`workflow_graph:${workflowId}`, { expire: 0 });
+    revalidateTag(`workflow_graph:list:${ownerId}`, { expire: 0 });
 
     return workflow;
   });

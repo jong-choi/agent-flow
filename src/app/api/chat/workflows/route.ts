@@ -5,7 +5,9 @@ import {
   type ThreadContext,
   createThread,
 } from "@/app/api/chat/_engines/handle-connect";
-import { flowEdgeSchema, flowNodeSchema } from "@/app/api/chat/_types/nodes";
+import { getSidebarNodesWithOptions } from "@/db/query/sidebar-nodes";
+import { getWorkflowWithGraph } from "@/db/query/workflows";
+import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 
 const LOCALES = ["ko"] as const;
 const SYSTEM_MESSAGES: Record<(typeof LOCALES)[number], string> = {
@@ -13,8 +15,7 @@ const SYSTEM_MESSAGES: Record<(typeof LOCALES)[number], string> = {
 };
 
 const ChatCreateThreadRequestSchema = z.object({
-  nodes: z.array(flowNodeSchema),
-  edges: z.array(flowEdgeSchema),
+  workflowId: z.uuid(),
   locale: z.enum(LOCALES),
 });
 
@@ -41,11 +42,33 @@ export async function POST(request: Request) {
       );
     }
 
-    const { nodes, edges, locale } = parsed.data;
+    const { workflowId, locale } = parsed.data;
 
-    if (!Array.isArray(nodes) || !Array.isArray(edges)) {
+    if (!workflowId) {
       return Response.json(
-        { error: "nodes와 edges가 필요합니다." },
+        { error: "workflowId가 전달되지 않았습니다." },
+        { status: 400 },
+      );
+    }
+
+    const workflowData = await getWorkflowWithGraph(workflowId);
+    if (!workflowData) {
+      return Response.json(
+        { error: "workflowData를 불러오는 데에 실패하였습니다." },
+        { status: 400 },
+      );
+    }
+
+    const sidebarNodes = await getSidebarNodesWithOptions();
+    const { nodes, edges } = buildFlowGraphFromWorkflow({
+      workflowNodes: workflowData.nodes,
+      workflowEdges: workflowData.edges,
+      sidebarNodes,
+    });
+
+    if (!nodes || !edges) {
+      return Response.json(
+        { error: "workflow로 그래프를 생성하는 데에 실패하였습니다." },
         { status: 400 },
       );
     }

@@ -27,10 +27,14 @@ const ChatStoreContext = createContext<ChatStoreApi | undefined>(undefined);
 
 interface ChatStoreProviderProps {
   children: ReactNode;
+  initialState?: Partial<ChatState>;
 }
 
-export const ChatStoreProvider = ({ children }: ChatStoreProviderProps) => {
-  const [store] = useState(() => createChatStore());
+export const ChatStoreProvider = ({
+  children,
+  initialState,
+}: ChatStoreProviderProps) => {
+  const [store] = useState(() => createChatStore(initialState));
   return (
     <ChatStoreContext.Provider value={store}>
       {children}

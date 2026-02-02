@@ -26,9 +26,11 @@ export function FlowSaveButton() {
   const router = useRouter();
   const { getEdges, getNodes } = useCanvasReactFlow();
   const workflow = useCanvasStore((s) => s.workflow);
-  const title = useCanvasStore((s) => s.workflow.title.trim());
+
   const isValidGraph = useCanvasStore((s) => s.isValidGraph);
-  const description = useCanvasStore((s) => s.workflow.description?.trim());
+
+  const [title, setTitle] = useState(workflow.title);
+  const [description, setDescription] = useState(workflow.description || "");
 
   const setWorkflow = useCanvasStore((s) => s.setWorkflow);
   const [open, setOpen] = useState(false);
@@ -123,14 +125,6 @@ export function FlowSaveButton() {
     ],
   );
 
-  const handleTitleChange = (value: string) => {
-    setWorkflow({ ...workflow, title: value });
-  };
-
-  const handleDescriptionChange = (value: string) => {
-    setWorkflow({ ...workflow, description: value });
-  };
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -155,7 +149,7 @@ export function FlowSaveButton() {
               id="workflow-dialog-title"
               name="title"
               value={title}
-              onChange={(event) => handleTitleChange(event.target.value)}
+              onChange={(event) => setTitle(event.target.value)}
               placeholder="워크플로우 이름"
               autoComplete="off"
             />
@@ -165,20 +159,35 @@ export function FlowSaveButton() {
             <Textarea
               id="workflow-dialog-description"
               name="description"
-              value={description ?? ""}
-              onChange={(event) => handleDescriptionChange(event.target.value)}
+              value={description}
+              onChange={(event) =>
+                setDescription(
+                  event.target.value.replace(/[\r\n]+/g, "").slice(0, 140),
+                )
+              }
               placeholder="워크플로우 설명"
+              className="h-30 overflow-y-auto"
+              maxLength={140}
             />
+            <p className="text-xs text-muted-foreground">
+              최대 140자까지 입력할 수 있어요.
+            </p>
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="secondary" disabled={isSaving}>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={isSaving}
+                className="w-16"
+              >
                 닫기
               </Button>
             </DialogClose>
             <Button
               type="submit"
               disabled={isSaving || !title || !isValidGraph}
+              className="w-16"
             >
               {isSaving ? <Spinner className="size-4" /> : "저장"}
             </Button>

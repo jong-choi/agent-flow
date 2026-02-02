@@ -1,7 +1,6 @@
-import { Play } from "lucide-react";
+import { ChatStartButton } from "@/app/[locale]/(app)/chat/_components/chat-start-button";
 import { WorkflowPreviewDialog } from "@/app/[locale]/(app)/chat/_components/workflow-preview-dialog";
 import { type ChatPageWorkflow } from "@/app/[locale]/(app)/chat/page";
-import { Button } from "@/components/ui/button";
 import { formatKoreanDate } from "@/lib/utils";
 
 export function WorkflowCard({ workflow }: { workflow: ChatPageWorkflow }) {
@@ -18,14 +17,11 @@ export function WorkflowCard({ workflow }: { workflow: ChatPageWorkflow }) {
           업데이트 {formatKoreanDate(workflow.updatedAt)}
         </div>
       </div>
-      <div className="truncate text-sm text-foreground/80">
+      <div className="h-6 truncate text-sm text-foreground/80">
         {workflow.description}
       </div>
       <div className="mt-2 flex items-center justify-end gap-2">
-        <Button size="sm" type="button">
-          <Play />
-          채팅 시작
-        </Button>
+        <ChatStartButton workflowId={workflow.id} />
         <WorkflowPreviewDialog workflowId={workflow.id} />
       </div>
     </div>

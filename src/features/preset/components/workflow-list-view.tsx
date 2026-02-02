@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getOwnedWorkflows } from "@/db/query/workflows";
-import { formatKoreanDate } from "@/lib/utils";
+import { WorkflowListCard } from "@/features/preset/components/workflow-list-card";
 
 export async function WorkflowListView() {
   const workflowList = await getOwnedWorkflows();
@@ -32,28 +32,14 @@ export async function WorkflowListView() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {workflowList.map((workflow) => (
-            <Link
+            <WorkflowListCard
               key={workflow.id}
               href={`/presets/workflows/${workflow.id}`}
-              className="group"
-            >
-              <Card className="h-full transition-shadow group-hover:shadow-md">
-                <CardHeader>
-                  <CardTitle className="text-lg">{workflow.title}</CardTitle>
-                  <CardDescription className="line-clamp-2">
-                    {workflow.description ?? "설명이 없습니다."}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span>
-                      최근 업데이트 {formatKoreanDate(workflow.updatedAt)}
-                    </span>
-                    <span>생성 {formatKoreanDate(workflow.createdAt)}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+              title={workflow.title}
+              description={workflow.description}
+              updatedAt={workflow.updatedAt}
+              actionLabel="상세보기"
+            />
           ))}
         </div>
       )}

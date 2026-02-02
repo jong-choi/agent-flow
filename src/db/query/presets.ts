@@ -428,8 +428,8 @@ export const purchasePresetAction = async (
     });
 
     if (result.status === "success" || result.status === "already_purchased") {
-      revalidateTag(PRESET_TAGS_MAP.presetListByUserId(buyerId), "default");
-      revalidateTag(PRESET_TAGS_MAP.presetById(presetId), "default");
+      revalidateTag(PRESET_TAGS_MAP.presetListByUserId(buyerId), { expire: 0 });
+      revalidateTag(PRESET_TAGS_MAP.presetById(presetId), { expire: 0 });
     }
 
     return result as PresetPurchaseResult;
@@ -701,7 +701,7 @@ export const createPreset = async ({
     }
   }
 
-  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), "default");
+  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), { expire: 0 });
   return preset ?? null;
 };
 
@@ -742,8 +742,8 @@ export const updatePreset = async ({
     .where(and(eq(presets.id, presetId), eq(presets.ownerId, ownerId)))
     .returning({ id: presets.id });
 
-  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), "default");
-  revalidateTag(PRESET_TAGS_MAP.presetById(presetId), "default");
+  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), { expire: 0 });
+  revalidateTag(PRESET_TAGS_MAP.presetById(presetId), { expire: 0 });
   return preset ?? null;
 };
 
@@ -759,8 +759,8 @@ export const deletePreset = async ({ presetId }: { presetId: string }) => {
     .where(and(eq(presets.id, presetId), eq(presets.ownerId, ownerId)))
     .returning({ id: presets.id });
 
-  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), "default");
-  revalidateTag(PRESET_TAGS_MAP.presetById(presetId), "default");
+  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), { expire: 0 });
+  revalidateTag(PRESET_TAGS_MAP.presetById(presetId), { expire: 0 });
   return preset ?? null;
 };
 
