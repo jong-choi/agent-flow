@@ -20,7 +20,7 @@ export function ChatEventWrapper({
       if (!threadId) return;
 
       (async () => {
-        const response = await fetch(`/api/chat/${threadId}/health`, {
+        const response = await fetch(`/api/chat/temporary/${threadId}/health`, {
           signal: controller.signal,
         });
 

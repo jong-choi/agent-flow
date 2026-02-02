@@ -25,7 +25,7 @@ export type ChatCreateThreadRequest = z.infer<
 /**
  * 사용자의 요청을 받아 ThreadContext를 생성한다
  * 생성한 ThreadContext에 Thread를 생성하기 위한 초기값을 설정한다.
- * src/app/api/chat/[id]/route.ts 에 요청을 보낼 때 사용되는 threadId를 반환한다.
+ * src/app/api/chat/temporary/[threadId]/route.ts 에 요청을 보낼 때 사용되는 threadId를 반환한다.
  *
  * @param {Request} request - xyflow nodes와 edges의 배열
  */

@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { type ChatCreateThreadRequest } from "@/app/api/chat/route";
+import { type ChatCreateThreadRequest } from "@/app/api/chat/temporary/route";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
@@ -33,7 +33,7 @@ export function FlowStartButton() {
     try {
       const requestBody: ChatCreateThreadRequest = { nodes, edges, locale };
 
-      const response = await fetch("/api/chat", {
+      const response = await fetch("/api/chat/temporary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),

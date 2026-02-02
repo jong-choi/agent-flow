@@ -19,10 +19,10 @@ import { isValidNodeType } from "@/app/api/chat/_types/nodes";
  */
 export async function GET(
   request: Request,
-  { params }: RouteContext<"/api/chat/[id]">,
+  { params }: RouteContext<"/api/chat/temporary/[threadId]">,
 ) {
   try {
-    const { id: threadId } = await params;
+    const { threadId } = await params;
 
     const threadContext = threadContextManager.get(threadId);
 
@@ -130,7 +130,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("GET /api/chat/[id] error:", error);
+    console.error("GET /api/chat/temporary/[threadId] error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

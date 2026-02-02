@@ -5,10 +5,10 @@ import {
 
 export async function GET(
   request: Request,
-  { params }: RouteContext<"/api/chat/[id]">,
+  { params }: RouteContext<"/api/chat/temporary/[threadId]">,
 ) {
   try {
-    const { id: threadId } = await params;
+    const { threadId } = await params;
 
     const threadContext = threadContextManager.get(threadId);
 
@@ -30,7 +30,7 @@ export async function GET(
 
     return Response.json({ ok: true });
   } catch (error) {
-    console.error("GET /api/chat/[id]/health error:", error);
+    console.error("GET /api/chat/temporary/[threadId]/health error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

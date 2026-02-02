@@ -26,7 +26,7 @@ export type ChatCreateThreadRequest = z.infer<
 /**
  * 사용자의 Workflow 아이디를 기반으로 새로운 채팅을 시작한다.
  * 생성한 ThreadContext에 Thread를 생성하기 위한 초기값을 설정한다.
- * src/app/api/chat/[id]/route.ts 에 요청을 보낼 때 사용되는 threadId를 반환한다.
+ * src/app/api/chat/temporary/[threadId]/route.ts 에 요청을 보낼 때 사용되는 threadId를 반환한다.
  *
  * @param {Request} request - xyflow nodes와 edges의 배열
  */

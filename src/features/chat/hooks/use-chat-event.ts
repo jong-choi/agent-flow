@@ -36,7 +36,7 @@ export function useChatEvent() {
       throw new Error("threadId가 없습니다.");
     }
 
-    const response = await fetch(`/api/chat/${threadId}`, {
+    const response = await fetch(`/api/chat/temporary/${threadId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),
@@ -52,7 +52,7 @@ export function useChatEvent() {
     }
 
     closeEventSource();
-    eventSourceRef.current = new EventSource(`/api/chat/${threadId}`);
+    eventSourceRef.current = new EventSource(`/api/chat/temporary/${threadId}`);
     const eventSource = eventSourceRef.current;
 
     eventSource.onmessage = (event) => {

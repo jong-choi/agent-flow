@@ -11,10 +11,10 @@ const chatSessionRunSchema = z.object({
 
 export async function POST(
   request: Request,
-  { params }: RouteContext<"/api/chat/[id]">,
+  { params }: RouteContext<"/api/chat/temporary/[threadId]">,
 ) {
   try {
-    const { id: threadId } = await params;
+    const { threadId } = await params;
 
     const json = await request.json();
     const parsed = chatSessionRunSchema.safeParse(json);
@@ -53,7 +53,7 @@ export async function POST(
 
     return Response.json({ ok: true });
   } catch (error) {
-    console.error("POST /api/chat/[id] error:", error);
+    console.error("POST /api/chat/temporary/[threadId] error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
