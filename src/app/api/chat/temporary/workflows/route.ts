@@ -8,6 +8,7 @@ import {
 import { getSidebarNodesWithOptions } from "@/db/query/sidebar-nodes";
 import { getWorkflowWithGraph } from "@/db/query/workflows";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
+import { auth } from "@/lib/auth";
 
 const LOCALES = ["ko"] as const;
 const SYSTEM_MESSAGES: Record<(typeof LOCALES)[number], string> = {
@@ -56,6 +57,14 @@ export async function POST(request: Request) {
       return Response.json(
         { error: "workflowData를 불러오는 데에 실패하였습니다." },
         { status: 400 },
+      );
+    }
+
+    const session = await auth();
+    if (!session?.user || session.user.id !== workflowData.workflow.ownerId) {
+      return Response.json(
+        { error: "해당 workflow에 접근할 권한이 없습니다." },
+        { status: 403 },
       );
     }
 
