@@ -1,7 +1,21 @@
 // next-auth.d.ts
 import "next-auth";
-import type { NextAuthConfig } from "next-auth";
+import type { DefaultSession, NextAuthConfig } from "next-auth";
 import "next-auth/jwt";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      displayName?: string | null;
+      avatarHash?: string | null;
+    } & DefaultSession["user"];
+  }
+
+  interface User {
+    displayName?: string | null;
+    avatarHash?: string | null;
+  }
+}
 
 declare module "next-auth/jwt" {
   interface JWT {
@@ -9,7 +23,9 @@ declare module "next-auth/jwt" {
     expires_at?: number; // epoch seconds
     refresh_token?: string;
     error?: "RefreshTokenError";
+    displayName?: string | null;
+    avatarHash?: string | null;
   }
 }
 
-type AuthCallbacks = NonNullable<NextAuthConfig["callbacks"]>;
+export type AuthCallbacks = NonNullable<NextAuthConfig["callbacks"]>;

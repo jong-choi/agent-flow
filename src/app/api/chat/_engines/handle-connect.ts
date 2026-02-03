@@ -1,10 +1,14 @@
 import { randomUUID } from "crypto";
 import { MemorySaver } from "@langchain/langgraph";
+import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import { type FlowEdge, type FlowNode } from "@/app/api/chat/_types/nodes";
 
 const THREAD_IDLE_TIMEOUT_MS = 1000 * 60 * 5; // 5분
 export const checkpointer = new MemorySaver();
+export const persistentCheckpointer = PostgresSaver.fromConnString(
+  process.env.DATABASE_URL!,
+);
 
 export type ThreadContext = {
   id: string;

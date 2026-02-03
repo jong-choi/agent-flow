@@ -5,7 +5,10 @@ import {
   type ThreadContext,
   createThread,
 } from "@/app/api/chat/_engines/handle-connect";
-import { flowEdgeSchema, flowNodeSchema } from "@/app/api/chat/_types/nodes";
+import { getSidebarNodesWithOptions } from "@/db/query/sidebar-nodes";
+import { getWorkflowWithGraph } from "@/db/query/workflows";
+import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
+import { auth } from "@/lib/auth";
 
 const LOCALES = ["ko"] as const;
 const SYSTEM_MESSAGES: Record<(typeof LOCALES)[number], string> = {
@@ -13,8 +16,7 @@ const SYSTEM_MESSAGES: Record<(typeof LOCALES)[number], string> = {
 };
 
 const ChatCreateThreadRequestSchema = z.object({
-  nodes: z.array(flowNodeSchema),
-  edges: z.array(flowEdgeSchema),
+  workflowId: z.uuid(),
   locale: z.enum(LOCALES),
 });
 
@@ -25,7 +27,7 @@ export type ChatCreateThreadRequest = z.infer<
 /**
  * 사용자의 Workflow 아이디를 기반으로 새로운 채팅을 시작한다.
  * 생성한 ThreadContext에 Thread를 생성하기 위한 초기값을 설정한다.
- * src/app/api/chat/[id]/route.ts 에 요청을 보낼 때 사용되는 threadId를 반환한다.
+ * src/app/api/chat/temporary/[threadId]/route.ts 에 요청을 보낼 때 사용되는 threadId를 반환한다.
  *
  * @param {Request} request - xyflow nodes와 edges의 배열
  */
@@ -41,11 +43,41 @@ export async function POST(request: Request) {
       );
     }
 
-    const { nodes, edges, locale } = parsed.data;
+    const { workflowId, locale } = parsed.data;
 
-    if (!Array.isArray(nodes) || !Array.isArray(edges)) {
+    if (!workflowId) {
       return Response.json(
-        { error: "nodes와 edges가 필요합니다." },
+        { error: "workflowId가 전달되지 않았습니다." },
+        { status: 400 },
+      );
+    }
+
+    const workflowData = await getWorkflowWithGraph(workflowId);
+    if (!workflowData) {
+      return Response.json(
+        { error: "workflowData를 불러오는 데에 실패하였습니다." },
+        { status: 400 },
+      );
+    }
+
+    const session = await auth();
+    if (!session?.user || session.user.id !== workflowData.workflow.ownerId) {
+      return Response.json(
+        { error: "해당 workflow에 접근할 권한이 없습니다." },
+        { status: 403 },
+      );
+    }
+
+    const sidebarNodes = await getSidebarNodesWithOptions();
+    const { nodes, edges } = buildFlowGraphFromWorkflow({
+      workflowNodes: workflowData.nodes,
+      workflowEdges: workflowData.edges,
+      sidebarNodes,
+    });
+
+    if (!nodes || !edges) {
+      return Response.json(
+        { error: "workflow로 그래프를 생성하는 데에 실패하였습니다." },
         { status: 400 },
       );
     }

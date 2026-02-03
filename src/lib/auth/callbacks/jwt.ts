@@ -1,6 +1,12 @@
 import { type AuthCallbacks } from "@/lib/auth/types/next-auth";
 
-export const jwtCallback: AuthCallbacks["jwt"] = async ({ token, account }) => {
+export const jwtCallback: AuthCallbacks["jwt"] = async ({
+  token,
+  account,
+  user,
+  trigger,
+  session,
+}) => {
   // 최초 로그인 : Google에서 제공하는 정보를 반환
   if (account) {
     return {
@@ -8,6 +14,16 @@ export const jwtCallback: AuthCallbacks["jwt"] = async ({ token, account }) => {
       access_token: account.access_token,
       expires_at: account.expires_at,
       refresh_token: account.refresh_token,
+      displayName: user?.displayName ?? token.displayName ?? null,
+      avatarHash: user?.avatarHash ?? token.avatarHash ?? null,
+    };
+  }
+
+  if (trigger === "update") {
+    return {
+      ...token,
+      displayName: session?.user?.displayName ?? token.displayName ?? null,
+      avatarHash: session?.user?.avatarHash ?? token.avatarHash ?? null,
     };
   }
 

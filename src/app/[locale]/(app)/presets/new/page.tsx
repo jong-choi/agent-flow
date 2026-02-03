@@ -8,15 +8,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { WorkflowListCard } from "@/features/preset/components/workflow-list-card";
 import { getOwnedWorkflows } from "@/db/query/workflows";
-import { formatKoreanDate } from "@/lib/utils";
 
 export default async function PresetCreatePage() {
   const workflowList = await getOwnedWorkflows();
 
   return (
     <PageContainer>
-      <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">내 프리셋 · 1/2</p>
@@ -52,28 +52,14 @@ export default async function PresetCreatePage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {workflowList.map((workflow) => (
-              <Link
+              <WorkflowListCard
                 key={workflow.id}
                 href={`/presets/new/${workflow.id}`}
-                className="group"
-              >
-                <Card className="h-full transition-shadow group-hover:shadow-md">
-                  <CardHeader>
-                    <CardTitle className="text-lg">{workflow.title}</CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {workflow.description ?? "설명이 없습니다."}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>
-                        최근 업데이트 {formatKoreanDate(workflow.updatedAt)}
-                      </span>
-                      <span className="text-primary">선택하기</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+                title={workflow.title}
+                description={workflow.description}
+                updatedAt={workflow.updatedAt}
+                actionLabel="선택하기"
+              />
             ))}
           </div>
         )}

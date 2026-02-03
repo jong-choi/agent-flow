@@ -1,6 +1,9 @@
 import type { StateCreator } from "zustand";
 
 export type ChatStatusSlice = {
+  mode: "temporary" | "persistent";
+  threadId: string | null;
+  chatId: string | null;
   isStreaming: boolean;
   setIsStreaming: (isStreaming: boolean) => void;
   lastMessageHeight: number;
@@ -8,6 +11,9 @@ export type ChatStatusSlice = {
 };
 
 export const createChatStatusSlice: StateCreator<ChatStatusSlice> = (set) => ({
+  mode: "temporary",
+  threadId: null,
+  chatId: null,
   isStreaming: false,
   setIsStreaming: (isStreaming) => set({ isStreaming }),
   lastMessageHeight: 0,

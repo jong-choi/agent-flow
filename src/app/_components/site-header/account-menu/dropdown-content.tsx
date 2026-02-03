@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -30,6 +31,9 @@ export function DropdownContent({ userName }: { userName: string }) {
           </DropdownMenuPortal>
         </DropdownMenuSub>
         <DropdownMenuItem>New Team</DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/profile">프로필 수정</Link>
+        </DropdownMenuItem>
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
       <DropdownLogoutForm />

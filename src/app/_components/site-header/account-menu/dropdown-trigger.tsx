@@ -1,16 +1,12 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BoringUserAvatar } from "@/components/boring-avatar";
 import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 
-export function DropdownTrigger({ userImage }: { userImage: string }) {
+export function DropdownTrigger({ avatarHash }: { avatarHash: string }) {
   return (
     <DropdownMenuTrigger asChild>
-      <Avatar data-testid="user-menu-trigger">
-        <AvatarImage src={userImage} alt="user-image" />
-        <AvatarFallback>
-          <Skeleton className="size-8 rounded-full" />
-        </AvatarFallback>
-      </Avatar>
+      <div className="relative size-8 shrink-0 cursor-pointer overflow-hidden rounded-full">
+        <BoringUserAvatar seed={avatarHash} className="size-8" />
+      </div>
     </DropdownMenuTrigger>
   );
 }

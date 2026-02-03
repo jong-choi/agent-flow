@@ -15,7 +15,7 @@ export function AccountMenu() {
     return <Skeleton className="size-8 rounded-full" />;
   }
 
-  if (!session?.user) {
+  if (!session?.user || !session?.user.id) {
     return (
       <Link href="/login">
         <Button>로그인</Button>
@@ -25,8 +25,8 @@ export function AccountMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownTrigger userImage={session.user.image ?? ""} />
-      <DropdownContent userName={session.user.name ?? "사용자"} />
+      <DropdownTrigger avatarHash={session.user.avatarHash ?? "default"} />
+      <DropdownContent userName={session.user.displayName ?? "사용자"} />
     </DropdownMenu>
   );
 }

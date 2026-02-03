@@ -8,12 +8,14 @@ import { ChatStreamingMessages } from "@/features/chat/components/chat-panel/con
 import { ChatPanelInputForm } from "@/features/chat/components/chat-panel/content/chat-panel-input-form";
 import { useChatStore } from "@/features/chat/store/chat-store";
 
+const SCROLL_OFFSET = 80;
+export const BOTTOM_PADDING = 30;
+
 export function ChatPanelContent() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const setLastMessageHeight = useChatStore((s) => s.setLastMessageHeight);
   const isMessage = useChatStore((s) => Boolean(s.messages.length));
   const isStreaming = useChatStore((s) => s.isStreaming);
-  const SCROLL_OFFSET = 80;
 
   useEffect(() => {
     const scrollElement = scrollAreaRef.current?.querySelector(
@@ -21,7 +23,9 @@ export function ChatPanelContent() {
     );
     // 스트리밍 시작 시 스크롤 로직 시작
     if (isStreaming && scrollElement) {
-      setLastMessageHeight(scrollElement.clientHeight - SCROLL_OFFSET);
+      setLastMessageHeight(
+        scrollElement.clientHeight - SCROLL_OFFSET - BOTTOM_PADDING,
+      );
       requestAnimationFrame(() => {
         scrollElement.scrollTo({
           top: scrollElement.scrollHeight,

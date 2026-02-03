@@ -1,5 +1,6 @@
 import { useShallow } from "zustand/react/shallow";
 import { ChatMessageItem } from "@/features/chat/components/chat-panel/content/chat-messages/chat-message-item";
+import { BOTTOM_PADDING } from "@/features/chat/components/chat-panel/content/chat-panel-content";
 import { useChatStore } from "@/features/chat/store/chat-store";
 
 export function ChatMessages() {
@@ -20,7 +21,10 @@ export function ChatMessages() {
             : "auto";
 
         return (
-          <div key={message.id} style={{ minHeight }}>
+          <div
+            key={message.id}
+            style={{ minHeight, paddingBottom: BOTTOM_PADDING }}
+          >
             <ChatMessageItem message={message} />
           </div>
         );

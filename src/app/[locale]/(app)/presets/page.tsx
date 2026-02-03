@@ -102,7 +102,7 @@ export default async function TemplateMarketPage({
   return (
     <>
       <PageContainer>
-        <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <PageHeader>
               <PageHeading>프리셋 마켓</PageHeading>
