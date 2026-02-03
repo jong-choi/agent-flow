@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import NextAuth, { type User } from "next-auth";
 import { type Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
@@ -41,6 +42,7 @@ if (ENABLE_DEV_LOGIN) {
             name: "Bob Tester",
             image: "https://avatars.githubusercontent.com/u/67470890?s=200&v=4",
             displayName: "TestingTester3221",
+            avatarHash: "IgV-JD03",
           } satisfies User;
         } else {
           return null;
@@ -58,17 +60,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
     async createUser(user) {
       const displayName = getRandomName();
+      const avatarHash = randomBytes(6).toString("base64url");
       await db
         .insert(users)
         .values({
           ...user,
           displayName,
+          avatarHash,
         })
         .returning();
 
       return {
         ...user,
         displayName,
+        avatarHash,
       };
     },
   },
@@ -86,6 +91,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.sub;
       }
       session.user.displayName = token.displayName ?? null;
+      session.user.avatarHash = token.avatarHash ?? null;
       return session;
     },
   },

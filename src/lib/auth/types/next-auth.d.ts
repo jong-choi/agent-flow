@@ -7,11 +7,13 @@ declare module "next-auth" {
   interface Session {
     user: {
       displayName?: string | null;
+      avatarHash?: string | null;
     } & DefaultSession["user"];
   }
 
   interface User {
     displayName?: string | null;
+    avatarHash?: string | null;
   }
 }
 
@@ -22,6 +24,7 @@ declare module "next-auth/jwt" {
     refresh_token?: string;
     error?: "RefreshTokenError";
     displayName?: string | null;
+    avatarHash?: string | null;
   }
 }
 

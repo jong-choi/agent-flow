@@ -25,7 +25,7 @@ export function AccountMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownTrigger userId={session.user.id} />
+      <DropdownTrigger avatarHash={session.user.avatarHash ?? "default"} />
       <DropdownContent userName={session.user.displayName ?? "사용자"} />
     </DropdownMenu>
   );

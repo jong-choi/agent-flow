@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 import {
   Blocks,
   BotMessageSquare,
+  CircleUserRound,
   HandCoins,
   type LucideProps,
   StickyNote,
@@ -72,6 +73,7 @@ const navigation: NavType[] = [
       { name: "출석 체크", href: "/credits/attendance" },
     ],
   },
+  { type: "Item", name: "프로필", href: "/profile", icon: CircleUserRound },
 ];
 
 interface MainLayoutProps {
