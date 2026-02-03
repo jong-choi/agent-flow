@@ -1,7 +1,9 @@
 import { ChatHeaderMenu } from "@/app/[locale]/(app)/chat/_components/chat-header-menu";
+import { ChatHeaderTitle } from "@/app/[locale]/(app)/chat/_components/chat-header-title";
 import { formatKoreanDate } from "@/lib/utils";
 
 type ChatHeaderProps = {
+  chatId: string;
   chatTitle: string | null;
   createdAt: Date | string;
   workflowTitle?: string | null;
@@ -9,6 +11,7 @@ type ChatHeaderProps = {
 };
 
 export function ChatHeader({
+  chatId,
   chatTitle,
   createdAt,
   workflowTitle,
@@ -20,9 +23,10 @@ export function ChatHeader({
   return (
     <header className="sticky top-0 z-20 w-full bg-background/80 px-6 py-2 backdrop-blur">
       <div className="flex justify-between">
-        <div className="truncate text-lg font-semibold text-foreground">
-          {resolvedChatTitle}
-        </div>
+        <ChatHeaderTitle
+          chatId={chatId}
+          initialTitle={resolvedChatTitle}
+        />
         <ChatHeaderMenu
           workflowId={workflowId}
           workflowTitle={resolvedWorkflowTitle}

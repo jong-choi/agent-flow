@@ -117,6 +117,73 @@ export const insertChatMessage = async ({
   return message;
 };
 
+export const updateChatTitle = async ({
+  chatId,
+  title,
+}: {
+  chatId: string;
+  title: string | null;
+}) => {
+  const userId = await getUserId();
+
+  const [chat] = await db
+    .select({ id: chats.id, userId: chats.userId, deletedAt: chats.deletedAt })
+    .from(chats)
+    .where(eq(chats.id, chatId))
+    .limit(1);
+
+  if (!chat || chat.deletedAt) {
+    throw new Error("채팅을 찾을 수 없습니다.");
+  }
+
+  if (chat.userId !== userId) {
+    throw new Error("채팅에 대한 접근 권한이 없습니다.");
+  }
+
+  const [updated] = await db
+    .update(chats)
+    .set({ title, updatedAt: new Date() })
+    .where(eq(chats.id, chatId))
+    .returning({ id: chats.id, title: chats.title, updatedAt: chats.updatedAt });
+
+  if (!updated) {
+    throw new Error("채팅 이름 변경에 실패했습니다.");
+  }
+
+  return updated;
+};
+
+export const softDeleteChat = async ({ chatId }: { chatId: string }) => {
+  const userId = await getUserId();
+
+  const [chat] = await db
+    .select({ id: chats.id, userId: chats.userId, deletedAt: chats.deletedAt })
+    .from(chats)
+    .where(eq(chats.id, chatId))
+    .limit(1);
+
+  if (!chat || chat.deletedAt) {
+    throw new Error("채팅을 찾을 수 없습니다.");
+  }
+
+  if (chat.userId !== userId) {
+    throw new Error("채팅에 대한 접근 권한이 없습니다.");
+  }
+
+  const now = new Date();
+  const [deleted] = await db
+    .update(chats)
+    .set({ deletedAt: now, updatedAt: now })
+    .where(eq(chats.id, chatId))
+    .returning({ id: chats.id });
+
+  if (!deleted) {
+    throw new Error("채팅 삭제에 실패했습니다.");
+  }
+
+  return deleted;
+};
+
 export const getChatsByUser = async () => {
   const userId = await getUserId();
 

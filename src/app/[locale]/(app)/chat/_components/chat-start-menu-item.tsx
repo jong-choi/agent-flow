@@ -42,9 +42,7 @@ export function ChatStartMenuItem({
   return (
     <DropdownMenuItem
       disabled={loading || !workflowId}
-      onSelect={() => {
-        handleNewChat();
-      }}
+      onSelect={handleNewChat}
     >
       {loading && <Spinner className="size-3.5" />}새 채팅
     </DropdownMenuItem>

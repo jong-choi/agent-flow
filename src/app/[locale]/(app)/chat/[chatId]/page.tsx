@@ -25,6 +25,7 @@ export default async function ChatRunPage({
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
       <ChatHeader
+        chatId={chatId}
         chatTitle={chat.title}
         createdAt={chat.createdAt}
         workflowTitle={workflow?.title}
