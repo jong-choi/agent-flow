@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BotMessageSquare } from "lucide-react";
+import { BotMessageSquare, SquarePen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { chatListQueryKey } from "@/app/[locale]/(app)/chat/_components/chat-queries";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatKoreanDate } from "@/lib/utils";
 
@@ -45,12 +47,25 @@ export function ChatSidebar() {
   const chats = data?.data ?? [];
 
   return (
-    <aside className="h-full w-52 border-r border-border bg-background/80 px-4 py-6 backdrop-blur">
-      <div className="flex items-center gap-2 text-xs font-extrabold text-muted-foreground">
+    <aside className="flex h-full w-52 flex-col gap-2 border-r border-border bg-background/80 px-4 py-6 backdrop-blur">
+      {/* <div className="flex items-center gap-2 text-xs font-extrabold text-muted-foreground">
         <BotMessageSquare className="size-4" strokeWidth={1.75} />
         채팅
-      </div>
-      <nav className="mt-4 flex flex-col gap-1">
+      </div> */}
+      {/* <div className="mt-4"> */}
+      <Button
+        asChild
+        size="sm"
+        variant="ghost"
+        className="w-full justify-start"
+      >
+        <Link href="/chat">
+          <SquarePen className="size-4" strokeWidth={1.75} />새 채팅
+        </Link>
+      </Button>
+      {/* </div> */}
+      <Separator />
+      <nav className="flex flex-col gap-1">
         {isLoading &&
           Array.from({ length: 6 }).map((_, index) => (
             <div key={`chat-skeleton-${index}`} className="space-y-2 px-2 py-2">

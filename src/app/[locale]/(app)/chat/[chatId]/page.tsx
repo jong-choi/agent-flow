@@ -28,6 +28,7 @@ export default async function ChatRunPage({
         chatTitle={chat.title}
         createdAt={chat.createdAt}
         workflowTitle={workflow?.title}
+        workflowId={chat.workflowId}
       />
       <div className="container mx-auto flex min-h-0 max-w-5xl flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">

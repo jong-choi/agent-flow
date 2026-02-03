@@ -1,15 +1,18 @@
+import { ChatHeaderMenu } from "@/app/[locale]/(app)/chat/_components/chat-header-menu";
 import { formatKoreanDate } from "@/lib/utils";
 
 type ChatHeaderProps = {
   chatTitle: string | null;
   createdAt: Date | string;
   workflowTitle?: string | null;
+  workflowId?: string | null;
 };
 
 export function ChatHeader({
   chatTitle,
   createdAt,
   workflowTitle,
+  workflowId,
 }: ChatHeaderProps) {
   const resolvedChatTitle = chatTitle?.trim() || formatKoreanDate(createdAt);
   const resolvedWorkflowTitle = workflowTitle?.trim() || "워크플로우 없음";
@@ -20,9 +23,10 @@ export function ChatHeader({
         <div className="truncate text-lg font-semibold text-foreground">
           {resolvedChatTitle}
         </div>
-        <div className="truncate text-sm text-muted-foreground">
-          {resolvedWorkflowTitle}
-        </div>
+        <ChatHeaderMenu
+          workflowId={workflowId}
+          workflowTitle={resolvedWorkflowTitle}
+        />
       </div>
     </header>
   );
