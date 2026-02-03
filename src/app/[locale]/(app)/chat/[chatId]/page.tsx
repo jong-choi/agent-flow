@@ -1,4 +1,6 @@
-import { getChatMessagesByChatId } from "@/db/query/chat";
+import { ChatHeader } from "@/app/[locale]/(app)/chat/_components/chat-header";
+import { getChatById, getChatMessagesByChatId } from "@/db/query/chat";
+import { getOwnedWorkflowById } from "@/db/query/workflows";
 import { ChatEventWrapper } from "@/features/chat/components/chat-panel/chat-event-wrapper";
 import { ChatPanelContent } from "@/features/chat/components/chat-panel/content/chat-panel-content";
 import { type ClientChatMessage } from "@/features/chat/utils/chat-message";
@@ -7,29 +9,37 @@ export default async function ChatRunPage({
   params,
 }: PageProps<"/[locale]/chat/[chatId]">) {
   const { chatId } = await params;
-  let initialMessages: ClientChatMessage[] = [];
+  const chat = await getChatById(chatId);
+  const workflow = await getOwnedWorkflowById(chat.workflowId);
 
-  try {
-    const messages = await getChatMessagesByChatId(chatId);
-    initialMessages = messages
-      .filter((message) => message.role !== "system")
-      .map((message) => ({
-        id: message.id,
-        role: message.role === "assistant" ? "assistant" : "user",
-        content: message.content,
-        createdAt: message.createdAt ? message.createdAt.toISOString() : null,
-      }));
-  } catch (error) {
-    throw error;
-  }
+  const messages = await getChatMessagesByChatId(chatId);
+  const initialMessages: ClientChatMessage[] = messages
+    .filter((message) => message.role !== "system")
+    .map((message) => ({
+      id: message.id,
+      role: message.role === "assistant" ? "assistant" : "user",
+      content: message.content,
+      createdAt: message.createdAt ? message.createdAt.toISOString() : null,
+    }));
 
   return (
-    <ChatEventWrapper
-      mode="persistent"
-      initialChatId={chatId}
-      initialMessages={initialMessages}
-    >
-      <ChatPanelContent />
-    </ChatEventWrapper>
+    <div className="flex h-full min-h-0 w-full flex-col">
+      <ChatHeader
+        chatTitle={chat.title}
+        createdAt={chat.createdAt}
+        workflowTitle={workflow?.title}
+      />
+      <div className="container mx-auto flex min-h-0 max-w-5xl flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <ChatEventWrapper
+            mode="persistent"
+            initialChatId={chatId}
+            initialMessages={initialMessages}
+          >
+            <ChatPanelContent />
+          </ChatEventWrapper>
+        </div>
+      </div>
+    </div>
   );
 }

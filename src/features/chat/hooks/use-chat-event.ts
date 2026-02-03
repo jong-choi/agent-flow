@@ -66,9 +66,6 @@ export function useChatEvent() {
       }
 
       const data = parsed.data;
-      if (data.type === "startNode" && data.event === "on_chain_start") {
-        setIsStreaming(true);
-      }
 
       if (data.type === "chatNode") {
         const nodeId = data.langgraph_node;
@@ -97,11 +94,14 @@ export function useChatEvent() {
 
   const sendMessage = async (message: string) => {
     appendMessage(createHumanMessage(message));
+    setIsStreaming(true);
 
     const { targetId, endpointBase } = resolveTarget();
 
     if (!targetId) {
-      throw new Error(mode === "persistent" ? "chatId가 없습니다." : "threadId가 없습니다.");
+      throw new Error(
+        mode === "persistent" ? "chatId가 없습니다." : "threadId가 없습니다.",
+      );
     }
 
     const response = await fetch(`${endpointBase}/${targetId}`, {

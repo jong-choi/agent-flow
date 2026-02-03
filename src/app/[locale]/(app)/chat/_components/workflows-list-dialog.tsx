@@ -16,7 +16,7 @@ export async function WorkflowsListDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button">더보기</Button>
+        <Button type="button">더 보기</Button>
       </DialogTrigger>
       <DialogContent
         ariaDescribedby="workflows list dialog"
