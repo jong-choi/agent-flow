@@ -2,11 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { RefreshCcw } from "lucide-react";
+import { nanoid } from "nanoid";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { ProfileNameInput } from "@/app/[locale]/(app)/profile/_components/profile-name-input";
 import { BoringUserAvatar } from "@/components/boring-avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { updateUserAction } from "@/db/query/auth";
 
 type ProfileFormProps = {
@@ -15,47 +17,33 @@ type ProfileFormProps = {
   email?: string | null;
 };
 
-const createAvatarHash = () => {
-  if (typeof window === "undefined") {
-    return "default";
-  }
-
-  if (typeof window.crypto?.getRandomValues !== "function") {
-    return Math.random().toString(36).slice(2, 10);
-  }
-
-  const bytes = new Uint8Array(6);
-  window.crypto.getRandomValues(bytes);
-  const base64 = btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-
-  return base64 || "default";
-};
-
 export function ProfileForm({
   initialDisplayName,
   initialAvatarHash,
   email,
 }: ProfileFormProps) {
-  const { update } = useSession();
-  const [clicked, setClicked] = useState(false);
-  const [displayName, setDisplayName] = useState(initialDisplayName ?? "");
+  const { data: session, update } = useSession();
+
   const [avatarHash, setAvatarHash] = useState(initialAvatarHash ?? "default");
+  const [clicked, setClicked] = useState(false);
+
+  const [nameMessage, setNameMessage] = useState("");
+  const [validName, setValidName] = useState(true);
+  const [checking, setChecking] = useState(false);
 
   const [isPending, startTransition] = useTransition();
 
+  const hasChanged = avatarHash !== initialAvatarHash || nameMessage;
+  const canSubmit = hasChanged && validName && !checking && !isPending;
+
   const handleAvatarClick = () => {
     setClicked(true);
-    setAvatarHash(createAvatarHash());
+    setAvatarHash(nanoid(8));
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     const formData = new FormData(event.currentTarget);
-
     startTransition(() => {
       (async () => {
         try {
@@ -68,8 +56,7 @@ export function ProfileForm({
 
           const nextDisplayName = result.data?.displayName ?? "";
           const nextAvatarHash = result.data?.avatarHash ?? avatarHash;
-          setDisplayName(nextDisplayName);
-          setAvatarHash(nextAvatarHash);
+
           await update({
             user: {
               displayName: nextDisplayName || null,
@@ -77,6 +64,7 @@ export function ProfileForm({
             },
           });
           toast.success("닉네임이 변경되었습니다.");
+          setNameMessage("");
         } catch (error) {
           console.error(error);
           toast.error("닉네임 변경 중 오류가 발생했습니다.");
@@ -84,8 +72,6 @@ export function ProfileForm({
       })();
     });
   };
-
-  const isInvalid = displayName.trim().length === 0;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 select-none">
@@ -118,19 +104,22 @@ export function ProfileForm({
         <label htmlFor="displayName" className="text-sm font-medium">
           닉네임
         </label>
-        <Input
-          id="displayName"
-          name="displayName"
-          value={displayName}
-          onChange={(event) => setDisplayName(event.target.value)}
-          placeholder="닉네임을 입력하세요"
-          autoComplete="nickname"
-          required
+        <ProfileNameInput
+          session={session}
+          initialDisplayName={initialDisplayName || ""}
+          setNameMessage={setNameMessage}
+          setValidName={setValidName}
+          setChecking={setChecking}
         />
       </div>
-      <Button type="submit" disabled={isPending || isInvalid}>
-        {isPending ? "저장 중..." : "변경 저장"}
-      </Button>
+      <div className="flex items-center gap-4">
+        <Button type="submit" disabled={!canSubmit}>
+          {isPending ? "저장 중..." : "변경 저장"}
+        </Button>
+        <div className="text-sm text-muted-foreground">
+          {checking ? <Spinner /> : nameMessage}
+        </div>
+      </div>
     </form>
   );
 }

@@ -1,13 +1,13 @@
-import { randomBytes } from "crypto";
+import { nanoid } from "nanoid";
 import NextAuth, { type User } from "next-auth";
 import { type Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/db/client";
+import { createUniqueDisplayName } from "@/db/query/auth";
 import { accounts, users } from "@/db/schema";
 import { jwtCallback } from "@/lib/auth/callbacks/jwt";
-import { getRandomName } from "@/lib/unique-name";
 
 export const ENABLE_DEV_LOGIN =
   process.env.NODE_ENV !== "production" ||
@@ -59,8 +59,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       accountsTable: accounts,
     }),
     async createUser(user) {
-      const displayName = getRandomName();
-      const avatarHash = randomBytes(6).toString("base64url");
+      const displayName = await createUniqueDisplayName();
+      const avatarHash = nanoid(8);
       await db
         .insert(users)
         .values({

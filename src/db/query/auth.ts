@@ -1,10 +1,12 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { type User } from "next-auth";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { getRandomName } from "@/lib/unique-name";
 
 export async function getUserId(): Promise<string>;
 export async function getUserId(opts: { throwOnError?: true }): Promise<string>;
@@ -63,6 +65,36 @@ export const updateUser = async (
   return updated ?? null;
 };
 
+export const isDisplayNameTaken = async (
+  displayName: string,
+  excludeUserId?: string,
+) => {
+  const clauses = [eq(users.displayName, displayName)];
+  if (excludeUserId) {
+    clauses.push(ne(users.id, excludeUserId));
+  }
+
+  const whereClause = clauses.length === 1 ? clauses[0] : and(...clauses);
+  const [user] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(whereClause)
+    .limit(1);
+
+  return Boolean(user);
+};
+
+export const createUniqueDisplayName = async () => {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const candidate = getRandomName();
+    if (!(await isDisplayNameTaken(candidate))) {
+      return candidate;
+    }
+  }
+
+  return `${getRandomName()}${nanoid(2)}`;
+};
+
 export const updateUserAction = async (formData: FormData) => {
   "use server";
 
@@ -73,6 +105,11 @@ export const updateUserAction = async (formData: FormData) => {
   const displayName = rawDisplayName.trim();
   if (!displayName) {
     return { ok: false, error: "닉네임을 입력해주세요." };
+  }
+
+  const userId = await getUserId();
+  if (await isDisplayNameTaken(displayName, userId)) {
+    return { ok: false, error: "이미 사용 중인 닉네임입니다." };
   }
 
   const rawAvatarHash = formData.get("avatarHash");
