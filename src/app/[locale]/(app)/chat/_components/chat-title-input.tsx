@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,25 +10,27 @@ import {
 } from "@/app/[locale]/(app)/chat/_components/chat-queries";
 import { Input } from "@/components/ui/input";
 import { updateChatTitle } from "@/db/query/chat";
+import { cn } from "@/lib/utils";
 
-type ChatSidebarInputProps = {
-  chat: ChatListItem;
+type ChatTitleInputProps = {
+  chatId: string;
+  currentTitle: string | null;
+  placeholder?: string;
   onClose: () => void;
+  variant?: "sidebar" | "header";
 };
 
-export function ChatSidebarInput({ chat, onClose }: ChatSidebarInputProps) {
+export function ChatTitleInput({
+  chatId,
+  currentTitle,
+  placeholder = "이름을 입력하세요.",
+  onClose,
+  variant = "sidebar",
+}: ChatTitleInputProps) {
   const queryClient = useQueryClient();
-  const [value, setValue] = useState(chat.title ?? "");
+  const [value, setValue] = useState(currentTitle ?? "");
   const inputRef = useRef<HTMLInputElement>(null);
   const skipCommitRef = useRef(false);
-
-  useEffect(() => {
-    const rafId = requestAnimationFrame(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    });
-    return () => cancelAnimationFrame(rafId);
-  }, []);
 
   const updateCache = (updater: (items: ChatListItem[]) => ChatListItem[]) => {
     queryClient.setQueryData<ChatListResponse>(chatListQueryKey, (old) => {
@@ -42,9 +44,9 @@ export function ChatSidebarInput({ chat, onClose }: ChatSidebarInputProps) {
 
     const trimmed = value.trim();
     const nextTitle = trimmed.length ? trimmed : null;
-    const currentTitle = chat.title?.trim() || null;
+    const normalizedCurrentTitle = currentTitle?.trim() || null;
 
-    if (nextTitle === currentTitle) {
+    if (nextTitle === normalizedCurrentTitle) {
       return;
     }
 
@@ -54,14 +56,14 @@ export function ChatSidebarInput({ chat, onClose }: ChatSidebarInputProps) {
 
     updateCache((items) =>
       items.map((item) =>
-        item.id === chat.id
+        item.id === chatId
           ? { ...item, title: nextTitle, updatedAt: nowIso }
           : item,
       ),
     );
 
     try {
-      await updateChatTitle({ chatId: chat.id, title: nextTitle });
+      await updateChatTitle({ chatId, title: nextTitle });
       toast.success("채팅 이름을 변경했어요.");
     } catch (error) {
       if (previous) {
@@ -83,12 +85,22 @@ export function ChatSidebarInput({ chat, onClose }: ChatSidebarInputProps) {
     void commitRename();
   };
 
+  const variantClasses =
+    variant === "header"
+      ? "!text-lg font-semibold text-foreground/80"
+      : "text-sm font-medium text-foreground/80 focus-visible:ring-0 focus-visible:ring-offset-0";
+
   return (
     <Input
       ref={inputRef}
       value={value}
-      placeholder={"이름을 입력하세요."}
-      className="h-8 text-sm"
+      placeholder={placeholder}
+      className={cn(
+        "h-auto min-h-0 border-0 bg-transparent p-0 shadow-none",
+        "placeholder:text-muted-foreground/70",
+        variantClasses,
+      )}
+      autoFocus={true}
       onChange={(event) => setValue(event.target.value)}
       onBlur={handleBlur}
       onKeyDown={(event) => {

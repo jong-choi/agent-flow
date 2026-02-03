@@ -26,6 +26,7 @@ export function ChatHeader({
         <ChatHeaderTitle
           chatId={chatId}
           initialTitle={resolvedChatTitle}
+          initialChatTitle={chatTitle}
         />
         <ChatHeaderMenu
           workflowId={workflowId}

@@ -1,19 +1,33 @@
 "use client";
 
+import { useState } from "react";
+import { Ellipsis } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchChats } from "@/app/[locale]/(app)/chat/_api/fetch-chats";
 import { chatListQueryKey } from "@/app/[locale]/(app)/chat/_components/chat-queries";
-import { formatKoreanDate } from "@/lib/utils";
+import { ChatSidebarDeleteDialog } from "@/app/[locale]/(app)/chat/_components/chat-sidebar-delete-dialog";
+import { ChatTitleInput } from "@/app/[locale]/(app)/chat/_components/chat-title-input";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn, formatKoreanDate } from "@/lib/utils";
 
 type ChatHeaderTitleProps = {
   chatId: string;
   initialTitle: string;
+  initialChatTitle: string | null;
 };
 
 export function ChatHeaderTitle({
   chatId,
   initialTitle,
+  initialChatTitle,
 }: ChatHeaderTitleProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const { data: chat } = useQuery({
     queryKey: chatListQueryKey,
     queryFn: fetchChats,
@@ -23,10 +37,51 @@ export function ChatHeaderTitle({
   const resolvedTitle = chat
     ? chat.title?.trim() || formatKoreanDate(chat.createdAt)
     : null;
+  const currentTitle = chat?.title ?? initialChatTitle ?? null;
+  const placeholder = chat ? formatKoreanDate(chat.createdAt) : initialTitle;
 
   return (
-    <div className="truncate text-lg font-semibold text-foreground">
-      {resolvedTitle ?? initialTitle}
+    <div className="flex items-center gap-2 md:max-w-[50vw]">
+      <div className={cn("min-w-0", isEditing && "w-[50vw]")}>
+        {isEditing ? (
+          <ChatTitleInput
+            chatId={chatId}
+            currentTitle={currentTitle}
+            placeholder={placeholder}
+            onClose={() => setIsEditing(false)}
+            variant="header"
+          />
+        ) : (
+          <div className="cursor-default truncate text-lg font-semibold text-foreground">
+            {resolvedTitle ?? initialTitle}
+          </div>
+        )}
+      </div>
+      {!isEditing && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="채팅 메뉴"
+            >
+              <Ellipsis className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem
+              onSelect={() => {
+                setIsEditing(true);
+              }}
+            >
+              이름 바꾸기
+            </DropdownMenuItem>
+            <ChatSidebarDeleteDialog chatId={chatId} isActive />
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Ellipsis } from "lucide-react";
 import { type ChatListItem } from "@/app/[locale]/(app)/chat/_components/chat-queries";
 import { ChatSidebarDeleteDialog } from "@/app/[locale]/(app)/chat/_components/chat-sidebar-delete-dialog";
-import { ChatSidebarInput } from "@/app/[locale]/(app)/chat/_components/chat-sidebar-input";
+import { ChatTitleInput } from "@/app/[locale]/(app)/chat/_components/chat-title-input";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,7 +34,13 @@ export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
     >
       <div className="min-w-0 flex-1">
         {isEditing ? (
-          <ChatSidebarInput chat={chat} onClose={() => setIsEditing(false)} />
+          <ChatTitleInput
+            chatId={chat.id}
+            currentTitle={chat.title}
+            placeholder={formatKoreanDate(chat.createdAt)}
+            onClose={() => setIsEditing(false)}
+            variant="sidebar"
+          />
         ) : (
           <Link
             href={`/chat/${chat.id}`}
