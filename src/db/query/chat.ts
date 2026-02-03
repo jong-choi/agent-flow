@@ -90,6 +90,33 @@ export const getChatMessagesByChatId = async (chatId: string) => {
     .orderBy(asc(chatMessages.createdAt));
 };
 
+export const insertChatMessage = async ({
+  chatId,
+  role,
+  content,
+}: {
+  chatId: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+}) => {
+  const [message] = await db
+    .insert(chatMessages)
+    .values({ chatId, role, content })
+    .returning({
+      id: chatMessages.id,
+      chatId: chatMessages.chatId,
+      role: chatMessages.role,
+      content: chatMessages.content,
+      createdAt: chatMessages.createdAt,
+    });
+
+  if (!message) {
+    throw new Error("메시지 저장에 실패했습니다.");
+  }
+
+  return message;
+};
+
 export const getChatsByUser = async () => {
   const userId = await getUserId();
 

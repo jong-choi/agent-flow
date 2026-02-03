@@ -6,6 +6,7 @@ import { Play } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { createChatFromWorkflow } from "@/db/query/chat";
 
 export function ChatStartButton({ workflowId }: { workflowId: string }) {
   const [loading, setLoading] = useState(false);
@@ -14,26 +15,11 @@ export function ChatStartButton({ workflowId }: { workflowId: string }) {
     if (loading) return;
     try {
       setLoading(true);
-      const response = await fetch("/api/chat/workflows", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workflowId, locale: "ko" }),
-      });
-
-      if (!response.ok) {
-        throw new Error("채팅 생성에 실패하였습니다.");
+      const { chatId } = await createChatFromWorkflow({ workflowId });
+      if (!chatId) {
+        throw new Error("chat 생성에 실패하였습니다.");
       }
-
-      const json: {
-        data: { thread_id: string };
-      } = await response.json();
-
-      const threadId = json.data.thread_id;
-      if (!threadId) {
-        console.log(JSON.stringify(json.data));
-        throw new Error("thread 생성에 실패하였습니다.");
-      }
-      router.push(`/chat/${threadId}`);
+      router.push(`/chat/${chatId}`);
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);

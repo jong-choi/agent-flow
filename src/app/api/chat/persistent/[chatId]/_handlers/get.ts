@@ -11,7 +11,11 @@ import {
   langgraphStreamEventSchema,
 } from "@/app/api/chat/_types/chat-events";
 import { isValidNodeType } from "@/app/api/chat/_types/nodes";
-import { getChatById, getChatMessagesByChatId } from "@/db/query/chat";
+import {
+  getChatById,
+  getChatMessagesByChatId,
+  insertChatMessage,
+} from "@/db/query/chat";
 import { getSidebarNodesWithOptions } from "@/db/query/sidebar-nodes";
 import { getWorkflowWithGraph } from "@/db/query/workflows";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
@@ -84,6 +88,8 @@ export async function GET(
 
     const stream = new ReadableStream({
       async start(controller) {
+        const streamingChunkMap = new Map<string, string>();
+        const completedMessageMap = new Map<string, string>();
         const emitEvent = (params: ClientStreamEvent) => {
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify(params)}\n\n`),
@@ -119,21 +125,39 @@ export async function GET(
               }
             }
             if (type === "chatNode") {
+              const nodeId = langgraph_node;
+              if (typeof nodeId !== "string") {
+                continue;
+              }
               if (event === "on_chat_model_start") {
-                emitEvent({ type, event, langgraph_node });
+                if (!streamingChunkMap.has(nodeId)) {
+                  streamingChunkMap.set(nodeId, "");
+                }
+                if (!completedMessageMap.has(nodeId)) {
+                  completedMessageMap.set(nodeId, "");
+                }
+                emitEvent({ type, event, langgraph_node: nodeId });
               } else if (event === "on_chat_model_stream") {
                 const content = parsed.data.data?.chunk?.content;
                 if (typeof content !== "string") {
                   continue;
                 }
+                const currentContent = streamingChunkMap.get(nodeId) ?? "";
+                streamingChunkMap.set(nodeId, currentContent + content);
                 emitEvent({
                   type,
                   event,
-                  langgraph_node,
+                  langgraph_node: nodeId,
                   chunk: { content },
                 });
               } else if (event === "on_chat_model_end") {
-                emitEvent({ type, event, langgraph_node });
+                const completedContent = streamingChunkMap.get(nodeId) ?? "";
+                if (!completedMessageMap.has(nodeId)) {
+                  completedMessageMap.set(nodeId, completedContent);
+                } else {
+                  completedMessageMap.set(nodeId, completedContent);
+                }
+                emitEvent({ type, event, langgraph_node: nodeId });
               }
             }
             if (type === "endNode") {
@@ -141,6 +165,17 @@ export async function GET(
                 emitEvent({ type, event, langgraph_node });
               }
             }
+          }
+
+          const aiMessageContent = Array.from(
+            completedMessageMap.values(),
+          ).join("\n\n");
+          if (aiMessageContent.trim().length > 0) {
+            await insertChatMessage({
+              chatId,
+              role: "assistant",
+              content: aiMessageContent,
+            });
           }
         } catch (error) {
           console.error("SSE stream error:", error);

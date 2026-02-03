@@ -1,7 +1,5 @@
 import { z } from "zod";
-import { db } from "@/db/client";
-import { getChatById } from "@/db/query/chat";
-import { chatMessages } from "@/db/schema/chat";
+import { getChatById, insertChatMessage } from "@/db/query/chat";
 
 const chatMessageSchema = z.object({
   message: z.string(),
@@ -27,12 +25,7 @@ export async function POST(
     const { message } = parsed.data;
 
     await getChatById(chatId);
-
-    await db.insert(chatMessages).values({
-      chatId,
-      role: "user",
-      content: message,
-    });
+    await insertChatMessage({ chatId, role: "user", content: message });
 
     return Response.json({ ok: true });
   } catch (error) {

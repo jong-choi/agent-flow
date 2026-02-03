@@ -7,7 +7,10 @@ import { createHumanMessage } from "@/features/chat/utils/chat-message";
 export function useChatEvent() {
   const eventSourceRef = useRef<EventSource | null>(null);
   const searchParams = useSearchParams();
-  const threadId = searchParams.get("thread_id");
+  const searchThreadId = searchParams.get("thread_id");
+  const mode = useChatStore((s) => s.mode);
+  const storedThreadId = useChatStore((s) => s.threadId);
+  const storedChatId = useChatStore((s) => s.chatId);
   const setIsStreaming = useChatStore((s) => s.setIsStreaming);
   const appendStreamingChunk = useChatStore((s) => s.appendStreamingChunk);
   const initStreamingChunk = useChatStore((s) => s.initStreamingChunk);
@@ -29,30 +32,31 @@ export function useChatEvent() {
     };
   }, [closeEventSource]);
 
-  const sendMessage = async (message: string) => {
-    appendMessage(createHumanMessage(message));
+  const resolveTarget = () => {
+    let threadId = storedThreadId ?? searchThreadId;
+    let chatId = storedChatId;
+    let endpointBase = "/api/chat/temporary";
 
-    if (!threadId) {
-      throw new Error("threadId가 없습니다.");
+    if (mode === "persistent") {
+      threadId = null;
+      endpointBase = "/api/chat/persistent";
+    } else {
+      chatId = null;
     }
 
-    const response = await fetch(`/api/chat/temporary/${threadId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-    });
+    const targetId = mode === "persistent" ? chatId : threadId;
+    return { targetId, endpointBase };
+  };
 
-    if (!response.ok) {
-      const payload = await response.json();
-      const message =
-        typeof payload?.error === "string"
-          ? payload.error
-          : "응답을 받을 수 없습니다.";
-      throw new Error(message);
-    }
-
+  const openEventSource = ({
+    endpointBase,
+    targetId,
+  }: {
+    endpointBase: string;
+    targetId: string;
+  }) => {
     closeEventSource();
-    eventSourceRef.current = new EventSource(`/api/chat/temporary/${threadId}`);
+    eventSourceRef.current = new EventSource(`${endpointBase}/${targetId}`);
     const eventSource = eventSourceRef.current;
 
     eventSource.onmessage = (event) => {
@@ -89,6 +93,33 @@ export function useChatEvent() {
         closeEventSource();
       }
     };
+  };
+
+  const sendMessage = async (message: string) => {
+    appendMessage(createHumanMessage(message));
+
+    const { targetId, endpointBase } = resolveTarget();
+
+    if (!targetId) {
+      throw new Error(mode === "persistent" ? "chatId가 없습니다." : "threadId가 없습니다.");
+    }
+
+    const response = await fetch(`${endpointBase}/${targetId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json();
+      const message =
+        typeof payload?.error === "string"
+          ? payload.error
+          : "응답을 받을 수 없습니다.";
+      throw new Error(message);
+    }
+
+    openEventSource({ endpointBase, targetId });
   };
 
   return sendMessage;
