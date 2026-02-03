@@ -6,6 +6,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/db/client";
 import { accounts, users } from "@/db/schema";
 import { jwtCallback } from "@/lib/auth/callbacks/jwt";
+import { getRandomName } from "@/lib/unique-name";
 
 export const ENABLE_DEV_LOGIN =
   process.env.NODE_ENV !== "production" ||
@@ -35,9 +36,11 @@ if (ENABLE_DEV_LOGIN) {
       authorize: (credentials) => {
         if (credentials.password === TEST_PASSWORD) {
           return {
+            id: "5cf2324c-1bbc-4f9c-b30e-071513cefcee",
             email: "bob@alice.com",
-            name: "Bob Alice",
+            name: "Bob Tester",
             image: "https://avatars.githubusercontent.com/u/67470890?s=200&v=4",
+            displayName: "TestingTester3221",
           } satisfies User;
         } else {
           return null;
@@ -48,10 +51,27 @@ if (ENABLE_DEV_LOGIN) {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: DrizzleAdapter(db, {
-    usersTable: users,
-    accountsTable: accounts,
-  }),
+  adapter: {
+    ...DrizzleAdapter(db, {
+      usersTable: users,
+      accountsTable: accounts,
+    }),
+    async createUser(user) {
+      const displayName = getRandomName();
+      await db
+        .insert(users)
+        .values({
+          ...user,
+          displayName,
+        })
+        .returning();
+
+      return {
+        ...user,
+        displayName,
+      };
+    },
+  },
   session: {
     strategy: "jwt",
   },
@@ -65,6 +85,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.sub) {
         session.user.id = token.sub;
       }
+      session.user.displayName = token.displayName ?? null;
       return session;
     },
   },
