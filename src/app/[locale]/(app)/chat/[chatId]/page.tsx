@@ -3,10 +3,10 @@ import { ChatPanelContent } from "@/features/chat/components/chat-panel/content/
 
 export default async function ChatRunPage({
   params,
-}: PageProps<"/[locale]/chat/[threadId]">) {
-  const { threadId } = await params;
+}: PageProps<"/[locale]/chat/[chatId]">) {
+  const { chatId } = await params;
   return (
-    <ChatEventWrapper initialThreadId={threadId}>
+    <ChatEventWrapper initialThreadId={chatId}>
       <ChatPanelContent />
     </ChatEventWrapper>
   );
