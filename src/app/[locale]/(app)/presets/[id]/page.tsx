@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PresetChatExampleSection } from "@/app/[locale]/(app)/presets/[id]/_components/preset-chat-example-section";
 import { BoringUserAvatar } from "@/components/boring-avatar";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,9 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { getUserId } from "@/db/query/auth";
 import { getPresetDetail, getPresetPurchaseStatus } from "@/db/query/presets";
-import { PresetChatExampleSection } from "@/app/[locale]/(app)/presets/[id]/_components/preset-chat-example-section";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
+import { ReactMarkdownApp } from "@/features/chat/components/markdown/react-markdown-app";
+import "@/features/chat/styles/small-header-markdown.css";
 import { PresetPurchaseDialog } from "@/features/preset/components/preset-purchase-dialog";
 import { formatKoreanDate } from "@/lib/utils";
 
@@ -65,7 +67,7 @@ export default async function PresetDetailPage({
                 </p>
                 <h1 className="text-2xl font-semibold">{preset.title}</h1>
                 <p className="text-sm text-muted-foreground">
-                  {preset.description ?? "설명이 없습니다."}
+                  {preset.summary ?? "설명이 없습니다."}
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -104,9 +106,11 @@ export default async function PresetDetailPage({
                 <CardDescription>주요 특징과 구성 요소</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  {preset.summary ?? preset.description ?? "설명이 없습니다."}
-                </p>
+                <div className="min-h-32 rounded-lg border bg-accent/50 p-4 text-sm leading-relaxed">
+                  <ReactMarkdownApp>
+                    {preset.description ?? "설명이 없습니다."}
+                  </ReactMarkdownApp>
+                </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-lg border bg-background/70 p-3">
                     <p className="text-sm font-medium">카테고리</p>

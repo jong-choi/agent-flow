@@ -1,28 +1,19 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getPresetChatExamplesForForm } from "@/db/query/presets";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { getChatsByWorkflowId } from "@/db/query/chat";
-import { PresetChatExampleOptions } from "@/features/preset/components/preset-chat-example-options";
+  PresetChatExampleCard,
+  PresetInfoCard,
+  PresetPricePublishCard,
+} from "@/features/preset/components/form/preset-form-sections";
 import { PresetCreateSubmitButton } from "@/features/preset/components/preset-create-submit-button";
-import { PresetTagInput } from "@/features/preset/components/preset-tag-input";
-import { categoryOptions } from "@/features/preset/constants/category-options";
-
-const selectClassName =
-  "border-input h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50";
 
 type PresetCreateFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   cancelHref?: string;
   submitLabel?: string;
   workflowId: string;
+  chatId?: string | null;
 };
 
 export async function PresetCreateForm({
@@ -30,132 +21,39 @@ export async function PresetCreateForm({
   cancelHref = "/presets",
   submitLabel = "프리셋 생성",
   workflowId,
+  chatId = null,
 }: PresetCreateFormProps) {
-  const chats = await getChatsByWorkflowId({ workflowId });
+  const { chats, pinnedChat, defaultSelectedId } =
+    await getPresetChatExamplesForForm({ workflowId, chatId });
 
   return (
     <form action={action} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>프리셋 정보</CardTitle>
-          <CardDescription>
-            마켓에 노출될 프리셋 설명을 입력합니다.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <PresetInfoCard
+        description="마켓에 노출될 프리셋 설명을 입력합니다."
+        placeholders={{
+          title: "예: 고객 문의 분류 + 답변 초안",
+          summary: "카드에 노출될 짧은 설명을 작성해 주세요.",
+          description: "프리셋의 목적, 사용 시나리오, 추천 대상 등을 적어주세요.",
+        }}
+        showSummaryHint
+        showTags
+        hiddenFields={
           <input type="hidden" name="workflowId" value={workflowId} />
-          <div className="grid gap-2">
-            <label htmlFor="title" className="text-sm font-medium">
-              프리셋 이름
-            </label>
-            <Input
-              id="title"
-              name="title"
-              placeholder="예: 고객 문의 분류 + 답변 초안"
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="summary" className="text-sm font-medium">
-              요약
-            </label>
-            <Textarea
-              id="summary"
-              name="summary"
-              rows={3}
-              placeholder="카드에 노출될 짧은 설명을 작성해 주세요."
-            />
-            <p className="text-xs text-muted-foreground">
-              마켓 리스트 카드에 표시됩니다.
-            </p>
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="description" className="text-sm font-medium">
-              상세 설명
-            </label>
-            <Textarea
-              id="description"
-              name="description"
-              rows={5}
-              placeholder="프리셋의 목적, 사용 시나리오, 추천 대상 등을 적어주세요."
-            />
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="category" className="text-sm font-medium">
-              카테고리
-            </label>
-            <select
-              id="category"
-              name="category"
-              defaultValue=""
-              className={selectClassName}
-            >
-              {categoryOptions.map((option) => (
-                <option key={option.label} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <PresetTagInput />
-        </CardContent>
-      </Card>
+        }
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>채팅 예시</CardTitle>
-          <CardDescription>
-            마켓에 노출될 채팅 예시를 선택합니다. 선택된 채팅은 최대 4개의
-            메시지를 노출합니다.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PresetChatExampleOptions chats={chats} />
-        </CardContent>
-      </Card>
+      <PresetChatExampleCard
+        chats={chats}
+        pinnedChat={pinnedChat}
+        defaultSelectedId={defaultSelectedId}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>가격 및 공개 설정</CardTitle>
-          <CardDescription>
-            무료 또는 크레딧 가격을 설정할 수 있습니다.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-2">
-            <label htmlFor="price" className="text-sm font-medium">
-              가격 (크레딧)
-            </label>
-            <Input
-              id="price"
-              name="price"
-              type="number"
-              min={0}
-              step={1}
-              defaultValue={0}
-            />
-            <p className="text-xs text-muted-foreground">
-              0을 입력하면 무료 프리셋으로 표시됩니다.
-            </p>
-          </div>
-          <div className="flex items-start gap-3">
-            <input
-              id="isPublished"
-              name="isPublished"
-              type="checkbox"
-              className="mt-1 size-4 rounded border border-input"
-            />
-            <div className="space-y-1">
-              <label htmlFor="isPublished" className="text-sm font-medium">
-                생성 후 바로 공개하기
-              </label>
-              <p className="text-xs text-muted-foreground">
-                공개된 프리셋은 마켓에서 누구나 볼 수 있습니다.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <PresetPricePublishCard
+        description="무료 또는 크레딧 가격을 설정할 수 있습니다."
+        priceHint="0을 입력하면 무료 프리셋으로 표시됩니다."
+        publishLabel="생성 후 바로 공개하기"
+        publishHint="공개된 프리셋은 마켓에서 누구나 볼 수 있습니다."
+      />
 
       <div className="flex flex-wrap gap-2">
         <PresetCreateSubmitButton label={submitLabel} />

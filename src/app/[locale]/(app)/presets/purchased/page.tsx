@@ -1,22 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PresetsFilter } from "@/app/[locale]/(app)/presets/_components/presets-filter";
+// import { PresetsFilter } from "@/app/[locale]/(app)/presets/_components/presets-filter";
 import { PresetsList } from "@/app/[locale]/(app)/presets/_components/presets-list";
 import { PresetsPagination } from "@/app/[locale]/(app)/presets/_components/presets-pagination";
-import { BoringCardAvatar } from "@/components/boring-avatar";
 import {
   PageContainer,
   PageDescription,
   PageHeader,
   PageHeading,
 } from "@/components/page-template";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -27,15 +24,8 @@ import {
   getPurchasedPresetsSummary,
 } from "@/db/query/presets";
 import { buildQueryString } from "@/features/chat/utils/query-string";
-import { formatKoreanDate } from "@/lib/utils";
 
 const PAGE_SIZE = 50;
-
-const formatPrice = (price: number) =>
-  price === 0 ? "무료" : `${price} 크레딧`;
-
-const formatDate = (value: Date | string | null | undefined) =>
-  formatKoreanDate(value, "날짜 없음");
 
 type PresetsLibrarySearchParams = {
   q?: string | string[];
@@ -168,77 +158,8 @@ export default async function PurchasedPresetsPage({
                 </Card>
               ) : (
                 <ScrollArea className="h-[450px]">
-                  <div className="grid gap-4 pb-14 md:grid-cols-2 xl:grid-cols-3">
-                    {ownedPresets.map((preset) => {
-                      const visibleTags = preset.tags.slice(0, 5);
-                      const hasMoreTags = preset.tags.length > 5;
-
-                      return (
-                        <Card key={preset.id} className="h-full">
-                          <CardHeader>
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                              <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-                                {preset.category ?? "미분류"}
-                              </span>
-                              <span>
-                                업데이트 {formatDate(preset.updatedAt)}
-                              </span>
-                              {preset.isPublished === false ? (
-                                <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                  비공개
-                                </span>
-                              ) : null}
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <BoringCardAvatar
-                                seed={preset.id}
-                                size={40}
-                                square={false}
-                                className="size-10"
-                              />
-                              <div className="min-w-0 space-y-1">
-                                <CardTitle className="text-lg">
-                                  {preset.title}
-                                </CardTitle>
-                                <CardDescription className="line-clamp-2">
-                                  {preset.description ?? "설명이 없습니다."}
-                                </CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="flex min-h-6 flex-wrap gap-2">
-                              {visibleTags.map((tag) => (
-                                <Badge key={tag} variant="secondary">
-                                  {tag}
-                                </Badge>
-                              ))}
-                              {hasMoreTags ? (
-                                <Badge variant="secondary">...</Badge>
-                              ) : null}
-                            </div>
-                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                              <span>가격 {formatPrice(preset.price)}</span>
-                              <span>
-                                제작자 {preset.ownerDisplayName ?? "알 수 없음"}
-                              </span>
-                            </div>
-                          </CardContent>
-                          <CardFooter className="gap-2 border-t">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1"
-                              asChild
-                            >
-                              <Link href={`/presets/${preset.id}`}>
-                                상세 보기
-                              </Link>
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      );
-                    })}
+                  <div className="pb-14">
+                    <PresetsList items={ownedPresets} variant="library" />
                   </div>
                 </ScrollArea>
               )}
@@ -295,9 +216,9 @@ export default async function PurchasedPresetsPage({
           )}
         </div>
       </PageContainer>
-      <aside className="fixed top-20 right-10 w-full shrink-0 lg:w-72">
+      {/* <aside className="fixed top-20 right-10 w-full shrink-0 lg:w-72">
         <PresetsFilter variant="purchased" />
-      </aside>
+      </aside> */}
     </>
   );
 }

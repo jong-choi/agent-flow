@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { type ClientChatMessage } from "@/features/chat/utils/chat-message";
 import { PresetChatExamplePreview } from "@/features/preset/components/preset-chat-example-preview";
 import { cn } from "@/lib/utils";
 
-type ChatExample = {
+export type ChatExample = {
   id: string;
   title: string | null;
   messages: ClientChatMessage[];
@@ -13,30 +13,32 @@ type ChatExample = {
 
 type PresetChatExampleOptionsProps = {
   chats: ChatExample[];
+  pinnedChat?: ChatExample | null;
+  defaultSelectedId?: string | null;
 };
-
-const MAX_CHAT_OPTIONS = 3;
-const NO_SELECTION = "";
 
 export function PresetChatExampleOptions({
   chats,
+  pinnedChat = null,
+  defaultSelectedId = null,
 }: PresetChatExampleOptionsProps) {
-  const chatOptions = chats.slice(0, MAX_CHAT_OPTIONS);
-  const [selectedId, setSelectedId] = useState<string>(NO_SELECTION);
-  const selectedChat = useMemo(
-    () => chatOptions.find((chat) => chat.id === selectedId) ?? null,
-    [chatOptions, selectedId],
-  );
+  const deduped = chats.filter((chat) => chat.id !== pinnedChat?.id);
+  const chatOptions = pinnedChat ? [pinnedChat, ...deduped] : deduped;
+
+  const [selectedId, setSelectedId] = useState<string>(defaultSelectedId || "");
+
+  const selectedChat =
+    chatOptions.find((chat) => chat.id === selectedId) ?? null;
 
   return (
     <div className="space-y-4">
       <input type="hidden" name="chatId" value={selectedId} />
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="flex flex-wrap gap-3">
         <ChatExampleOptionCard
           label="선택 안함"
           count={0}
-          selected={selectedId === NO_SELECTION}
-          onSelect={() => setSelectedId(NO_SELECTION)}
+          selected={!selectedId || selectedId === ""}
+          onSelect={() => setSelectedId("")}
         />
         {chatOptions.map((chat, index) => (
           <ChatExampleOptionCard
@@ -72,7 +74,7 @@ function ChatExampleOptionCard({
       onClick={onSelect}
       aria-pressed={selected}
       className={cn(
-        "flex h-full flex-col gap-2 rounded-lg border bg-background/40 p-3 text-left transition",
+        "flex h-full flex-1 flex-col gap-2 rounded-lg border bg-background/40 p-3 text-left transition",
         "hover:border-primary/50 hover:bg-background/70",
         selected && "border-primary ring-1 ring-primary/30",
       )}

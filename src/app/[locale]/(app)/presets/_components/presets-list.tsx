@@ -73,7 +73,7 @@ export function PresetsCard({
           <div className="min-w-0 space-y-1">
             <CardTitle className="text-lg">{preset.title}</CardTitle>
             <CardDescription className="line-clamp-2">
-              {preset.summary ?? preset.description ?? "설명이 없습니다."}
+              {preset.summary ?? "설명이 없습니다."}
             </CardDescription>
           </div>
         </div>

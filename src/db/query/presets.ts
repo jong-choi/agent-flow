@@ -19,6 +19,11 @@ import {
 import { normalizeOptionalText } from "@/app/[locale]/(app)/presets/_utils/form-utils";
 import { db } from "@/db/client";
 import { getUserId } from "@/db/query/auth";
+import {
+  getChatById,
+  getChatsByWorkflowId,
+  getPublicChatMessagesByChatId,
+} from "@/db/query/chat";
 import { getWorkflowWithGraph } from "@/db/query/workflows";
 import { users } from "@/db/schema/auth";
 import { chats } from "@/db/schema/chat";
@@ -746,6 +751,7 @@ export const createPreset = async ({
  */
 export const updatePreset = async ({
   presetId,
+  chatId,
   title,
   description,
   summary,
@@ -754,6 +760,7 @@ export const updatePreset = async ({
   isPublished,
 }: {
   presetId: string;
+  chatId: string | null;
   title: string;
   description: string | null;
   summary: string | null;
@@ -765,6 +772,7 @@ export const updatePreset = async ({
   const [preset] = await db
     .update(presets)
     .set({
+      chatId,
       title,
       description,
       summary,
@@ -806,6 +814,7 @@ export const getOwnedPresetForEdit = async (presetId: string) => {
   const [preset] = await db
     .select({
       id: presets.id,
+      chatId: presets.chatId,
       workflowId: presets.workflowId,
       workflowTitle: workflows.title,
       workflowUpdatedAt: workflows.updatedAt,
@@ -822,6 +831,59 @@ export const getOwnedPresetForEdit = async (presetId: string) => {
     .limit(1);
 
   return preset ?? null;
+};
+
+export const getPresetChatExamplesForForm = async ({
+  workflowId,
+  chatId,
+}: {
+  workflowId: string;
+  chatId?: string | null;
+}) => {
+  const chats = await getChatsByWorkflowId({ workflowId });
+
+  if (!chatId) {
+    return {
+      chats,
+      pinnedChat: null,
+      defaultSelectedId: "",
+    };
+  }
+
+  const existingChat = chats.find((chat) => chat.id === chatId);
+  if (existingChat) {
+    return {
+      chats,
+      pinnedChat: {
+        ...existingChat,
+        title: existingChat.title ?? "연결된 채팅",
+      },
+      defaultSelectedId: chatId,
+    };
+  }
+
+  try {
+    const [chat, messages] = await Promise.all([
+      getChatById(chatId),
+      getPublicChatMessagesByChatId({ chatId }),
+    ]);
+
+    return {
+      chats,
+      pinnedChat: {
+        id: chat.id,
+        title: chat.title ?? "연결된 채팅",
+        messages,
+      },
+      defaultSelectedId: chatId,
+    };
+  } catch {
+    return {
+      chats,
+      pinnedChat: null,
+      defaultSelectedId: "",
+    };
+  }
 };
 
 export const createPresetAction = async (formData: FormData) => {
@@ -894,6 +956,7 @@ export const updatePresetAction = async (formData: FormData) => {
   const description = normalizeOptionalText(formData.get("description"));
   const summary = normalizeOptionalText(formData.get("summary"));
   const category = normalizeOptionalText(formData.get("category"));
+  const chatId = normalizeOptionalText(formData.get("chatId"));
   const priceValue = formData.get("price");
   const isPublished = formData.get("isPublished") === "on";
 
@@ -905,6 +968,7 @@ export const updatePresetAction = async (formData: FormData) => {
 
   const updated = await updatePreset({
     presetId,
+    chatId,
     title: titleValue.trim(),
     description,
     summary,

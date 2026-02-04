@@ -34,7 +34,13 @@ export async function PresetChatExampleSection({
         <CardDescription>마켓에 노출된 채팅 예시입니다.</CardDescription>
       </CardHeader>
       <CardContent>
-        <PresetChatExamplePreview messages={messages} />
+        {chatId ? (
+          <PresetChatExamplePreview messages={messages} />
+        ) : (
+          <div className="flex h-[320px] items-center justify-center rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
+            연결된 채팅이 없습니다.
+          </div>
+        )}
       </CardContent>
     </Card>
   );
