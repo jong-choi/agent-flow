@@ -10,6 +10,7 @@ import {
   gte,
   ilike,
   inArray,
+  isNotNull,
   isNull,
   lte,
   ne,
@@ -24,12 +25,14 @@ import {
   getChatsByWorkflowId,
   getPublicChatMessagesByChatId,
 } from "@/db/query/chat";
+import { getSidebarNodesWithOptions } from "@/db/query/sidebar-nodes";
 import { getWorkflowWithGraph } from "@/db/query/workflows";
 import { users } from "@/db/schema/auth";
 import { chats } from "@/db/schema/chat";
 import { creditAccounts, creditTransactions } from "@/db/schema/credit";
 import { presetPurchases, presetTags, presets } from "@/db/schema/presets";
 import { workflows } from "@/db/schema/workflows";
+import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 
 const PRESET_TAGS_MAP = {
   presetById: (presetId: string) => `preset:detail:${presetId}`,
@@ -457,6 +460,133 @@ export const purchasePresetAction = async (
   }
 };
 
+const getPresetLibraryForCanvasBase = async (userId: string) => {
+  const rows = await db
+    .select({
+      id: presets.id,
+      workflowId: presets.workflowId,
+      title: presets.title,
+      summary: presets.summary,
+      category: presets.category,
+      ownerId: presets.ownerId,
+      ownerDisplayName: users.displayName,
+      ownerAvatarHash: users.avatarHash,
+      purchasedAt: presetPurchases.purchasedAt,
+      updatedAt: presets.updatedAt,
+    })
+    .from(presets)
+    .leftJoin(users, eq(users.id, presets.ownerId))
+    .leftJoin(
+      presetPurchases,
+      and(
+        eq(presetPurchases.presetId, presets.id),
+        eq(presetPurchases.buyerId, userId),
+      ),
+    )
+    .where(or(eq(presets.ownerId, userId), isNotNull(presetPurchases.presetId)))
+    .orderBy(desc(presets.updatedAt));
+
+  return rows.map((row) => ({
+    id: row.id,
+    workflowId: row.workflowId,
+    title: row.title,
+    summary: row.summary ?? null,
+    category: row.category ?? null,
+    ownerId: row.ownerId,
+    ownerDisplayName: row.ownerDisplayName ?? null,
+    ownerAvatarHash: row.ownerAvatarHash ?? null,
+    purchasedAt: row.purchasedAt ? row.purchasedAt.toISOString() : null,
+    updatedAt: row.updatedAt.toISOString(),
+  }));
+};
+
+export const getPresetLibraryForCanvasAction = async () => {
+  "use server";
+
+  const userId = await getUserId();
+
+  const getPresetLibraryForCanvasCached = unstable_cache(
+    () => getPresetLibraryForCanvasBase(userId),
+    [PRESET_TAGS_MAP.presetListByUserId(userId)],
+    {
+      tags: [PRESET_TAGS_MAP.presetListByUserId(userId)],
+      revalidate: 60 * 60 * 24 * 7,
+    },
+  );
+
+  return getPresetLibraryForCanvasCached();
+};
+
+export const getPresetGraphForCanvasAction = async (presetId: string) => {
+  "use server";
+
+  const userId = await getUserId();
+
+  const [preset] = await db
+    .select({
+      id: presets.id,
+      workflowId: presets.workflowId,
+      title: presets.title,
+      ownerId: presets.ownerId,
+      purchasedPresetId: presetPurchases.presetId,
+    })
+    .from(presets)
+    .leftJoin(
+      presetPurchases,
+      and(
+        eq(presetPurchases.presetId, presets.id),
+        eq(presetPurchases.buyerId, userId),
+      ),
+    )
+    .where(eq(presets.id, presetId))
+    .limit(1);
+
+  if (!preset) {
+    throw new Error("프리셋을 찾을 수 없습니다.");
+  }
+
+  const hasAccess =
+    preset.ownerId === userId || Boolean(preset.purchasedPresetId);
+
+  if (!hasAccess) {
+    throw new Error("해당 프리셋을 불러올 권한이 없습니다.");
+  }
+
+  const workflowData = await getWorkflowWithGraph(preset.workflowId);
+  if (!workflowData) {
+    throw new Error("프리셋 워크플로우 데이터를 불러오지 못했습니다.");
+  }
+
+  const sidebarNodes = await getSidebarNodesWithOptions();
+  const { nodes, edges } = buildFlowGraphFromWorkflow({
+    workflowNodes: workflowData.nodes,
+    workflowEdges: workflowData.edges,
+    sidebarNodes,
+  });
+
+  const excludedNodeIds = new Set(
+    nodes
+      .filter((node) => node.type === "startNode" || node.type === "endNode")
+      .map((node) => node.id),
+  );
+
+  const filteredNodes = nodes.filter((node) => !excludedNodeIds.has(node.id));
+  const filteredEdges = edges.filter(
+    (edge) =>
+      !excludedNodeIds.has(edge.source) && !excludedNodeIds.has(edge.target),
+  );
+
+  return {
+    preset: {
+      id: preset.id,
+      title: preset.title,
+      workflowId: preset.workflowId,
+    },
+    nodes: filteredNodes,
+    edges: filteredEdges,
+  };
+};
+
 /**
  * 내 프리셋(/presets/purchased) 요약 통계 조회.
  * - 표시 데이터: 구매한 총 개수/무료 개수(통계 카드).
@@ -769,10 +899,40 @@ export const updatePreset = async ({
   isPublished: boolean;
 }) => {
   const ownerId = await getUserId();
+  const [existingPreset] = await db
+    .select({ workflowId: presets.workflowId })
+    .from(presets)
+    .where(and(eq(presets.id, presetId), eq(presets.ownerId, ownerId)))
+    .limit(1);
+
+  if (!existingPreset) {
+    return null;
+  }
+
+  let selectedChatId = chatId ?? null;
+  if (selectedChatId) {
+    const [chat] = await db
+      .select({ id: chats.id })
+      .from(chats)
+      .where(
+        and(
+          eq(chats.id, selectedChatId),
+          eq(chats.userId, ownerId),
+          eq(chats.workflowId, existingPreset.workflowId),
+          isNull(chats.deletedAt),
+        ),
+      )
+      .limit(1);
+
+    if (!chat) {
+      selectedChatId = null;
+    }
+  }
+
   const [preset] = await db
     .update(presets)
     .set({
-      chatId,
+      chatId: selectedChatId,
       title,
       description,
       summary,

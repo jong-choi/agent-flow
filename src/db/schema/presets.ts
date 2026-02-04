@@ -33,6 +33,26 @@ export const presets = pgTable("presets", {
   deletedAt: timestamp("deleted_at"),
 });
 
+export const workflowPresets = pgTable(
+  "workflow_presets",
+  {
+    workflowId: uuid("workflow_id")
+      .notNull()
+      .references(() => workflows.id, { onDelete: "cascade" }),
+    presetId: uuid("preset_id")
+      .notNull()
+      .references(() => presets.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    {
+      pk: primaryKey({
+        columns: [table.workflowId, table.presetId],
+      }),
+    },
+  ],
+);
+
 export const presetPurchases = pgTable(
   "preset_purchases",
   {
@@ -74,6 +94,9 @@ export const presetTags = pgTable(
 
 export type Preset = typeof presets.$inferSelect;
 export type PresetInsert = typeof presets.$inferInsert;
+
+export type WorkflowPreset = typeof workflowPresets.$inferSelect;
+export type WorkflowPresetInsert = typeof workflowPresets.$inferInsert;
 
 export type PresetPurchase = typeof presetPurchases.$inferSelect;
 export type PresetPurchaseInsert = typeof presetPurchases.$inferInsert;

@@ -15,6 +15,8 @@ import {
   useNodesState,
 } from "@xyflow/react";
 import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
+import { FlowLoadPresetButton } from "@/features/canvas/components/flow/flow-load-preset/flow-load-preset-button";
+import { FlowPresetGroupsOverlay } from "@/features/canvas/components/flow/flow-preset-groups/flow-preset-groups-overlay";
 import { FlowSaveButton } from "@/features/canvas/components/flow/flow-save-button";
 import { FlowStartButton } from "@/features/canvas/components/flow/flow-start-button";
 import {
@@ -95,6 +97,7 @@ export function FlowApp({
         <Suspense>
           <FlowStartButton />
         </Suspense>
+        <FlowLoadPresetButton />
         <FlowSaveButton />
       </div>
       <ReactFlow
@@ -115,6 +118,7 @@ export function FlowApp({
         onReconnectStart={handleReconnectStart}
         isValidConnection={isValidConnection}
       >
+        <FlowPresetGroupsOverlay />
         <Background gap={16} size={1} color="#e5e7eb" />
         <Controls position="bottom-left" />
       </ReactFlow>

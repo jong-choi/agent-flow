@@ -18,7 +18,7 @@ export async function PUT(
       );
     }
 
-    const { nodes, edges } = parsed.data;
+    const { nodes, edges, presetIds } = parsed.data;
     const title = parsed.data.title.trim();
     const description = parsed.data.description?.trim() || null;
 
@@ -35,6 +35,7 @@ export async function PUT(
       description,
       nodes,
       edges,
+      presetIds,
     });
 
     if (!workflow) {
