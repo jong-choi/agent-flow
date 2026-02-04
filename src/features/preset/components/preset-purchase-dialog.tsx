@@ -31,7 +31,9 @@ const formatCredit = (value: number) => `${value.toLocaleString()} 크레딧`;
 
 type PresetPurchaseDialogProps = {
   presetId: string;
-  price: number;
+  totalPrice: number;
+  currentPresetPrice: number;
+  referencedPresetPrice: number;
   isOwned?: boolean;
   className?: string;
   size?: ComponentProps<typeof Button>["size"];
@@ -67,12 +69,16 @@ const resolveSuccessMessage = (result: PresetPurchaseResult) => {
     return "이미 보유한 프리셋입니다.";
   }
 
-  return result.price === 0 ? "무료로 받았습니다." : "구매가 완료되었습니다.";
+  return result.totalPrice === 0
+    ? "무료로 받았습니다."
+    : "구매가 완료되었습니다.";
 };
 
 export function PresetPurchaseDialog({
   presetId,
-  price,
+  totalPrice,
+  currentPresetPrice,
+  referencedPresetPrice,
   isOwned = false,
   className,
   size,
@@ -85,18 +91,19 @@ export function PresetPurchaseDialog({
   const [balance, setBalance] = useState<number | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [balanceError, setBalanceError] = useState<string | null>(null);
-  const label = resolveActionLabel(price, isOwned);
-  const resolvedVariant = resolveVariant(price, isOwned, variant);
+  const label = resolveActionLabel(totalPrice, isOwned);
+  const resolvedVariant = resolveVariant(totalPrice, isOwned, variant);
 
   const nextBalance = useMemo(() => {
     if (balance == null) {
       return null;
     }
 
-    return balance - price;
-  }, [balance, price]);
+    return balance - totalPrice;
+  }, [balance, totalPrice]);
 
-  const isInsufficient = balance != null && price > 0 && balance < price;
+  const isInsufficient =
+    balance != null && totalPrice > 0 && balance < totalPrice;
 
   useEffect(() => {
     if (!open || isOwned) {
@@ -237,8 +244,24 @@ export function PresetPurchaseDialog({
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">프리셋 가격</span>
-            <span className="font-medium">{formatCredit(price)}</span>
+            <span className="font-medium">{formatCredit(totalPrice)}</span>
           </div>
+          {referencedPresetPrice > 0 ? (
+            <div className="space-y-1 pl-2 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>현재 프리셋</span>
+                <span className="font-medium text-foreground">
+                  {formatCredit(currentPresetPrice)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>참조된 프리셋</span>
+                <span className="font-medium text-foreground">
+                  {formatCredit(referencedPresetPrice)}
+                </span>
+              </div>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">구매 후 크레딧</span>
             <span className="font-medium">

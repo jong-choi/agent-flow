@@ -148,62 +148,7 @@ export function PresetChatExampleCard({
   );
 }
 
-type PresetPricePublishCardProps = {
-  description: string;
-  priceDefault?: number;
-  priceHint?: string;
-  publishLabel: string;
-  publishHint: string;
-  isPublishedDefault?: boolean;
-};
-
-export function PresetPricePublishCard({
-  description,
-  priceDefault = 0,
-  priceHint,
-  publishLabel,
-  publishHint,
-  isPublishedDefault = false,
-}: PresetPricePublishCardProps) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>가격 및 공개 설정</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-2">
-          <label htmlFor="price" className="text-sm font-medium">
-            가격 (크레딧)
-          </label>
-          <Input
-            id="price"
-            name="price"
-            type="number"
-            min={0}
-            step={1}
-            defaultValue={priceDefault}
-          />
-          {priceHint && (
-            <p className="text-xs text-muted-foreground">{priceHint}</p>
-          )}
-        </div>
-        <div className="flex items-start gap-3">
-          <input
-            id="isPublished"
-            name="isPublished"
-            type="checkbox"
-            defaultChecked={isPublishedDefault}
-            className="mt-1 size-4 rounded border border-input"
-          />
-          <div className="space-y-1">
-            <label htmlFor="isPublished" className="text-sm font-medium">
-              {publishLabel}
-            </label>
-            <p className="text-xs text-muted-foreground">{publishHint}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+export {
+  PresetPricePublishCard,
+  type PresetPricePublishCardProps,
+} from "@/features/preset/components/form/preset-price-publish-card";

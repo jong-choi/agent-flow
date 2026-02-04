@@ -30,7 +30,12 @@ import { getWorkflowWithGraph } from "@/db/query/workflows";
 import { users } from "@/db/schema/auth";
 import { chats } from "@/db/schema/chat";
 import { creditAccounts, creditTransactions } from "@/db/schema/credit";
-import { presetPurchases, presetTags, presets } from "@/db/schema/presets";
+import {
+  presetPurchases,
+  presetTags,
+  presets,
+  workflowPresets,
+} from "@/db/schema/presets";
 import { workflows } from "@/db/schema/workflows";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 
@@ -38,6 +43,18 @@ const PRESET_TAGS_MAP = {
   presetById: (presetId: string) => `preset:detail:${presetId}`,
   presetListByUserId: (userId: string) => `preset:list:${userId}`,
 } as const;
+
+const workflowReferencedPresetPricing = db
+  .select({
+    workflowId: workflowPresets.workflowId,
+    referencedPresetPrice: sql<number>`coalesce(sum(${presets.price}), 0)`
+      .mapWith(Number)
+      .as("referencedPresetPrice"),
+  })
+  .from(workflowPresets)
+  .innerJoin(presets, eq(presets.id, workflowPresets.presetId))
+  .groupBy(workflowPresets.workflowId)
+  .as("workflow_referenced_preset_pricing");
 
 const buildPurchaseCount = () =>
   sql<number>`
@@ -140,6 +157,12 @@ export const getPresets = async (
   const userId = await getUserId({ throwOnError: false });
   const purchaseCount = buildPurchaseCount();
   const isPurchased = buildIsPurchased(userId || undefined);
+  const referencedPresetPrice =
+    sql<number>`coalesce(${workflowReferencedPresetPricing.referencedPresetPrice}, 0)`.mapWith(
+      Number,
+    );
+  const totalPrice =
+    sql<number>`${presets.price} + ${referencedPresetPrice}`.mapWith(Number);
   const isOwner = userId
     ? sql<boolean>`${presets.ownerId} = ${userId}`.mapWith(Boolean)
     : sql<boolean>`false`.mapWith(Boolean);
@@ -172,11 +195,11 @@ export const getPresets = async (
   }
 
   if (filters?.priceMin != null) {
-    clauses.push(gte(presets.price, filters.priceMin));
+    clauses.push(gte(totalPrice, filters.priceMin));
   }
 
   if (filters?.priceMax != null) {
-    clauses.push(lte(presets.price, filters.priceMax));
+    clauses.push(lte(totalPrice, filters.priceMax));
   }
 
   const whereClause = clauses.length === 1 ? clauses[0] : and(...clauses);
@@ -186,7 +209,7 @@ export const getPresets = async (
     sort === "popular" || sort === "rating"
       ? [desc(purchaseCount), desc(presets.updatedAt)]
       : sort === "price-asc"
-        ? [asc(presets.price), desc(presets.updatedAt)]
+        ? [asc(totalPrice), desc(presets.updatedAt)]
         : [desc(presets.updatedAt)];
 
   const { pageSize, offset } = resolvePagination(pagination);
@@ -205,6 +228,8 @@ export const getPresets = async (
         summary: presets.summary,
         category: presets.category,
         price: presets.price,
+        referencedPresetPrice,
+        totalPrice,
         createdAt: presets.createdAt,
         updatedAt: presets.updatedAt,
         purchaseCount,
@@ -212,6 +237,10 @@ export const getPresets = async (
       })
       .from(presets)
       .leftJoin(users, eq(users.id, presets.ownerId))
+      .leftJoin(
+        workflowReferencedPresetPricing,
+        eq(workflowReferencedPresetPricing.workflowId, presets.workflowId),
+      )
       .where(whereClause)
       .orderBy(...orderBy)
       .limit(pageSize)
@@ -221,6 +250,10 @@ export const getPresets = async (
         count: sql<number>`count(*)`.mapWith(Number),
       })
       .from(presets)
+      .leftJoin(
+        workflowReferencedPresetPricing,
+        eq(workflowReferencedPresetPricing.workflowId, presets.workflowId),
+      )
       .where(whereClause),
   ]);
 
@@ -280,19 +313,96 @@ const getPresetDetailCached = (presetId: string) =>
     },
   )();
 
+export const getWorkflowReferencedPresetPricingSummary = async ({
+  workflowId,
+  excludePresetId,
+}: {
+  workflowId: string;
+  excludePresetId?: string;
+}) => {
+  const clauses = [eq(workflowPresets.workflowId, workflowId)];
+
+  if (excludePresetId) {
+    clauses.push(ne(workflowPresets.presetId, excludePresetId));
+  }
+
+  const whereClause = clauses.length === 1 ? clauses[0] : and(...clauses);
+
+  const [row] = await db
+    .select({
+      referencedPresetPrice: sql<number>`
+        coalesce(sum(${presets.price}), 0)
+      `.mapWith(Number),
+      referencedPresetCount: sql<number>`count(*)`.mapWith(Number),
+    })
+    .from(workflowPresets)
+    .innerJoin(presets, eq(presets.id, workflowPresets.presetId))
+    .where(whereClause);
+
+  return {
+    referencedPresetPrice: Math.max(0, row?.referencedPresetPrice ?? 0),
+    referencedPresetCount: row?.referencedPresetCount ?? 0,
+  };
+};
+
+const getWorkflowReferencedPresets = async (workflowId: string) => {
+  const rows = await db
+    .select({
+      id: presets.id,
+      title: presets.title,
+      price: presets.price,
+      ownerId: presets.ownerId,
+      ownerDisplayName: users.displayName,
+      ownerAvatarHash: users.avatarHash,
+      updatedAt: presets.updatedAt,
+    })
+    .from(workflowPresets)
+    .innerJoin(presets, eq(presets.id, workflowPresets.presetId))
+    .leftJoin(users, eq(users.id, presets.ownerId))
+    .where(eq(workflowPresets.workflowId, workflowId))
+    .orderBy(desc(presets.price), desc(presets.updatedAt));
+
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    price: Math.max(0, row.price),
+    ownerId: row.ownerId,
+    ownerDisplayName: row.ownerDisplayName ?? null,
+    ownerAvatarHash: row.ownerAvatarHash ?? null,
+    updatedAt: row.updatedAt.toISOString(),
+  }));
+};
+
 export const getPresetDetail = async (presetId: string) => {
   const base = await getPresetDetailCached(presetId);
   if (!base) {
     return null;
   }
 
-  const workflowData = await getWorkflowWithGraph(base.preset.workflowId);
+  const workflowId = base.preset.workflowId;
+
+  const [workflowData, referencedPresetsList] = await Promise.all([
+    getWorkflowWithGraph(workflowId),
+    getWorkflowReferencedPresets(workflowId),
+  ]);
+
+  const referencedPresetPrice = referencedPresetsList.reduce(
+    (sum, preset) => sum + preset.price,
+    0,
+  );
+  const currentPresetPrice = Math.max(0, base.preset.price);
+  const totalPrice = currentPresetPrice + referencedPresetPrice;
 
   return {
-    preset: base.preset,
+    preset: {
+      ...base.preset,
+      referencedPresetPrice,
+      totalPrice,
+    },
     workflow: workflowData?.workflow ?? null,
     nodes: workflowData?.nodes ?? [],
     edges: workflowData?.edges ?? [],
+    referencedPresets: referencedPresetsList,
   };
 };
 
@@ -330,7 +440,9 @@ export type PresetPurchaseStatus =
 
 export type PresetPurchaseResult = {
   status: PresetPurchaseStatus;
-  price: number;
+  totalPrice: number;
+  currentPresetPrice: number;
+  referencedPresetPrice: number;
 };
 
 export const purchasePresetAction = async (
@@ -339,7 +451,15 @@ export const purchasePresetAction = async (
   "use server";
 
   const buyerId = await getUserId();
-  let priceSnapshot = 0;
+  let priceSnapshot: Pick<
+    PresetPurchaseResult,
+    "totalPrice" | "currentPresetPrice" | "referencedPresetPrice"
+  > = {
+    totalPrice: 0,
+    currentPresetPrice: 0,
+    referencedPresetPrice: 0,
+  };
+  let referencedPresetIdsSnapshot: string[] = [];
 
   try {
     const result = await db.transaction(async (tx) => {
@@ -350,54 +470,109 @@ export const purchasePresetAction = async (
           title: presets.title,
           price: presets.price,
           isPublished: presets.isPublished,
+          workflowId: presets.workflowId,
         })
         .from(presets)
         .where(eq(presets.id, presetId))
         .limit(1);
 
       if (!preset || !preset.isPublished) {
-        return { status: "not_available", price: 0 };
+        return {
+          status: "not_available",
+          totalPrice: 0,
+          currentPresetPrice: 0,
+          referencedPresetPrice: 0,
+        };
       }
 
-      const price = Math.max(0, preset.price);
-      priceSnapshot = price;
+      const currentPresetPrice = Math.max(0, preset.price);
 
       if (preset.ownerId === buyerId) {
-        return { status: "owned", price };
+        return {
+          status: "owned",
+          totalPrice: currentPresetPrice,
+          currentPresetPrice,
+          referencedPresetPrice: 0,
+        };
       }
+
+      const referencedPresetsList = await tx
+        .select({
+          id: presets.id,
+          ownerId: presets.ownerId,
+          title: presets.title,
+          price: presets.price,
+        })
+        .from(workflowPresets)
+        .innerJoin(presets, eq(presets.id, workflowPresets.presetId))
+        .where(
+          and(
+            eq(workflowPresets.workflowId, preset.workflowId),
+            ne(workflowPresets.presetId, preset.id),
+          ),
+        );
+
+      referencedPresetIdsSnapshot = referencedPresetsList.map((row) => row.id);
+
+      const referencedPresetPrice = referencedPresetsList.reduce(
+        (sum, row) => sum + Math.max(0, row.price),
+        0,
+      );
+
+      const totalPrice = currentPresetPrice + referencedPresetPrice;
+
+      priceSnapshot = { totalPrice, currentPresetPrice, referencedPresetPrice };
 
       await tx
         .insert(creditAccounts)
         .values({ userId: buyerId })
         .onConflictDoNothing();
 
+      const purchasedAt = new Date();
+
       const [purchase] = await tx
         .insert(presetPurchases)
         .values({
           presetId,
           buyerId,
-          price,
-          purchasedAt: new Date(),
+          price: currentPresetPrice,
+          purchasedAt,
         })
         .onConflictDoNothing()
         .returning({ presetId: presetPurchases.presetId });
 
       if (!purchase) {
-        return { status: "already_purchased", price };
+        return { status: "already_purchased", ...priceSnapshot };
       }
 
-      if (price > 0) {
+      const referencedPurchaseValues = referencedPresetsList
+        .filter((row) => row.ownerId !== buyerId)
+        .map((row) => ({
+          presetId: row.id,
+          buyerId,
+          price: Math.max(0, row.price),
+          purchasedAt,
+        }));
+
+      if (referencedPurchaseValues.length > 0) {
+        await tx
+          .insert(presetPurchases)
+          .values(referencedPurchaseValues)
+          .onConflictDoNothing();
+      }
+
+      if (totalPrice > 0) {
         const [account] = await tx
           .update(creditAccounts)
           .set({
-            balance: sql`${creditAccounts.balance} - ${price}`,
-            totalSpent: sql`${creditAccounts.totalSpent} + ${price}`,
-            updatedAt: new Date(),
+            balance: sql`${creditAccounts.balance} - ${totalPrice}`,
+            totalSpent: sql`${creditAccounts.totalSpent} + ${totalPrice}`,
+            updatedAt: purchasedAt,
           })
           .where(
             and(
               eq(creditAccounts.userId, buyerId),
-              gte(creditAccounts.balance, price),
+              gte(creditAccounts.balance, totalPrice),
             ),
           )
           .returning({ balance: creditAccounts.balance });
@@ -412,47 +587,74 @@ export const purchasePresetAction = async (
           category: "preset_purchase",
           title: "프리셋 구매",
           description: preset.title,
-          amount: -price,
-          occurredAt: new Date(),
+          amount: -totalPrice,
+          occurredAt: purchasedAt,
         });
 
-        await tx
-          .insert(creditAccounts)
-          .values({ userId: preset.ownerId })
-          .onConflictDoNothing();
+        const payouts = new Map<string, number>();
 
-        await tx.insert(creditTransactions).values({
-          userId: preset.ownerId,
-          type: "earn",
-          category: "preset_sale",
-          title: "프리셋 판매",
-          description: preset.title,
-          amount: price,
-          occurredAt: new Date(),
-        });
+        const addPayout = (userId: string, amount: number) => {
+          if (amount <= 0) return;
+          payouts.set(userId, (payouts.get(userId) ?? 0) + amount);
+        };
 
-        await tx
-          .update(creditAccounts)
-          .set({
-            balance: sql`${creditAccounts.balance} + ${price}`,
-            totalEarned: sql`${creditAccounts.totalEarned} + ${price}`,
-            updatedAt: new Date(),
-          })
-          .where(eq(creditAccounts.userId, preset.ownerId));
+        addPayout(preset.ownerId, currentPresetPrice);
+        referencedPresetsList.forEach((row) =>
+          addPayout(row.ownerId, Math.max(0, row.price)),
+        );
+
+        const payoutEntries = Array.from(payouts.entries()).filter(
+          ([, amount]) => amount > 0,
+        );
+
+        if (payoutEntries.length > 0) {
+          await tx
+            .insert(creditAccounts)
+            .values(payoutEntries.map(([userId]) => ({ userId })))
+            .onConflictDoNothing();
+
+          await tx.insert(creditTransactions).values(
+            payoutEntries.map(([userId, amount]) => ({
+              userId,
+              type: "earn" as const,
+              category: "preset_sale" as const,
+              title: "프리셋 판매",
+              description: preset.title,
+              amount,
+              occurredAt: purchasedAt,
+            })),
+          );
+
+          for (const [userId, amount] of payoutEntries) {
+            await tx
+              .update(creditAccounts)
+              .set({
+                balance: sql`${creditAccounts.balance} + ${amount}`,
+                totalEarned: sql`${creditAccounts.totalEarned} + ${amount}`,
+                updatedAt: purchasedAt,
+              })
+              .where(eq(creditAccounts.userId, userId));
+          }
+        }
       }
 
-      return { status: "success", price };
+      return { status: "success", ...priceSnapshot };
     });
 
     if (result.status === "success" || result.status === "already_purchased") {
       revalidateTag(PRESET_TAGS_MAP.presetListByUserId(buyerId), { expire: 0 });
       revalidateTag(PRESET_TAGS_MAP.presetById(presetId), { expire: 0 });
+      referencedPresetIdsSnapshot.forEach((referencedPresetId) => {
+        revalidateTag(PRESET_TAGS_MAP.presetById(referencedPresetId), {
+          expire: 0,
+        });
+      });
     }
 
     return result as PresetPurchaseResult;
   } catch (error) {
     if (error instanceof Error && error.message === "INSUFFICIENT_CREDIT") {
-      return { status: "insufficient_credit", price: priceSnapshot };
+      return { status: "insufficient_credit", ...priceSnapshot };
     }
 
     console.error("프리셋 구매 실패:", error);
@@ -600,15 +802,26 @@ export const getPurchasedPresetsSummary = async () => {
     ne(presets.ownerId, buyerId),
   );
 
+  const referencedPresetPrice =
+    sql<number>`coalesce(${workflowReferencedPresetPricing.referencedPresetPrice}, 0)`.mapWith(
+      Number,
+    );
+  const totalPrice =
+    sql<number>`${presets.price} + ${referencedPresetPrice}`.mapWith(Number);
+
   const [row] = await db
     .select({
       totalCount: sql<number>`count(*)`.mapWith(Number),
       freeCount: sql<number>`
-        sum(case when ${presets.price} = 0 then 1 else 0 end)
+        sum(case when ${totalPrice} = 0 then 1 else 0 end)
       `.mapWith(Number),
     })
     .from(presetPurchases)
     .innerJoin(presets, eq(presets.id, presetPurchases.presetId))
+    .leftJoin(
+      workflowReferencedPresetPricing,
+      eq(workflowReferencedPresetPricing.workflowId, presets.workflowId),
+    )
     .where(baseWhere);
 
   return {
@@ -634,6 +847,13 @@ const getPurchasedPresetsBase = async ({
 }) => {
   const trimmedQuery = filters?.query?.trim();
   const searchPattern = trimmedQuery ? `%${trimmedQuery}%` : null;
+
+  const referencedPresetPrice =
+    sql<number>`coalesce(${workflowReferencedPresetPricing.referencedPresetPrice}, 0)`.mapWith(
+      Number,
+    );
+  const totalPrice =
+    sql<number>`${presets.price} + ${referencedPresetPrice}`.mapWith(Number);
 
   const clauses = [
     eq(presetPurchases.buyerId, buyerId),
@@ -687,6 +907,8 @@ const getPurchasedPresetsBase = async ({
         summary: presets.summary,
         category: presets.category,
         price: presets.price,
+        referencedPresetPrice,
+        totalPrice,
         isPublished: presets.isPublished,
         updatedAt: presets.updatedAt,
         purchasedAt: presetPurchases.purchasedAt,
@@ -694,6 +916,10 @@ const getPurchasedPresetsBase = async ({
       .from(presetPurchases)
       .innerJoin(presets, eq(presets.id, presetPurchases.presetId))
       .leftJoin(users, eq(users.id, presets.ownerId))
+      .leftJoin(
+        workflowReferencedPresetPricing,
+        eq(workflowReferencedPresetPricing.workflowId, presets.workflowId),
+      )
       .where(whereClause)
       .orderBy(...orderBy)
       .limit(pageSize)
@@ -736,6 +962,13 @@ export const getPurchasedPresets = async (filters?: PurchasedPresetFilters) => {
  * - 사용처: src/app/presets/purchased/page.tsx
  */
 const getOwnedPresetsBase = async (ownerId: string) => {
+  const referencedPresetPrice =
+    sql<number>`coalesce(${workflowReferencedPresetPricing.referencedPresetPrice}, 0)`.mapWith(
+      Number,
+    );
+  const totalPrice =
+    sql<number>`${presets.price} + ${referencedPresetPrice}`.mapWith(Number);
+
   const ownedPresets = await db
     .select({
       id: presets.id,
@@ -748,12 +981,18 @@ const getOwnedPresetsBase = async (ownerId: string) => {
       summary: presets.summary,
       category: presets.category,
       price: presets.price,
+      referencedPresetPrice,
+      totalPrice,
       isPublished: presets.isPublished,
       createdAt: presets.createdAt,
       updatedAt: presets.updatedAt,
     })
     .from(presets)
     .leftJoin(users, eq(users.id, presets.ownerId))
+    .leftJoin(
+      workflowReferencedPresetPricing,
+      eq(workflowReferencedPresetPricing.workflowId, presets.workflowId),
+    )
     .where(eq(presets.ownerId, ownerId))
     .orderBy(desc(presets.updatedAt));
 

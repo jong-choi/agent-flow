@@ -77,8 +77,8 @@ describe("preset-import-graph", () => {
       });
 
       expect(imported.nodes.map((node) => node.id)).toEqual([
-        "preset:p1:i1:a",
-        "preset:p1:i1:b",
+        "preset_p1_i1_a",
+        "preset_p1_i1_b",
       ]);
       expect(imported.nodes.map((node) => node.position)).toEqual([
         { x: 15, y: 15 },
@@ -88,8 +88,8 @@ describe("preset-import-graph", () => {
       expect(imported.edges).toHaveLength(1);
       expect(imported.edges[0]).toMatchObject({
         id: "edge-1",
-        source: "preset:p1:i1:a",
-        target: "preset:p1:i1:b",
+        source: "preset_p1_i1_a",
+        target: "preset_p1_i1_b",
       });
     });
   });

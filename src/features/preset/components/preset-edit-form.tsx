@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { type PresetEditRes } from "@/app/[locale]/(app)/presets/[id]/edit/page";
 import { Button } from "@/components/ui/button";
-import { getPresetChatExamplesForForm } from "@/db/query/presets";
+import {
+  getPresetChatExamplesForForm,
+  getWorkflowReferencedPresetPricingSummary,
+} from "@/db/query/presets";
 import {
   Card,
   CardContent,
@@ -27,11 +30,17 @@ export async function PresetEditForm({
   updateAction,
   deleteAction,
 }: PresetEditFormProps) {
-  const { chats, pinnedChat, defaultSelectedId } =
-    await getPresetChatExamplesForForm({
-      workflowId: preset.workflowId,
-      chatId: preset.chatId,
-    });
+  const [{ chats, pinnedChat, defaultSelectedId }, pricingSummary] =
+    await Promise.all([
+      getPresetChatExamplesForForm({
+        workflowId: preset.workflowId,
+        chatId: preset.chatId,
+      }),
+      getWorkflowReferencedPresetPricingSummary({
+        workflowId: preset.workflowId,
+        excludePresetId: preset.id,
+      }),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -77,11 +86,12 @@ export async function PresetEditForm({
         />
 
         <PresetPricePublishCard
-          description="가격과 공개 여부를 조정합니다."
+          description="현재 프리셋 가격과 공개 여부를 조정합니다. 참조된 프리셋 가격이 합산되어 결제 금액이 결정됩니다."
           priceDefault={preset.price}
           publishLabel="마켓에 공개"
           publishHint="공개하면 마켓에서 누구나 확인할 수 있습니다."
           isPublishedDefault={preset.isPublished}
+          referencedPresetPrice={pricingSummary.referencedPresetPrice}
         />
 
         <div className="flex flex-wrap gap-2">

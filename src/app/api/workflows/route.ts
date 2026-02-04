@@ -7,6 +7,7 @@ export async function POST(request: Request) {
     const parsed = workflowSaveSchema.safeParse(json);
 
     if (!parsed.success) {
+      console.log(json);
       return Response.json(
         { message: "Invalid body", issues: parsed.error.issues },
         { status: 400 },

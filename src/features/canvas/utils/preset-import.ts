@@ -5,18 +5,19 @@ type ParsedPresetNodeId = {
 };
 
 const PRESET_NODE_ID_PREFIX = "preset";
+const PRESET_NODE_ID_SEPARATOR = "_";
 
 export const buildPresetNodeId = ({
   presetId,
   instanceId,
   originalNodeId,
 }: ParsedPresetNodeId) =>
-  `${PRESET_NODE_ID_PREFIX}-${presetId}-${instanceId}-${originalNodeId}`;
+  `${PRESET_NODE_ID_PREFIX}${PRESET_NODE_ID_SEPARATOR}${presetId}${PRESET_NODE_ID_SEPARATOR}${instanceId}${PRESET_NODE_ID_SEPARATOR}${originalNodeId}`;
 
 export const parsePresetNodeId = (
   nodeId: string,
 ): ParsedPresetNodeId | null => {
-  const parts = nodeId.split("-");
+  const parts = nodeId.split(PRESET_NODE_ID_SEPARATOR);
   if (parts.length < 4) {
     return null;
   }
@@ -26,7 +27,7 @@ export const parsePresetNodeId = (
     return null;
   }
 
-  const originalNodeId = rest.join("-");
+  const originalNodeId = rest.join(PRESET_NODE_ID_SEPARATOR);
   if (!presetId || !instanceId || !originalNodeId) {
     return null;
   }
