@@ -9,7 +9,7 @@ import { auth } from "@/lib/auth";
 
 export default async function CanvasWorkflowPage({
   params,
-}: PageProps<"/[locale]/canvas/[id]">) {
+}: PageProps<"/[locale]/workflows/canvas/[id]">) {
   const { id } = await params;
   const workflowData = await getWorkflowWithGraph(id);
   const session = await auth();

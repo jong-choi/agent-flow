@@ -58,7 +58,7 @@ export function PresetEditForm({
               </p>
             </div>
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/presets/workflows/${preset.workflowId}`}>
+              <Link href={`/workflows/${preset.workflowId}`}>
                 워크플로우 보기
               </Link>
             </Button>

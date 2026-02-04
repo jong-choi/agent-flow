@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { WorkflowListCard } from "@/features/preset/components/workflow-list-card";
 import { getOwnedWorkflows } from "@/db/query/workflows";
+import { WorkflowListCard } from "@/features/preset/components/workflow-list-card";
 
 export default async function PresetCreatePage() {
   const workflowList = await getOwnedWorkflows();
@@ -45,7 +45,7 @@ export default async function PresetCreatePage() {
             </CardHeader>
             <CardContent>
               <Button variant="secondary" asChild>
-                <Link href="/canvas">워크플로우 만들기</Link>
+                <Link href="/workflows/canvas">워크플로우 만들기</Link>
               </Button>
             </CardContent>
           </Card>

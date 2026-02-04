@@ -146,7 +146,7 @@ export default async function TemplateMarketPage({
               </CardHeader>
               <CardContent>
                 <Button variant="secondary" asChild>
-                  <Link href="/canvas">첫 프리셋 만들기</Link>
+                  <Link href="/workflows/canvas">첫 프리셋 만들기</Link>
                 </Button>
               </CardContent>
             </Card>

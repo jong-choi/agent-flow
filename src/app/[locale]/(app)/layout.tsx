@@ -45,7 +45,7 @@ type NavSeparator = {
 type NavType = NavItem | NavSeparator;
 
 const navigation: NavType[] = [
-  { type: "Item", name: "캔버스", href: "/canvas", icon: Workflow },
+  { type: "Item", name: "캔버스", href: "/workflows", icon: Workflow },
   { type: "Item", name: "채팅", href: "/chat", icon: BotMessageSquare },
   { type: "Separator" },
   {
@@ -56,7 +56,6 @@ const navigation: NavType[] = [
     children: [
       { name: "마켓", href: "/presets" },
       { name: "내 프리셋", href: "/presets/purchased" },
-      { name: "내 워크플로우", href: "/presets/workflows" },
       { name: "프리셋 만들기", href: "/presets/new" },
     ],
   },

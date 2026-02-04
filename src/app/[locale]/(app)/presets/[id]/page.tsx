@@ -41,7 +41,6 @@ export default async function PresetDetailPage({
   const isPurchased =
     viewerId && !isOwner ? await getPresetPurchaseStatus(preset.id) : false;
   const canOpen = isOwner || isPurchased;
-  const canvasHref = isOwner ? `/canvas/${preset.workflowId}` : "/canvas";
 
   return (
     <>
@@ -196,9 +195,6 @@ export default async function PresetDetailPage({
             <CardFooter className="flex flex-col items-stretch gap-2 border-t">
               {canOpen ? (
                 <>
-                  <Button asChild>
-                    <Link href={canvasHref}>캔버스에서 열기</Link>
-                  </Button>
                   {isOwner ? (
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/presets/${preset.id}/edit`}>

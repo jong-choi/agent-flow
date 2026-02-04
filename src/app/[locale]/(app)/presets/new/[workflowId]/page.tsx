@@ -67,9 +67,7 @@ export default async function PresetCreateDetailPage({
                 <Link href="/presets/new">워크플로우 변경</Link>
               </Button>
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/presets/workflows/${workflow.id}`}>
-                  워크플로우 보기
-                </Link>
+                <Link href={`/workflows/${workflow.id}`}>워크플로우 보기</Link>
               </Button>
             </div>
           </CardContent>

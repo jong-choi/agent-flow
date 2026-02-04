@@ -91,7 +91,7 @@ export function FlowSaveButton() {
         const nextId = payload?.data?.id ?? workflowId;
 
         if (!workflowId && nextId) {
-          router.push(`/canvas/${nextId}`);
+          router.push(`/workflows/canvas/${nextId}`);
         }
 
         setWorkflow({

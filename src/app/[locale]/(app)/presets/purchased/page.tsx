@@ -126,7 +126,7 @@ export default async function PurchasedPresetsPage({
                 <Link href="/presets/new">내 프리셋 만들기</Link>
               </Button>
               <Button asChild>
-                <Link href="/canvas">캔버스 열기</Link>
+                <Link href="/workflows/canvas">캔버스 열기</Link>
               </Button>
             </div>
           </div>
@@ -161,7 +161,7 @@ export default async function PurchasedPresetsPage({
                   </CardHeader>
                   <CardContent>
                     <Button variant="secondary" asChild>
-                      <Link href="/canvas">캔버스에서 만들기</Link>
+                      <Link href="/workflows/canvas">캔버스에서 만들기</Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -178,9 +178,6 @@ export default async function PurchasedPresetsPage({
                             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                               <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
                                 {preset.category ?? "미분류"}
-                              </span>
-                              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                                내가 만든
                               </span>
                               <span>
                                 업데이트 {formatDate(preset.updatedAt)}
@@ -219,11 +216,6 @@ export default async function PurchasedPresetsPage({
                             </div>
                           </CardContent>
                           <CardFooter className="gap-2 border-t">
-                            <Button size="sm" className="flex-1" asChild>
-                              <Link href={`/canvas/${preset.workflowId}`}>
-                                캔버스에서 열기
-                              </Link>
-                            </Button>
                             <Button
                               variant="outline"
                               size="sm"

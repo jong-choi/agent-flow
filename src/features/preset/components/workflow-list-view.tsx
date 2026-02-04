@@ -25,7 +25,7 @@ export async function WorkflowListView() {
           </CardHeader>
           <CardContent>
             <Button variant="secondary" asChild>
-              <Link href="/canvas">워크플로우 만들기</Link>
+              <Link href="/workflows/canvas">워크플로우 만들기</Link>
             </Button>
           </CardContent>
         </Card>
@@ -34,7 +34,7 @@ export async function WorkflowListView() {
           {workflowList.map((workflow) => (
             <WorkflowListCard
               key={workflow.id}
-              href={`/presets/workflows/${workflow.id}`}
+              href={`/workflows/${workflow.id}`}
               title={workflow.title}
               description={workflow.description}
               updatedAt={workflow.updatedAt}
