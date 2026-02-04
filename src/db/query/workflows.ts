@@ -1,21 +1,73 @@
 "use server";
 
 import { revalidateTag, unstable_cache } from "next/cache";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, ne, or } from "drizzle-orm";
 import { type FlowEdge, type FlowNode } from "@/app/api/chat/_types/nodes";
 import { db } from "@/db/client";
 import { getUserId } from "@/db/query/auth";
+import { presetPurchases, presets, workflowPresets } from "@/db/schema/presets";
 import { workflowEdges, workflowNodes, workflows } from "@/db/schema/workflows";
 
 type WorkflowGraphInput = {
   nodes: FlowNode[];
   edges: FlowEdge[];
+  presetIds?: string[];
 };
 
-const normalizeHandle = (value: string | null | undefined, fallback: string) =>
-  value ?? fallback;
+const getUniquePresetIds = (presetIds?: string[]) => {
+  if (!presetIds) {
+    return [];
+  }
 
-const resolveEdgeId = (edge: FlowEdge) => edge.id ?? crypto.randomUUID();
+  const unique = new Set<string>();
+  for (const presetId of presetIds) {
+    if (presetId) {
+      unique.add(presetId);
+    }
+  }
+  return Array.from(unique);
+};
+
+const resolveAccessiblePresetIds = async ({
+  tx,
+  ownerId,
+  presetIds,
+  excludeWorkflowId,
+}: {
+  tx: Pick<typeof db, "select">;
+  ownerId: string;
+  presetIds: string[];
+  excludeWorkflowId?: string;
+}) => {
+  if (presetIds.length === 0) {
+    return [];
+  }
+
+  const clauses = [
+    inArray(presets.id, presetIds),
+    or(eq(presets.ownerId, ownerId), isNotNull(presetPurchases.presetId)),
+  ];
+
+  if (excludeWorkflowId) {
+    clauses.push(ne(presets.workflowId, excludeWorkflowId));
+  }
+
+  const whereClause = clauses.length === 1 ? clauses[0] : and(...clauses);
+
+  const rows = await tx
+    .select({ id: presets.id })
+    .from(presets)
+    .leftJoin(
+      presetPurchases,
+      and(
+        eq(presetPurchases.presetId, presets.id),
+        eq(presetPurchases.buyerId, ownerId),
+      ),
+    )
+    .where(whereClause);
+
+  return rows.map((row) => row.id);
+};
 
 const buildWorkflowNodeValue = (
   node: FlowNode,
@@ -46,8 +98,8 @@ const buildWorkflowEdgeValue = (
   edgeId,
   source: edge.source,
   target: edge.target,
-  sourceHandle: normalizeHandle(edge.sourceHandle, "source"),
-  targetHandle: normalizeHandle(edge.targetHandle, "target"),
+  sourceHandle: edge.sourceHandle || "source",
+  targetHandle: edge.targetHandle || "target",
 });
 
 const getWorkflowWithGraphBase = async (workflowId: string) => {
@@ -185,6 +237,7 @@ export const createWorkflowGraph = async ({
   description,
   nodes,
   edges,
+  presetIds,
 }: {
   title: string;
   description: string | null;
@@ -219,13 +272,31 @@ export const createWorkflowGraph = async ({
     if (edges.length > 0) {
       await tx.insert(workflowEdges).values(
         edges.map((edge) => {
-          const edgeId = resolveEdgeId(edge);
+          const edgeId = edge.id || crypto.randomUUID();
           return {
             id: crypto.randomUUID(),
             ...buildWorkflowEdgeValue(edge, workflowId, ownerId, edgeId),
           };
         }),
       );
+    }
+
+    const normalizedPresetIds = getUniquePresetIds(presetIds);
+    const accessiblePresetIds = await resolveAccessiblePresetIds({
+      tx,
+      ownerId,
+      presetIds: normalizedPresetIds,
+    });
+    if (accessiblePresetIds.length > 0) {
+      await tx
+        .insert(workflowPresets)
+        .values(
+          accessiblePresetIds.map((presetId) => ({
+            workflowId,
+            presetId,
+          })),
+        )
+        .onConflictDoNothing();
     }
 
     revalidateTag(`workflow_graph:list:${ownerId}`, { expire: 0 });
@@ -239,6 +310,7 @@ export const updateWorkflowGraph = async ({
   description,
   nodes,
   edges,
+  presetIds,
 }: {
   workflowId: string;
   title: string;
@@ -296,7 +368,7 @@ export const updateWorkflowGraph = async ({
     }
 
     for (const edge of edges) {
-      const edgeId = resolveEdgeId(edge);
+      const edgeId = edge.id || crypto.randomUUID();
       nextEdgeIds.add(edgeId);
       const payload = buildWorkflowEdgeValue(edge, workflowId, ownerId, edgeId);
       const existingId = existingEdgeMap.get(edgeId);
@@ -332,6 +404,54 @@ export const updateWorkflowGraph = async ({
       await tx
         .delete(workflowEdges)
         .where(inArray(workflowEdges.id, removedEdgeIds));
+    }
+
+    const normalizedPresetIds = getUniquePresetIds(presetIds);
+    const accessiblePresetIds = await resolveAccessiblePresetIds({
+      tx,
+      ownerId,
+      presetIds: normalizedPresetIds,
+      excludeWorkflowId: workflowId,
+    });
+
+    const existingPresets = await tx
+      .select({ presetId: workflowPresets.presetId })
+      .from(workflowPresets)
+      .where(eq(workflowPresets.workflowId, workflowId));
+
+    const existingPresetSet = new Set(
+      existingPresets.map((row) => row.presetId),
+    );
+    const nextPresetSet = new Set(accessiblePresetIds);
+
+    const presetIdsToInsert = accessiblePresetIds.filter(
+      (presetId) => !existingPresetSet.has(presetId),
+    );
+    if (presetIdsToInsert.length > 0) {
+      await tx
+        .insert(workflowPresets)
+        .values(
+          presetIdsToInsert.map((presetId) => ({
+            workflowId,
+            presetId,
+          })),
+        )
+        .onConflictDoNothing();
+    }
+
+    const presetIdsToRemove = existingPresets
+      .map((row) => row.presetId)
+      .filter((presetId) => !nextPresetSet.has(presetId));
+
+    if (presetIdsToRemove.length > 0) {
+      await tx
+        .delete(workflowPresets)
+        .where(
+          and(
+            eq(workflowPresets.workflowId, workflowId),
+            inArray(workflowPresets.presetId, presetIdsToRemove),
+          ),
+        );
     }
 
     revalidateTag(`workflow_graph:${workflowId}`, { expire: 0 });

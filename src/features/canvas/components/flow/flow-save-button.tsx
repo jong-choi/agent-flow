@@ -21,6 +21,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+import { extractPresetIdsFromNodes } from "@/features/canvas/utils/preset-import";
 
 export function FlowSaveButton() {
   const router = useRouter();
@@ -55,12 +56,14 @@ export function FlowSaveButton() {
 
       const nodes = getNodes();
       const edges = getEdges();
+      const presetIds = extractPresetIdsFromNodes(nodes);
 
       const requestBody: WorkflowSaveRequest = {
         title,
         description,
         nodes,
         edges,
+        presetIds,
       };
 
       try {

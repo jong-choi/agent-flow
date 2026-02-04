@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { nodes, edges } = parsed.data;
+    const { nodes, edges, presetIds } = parsed.data;
     const title = parsed.data.title.trim();
     const description = parsed.data.description?.trim() || null;
 
@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       description,
       nodes,
       edges,
+      presetIds,
     });
 
     return Response.json({ data: workflow });
