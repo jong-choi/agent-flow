@@ -42,7 +42,13 @@ export function DocumentCreateButton({
         setIsCreatingDocument(false);
       }
     })();
-  }, [isCreatingDocument, onClose, onCreated, setIsCreatingDocument]);
+  }, [
+    isCreatingDocument,
+    onClose,
+    onCreated,
+    setIsCreatingDocument,
+    setSelectedNodeId,
+  ]);
 
   return (
     <Button
