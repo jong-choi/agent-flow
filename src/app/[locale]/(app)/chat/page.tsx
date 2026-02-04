@@ -34,7 +34,7 @@ export default async function Page() {
               저장된 워크플로우가 없습니다.
             </div>
             <Button asChild>
-              <Link href="/canvas">워크플로우 생성하기</Link>
+              <Link href="/workflows/canvas">워크플로우 생성하기</Link>
             </Button>
           </>
         )}

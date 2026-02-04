@@ -10,6 +10,7 @@ import {
   gte,
   ilike,
   inArray,
+  isNull,
   lte,
   ne,
   or,
@@ -18,8 +19,14 @@ import {
 import { normalizeOptionalText } from "@/app/[locale]/(app)/presets/_utils/form-utils";
 import { db } from "@/db/client";
 import { getUserId } from "@/db/query/auth";
+import {
+  getChatById,
+  getChatsByWorkflowId,
+  getPublicChatMessagesByChatId,
+} from "@/db/query/chat";
 import { getWorkflowWithGraph } from "@/db/query/workflows";
 import { users } from "@/db/schema/auth";
+import { chats } from "@/db/schema/chat";
 import { creditAccounts, creditTransactions } from "@/db/schema/credit";
 import { presetPurchases, presetTags, presets } from "@/db/schema/presets";
 import { workflows } from "@/db/schema/workflows";
@@ -130,6 +137,9 @@ export const getPresets = async (
   const userId = await getUserId({ throwOnError: false });
   const purchaseCount = buildPurchaseCount();
   const isPurchased = buildIsPurchased(userId || undefined);
+  const isOwner = userId
+    ? sql<boolean>`${presets.ownerId} = ${userId}`.mapWith(Boolean)
+    : sql<boolean>`false`.mapWith(Boolean);
   const clauses = [eq(presets.isPublished, true)];
 
   if (filters?.category) {
@@ -184,7 +194,9 @@ export const getPresets = async (
         id: presets.id,
         workflowId: presets.workflowId,
         ownerId: presets.ownerId,
-        ownerName: users.name,
+        ownerDisplayName: users.displayName,
+        ownerAvatarHash: users.avatarHash,
+        isOwner,
         title: presets.title,
         description: presets.description,
         summary: presets.summary,
@@ -222,8 +234,10 @@ const getPresetDetailBase = async (presetId: string) => {
     .select({
       id: presets.id,
       workflowId: presets.workflowId,
+      chatId: presets.chatId,
       ownerId: presets.ownerId,
-      ownerName: users.name,
+      ownerDisplayName: users.displayName,
+      ownerAvatarHash: users.avatarHash,
       title: presets.title,
       description: presets.description,
       summary: presets.summary,
@@ -536,7 +550,8 @@ const getPurchasedPresetsBase = async ({
         id: presets.id,
         workflowId: presets.workflowId,
         ownerId: presets.ownerId,
-        ownerName: users.name,
+        ownerDisplayName: users.displayName,
+        ownerAvatarHash: users.avatarHash,
         title: presets.title,
         description: presets.description,
         summary: presets.summary,
@@ -596,7 +611,8 @@ const getOwnedPresetsBase = async (ownerId: string) => {
       id: presets.id,
       workflowId: presets.workflowId,
       ownerId: presets.ownerId,
-      ownerName: users.name,
+      ownerDisplayName: users.displayName,
+      ownerAvatarHash: users.avatarHash,
       title: presets.title,
       description: presets.description,
       summary: presets.summary,
@@ -636,6 +652,7 @@ export const getOwnedPresets = async () => {
  */
 export const createPreset = async ({
   workflowId,
+  chatId,
   title,
   description,
   summary,
@@ -645,6 +662,7 @@ export const createPreset = async ({
   tags = [],
 }: {
   workflowId: string;
+  chatId?: string | null;
   title: string;
   description: string | null;
   summary: string | null;
@@ -664,11 +682,32 @@ export const createPreset = async ({
     return null;
   }
 
+  let selectedChatId = chatId ?? null;
+  if (selectedChatId) {
+    const [chat] = await db
+      .select({ id: chats.id })
+      .from(chats)
+      .where(
+        and(
+          eq(chats.id, selectedChatId),
+          eq(chats.userId, ownerId),
+          eq(chats.workflowId, workflowId),
+          isNull(chats.deletedAt),
+        ),
+      )
+      .limit(1);
+
+    if (!chat) {
+      selectedChatId = null;
+    }
+  }
+
   const [preset] = await db
     .insert(presets)
     .values({
       ownerId,
       workflowId,
+      chatId: selectedChatId,
       title,
       description,
       summary,
@@ -712,6 +751,7 @@ export const createPreset = async ({
  */
 export const updatePreset = async ({
   presetId,
+  chatId,
   title,
   description,
   summary,
@@ -720,6 +760,7 @@ export const updatePreset = async ({
   isPublished,
 }: {
   presetId: string;
+  chatId: string | null;
   title: string;
   description: string | null;
   summary: string | null;
@@ -731,6 +772,7 @@ export const updatePreset = async ({
   const [preset] = await db
     .update(presets)
     .set({
+      chatId,
       title,
       description,
       summary,
@@ -772,6 +814,7 @@ export const getOwnedPresetForEdit = async (presetId: string) => {
   const [preset] = await db
     .select({
       id: presets.id,
+      chatId: presets.chatId,
       workflowId: presets.workflowId,
       workflowTitle: workflows.title,
       workflowUpdatedAt: workflows.updatedAt,
@@ -790,6 +833,59 @@ export const getOwnedPresetForEdit = async (presetId: string) => {
   return preset ?? null;
 };
 
+export const getPresetChatExamplesForForm = async ({
+  workflowId,
+  chatId,
+}: {
+  workflowId: string;
+  chatId?: string | null;
+}) => {
+  const chats = await getChatsByWorkflowId({ workflowId });
+
+  if (!chatId) {
+    return {
+      chats,
+      pinnedChat: null,
+      defaultSelectedId: "",
+    };
+  }
+
+  const existingChat = chats.find((chat) => chat.id === chatId);
+  if (existingChat) {
+    return {
+      chats,
+      pinnedChat: {
+        ...existingChat,
+        title: existingChat.title ?? "연결된 채팅",
+      },
+      defaultSelectedId: chatId,
+    };
+  }
+
+  try {
+    const [chat, messages] = await Promise.all([
+      getChatById(chatId),
+      getPublicChatMessagesByChatId({ chatId }),
+    ]);
+
+    return {
+      chats,
+      pinnedChat: {
+        id: chat.id,
+        title: chat.title ?? "연결된 채팅",
+        messages,
+      },
+      defaultSelectedId: chatId,
+    };
+  } catch {
+    return {
+      chats,
+      pinnedChat: null,
+      defaultSelectedId: "",
+    };
+  }
+};
+
 export const createPresetAction = async (formData: FormData) => {
   "use server";
 
@@ -803,6 +899,7 @@ export const createPresetAction = async (formData: FormData) => {
     throw new Error("workflowId가 전달되지 않았습니다.");
   }
 
+  const chatId = normalizeOptionalText(formData.get("chatId"));
   const description = normalizeOptionalText(formData.get("description"));
   const summary = normalizeOptionalText(formData.get("summary"));
   const category = normalizeOptionalText(formData.get("category"));
@@ -827,6 +924,7 @@ export const createPresetAction = async (formData: FormData) => {
 
   const preset = await createPreset({
     workflowId: workflowId,
+    chatId,
     title: titleValue.trim(),
     description,
     summary,
@@ -858,6 +956,7 @@ export const updatePresetAction = async (formData: FormData) => {
   const description = normalizeOptionalText(formData.get("description"));
   const summary = normalizeOptionalText(formData.get("summary"));
   const category = normalizeOptionalText(formData.get("category"));
+  const chatId = normalizeOptionalText(formData.get("chatId"));
   const priceValue = formData.get("price");
   const isPublished = formData.get("isPublished") === "on";
 
@@ -869,6 +968,7 @@ export const updatePresetAction = async (formData: FormData) => {
 
   const updated = await updatePreset({
     presetId,
+    chatId,
     title: titleValue.trim(),
     description,
     summary,

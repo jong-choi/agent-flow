@@ -132,7 +132,7 @@ export default async function TemplateMarketPage({
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
-              추천 {totalCount}개 프리셋
+              {totalCount}개 프리셋
             </p>
           </div>
 
@@ -146,7 +146,7 @@ export default async function TemplateMarketPage({
               </CardHeader>
               <CardContent>
                 <Button variant="secondary" asChild>
-                  <Link href="/canvas">첫 프리셋 만들기</Link>
+                  <Link href="/workflows/canvas">첫 프리셋 만들기</Link>
                 </Button>
               </CardContent>
             </Card>

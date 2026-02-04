@@ -1,6 +1,7 @@
 import { ChatStartButton } from "@/app/[locale]/(app)/chat/_components/chat-start-button";
 import { WorkflowPreviewDialog } from "@/app/[locale]/(app)/chat/_components/workflow-preview-dialog";
 import { type ChatPageWorkflow } from "@/app/[locale]/(app)/chat/page";
+import { BoringCardAvatar } from "@/components/boring-avatar";
 import { formatKoreanDate } from "@/lib/utils";
 
 export function WorkflowCard({ workflow }: { workflow: ChatPageWorkflow }) {
@@ -20,9 +21,19 @@ export function WorkflowCard({ workflow }: { workflow: ChatPageWorkflow }) {
       <div className="h-6 truncate text-sm text-foreground/80">
         {workflow.description}
       </div>
-      <div className="mt-2 flex items-center justify-end gap-2">
-        <ChatStartButton workflowId={workflow.id} />
-        <WorkflowPreviewDialog workflowId={workflow.id} />
+      <div className="mt-2 flex items-end justify-between">
+        <div className="mb-1">
+          <BoringCardAvatar
+            seed={workflow.id}
+            variant="bauhaus"
+            square={false}
+            className="size-8"
+          />
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          <ChatStartButton workflowId={workflow.id} />
+          <WorkflowPreviewDialog workflowId={workflow.id} />
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BoringCardAvatar } from "@/components/boring-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,9 +23,11 @@ export type PresetListItem = {
   category?: string | null;
   price: number;
   updatedAt?: Date | string | null;
-  ownerName?: string | null;
+  ownerDisplayName?: string | null;
+  ownerAvatarHash?: string | null;
   purchaseCount?: number | null;
   isPurchased?: boolean | null;
+  isOwner?: boolean | null;
 };
 
 type PresetsListProps = {
@@ -45,7 +48,10 @@ export function PresetsCard({
   preset: PresetListItem;
   variant?: PresetsListVariant;
 }) {
-  const isOwned = variant === "library" ? true : Boolean(preset.isPurchased);
+  const isOwned =
+    variant === "library"
+      ? true
+      : Boolean(preset.isPurchased || preset.isOwner);
   const showPurchaseCount = typeof preset.purchaseCount === "number";
 
   return (
@@ -57,10 +63,20 @@ export function PresetsCard({
           </span>
           <span>업데이트 {formatDate(preset.updatedAt)}</span>
         </div>
-        <CardTitle className="text-lg">{preset.title}</CardTitle>
-        <CardDescription className="line-clamp-2">
-          {preset.summary ?? preset.description ?? "설명이 없습니다."}
-        </CardDescription>
+        <div className="flex items-center gap-3">
+          <BoringCardAvatar
+            seed={preset.id}
+            size={40}
+            square={false}
+            className="size-10"
+          />
+          <div className="min-w-0 space-y-1">
+            <CardTitle className="text-lg">{preset.title}</CardTitle>
+            <CardDescription className="line-clamp-2">
+              {preset.summary ?? "설명이 없습니다."}
+            </CardDescription>
+          </div>
+        </div>
         <CardAction>
           <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
             {formatPrice(preset.price)}
@@ -70,7 +86,7 @@ export function PresetsCard({
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
           {showPurchaseCount ? <span>구매 {preset.purchaseCount}</span> : null}
-          <span>제작자 {preset.ownerName ?? "알 수 없음"}</span>
+          <span>제작자 {preset.ownerDisplayName ?? "알 수 없음"}</span>
         </div>
       </CardContent>
       <CardFooter className="gap-2 border-t">

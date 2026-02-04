@@ -2,7 +2,7 @@ import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarkdownWrapper } from "@/features/chat/components/markdown/markdown-wrapper";
 import { type ClientChatMessage } from "@/features/chat/utils/chat-message";
-import { cn, formatHHMM } from "@/lib/utils";
+import { cn, formatKoreanDate } from "@/lib/utils";
 
 export function ChatMessageItem({ message }: { message: ClientChatMessage }) {
   return (
@@ -35,7 +35,7 @@ export function ChatMessageItem({ message }: { message: ClientChatMessage }) {
           )}
         >
           <span className="text-xs text-muted-foreground">
-            {!!message.createdAt && formatHHMM(message.createdAt)}
+            {!!message.createdAt && formatKoreanDate(message.createdAt)}
           </span>
           <Button
             type="button"

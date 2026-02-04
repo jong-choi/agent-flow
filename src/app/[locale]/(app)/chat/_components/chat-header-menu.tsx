@@ -43,7 +43,7 @@ export function ChatHeaderMenu({
         <ChatStartMenuItem workflowId={workflowId} />
         {workflowId ? (
           <DropdownMenuItem asChild>
-            <Link href={`/presets/workflows/${workflowId}`}>상세 보기</Link>
+            <Link href={`/workflows/${workflowId}`}>상세 보기</Link>
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem disabled>상세 보기</DropdownMenuItem>

@@ -15,7 +15,7 @@ import { formatKoreanDate } from "@/lib/utils";
 
 export default async function WorkflowDetailPage({
   params,
-}: PageProps<"/[locale]/presets/workflows/[id]">) {
+}: PageProps<"/[locale]/workflows/[id]">) {
   const { id } = await params;
   const workflowData = await getWorkflowWithGraph(id);
   const session = await auth();
@@ -29,11 +29,11 @@ export default async function WorkflowDetailPage({
 
   return (
     <PageContainer>
-      <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-6">
+        <div className="flex items-start justify-between gap-4">
           <div className="space-y-3">
             <Button variant="outline" size="sm" asChild>
-              <Link href="/presets/workflows">
+              <Link href="/workflows">
                 <ChevronLeft />
                 목록으로
               </Link>
@@ -51,7 +51,9 @@ export default async function WorkflowDetailPage({
           </div>
           <div className="flex items-center gap-2">
             <Button asChild>
-              <Link href={`/canvas/${workflow.id}`}>캔버스에서 열기</Link>
+              <Link href={`/workflows/canvas/${workflow.id}`}>
+                캔버스에서 열기
+              </Link>
             </Button>
           </div>
         </div>

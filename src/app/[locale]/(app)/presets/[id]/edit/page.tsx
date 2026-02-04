@@ -9,6 +9,10 @@ import {
 } from "@/db/query/presets";
 import { PresetEditForm } from "@/features/preset/components/preset-edit-form";
 
+export type PresetEditRes = NonNullable<
+  Awaited<ReturnType<typeof getOwnedPresetForEdit>>
+>;
+
 export default async function PresetEditPage({
   params,
 }: PageProps<"/[locale]/presets/[id]/edit">) {

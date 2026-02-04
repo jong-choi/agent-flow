@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BoringCardAvatar } from "@/components/boring-avatar";
 import {
   Card,
   CardContent,
@@ -15,6 +16,7 @@ type WorkflowListCardProps = {
   description?: string | null;
   updatedAt: Date;
   actionLabel?: string;
+  workflowId: string;
 };
 
 export function WorkflowListCard({
@@ -23,6 +25,7 @@ export function WorkflowListCard({
   description,
   updatedAt,
   actionLabel,
+  workflowId,
 }: WorkflowListCardProps) {
   return (
     <Link href={href} className="group">
@@ -30,19 +33,27 @@ export function WorkflowListCard({
         <CardHeader className="-mb-2">
           <CardTitle className="line-clamp-1 text-lg">{title}</CardTitle>
         </CardHeader>
-        <CardContent className="h-12">
-          <CardDescription className="line-clamp-2">
+        <CardContent className="flex justify-between">
+          <CardDescription className="line-clamp-2 min-h-10 flex-1">
             {description ?? "설명이 없습니다."}
           </CardDescription>
         </CardContent>
-        <CardFooter className="mt-auto">
-          <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
-            <span>최근 업데이트 {formatKoreanDate(updatedAt)}</span>
+        <CardFooter className="mt-auto flex items-end justify-between">
+          <div className="shrink-0">
+            <BoringCardAvatar
+              seed={workflowId}
+              variant="bauhaus"
+              className="size-8"
+              square={false}
+            />
+          </div>
+          <div className="flex flex-col items-end text-xs text-muted-foreground">
             {!!actionLabel && (
               <span className="hidden text-primary group-hover:block">
                 {actionLabel}
               </span>
             )}
+            <span>최근 업데이트 {formatKoreanDate(updatedAt)}</span>
           </div>
         </CardFooter>
       </Card>

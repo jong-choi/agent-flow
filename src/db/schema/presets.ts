@@ -8,6 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { users } from "@/db/schema/auth";
+import { chats } from "@/db/schema/chat";
 import { workflows } from "@/db/schema/workflows";
 
 export const presets = pgTable("presets", {
@@ -15,6 +16,9 @@ export const presets = pgTable("presets", {
   workflowId: uuid("workflow_id")
     .notNull()
     .references(() => workflows.id, { onDelete: "cascade" }),
+  chatId: uuid("chat_id").references(() => chats.id, {
+    onDelete: "set null",
+  }),
   ownerId: text("owner_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

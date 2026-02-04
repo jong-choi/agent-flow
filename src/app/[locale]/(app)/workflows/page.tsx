@@ -19,7 +19,7 @@ export default async function WorkflowsPage() {
             </PageDescription>
           </div>
           <Button asChild>
-            <Link href="/canvas">새 워크플로우</Link>
+            <Link href="/workflows/canvas">새 워크플로우</Link>
           </Button>
         </div>
         <WorkflowListView />

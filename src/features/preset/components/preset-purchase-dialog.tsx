@@ -1,6 +1,12 @@
 "use client";
 
-import { type ComponentProps, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  type ComponentProps,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,8 +23,8 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { getCreditBalance } from "@/db/query/credit";
 import {
-  purchasePresetAction,
   type PresetPurchaseResult,
+  purchasePresetAction,
 } from "@/db/query/presets";
 
 const formatCredit = (value: number) => `${value.toLocaleString()} 크레딧`;
@@ -49,7 +55,11 @@ const resolveVariant = (
     return variant;
   }
 
-  return isOwned || price === 0 ? "secondary" : "default";
+  if (isOwned) {
+    return "secondary";
+  }
+
+  return "default";
 };
 
 const resolveSuccessMessage = (result: PresetPurchaseResult) => {
@@ -69,12 +79,12 @@ export function PresetPurchaseDialog({
   variant,
 }: PresetPurchaseDialogProps) {
   const router = useRouter();
+
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [balance, setBalance] = useState<number | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [balanceError, setBalanceError] = useState<string | null>(null);
-
   const label = resolveActionLabel(price, isOwned);
   const resolvedVariant = resolveVariant(price, isOwned, variant);
 
@@ -108,7 +118,9 @@ export function PresetPurchaseDialog({
           return;
         }
         const message =
-          error instanceof Error ? error.message : "크레딧 정보를 불러오지 못했습니다.";
+          error instanceof Error
+            ? error.message
+            : "크레딧 정보를 불러오지 못했습니다.";
         setBalanceError(
           message.includes("사용자 정보가 없습니다")
             ? "로그인이 필요합니다."
@@ -137,7 +149,10 @@ export function PresetPurchaseDialog({
       try {
         const result = await purchasePresetAction(presetId);
 
-        if (result.status === "success" || result.status === "already_purchased") {
+        if (
+          result.status === "success" ||
+          result.status === "already_purchased"
+        ) {
           toast.success(resolveSuccessMessage(result));
           setOpen(false);
           router.refresh();
@@ -255,7 +270,10 @@ export function PresetPurchaseDialog({
             type="button"
             onClick={handlePurchase}
             disabled={
-              isPending || isLoadingBalance || Boolean(balanceError) || isInsufficient
+              isPending ||
+              isLoadingBalance ||
+              Boolean(balanceError) ||
+              isInsufficient
             }
           >
             {isPending ? <Spinner className="size-4" /> : null}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PresetsFilter } from "@/app/[locale]/(app)/presets/_components/presets-filter";
+// import { PresetsFilter } from "@/app/[locale]/(app)/presets/_components/presets-filter";
 import { PresetsList } from "@/app/[locale]/(app)/presets/_components/presets-list";
 import { PresetsPagination } from "@/app/[locale]/(app)/presets/_components/presets-pagination";
 import {
@@ -9,13 +9,11 @@ import {
   PageHeader,
   PageHeading,
 } from "@/components/page-template";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -26,15 +24,8 @@ import {
   getPurchasedPresetsSummary,
 } from "@/db/query/presets";
 import { buildQueryString } from "@/features/chat/utils/query-string";
-import { formatKoreanDate } from "@/lib/utils";
 
 const PAGE_SIZE = 50;
-
-const formatPrice = (price: number) =>
-  price === 0 ? "무료" : `${price} 크레딧`;
-
-const formatDate = (value: Date | string | null | undefined) =>
-  formatKoreanDate(value, "날짜 없음");
 
 type PresetsLibrarySearchParams = {
   q?: string | string[];
@@ -126,7 +117,7 @@ export default async function PurchasedPresetsPage({
                 <Link href="/presets/new">내 프리셋 만들기</Link>
               </Button>
               <Button asChild>
-                <Link href="/canvas">캔버스 열기</Link>
+                <Link href="/workflows/canvas">캔버스 열기</Link>
               </Button>
             </div>
           </div>
@@ -161,83 +152,14 @@ export default async function PurchasedPresetsPage({
                   </CardHeader>
                   <CardContent>
                     <Button variant="secondary" asChild>
-                      <Link href="/canvas">캔버스에서 만들기</Link>
+                      <Link href="/workflows/canvas">캔버스에서 만들기</Link>
                     </Button>
                   </CardContent>
                 </Card>
               ) : (
                 <ScrollArea className="h-[450px]">
-                  <div className="grid gap-4 pb-14 md:grid-cols-2 xl:grid-cols-3">
-                    {ownedPresets.map((preset) => {
-                      const visibleTags = preset.tags.slice(0, 5);
-                      const hasMoreTags = preset.tags.length > 5;
-
-                      return (
-                        <Card key={preset.id} className="h-full">
-                          <CardHeader>
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                              <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-                                {preset.category ?? "미분류"}
-                              </span>
-                              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                                내가 만든
-                              </span>
-                              <span>
-                                업데이트 {formatDate(preset.updatedAt)}
-                              </span>
-                              {preset.isPublished === false ? (
-                                <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                  비공개
-                                </span>
-                              ) : null}
-                            </div>
-                            <CardTitle className="text-lg">
-                              {preset.title}
-                            </CardTitle>
-                            <CardDescription className="line-clamp-2">
-                              {preset.description ?? "설명이 없습니다."}
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            {visibleTags.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
-                                {visibleTags.map((tag) => (
-                                  <Badge key={tag} variant="secondary">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                                {hasMoreTags ? (
-                                  <Badge variant="secondary">...</Badge>
-                                ) : null}
-                              </div>
-                            ) : null}
-                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                              <span>가격 {formatPrice(preset.price)}</span>
-                              <span>
-                                제작자 {preset.ownerName ?? "알 수 없음"}
-                              </span>
-                            </div>
-                          </CardContent>
-                          <CardFooter className="gap-2 border-t">
-                            <Button size="sm" className="flex-1" asChild>
-                              <Link href={`/canvas/${preset.workflowId}`}>
-                                캔버스에서 열기
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1"
-                              asChild
-                            >
-                              <Link href={`/presets/${preset.id}`}>
-                                상세 보기
-                              </Link>
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      );
-                    })}
+                  <div className="pb-14">
+                    <PresetsList items={ownedPresets} variant="library" />
                   </div>
                 </ScrollArea>
               )}
@@ -294,9 +216,9 @@ export default async function PurchasedPresetsPage({
           )}
         </div>
       </PageContainer>
-      <aside className="fixed top-20 right-10 w-full shrink-0 lg:w-72">
+      {/* <aside className="fixed top-20 right-10 w-full shrink-0 lg:w-72">
         <PresetsFilter variant="purchased" />
-      </aside>
+      </aside> */}
     </>
   );
 }
