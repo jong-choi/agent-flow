@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getPresetChatExamplesForForm } from "@/db/query/presets";
+import {
+  getPresetChatExamplesForForm,
+  getWorkflowReferencedPresetPricingSummary,
+} from "@/db/query/presets";
 import {
   PresetChatExampleCard,
   PresetInfoCard,
@@ -23,8 +26,11 @@ export async function PresetCreateForm({
   workflowId,
   chatId = null,
 }: PresetCreateFormProps) {
-  const { chats, pinnedChat, defaultSelectedId } =
-    await getPresetChatExamplesForForm({ workflowId, chatId });
+  const [{ chats, pinnedChat, defaultSelectedId }, pricingSummary] =
+    await Promise.all([
+      getPresetChatExamplesForForm({ workflowId, chatId }),
+      getWorkflowReferencedPresetPricingSummary({ workflowId }),
+    ]);
 
   return (
     <form action={action} className="space-y-6">
@@ -49,10 +55,10 @@ export async function PresetCreateForm({
       />
 
       <PresetPricePublishCard
-        description="무료 또는 크레딧 가격을 설정할 수 있습니다."
-        priceHint="0을 입력하면 무료 프리셋으로 표시됩니다."
+        description="현재 프리셋 가격을 설정합니다. 참조된 프리셋 가격이 합산되어 결제 금액이 결정됩니다."
         publishLabel="생성 후 바로 공개하기"
         publishHint="공개된 프리셋은 마켓에서 누구나 볼 수 있습니다."
+        referencedPresetPrice={pricingSummary.referencedPresetPrice}
       />
 
       <div className="flex flex-wrap gap-2">

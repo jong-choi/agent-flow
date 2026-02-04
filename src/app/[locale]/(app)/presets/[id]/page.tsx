@@ -39,7 +39,7 @@ export default async function PresetDetailPage({
     notFound();
   }
 
-  const { preset, nodes, edges, workflow } = presetDetail;
+  const { preset, nodes, edges, workflow, referencedPresets } = presetDetail;
   const isOwner = viewerId ? viewerId === preset.ownerId : false;
   const isPurchased =
     viewerId && !isOwner ? await getPresetPurchaseStatus(preset.id) : false;
@@ -162,6 +162,46 @@ export default async function PresetDetailPage({
                 )}
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>사용된 프리셋</CardTitle>
+                <CardDescription>
+                  이 프리셋에 포함된(참조된) 프리셋 목록입니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {referencedPresets.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    참조된 프리셋이 없습니다.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {referencedPresets.map((usedPreset) => (
+                      <Link
+                        key={usedPreset.id}
+                        href={`/presets/${usedPreset.id}`}
+                        className="flex items-center justify-between gap-4 rounded-lg border bg-background/70 px-3 py-2 transition-colors hover:bg-muted"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">
+                            {usedPreset.title}
+                          </p>
+                          {usedPreset.ownerDisplayName ? (
+                            <p className="truncate text-xs text-muted-foreground">
+                              제작자 {usedPreset.ownerDisplayName}
+                            </p>
+                          ) : null}
+                        </div>
+                        <span className="shrink-0 text-sm font-semibold">
+                          {formatPrice(usedPreset.price)}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </PageContainer>
@@ -175,7 +215,7 @@ export default async function PresetDetailPage({
             <CardContent className="space-y-4">
               <div className="space-y-1">
                 <p className="text-3xl font-semibold">
-                  {formatPrice(preset.price)}
+                  {formatPrice(preset.totalPrice)}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   구매 {preset.purchaseCount} · 업데이트{" "}
@@ -214,7 +254,9 @@ export default async function PresetDetailPage({
                 <>
                   <PresetPurchaseDialog
                     presetId={preset.id}
-                    price={preset.price}
+                    totalPrice={preset.totalPrice}
+                    currentPresetPrice={preset.price}
+                    referencedPresetPrice={preset.referencedPresetPrice}
                   />
                 </>
               )}

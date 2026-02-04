@@ -5,12 +5,12 @@ describe("preset-groups", () => {
   it("presetId/instanceId 기준으로 노드를 그룹핑하고 padding을 포함한 박스를 계산한다", () => {
     const nodes = [
       {
-        id: "preset:p1:i1:a",
+        id: "preset_p1_i1_a",
         position: { x: 100, y: 100 },
         measured: { width: 50, height: 40 },
       },
       {
-        id: "preset:p1:i1:b",
+        id: "preset_p1_i1_b",
         position: { x: 200, y: 150 },
         width: 60,
         height: 50,
@@ -20,7 +20,7 @@ describe("preset-groups", () => {
         position: { x: 0, y: 0 },
       },
       {
-        id: "preset:p2:i2:c",
+        id: "preset_p2_i2_c",
         position: { x: 10, y: 20 },
         measured: { width: 30, height: 30 },
       },
@@ -40,7 +40,7 @@ describe("preset-groups", () => {
       height: 148,
     });
     expect(group1?.nodeIds.sort()).toEqual(
-      ["preset:p1:i1:a", "preset:p1:i1:b"].sort(),
+      ["preset_p1_i1_a", "preset_p1_i1_b"].sort(),
     );
 
     const group2 = groups.find((group) => group.key === "p2:i2");

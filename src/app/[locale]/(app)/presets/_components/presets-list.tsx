@@ -22,6 +22,8 @@ export type PresetListItem = {
   description?: string | null;
   category?: string | null;
   price: number;
+  referencedPresetPrice: number;
+  totalPrice: number;
   updatedAt?: Date | string | null;
   ownerDisplayName?: string | null;
   ownerAvatarHash?: string | null;
@@ -79,7 +81,7 @@ export function PresetsCard({
         </div>
         <CardAction>
           <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
-            {formatPrice(preset.price)}
+            {formatPrice(preset.totalPrice)}
           </span>
         </CardAction>
       </CardHeader>
@@ -95,7 +97,9 @@ export function PresetsCard({
         </Button>
         <PresetPurchaseDialog
           presetId={preset.id}
-          price={preset.price}
+          totalPrice={preset.totalPrice}
+          currentPresetPrice={preset.price}
+          referencedPresetPrice={preset.referencedPresetPrice}
           isOwned={isOwned}
           size="sm"
           className="flex-1"
