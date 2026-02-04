@@ -83,6 +83,7 @@ const buildWorkflowNodeValue = (
   label: node.data.label,
   description: node.data.description,
   value: node.data.content?.value ?? null,
+  contentReferenceId: node.data.content?.referenceId ?? null,
   targetCount: node.data.handle?.targetCount ?? null,
   sourceCount: node.data.handle?.sourceCount ?? null,
 });

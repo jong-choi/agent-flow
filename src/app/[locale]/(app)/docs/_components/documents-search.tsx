@@ -33,7 +33,6 @@ export function DocumentsSearch() {
   const [suggestions, setSuggestions] = useState<DocumentSuggestion[]>([]);
   const [isSuggestOpen, setIsSuggestOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const requestIdRef = useRef(0);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -59,34 +58,23 @@ export function DocumentsSearch() {
   const fetchSuggestions = useCallback(async (value: string) => {
     const normalized = value.trim();
     if (!normalized) {
-      requestIdRef.current += 1;
       setSuggestions([]);
       setIsLoading(false);
       setIsSuggestOpen(false);
       return;
     }
 
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
     setIsLoading(true);
 
     try {
       const results = await searchDocumentsByTitle(normalized, MAX_SUGGESTIONS);
-      if (requestIdRef.current !== requestId) {
-        return;
-      }
-
       setSuggestions(results);
       setIsSuggestOpen(true);
     } catch {
-      if (requestIdRef.current === requestId) {
-        setSuggestions([]);
-        setIsSuggestOpen(true);
-      }
+      setSuggestions([]);
+      setIsSuggestOpen(true);
     } finally {
-      if (requestIdRef.current === requestId) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   }, []);
 
@@ -143,7 +131,6 @@ export function DocumentsSearch() {
               debouncedSuggest(value);
               const trimmed = value.trim();
               if (!trimmed) {
-                requestIdRef.current += 1;
                 setSuggestions([]);
                 setIsSuggestOpen(false);
                 setIsLoading(false);

@@ -29,6 +29,7 @@ export const workflowNodes = pgTable("workflow_nodes", {
   label: text("label").notNull(),
   description: text("description"),
   value: text("value"),
+  contentReferenceId: text("content_reference_id"),
   targetCount: integer("target_count"),
   sourceCount: integer("source_count"),
 });

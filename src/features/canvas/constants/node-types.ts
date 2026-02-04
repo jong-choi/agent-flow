@@ -4,6 +4,7 @@ export const nodeTypes = [
   "promptNode",
   "chatNode",
   "searchNode",
+  "documentNode",
   "mergeNode",
   "endNode",
 ] as const;

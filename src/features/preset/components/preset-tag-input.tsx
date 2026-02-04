@@ -14,8 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useDebounce } from "@/hooks/use-debounce";
 
-const DEFAULT_DESCRIPTION =
-  "검색해서 추가하거나 Enter로 직접 입력하세요.";
+const DEFAULT_DESCRIPTION = "검색해서 추가하거나 Enter로 직접 입력하세요.";
 const MAX_SUGGESTIONS = 8;
 
 const normalizeTag = (value: string) => value.trim().replace(/\s+/g, " ");
@@ -41,7 +40,6 @@ export function PresetTagInput({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const requestIdRef = useRef(0);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedKeys = useMemo(
@@ -52,14 +50,11 @@ export function PresetTagInput({
   const fetchSuggestions = useCallback(async (value: string) => {
     const query = normalizeTag(value);
     if (!query) {
-      requestIdRef.current += 1;
       setSuggestions([]);
       setIsLoading(false);
       return;
     }
 
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
     setIsLoading(true);
 
     try {
@@ -73,20 +68,12 @@ export function PresetTagInput({
       }
 
       const payload = (await response.json()) as { tags?: string[] };
-      if (requestIdRef.current !== requestId) {
-        return;
-      }
-
       const next = Array.isArray(payload.tags) ? payload.tags : [];
       setSuggestions(next.slice(0, MAX_SUGGESTIONS));
     } catch {
-      if (requestIdRef.current === requestId) {
-        setSuggestions([]);
-      }
+      setSuggestions([]);
     } finally {
-      if (requestIdRef.current === requestId) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   }, []);
 
@@ -145,8 +132,7 @@ export function PresetTagInput({
     !visibleSuggestions.some((tag) => tagKey(tag) === tagKey(normalizedInput));
 
   const shouldShowList =
-    isOpen &&
-    (isLoading || showCreateOption || visibleSuggestions.length > 0);
+    isOpen && (isLoading || showCreateOption || visibleSuggestions.length > 0);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.nativeEvent.isComposing) {
@@ -205,7 +191,7 @@ export function PresetTagInput({
           autoComplete="off"
         />
         {shouldShowList ? (
-          <div className="absolute left-0 right-0 top-full z-10 mt-2 rounded-md border bg-popover text-popover-foreground shadow-md">
+          <div className="absolute top-full right-0 left-0 z-10 mt-2 rounded-md border bg-popover text-popover-foreground shadow-md">
             <div
               id={`${id}-suggestions`}
               role="listbox"
@@ -243,7 +229,9 @@ export function PresetTagInput({
                   <span>{tag}</span>
                 </button>
               ))}
-              {!isLoading && !showCreateOption && visibleSuggestions.length === 0 ? (
+              {!isLoading &&
+              !showCreateOption &&
+              visibleSuggestions.length === 0 ? (
                 <div className="px-3 py-2 text-xs text-muted-foreground">
                   검색 결과가 없습니다.
                 </div>

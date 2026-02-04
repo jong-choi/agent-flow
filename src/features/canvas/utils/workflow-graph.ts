@@ -1,9 +1,9 @@
 import { type Edge } from "@xyflow/react";
+import { type WorkflowEdge, type WorkflowNode } from "@/db/schema/workflows";
 import {
   type FlowCanvasNode,
   type SidebarNodeData,
 } from "@/db/types/sidebar-nodes";
-import { type WorkflowEdge, type WorkflowNode } from "@/db/schema/workflows";
 
 type BuildFlowGraphParams = {
   workflowNodes: WorkflowNode[];
@@ -16,9 +16,7 @@ export const buildFlowGraphFromWorkflow = ({
   workflowEdges,
   sidebarNodes,
 }: BuildFlowGraphParams): { nodes: FlowCanvasNode[]; edges: Edge[] } => {
-  const sidebarNodeMap = new Map(
-    sidebarNodes.map((node) => [node.type, node]),
-  );
+  const sidebarNodeMap = new Map(sidebarNodes.map((node) => [node.type, node]));
 
   const nodes = workflowNodes.map((node) => {
     const baseNode = sidebarNodeMap.get(node.type);
@@ -31,6 +29,7 @@ export const buildFlowGraphFromWorkflow = ({
 
     if (content) {
       content.value = node.value ?? null;
+      content.referenceId = node.contentReferenceId ?? null;
     }
 
     const handle = baseHandle
