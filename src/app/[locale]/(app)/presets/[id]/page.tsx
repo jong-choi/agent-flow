@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BoringUserAvatar } from "@/components/boring-avatar";
 import { PageContainer } from "@/components/page-template";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -179,7 +179,7 @@ export default async function PresetDetailPage({
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">제작자</span>
                   <span className="font-medium">
-                    {preset.ownerName ?? "알 수 없음"}
+                    {preset.ownerDisplayName ?? "알 수 없음"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -217,27 +217,21 @@ export default async function PresetDetailPage({
           <Card>
             <CardHeader>
               <CardTitle>제작자</CardTitle>
-              <CardDescription>프리셋을 만든 전문가</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-3">
-                <Avatar className="size-10">
-                  <AvatarFallback>
-                    {(preset.ownerName ?? "?").slice(0, 1)}
-                  </AvatarFallback>
-                </Avatar>
+                <BoringUserAvatar
+                  seed={preset.ownerAvatarHash ?? "default"}
+                  size={40}
+                  square={false}
+                  className="size-10"
+                />
                 <div>
                   <p className="text-sm font-medium">
-                    {preset.ownerName ?? "알 수 없음"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {preset.category ?? "미분류"}
+                    {preset.ownerDisplayName ?? "알 수 없음"}
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
-                프로필 보기
-              </Button>
             </CardContent>
           </Card>
 

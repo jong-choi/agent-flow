@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { PresetsFilter } from "@/app/[locale]/(app)/presets/_components/presets-filter";
 import { PresetsList } from "@/app/[locale]/(app)/presets/_components/presets-list";
 import { PresetsPagination } from "@/app/[locale]/(app)/presets/_components/presets-pagination";
+import { BoringCardAvatar } from "@/components/boring-avatar";
 import {
   PageContainer,
   PageDescription,
@@ -188,30 +189,38 @@ export default async function PurchasedPresetsPage({
                                 </span>
                               ) : null}
                             </div>
-                            <CardTitle className="text-lg">
-                              {preset.title}
-                            </CardTitle>
-                            <CardDescription className="line-clamp-2">
-                              {preset.description ?? "설명이 없습니다."}
-                            </CardDescription>
+                            <div className="flex items-center gap-3">
+                              <BoringCardAvatar
+                                seed={preset.id}
+                                size={40}
+                                square={false}
+                                className="size-10"
+                              />
+                              <div className="min-w-0 space-y-1">
+                                <CardTitle className="text-lg">
+                                  {preset.title}
+                                </CardTitle>
+                                <CardDescription className="line-clamp-2">
+                                  {preset.description ?? "설명이 없습니다."}
+                                </CardDescription>
+                              </div>
+                            </div>
                           </CardHeader>
                           <CardContent className="space-y-4">
-                            {visibleTags.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
-                                {visibleTags.map((tag) => (
-                                  <Badge key={tag} variant="secondary">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                                {hasMoreTags ? (
-                                  <Badge variant="secondary">...</Badge>
-                                ) : null}
-                              </div>
-                            ) : null}
+                            <div className="flex min-h-6 flex-wrap gap-2">
+                              {visibleTags.map((tag) => (
+                                <Badge key={tag} variant="secondary">
+                                  {tag}
+                                </Badge>
+                              ))}
+                              {hasMoreTags ? (
+                                <Badge variant="secondary">...</Badge>
+                              ) : null}
+                            </div>
                             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                               <span>가격 {formatPrice(preset.price)}</span>
                               <span>
-                                제작자 {preset.ownerName ?? "알 수 없음"}
+                                제작자 {preset.ownerDisplayName ?? "알 수 없음"}
                               </span>
                             </div>
                           </CardContent>

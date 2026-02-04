@@ -35,6 +35,7 @@ export async function WorkflowListView() {
             <WorkflowListCard
               key={workflow.id}
               href={`/workflows/${workflow.id}`}
+              workflowId={workflow.id}
               title={workflow.title}
               description={workflow.description}
               updatedAt={workflow.updatedAt}

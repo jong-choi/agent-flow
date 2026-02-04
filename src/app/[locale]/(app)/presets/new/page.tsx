@@ -55,6 +55,7 @@ export default async function PresetCreatePage() {
               <WorkflowListCard
                 key={workflow.id}
                 href={`/presets/new/${workflow.id}`}
+                workflowId={workflow.id}
                 title={workflow.title}
                 description={workflow.description}
                 updatedAt={workflow.updatedAt}

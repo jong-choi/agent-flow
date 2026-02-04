@@ -130,6 +130,9 @@ export const getPresets = async (
   const userId = await getUserId({ throwOnError: false });
   const purchaseCount = buildPurchaseCount();
   const isPurchased = buildIsPurchased(userId || undefined);
+  const isOwner = userId
+    ? sql<boolean>`${presets.ownerId} = ${userId}`.mapWith(Boolean)
+    : sql<boolean>`false`.mapWith(Boolean);
   const clauses = [eq(presets.isPublished, true)];
 
   if (filters?.category) {
@@ -184,7 +187,9 @@ export const getPresets = async (
         id: presets.id,
         workflowId: presets.workflowId,
         ownerId: presets.ownerId,
-        ownerName: users.name,
+        ownerDisplayName: users.displayName,
+        ownerAvatarHash: users.avatarHash,
+        isOwner,
         title: presets.title,
         description: presets.description,
         summary: presets.summary,
@@ -223,7 +228,8 @@ const getPresetDetailBase = async (presetId: string) => {
       id: presets.id,
       workflowId: presets.workflowId,
       ownerId: presets.ownerId,
-      ownerName: users.name,
+      ownerDisplayName: users.displayName,
+      ownerAvatarHash: users.avatarHash,
       title: presets.title,
       description: presets.description,
       summary: presets.summary,
@@ -536,7 +542,8 @@ const getPurchasedPresetsBase = async ({
         id: presets.id,
         workflowId: presets.workflowId,
         ownerId: presets.ownerId,
-        ownerName: users.name,
+        ownerDisplayName: users.displayName,
+        ownerAvatarHash: users.avatarHash,
         title: presets.title,
         description: presets.description,
         summary: presets.summary,
@@ -596,7 +603,8 @@ const getOwnedPresetsBase = async (ownerId: string) => {
       id: presets.id,
       workflowId: presets.workflowId,
       ownerId: presets.ownerId,
-      ownerName: users.name,
+      ownerDisplayName: users.displayName,
+      ownerAvatarHash: users.avatarHash,
       title: presets.title,
       description: presets.description,
       summary: presets.summary,

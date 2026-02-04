@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import { WorkflowCard } from "@/app/[locale]/(app)/chat/_components/workflow-card";
 import { type ChatPageWorkflow } from "@/app/[locale]/(app)/chat/page";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,9 @@ export async function WorkflowsListDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button">더 보기</Button>
+        <Button type="button" variant="outline">
+          더 보기 <ChevronRight />
+        </Button>
       </DialogTrigger>
       <DialogContent
         ariaDescribedby="workflows list dialog"

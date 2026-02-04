@@ -55,7 +55,11 @@ const resolveVariant = (
     return variant;
   }
 
-  return isOwned || price === 0 ? "secondary" : "default";
+  if (isOwned) {
+    return "secondary";
+  }
+
+  return "default";
 };
 
 const resolveSuccessMessage = (result: PresetPurchaseResult) => {
