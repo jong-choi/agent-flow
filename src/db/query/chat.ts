@@ -144,7 +144,11 @@ export const updateChatTitle = async ({
     .update(chats)
     .set({ title, updatedAt: new Date() })
     .where(eq(chats.id, chatId))
-    .returning({ id: chats.id, title: chats.title, updatedAt: chats.updatedAt });
+    .returning({
+      id: chats.id,
+      title: chats.title,
+      updatedAt: chats.updatedAt,
+    });
 
   if (!updated) {
     throw new Error("채팅 이름 변경에 실패했습니다.");
@@ -198,4 +202,61 @@ export const getChatsByUser = async () => {
     .from(chats)
     .where(and(eq(chats.userId, userId), isNull(chats.deletedAt)))
     .orderBy(desc(chats.updatedAt));
+};
+
+export const getChatsByWorkflowId = async ({
+  workflowId,
+  limit = 3,
+  chatLen = 4,
+}: {
+  workflowId: string;
+  limit?: number;
+  chatLen?: number;
+}) => {
+  const userId = await getUserId();
+
+  // 1. 해당 워크플로우의 최신 채팅들을 가져오기
+  const recentChats = await db
+    .select({
+      id: chats.id,
+      workflowId: chats.workflowId,
+      title: chats.title,
+      createdAt: chats.createdAt,
+      updatedAt: chats.updatedAt,
+    })
+    .from(chats)
+    .where(
+      and(
+        eq(chats.userId, userId),
+        eq(chats.workflowId, workflowId),
+        isNull(chats.deletedAt),
+      ),
+    )
+    .orderBy(desc(chats.updatedAt))
+    .limit(limit);
+
+  // 2. 각 채팅별로 최초 N개의 메시지를 개별 쿼리로 가져오기
+  const chatsWithMessages = await Promise.all(
+    recentChats.map(async (chat) => {
+      const messages = await db
+        .select({
+          id: chatMessages.id,
+          chatId: chatMessages.chatId,
+          role: chatMessages.role,
+          content: chatMessages.content,
+          createdAt: chatMessages.createdAt,
+        })
+        .from(chatMessages)
+        .where(eq(chatMessages.chatId, chat.id))
+        .orderBy(asc(chatMessages.createdAt))
+        .limit(chatLen);
+
+      return {
+        ...chat,
+        messages,
+      };
+    }),
+  );
+
+  return chatsWithMessages;
 };

@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { getChatsByWorkflowId } from "@/db/query/chat";
+import { PresetChatExampleOptions } from "@/features/preset/components/preset-chat-example-options";
 import { PresetCreateSubmitButton } from "@/features/preset/components/preset-create-submit-button";
 import { PresetTagInput } from "@/features/preset/components/preset-tag-input";
 import { categoryOptions } from "@/features/preset/constants/category-options";
@@ -23,12 +25,14 @@ type PresetCreateFormProps = {
   workflowId: string;
 };
 
-export function PresetCreateForm({
+export async function PresetCreateForm({
   action,
   cancelHref = "/presets",
   submitLabel = "프리셋 생성",
   workflowId,
 }: PresetCreateFormProps) {
+  const chats = await getChatsByWorkflowId({ workflowId });
+
   return (
     <form action={action} className="space-y-6">
       <Card>
@@ -94,6 +98,18 @@ export function PresetCreateForm({
             </select>
           </div>
           <PresetTagInput />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>채팅 예시</CardTitle>
+          <CardDescription>
+            마켓에 노출될 채팅 예시를 선택합니다.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PresetChatExampleOptions chats={chats} />
         </CardContent>
       </Card>
 

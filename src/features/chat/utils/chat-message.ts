@@ -1,8 +1,8 @@
 export type ClientChatMessage = {
   id: string;
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
-  createdAt: string | null;
+  createdAt: string | null | Date;
 };
 
 type MessageConstructorParams =

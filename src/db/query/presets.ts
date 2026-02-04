@@ -10,6 +10,7 @@ import {
   gte,
   ilike,
   inArray,
+  isNull,
   lte,
   ne,
   or,
@@ -20,6 +21,7 @@ import { db } from "@/db/client";
 import { getUserId } from "@/db/query/auth";
 import { getWorkflowWithGraph } from "@/db/query/workflows";
 import { users } from "@/db/schema/auth";
+import { chats } from "@/db/schema/chat";
 import { creditAccounts, creditTransactions } from "@/db/schema/credit";
 import { presetPurchases, presetTags, presets } from "@/db/schema/presets";
 import { workflows } from "@/db/schema/workflows";
@@ -644,6 +646,7 @@ export const getOwnedPresets = async () => {
  */
 export const createPreset = async ({
   workflowId,
+  chatId,
   title,
   description,
   summary,
@@ -653,6 +656,7 @@ export const createPreset = async ({
   tags = [],
 }: {
   workflowId: string;
+  chatId?: string | null;
   title: string;
   description: string | null;
   summary: string | null;
@@ -672,11 +676,32 @@ export const createPreset = async ({
     return null;
   }
 
+  let selectedChatId = chatId ?? null;
+  if (selectedChatId) {
+    const [chat] = await db
+      .select({ id: chats.id })
+      .from(chats)
+      .where(
+        and(
+          eq(chats.id, selectedChatId),
+          eq(chats.userId, ownerId),
+          eq(chats.workflowId, workflowId),
+          isNull(chats.deletedAt),
+        ),
+      )
+      .limit(1);
+
+    if (!chat) {
+      selectedChatId = null;
+    }
+  }
+
   const [preset] = await db
     .insert(presets)
     .values({
       ownerId,
       workflowId,
+      chatId: selectedChatId,
       title,
       description,
       summary,
@@ -811,6 +836,7 @@ export const createPresetAction = async (formData: FormData) => {
     throw new Error("workflowId가 전달되지 않았습니다.");
   }
 
+  const chatId = normalizeOptionalText(formData.get("chatId"));
   const description = normalizeOptionalText(formData.get("description"));
   const summary = normalizeOptionalText(formData.get("summary"));
   const category = normalizeOptionalText(formData.get("category"));
@@ -835,6 +861,7 @@ export const createPresetAction = async (formData: FormData) => {
 
   const preset = await createPreset({
     workflowId: workflowId,
+    chatId,
     title: titleValue.trim(),
     description,
     summary,
