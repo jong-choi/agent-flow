@@ -36,6 +36,15 @@ export const checkValidNode = (
   if (node.type === "chatNode" && !node.data.content?.value) {
     return { isValid: false, message: "chatNode의 value가 없습니다." };
   }
+  if (node.type === "documentNode") {
+    const referenceId = node.data.content?.referenceId;
+    if (typeof referenceId !== "string" || referenceId.trim().length === 0) {
+      return {
+        isValid: false,
+        message: "documentNode의 referenceId가 없습니다.",
+      };
+    }
+  }
   return { isValid: true };
 };
 

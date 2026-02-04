@@ -13,7 +13,7 @@ import { FlowNodeDeleteButton } from "@/features/canvas/components/flow/flow-nod
 import { FlowNodeHandles } from "@/features/canvas/components/flow/flow-node/flow-node-handles";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
-export function FlowNode({ data, id }: NodeProps<FlowCanvasNode>) {
+export function FlowNode({ data, id, type }: NodeProps<FlowCanvasNode>) {
   const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
 
   const handleClick = useCallback(() => {
@@ -30,7 +30,7 @@ export function FlowNode({ data, id }: NodeProps<FlowCanvasNode>) {
         <CardTitle>{data.label}</CardTitle>
         <CardDescription>{data.description}</CardDescription>
       </CardHeader>
-      <FlowNodeContent content={data.content} id={id} />
+      <FlowNodeContent content={data.content} id={id} nodeType={type} />
       <FlowNodeHandles handle={data.handle} />
     </Card>
   );

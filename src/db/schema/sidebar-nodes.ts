@@ -87,6 +87,7 @@ const sidebarNodeContentsSelectSchema = createSelectSchema(
   sidebarNodeContents,
 ).extend({
   options: z.array(z.object({ id: z.string(), value: z.string() })).optional(),
+  referenceId: z.string().nullable().optional(),
 });
 const sidebarNodeHandlesSelectSchema = createSelectSchema(sidebarNodeHandles);
 

@@ -31,6 +31,7 @@ import {
   type FlowCanvasNode,
   type FlowNodeData,
 } from "@/db/types/sidebar-nodes";
+import { DocumentReferenceDialog } from "@/features/canvas/components/flow/document-reference/document-reference-dialog";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import {
   handleCountRefine,
@@ -41,6 +42,7 @@ const formSchema = z.object({
   label: z.string().min(1, "이름을 입력해주세요"),
   description: z.string(),
   contentValue: z.string(),
+  contentReferenceId: z.string().optional(),
   targetCount: z
     .string()
     .refine(handleCountRefine, "0 이상, 5이하의 정수를 입력해주세요"),
@@ -67,8 +69,9 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
 
   const contentLabel = useMemo(() => {
     if (!data.content) return null;
+    if (node.type === "documentNode") return "동작";
     return data.content.type === "select" ? "선택 값" : "대화 값";
-  }, [data.content]);
+  }, [data.content, node.type]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -76,6 +79,8 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
       label,
       description,
       contentValue: content?.value ?? "",
+      contentReferenceId:
+        typeof content?.referenceId === "string" ? content.referenceId : "",
       targetCount: String(targetCount ?? ""),
       sourceCount: String(sourceCount ?? ""),
     },
@@ -85,9 +90,15 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
     (values: FormValues) => {
       const nextContentValue =
         values.contentValue === "" ? null : values.contentValue;
-      const nextContent = data.content
-        ? { ...data.content, value: nextContentValue }
-        : null;
+      const nextContent = data.content ? { ...data.content } : null;
+
+      if (nextContent) {
+        nextContent.value = nextContentValue;
+        if (node.type === "documentNode") {
+          const normalized = values.contentReferenceId?.trim() ?? "";
+          nextContent.referenceId = normalized.length > 0 ? normalized : null;
+        }
+      }
 
       const nextHandle = data.handle ? { ...data.handle } : null;
 
@@ -146,6 +157,7 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
       data.handle,
       getEdges,
       node.id,
+      node.type,
       setEdges,
       sourceCount,
       sourceCountEditable,
@@ -197,6 +209,30 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
                 control={form.control}
                 content={data.content}
                 label={contentLabel ?? ""}
+              />
+            ) : null}
+
+            {node.type === "documentNode" && data.content ? (
+              <FormField
+                control={form.control}
+                name="contentReferenceId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>문서 연결</FormLabel>
+                    <FormControl>
+                      <DocumentReferenceDialog
+                        referenceId={field.value}
+                        onChange={(nextReferenceId) =>
+                          field.onChange(nextReferenceId ?? "")
+                        }
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      문서 노드는 문서 연결이 있어야 실행할 수 있습니다.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             ) : null}
 

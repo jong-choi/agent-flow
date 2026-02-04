@@ -78,6 +78,30 @@ const SearchNodeItem: SidebarNodeSeedItem = {
   },
 };
 
+const DocumentNodeItem: SidebarNodeSeedItem = {
+  label: "문서",
+  description: "문서를 읽거나 수정",
+  type: "documentNode",
+  content: {
+    type: "select",
+    label: "동작",
+    placeholder: "동작 선택",
+    value: "읽기",
+  },
+  handle: null,
+  information: {
+    title: "문서 노드",
+    summary: "문서를 읽거나(읽기), 수정하거나(대치/병합) 합니다",
+    description:
+      "문서 노드는 내 문서와 연결한 뒤, 선택한 동작에 따라 문서를 읽거나 수정합니다. 대치/병합은 입력이 필요합니다.",
+    guides: [
+      "동작을 선택하세요: 읽기 / 대치 / 병합",
+      "문서를 선택해 연결하세요",
+      "대치/병합은 이전 노드의 출력값을 사용합니다",
+    ],
+  },
+};
+
 const MergeNodeItem: SidebarNodeSeedItem = {
   label: "병합",
   description: "여러 입력을 병합",
@@ -200,6 +224,7 @@ export const sidebarNodesData: SidebarNodeSeedItem[] = [
   MergeNodeItem,
   SplitNodeItem,
   SearchNodeItem,
+  DocumentNodeItem,
   EndNodeItem,
   PromptNodeItem,
 ];

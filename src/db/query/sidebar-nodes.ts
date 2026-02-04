@@ -14,6 +14,12 @@ import {
 } from "@/db/schema";
 import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 
+const DOCUMENT_ACTION_OPTIONS = [
+  { id: "read", value: "읽기" },
+  { id: "merge", value: "병합" },
+  { id: "replace", value: "대치" },
+] as const;
+
 const getSidebarNodesBase = async () => {
   const rows = await db
     .select({
@@ -73,6 +79,16 @@ const hydrateSidebarNodeOptions = async (
     : null;
 
   return nodes.map((node) => {
+    if (node.type === "documentNode" && node.content?.type === "select") {
+      return {
+        ...node,
+        content: {
+          ...node.content,
+          options: [...DOCUMENT_ACTION_OPTIONS],
+        },
+      };
+    }
+
     if (
       node.content?.type === "select" &&
       node.content.optionsSource === "ai_models"

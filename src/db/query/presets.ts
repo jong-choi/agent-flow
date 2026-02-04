@@ -784,7 +784,27 @@ export const getPresetGraphForCanvasAction = async (presetId: string) => {
       title: preset.title,
       workflowId: preset.workflowId,
     },
-    nodes: filteredNodes,
+    nodes: filteredNodes.map((node) => {
+      if (node.type !== "documentNode") {
+        return node;
+      }
+
+      const content = node.data.content;
+      if (!content) {
+        return node;
+      }
+
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          content: {
+            ...content,
+            referenceId: null,
+          },
+        },
+      };
+    }),
     edges: filteredEdges,
   };
 };

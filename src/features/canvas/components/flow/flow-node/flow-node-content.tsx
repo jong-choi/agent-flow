@@ -22,15 +22,18 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { type FlowNodeData } from "@/db/types/sidebar-nodes";
+import { DocumentReferenceDialog } from "@/features/canvas/components/flow/document-reference/document-reference-dialog";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export function FlowNodeContent({
   content,
   id,
+  nodeType,
 }: {
   content: FlowNodeData["content"];
   id: string;
+  nodeType?: string;
 }) {
   const { updateNodeData } = useCanvasReactFlow();
   const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
@@ -53,26 +56,40 @@ export function FlowNodeContent({
   if (content.type === "select") {
     return (
       <CardContent className="-mt-4">
-        <Select
-          onValueChange={handleValueChange}
-          value={content.value || undefined}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={content.placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>{content.label} </SelectLabel>
-              {content.options?.map((option) => {
-                return (
-                  <SelectItem value={option.value} key={option.id}>
-                    {option.value}
-                  </SelectItem>
-                );
-              })}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-2">
+          <Select
+            onValueChange={handleValueChange}
+            value={content.value || undefined}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={content.placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>{content.label} </SelectLabel>
+                {content.options?.map((option) => {
+                  return (
+                    <SelectItem value={option.value} key={option.id}>
+                      {option.value}
+                    </SelectItem>
+                  );
+                })}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          {nodeType === "documentNode" ? (
+            <DocumentReferenceDialog
+              referenceId={content.referenceId}
+              onChange={(nextReferenceId) => {
+                setSelectedNodeId(null);
+                updateNodeData(id, {
+                  content: { ...content, referenceId: nextReferenceId },
+                });
+              }}
+            />
+          ) : null}
+        </div>
       </CardContent>
     );
   }

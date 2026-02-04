@@ -133,16 +133,52 @@ export const searchDocumentsByTitle = async (
     .limit(safeLimit);
 };
 
+export const getRecentDocumentsForPicker = async (
+  limit = 6,
+): Promise<DocumentSearchResult[]> => {
+  const userId = await getUserId();
+  const safeLimit = Math.min(Math.max(limit, 1), 20);
+
+  return db
+    .select({
+      id: documents.id,
+      title: documents.title,
+      content: documents.content,
+    })
+    .from(documents)
+    .where(and(eq(documents.ownerId, userId), isNull(documents.deletedAt)))
+    .orderBy(desc(documents.updatedAt))
+    .limit(safeLimit);
+};
+
+export const getDocumentTitleById = async ({
+  docId,
+}: {
+  docId: string;
+}): Promise<string | null> => {
+  const ownerId = await getUserId();
+
+  const [document] = await db
+    .select({ title: documents.title })
+    .from(documents)
+    .where(
+      and(
+        eq(documents.id, docId),
+        eq(documents.ownerId, ownerId),
+        isNull(documents.deletedAt),
+      ),
+    )
+    .limit(1);
+
+  return document?.title ?? null;
+};
+
 /**
  * 문서 상세 조회.
  * - 사용처: src/app/docs/[docId]/page.tsx, src/app/docs/edit/[docId]/page.tsx
  * - 동작: 소유자 검증 후 단건 반환
  */
-export const getDocumentById = async ({
-  docId,
-}: {
-  docId: string;
-}) => {
+export const getDocumentById = async ({ docId }: { docId: string }) => {
   const ownerId = await getUserId();
   const [document] = await db
     .select({
@@ -163,6 +199,58 @@ export const getDocumentById = async ({
     .limit(1);
 
   return document ?? null;
+};
+
+export const replaceDocumentContentById = async ({
+  docId,
+  content,
+}: {
+  docId: string;
+  content: string;
+}) => {
+  const ownerId = await getUserId();
+  const [document] = await db
+    .update(documents)
+    .set({
+      content,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(documents.id, docId),
+        eq(documents.ownerId, ownerId),
+        isNull(documents.deletedAt),
+      ),
+    )
+    .returning({ content: documents.content });
+
+  return document?.content ?? null;
+};
+
+export const mergeDocumentContentById = async ({
+  docId,
+  content,
+}: {
+  docId: string;
+  content: string;
+}) => {
+  const ownerId = await getUserId();
+  const [document] = await db
+    .update(documents)
+    .set({
+      content: sql`${documents.content} || ${content}`,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(documents.id, docId),
+        eq(documents.ownerId, ownerId),
+        isNull(documents.deletedAt),
+      ),
+    )
+    .returning({ content: documents.content });
+
+  return document?.content ?? null;
 };
 
 /**
@@ -238,11 +326,7 @@ export const updateDocument = async ({
  * - 사용처: src/app/docs/[docId]/page.tsx
  * - 동작: deletedAt 갱신으로 목록/상세에서 숨김 처리
  */
-export const deleteDocument = async ({
-  docId,
-}: {
-  docId: string;
-}) => {
+export const deleteDocument = async ({ docId }: { docId: string }) => {
   const ownerId = await getUserId();
   const [document] = await db
     .update(documents)
