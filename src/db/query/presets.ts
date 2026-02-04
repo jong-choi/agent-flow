@@ -229,6 +229,7 @@ const getPresetDetailBase = async (presetId: string) => {
     .select({
       id: presets.id,
       workflowId: presets.workflowId,
+      chatId: presets.chatId,
       ownerId: presets.ownerId,
       ownerDisplayName: users.displayName,
       ownerAvatarHash: users.avatarHash,

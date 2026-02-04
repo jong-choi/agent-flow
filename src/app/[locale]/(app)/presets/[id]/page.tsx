@@ -14,6 +14,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { getUserId } from "@/db/query/auth";
 import { getPresetDetail, getPresetPurchaseStatus } from "@/db/query/presets";
+import { PresetChatExampleSection } from "@/app/[locale]/(app)/presets/[id]/_components/preset-chat-example-section";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
 import { PresetPurchaseDialog } from "@/features/preset/components/preset-purchase-dialog";
 import { formatKoreanDate } from "@/lib/utils";
@@ -94,6 +95,8 @@ export default async function PresetDetailPage({
                 )}
               </CardContent>
             </Card>
+
+            <PresetChatExampleSection chatId={preset.chatId} />
 
             <Card>
               <CardHeader>

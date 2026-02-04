@@ -105,7 +105,8 @@ export async function PresetCreateForm({
         <CardHeader>
           <CardTitle>채팅 예시</CardTitle>
           <CardDescription>
-            마켓에 노출될 채팅 예시를 선택합니다.
+            마켓에 노출될 채팅 예시를 선택합니다. 선택된 채팅은 최대 4개의
+            메시지를 노출합니다.
           </CardDescription>
         </CardHeader>
         <CardContent>

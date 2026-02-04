@@ -204,6 +204,29 @@ export const getChatsByUser = async () => {
     .orderBy(desc(chats.updatedAt));
 };
 
+export const getPublicChatMessagesByChatId = async ({
+  chatId,
+  chatLen = 4,
+}: {
+  chatId: string;
+  chatLen?: number;
+}) => {
+  const messages = await db
+    .select({
+      id: chatMessages.id,
+      chatId: chatMessages.chatId,
+      role: chatMessages.role,
+      content: chatMessages.content,
+      createdAt: chatMessages.createdAt,
+    })
+    .from(chatMessages)
+    .where(eq(chatMessages.chatId, chatId))
+    .orderBy(asc(chatMessages.createdAt))
+    .limit(chatLen);
+
+  return messages;
+};
+
 export const getChatsByWorkflowId = async ({
   workflowId,
   limit = 3,
@@ -238,18 +261,10 @@ export const getChatsByWorkflowId = async ({
   // 2. 각 채팅별로 최초 N개의 메시지를 개별 쿼리로 가져오기
   const chatsWithMessages = await Promise.all(
     recentChats.map(async (chat) => {
-      const messages = await db
-        .select({
-          id: chatMessages.id,
-          chatId: chatMessages.chatId,
-          role: chatMessages.role,
-          content: chatMessages.content,
-          createdAt: chatMessages.createdAt,
-        })
-        .from(chatMessages)
-        .where(eq(chatMessages.chatId, chat.id))
-        .orderBy(asc(chatMessages.createdAt))
-        .limit(chatLen);
+      const messages = await getPublicChatMessagesByChatId({
+        chatId: chat.id,
+        chatLen,
+      });
 
       return {
         ...chat,

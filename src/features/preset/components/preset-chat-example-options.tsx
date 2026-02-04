@@ -41,7 +41,7 @@ export function PresetChatExampleOptions({
         {chatOptions.map((chat, index) => (
           <ChatExampleOptionCard
             key={chat.id}
-            label={`채팅 ${index + 1}`}
+            label={chat.title || `채팅 ${index + 1}`}
             count={chat.messages.length}
             selected={selectedId === chat.id}
             onSelect={() => setSelectedId(chat.id)}
