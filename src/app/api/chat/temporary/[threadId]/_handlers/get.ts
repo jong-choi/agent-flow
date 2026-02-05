@@ -10,6 +10,7 @@ import {
   langgraphStreamEventSchema,
 } from "@/app/api/chat/_types/chat-events";
 import { isValidNodeType } from "@/app/api/chat/_types/nodes";
+import { getUserId } from "@/db/query/auth";
 
 /**
  * 채팅 실행 GET 요청
@@ -40,6 +41,7 @@ export async function GET(
       );
     }
 
+    const userId = await getUserId();
     const state = threadContext.state;
 
     const graph = buildStateGraph(threadContext.graph);
@@ -57,7 +59,7 @@ export async function GET(
         try {
           for await (const chunk of app.streamEvents(state, {
             version: "v2",
-            configurable: { thread_id: threadId },
+            configurable: { thread_id: threadId, user_id: userId },
             durability: "exit", // 랭그래프 종료 시점에만 상태 업데이트
           })) {
             if (
@@ -130,6 +132,9 @@ export async function GET(
       },
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "사용자 정보가 없습니다.") {
+      return Response.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
     console.error("GET /api/chat/temporary/[threadId] error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }

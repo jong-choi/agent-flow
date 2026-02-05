@@ -94,9 +94,9 @@ describe("searchNode (integration)", () => {
     const state = buildState({ nodeId, inputNodeId, input: "고양이" });
     const config = buildConfig(nodeId);
 
-    await expect(searchNode(state, config)).rejects.toThrow(
-      "Google Search API 키가 설정되지 않았습니다.",
-    );
+    const result = await searchNode(state, config);
+
+    expect(result.outputMap?.[nodeId]).toBe("검색 중 에러가 발생하였습니다.");
   });
 
   it("nodeId가 문자열이 아니면 에러가 발생한다", async () => {
@@ -158,9 +158,9 @@ describe("searchNode (integration)", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(searchNode(state, config)).rejects.toThrow(
-      "Google Search API 오류: 503 Service Unavailable",
-    );
+    const result = await searchNode(state, config);
+
+    expect(result.outputMap?.[nodeId]).toBe("검색 중 에러가 발생하였습니다.");
   });
 
   it("검색 결과를 요약해 outputMap에 저장한다", async () => {
@@ -188,10 +188,14 @@ describe("searchNode (integration)", () => {
 
     const result = await searchNode(state, config);
 
-    const expectedUrl =
-      "https://www.googleapis.com/customsearch/v1" +
-      "?key=test-key&cx=test-cx" +
-      `&q=${encodeURIComponent(input)}`;
+    const params = new URLSearchParams({
+      key: "test-key",
+      cx: "test-cx",
+      q: input,
+      num: String(10),
+      fields: "items(title,link,snippet),searchInformation(totalResults)",
+    });
+    const expectedUrl = `https://www.googleapis.com/customsearch/v1?${params}`;
     const expectedMessage =
       "검색 결과 (2개):\n\n" +
       "1. 첫번째 결과\n스니펫1\nhttps://example.com/1\n\n" +
@@ -201,7 +205,7 @@ describe("searchNode (integration)", () => {
     expect(result.outputMap?.[nodeId]).toBe(expectedMessage);
   });
 
-  it("items가 없으면 0개로 요약한다", async () => {
+  it("items가 없으면 에러 메시지를 반환한다", async () => {
     setEnv({ apiKey: "test-key", cx: "test-cx" });
 
     const input = "고양이 검색";
@@ -212,6 +216,6 @@ describe("searchNode (integration)", () => {
 
     const result = await searchNode(state, config);
 
-    expect(result.outputMap?.[nodeId]).toBe("검색 결과 (0개):\n\n");
+    expect(result.outputMap?.[nodeId]).toBe("검색 중 에러가 발생하였습니다.");
   });
 });

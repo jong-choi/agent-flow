@@ -19,7 +19,7 @@ export async function WorkflowPreviewDialog({
     <Dialog>
       <DialogTrigger asChild>
         <Button type="button" variant="outline">
-          그래프 보기
+          <span>그래프 보기</span>
         </Button>
       </DialogTrigger>
       <DialogContent

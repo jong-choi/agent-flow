@@ -86,7 +86,15 @@ const sidebarNodeInformationSelectSchema = createSelectSchema(
 const sidebarNodeContentsSelectSchema = createSelectSchema(
   sidebarNodeContents,
 ).extend({
-  options: z.array(z.object({ id: z.string(), value: z.string() })).optional(),
+  options: z
+    .array(
+      z.object({
+        id: z.string(),
+        value: z.string(),
+        price: z.number().int().nonnegative().optional(),
+      }),
+    )
+    .optional(),
   referenceId: z.string().nullable().optional(),
 });
 const sidebarNodeHandlesSelectSchema = createSelectSchema(sidebarNodeHandles);

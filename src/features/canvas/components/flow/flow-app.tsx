@@ -14,6 +14,7 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
+import { Badge } from "@/components/ui/badge";
 import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
 import { FlowLoadPresetButton } from "@/features/canvas/components/flow/flow-load-preset/flow-load-preset-button";
 import { FlowPresetGroupsOverlay } from "@/features/canvas/components/flow/flow-preset-groups/flow-preset-groups-overlay";
@@ -56,6 +57,26 @@ export function FlowApp({
   const setLoading = useCanvasStore((s) => s.setIsStartLoading);
   const setWorkflow = useCanvasStore((s) => s.setWorkflow);
 
+  const estimatedCredits = useMemo(() => {
+    return nodes
+      .filter((node) => node.type === "chatNode")
+      .reduce((sum, node) => {
+        const modelId = node.data.content?.value;
+        if (typeof modelId !== "string") return sum;
+
+        const option = node.data.content?.options?.find(
+          (item) => item.value === modelId,
+        );
+        const price = typeof option?.price === "number" ? option.price : 0;
+        return sum + Math.max(0, price);
+      }, 0);
+  }, [nodes]);
+
+  const hasChatNode = useMemo(
+    () => nodes.some((node) => node.type === "chatNode"),
+    [nodes],
+  );
+
   const isValidConnection = useIsValidConnection();
 
   const { handleReconnect, handleReconnectStart } = useReconnectEdge();
@@ -93,12 +114,17 @@ export function FlowApp({
 
   return (
     <div className="relative h-full w-full">
-      <div className="absolute top-4 left-4 z-10 flex gap-2">
+      <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
         <Suspense>
           <FlowStartButton />
         </Suspense>
         <FlowLoadPresetButton />
         <FlowSaveButton />
+        {hasChatNode ? (
+          <Badge variant="secondary" className="h-9">
+            예상 소모: {estimatedCredits.toLocaleString()} 크레딧
+          </Badge>
+        ) : null}
       </div>
       <ReactFlow
         snapToGrid

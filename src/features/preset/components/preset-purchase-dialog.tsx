@@ -27,8 +27,6 @@ import {
   purchasePresetAction,
 } from "@/db/query/presets";
 
-const formatCredit = (value: number) => `${value.toLocaleString()} 크레딧`;
-
 type PresetPurchaseDialogProps = {
   presetId: string;
   totalPrice: number;
@@ -239,25 +237,25 @@ export function PresetPurchaseDialog({
                   ? "-"
                   : balance == null
                     ? "-"
-                    : formatCredit(balance)}
+                    : `${balance} 크레딧`}
             </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">프리셋 가격</span>
-            <span className="font-medium">{formatCredit(totalPrice)}</span>
+            <span className="font-medium">{totalPrice} 크레딧</span>
           </div>
           {referencedPresetPrice > 0 ? (
             <div className="space-y-1 pl-2 text-xs text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>현재 프리셋</span>
                 <span className="font-medium text-foreground">
-                  {formatCredit(currentPresetPrice)}
+                  {currentPresetPrice} 크레딧
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>참조된 프리셋</span>
                 <span className="font-medium text-foreground">
-                  {formatCredit(referencedPresetPrice)}
+                  {referencedPresetPrice} 크레딧
                 </span>
               </div>
             </div>
@@ -271,7 +269,7 @@ export function PresetPurchaseDialog({
                   ? "-"
                   : nextBalance == null
                     ? "-"
-                    : formatCredit(nextBalance)}
+                    : `${nextBalance} 크레딧`}
             </span>
           </div>
           {balanceError ? (
