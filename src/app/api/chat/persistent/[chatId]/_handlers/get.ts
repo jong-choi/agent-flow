@@ -100,7 +100,7 @@ export async function GET(
         try {
           for await (const chunk of app.streamEvents(state, {
             version: "v2",
-            configurable: { thread_id: chatId },
+            configurable: { thread_id: chatId, user_id: chat.userId },
             durability: "exit",
           })) {
             if (

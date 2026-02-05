@@ -333,7 +333,14 @@ function ContentContentFormField({
                     {content.options?.map((option) => {
                       return (
                         <SelectItem value={option.value} key={option.id}>
-                          {option.value}
+                          <div className="flex w-full items-center justify-between gap-2">
+                            <span className="truncate">{option.value}</span>
+                            {typeof option.price === "number" ? (
+                              <span className="text-xs text-muted-foreground">
+                                {option.price} 크레딧
+                              </span>
+                            ) : null}
+                          </div>
                         </SelectItem>
                       );
                     })}

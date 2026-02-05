@@ -14,11 +14,13 @@ export function ChatEventWrapper({
   initialThreadId,
   initialChatId,
   initialMessages,
+  estimatedCredits,
   mode = "temporary",
 }: React.PropsWithChildren<{
   initialThreadId?: string;
   initialChatId?: string;
   initialMessages?: ClientChatMessage[];
+  estimatedCredits?: number | null;
   mode?: ChatEventWrapperMode;
 }>) {
   const threadSearchParam = useSearchParams().get("thread_id");
@@ -79,6 +81,7 @@ export function ChatEventWrapper({
     mode,
     threadId,
     chatId,
+    estimatedCredits: estimatedCredits ?? null,
     messages: initialMessages ?? [],
   };
 

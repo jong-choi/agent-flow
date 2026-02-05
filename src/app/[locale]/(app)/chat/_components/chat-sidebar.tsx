@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SquarePen } from "lucide-react";
+import { BotMessageSquare, SquarePen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchChats } from "@/app/[locale]/(app)/chat/_api/fetch-chats";
 import { chatListQueryKey } from "@/app/[locale]/(app)/chat/_components/chat-queries";
@@ -17,21 +17,35 @@ export function ChatSidebar() {
     queryKey: chatListQueryKey,
     queryFn: fetchChats,
   });
-
+  const isCreating = pathname.endsWith("/chat");
   const chats = data?.data ?? [];
 
   return (
     <aside className="flex h-full w-64 max-w-64 shrink-0 flex-col gap-2 border-r border-border bg-background/80 px-4 py-6 backdrop-blur">
-      <Button
-        asChild
-        size="sm"
-        variant="ghost"
-        className="w-full justify-start"
-      >
-        <Link href="/chat">
-          <SquarePen className="size-4" strokeWidth={1.75} />새 채팅
-        </Link>
-      </Button>
+      <div className="h-7">
+        {isCreating ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="w-full justify-start"
+            disabled
+          >
+            <BotMessageSquare className="size-4" strokeWidth={1.75} />
+            채팅
+          </Button>
+        ) : (
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className="w-full justify-start"
+          >
+            <Link href="/chat">
+              <SquarePen className="size-4" strokeWidth={1.75} />새 채팅
+            </Link>
+          </Button>
+        )}
+      </div>
       <Separator />
       <nav className="flex flex-col gap-1">
         {isLoading &&

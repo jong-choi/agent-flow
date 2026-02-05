@@ -12,6 +12,7 @@ import { FlowNodeContent } from "@/features/canvas/components/flow/flow-node/flo
 import { FlowNodeDeleteButton } from "@/features/canvas/components/flow/flow-node/flow-node-delete-button";
 import { FlowNodeHandles } from "@/features/canvas/components/flow/flow-node/flow-node-handles";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+import { cn } from "@/lib/utils";
 
 export function FlowNode({ data, id, type }: NodeProps<FlowCanvasNode>) {
   const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
@@ -22,7 +23,10 @@ export function FlowNode({ data, id, type }: NodeProps<FlowCanvasNode>) {
 
   return (
     <Card
-      className="relative w-48 cursor-pointer p-2 px-0"
+      className={cn(
+        "relative cursor-pointer p-2 px-0",
+        data.content?.type ? "w-56" : "w-48",
+      )}
       onClick={handleClick}
     >
       <FlowNodeDeleteButton id={id} />

@@ -13,6 +13,7 @@ import {
 } from "@/app/api/chat/_nodes/chat-node/models";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import { getActiveAiModels } from "@/db/query/ai-models";
+import { getCreditBalanceByUserId, spendCreditsByUserId } from "@/db/query/credit";
 import { type AiModel } from "@/db/schema";
 
 const baseModel: AiModel = {
@@ -62,6 +63,7 @@ const buildConfig = ({
       langgraph_node: nodeId,
       data: { content: { value: modelId } },
     },
+    configurable: { thread_id: "thread-id", user_id: "user-id" },
   } as unknown as FlowRunnableConfig;
 
   return config;
@@ -71,12 +73,19 @@ vi.mock("@/db/query/ai-models", () => ({
   getActiveAiModels: vi.fn(),
 }));
 
+vi.mock("@/db/query/credit", () => ({
+  getCreditBalanceByUserId: vi.fn(),
+  spendCreditsByUserId: vi.fn(),
+}));
+
 vi.mock("@langchain/google-gauth", () => ({
   ChatGoogle: vi.fn(),
 }));
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(getCreditBalanceByUserId).mockResolvedValue(9999);
+  vi.mocked(spendCreditsByUserId).mockResolvedValue({ ok: true, balance: 9999 });
 });
 
 describe("chat-node models (unit)", () => {
@@ -195,6 +204,15 @@ describe("chatNode (integration)", () => {
     expect(messagesArg).toHaveLength(1);
     expect(messagesArg[0]).toMatchObject({ content: input });
     expect(result.outputMap?.[nodeId]).toBe("hello world");
+    expect(vi.mocked(spendCreditsByUserId)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-id",
+        amount: baseModel.price,
+        category: "workflow",
+        title: "워크플로우 실행",
+        description: `모델 사용 : ${modelId}`,
+      }),
+    );
   });
 
   it("멀티턴: 이전 메시지를 포함해 invoke를 호출한다", async () => {

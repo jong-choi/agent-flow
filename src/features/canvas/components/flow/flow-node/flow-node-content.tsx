@@ -41,7 +41,7 @@ export function FlowNodeContent({
   if (!content) return null;
 
   const handleValueChange = (value: string) => {
-    setSelectedNodeId(null);
+    requestAnimationFrame(() => setSelectedNodeId(null));
     updateNodeData(id, { content: { ...content, value } });
   };
 
@@ -61,7 +61,7 @@ export function FlowNodeContent({
             onValueChange={handleValueChange}
             value={content.value || undefined}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder={content.placeholder} />
             </SelectTrigger>
             <SelectContent>
@@ -70,7 +70,14 @@ export function FlowNodeContent({
                 {content.options?.map((option) => {
                   return (
                     <SelectItem value={option.value} key={option.id}>
-                      {option.value}
+                      <div className="flex w-full items-center justify-between gap-2">
+                        <span className="truncate">{option.value}</span>
+                        {typeof option.price === "number" ? (
+                          <span className="right-0 text-xs text-muted-foreground">
+                            x{option.price}
+                          </span>
+                        ) : null}
+                      </div>
                     </SelectItem>
                   );
                 })}
@@ -82,10 +89,10 @@ export function FlowNodeContent({
             <DocumentReferenceDialog
               referenceId={content.referenceId}
               onChange={(nextReferenceId) => {
-                setSelectedNodeId(null);
                 updateNodeData(id, {
                   content: { ...content, referenceId: nextReferenceId },
                 });
+                requestAnimationFrame(() => setSelectedNodeId(null));
               }}
             />
           ) : null}

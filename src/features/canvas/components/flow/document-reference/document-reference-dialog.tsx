@@ -74,10 +74,11 @@ export function DocumentReferenceDialog({
             type="button"
             variant={resolvedReferenceId ? "outline" : "default"}
             className="min-w-0 flex-1"
+            size="sm"
             title={triggerText}
-            disabled={isCreatingDocument}
+            disabled={isCreatingDocument || isFetchingTitle}
           >
-            <span className="min-w-0 truncate">{triggerText}</span>
+            <span className="min-w-0 truncate text-sm">{triggerText}</span>
           </Button>
         </DialogTrigger>
         {resolvedReferenceId ? (

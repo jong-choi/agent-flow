@@ -108,7 +108,9 @@ export function DocumentReferencePicker({
             key={doc.id}
             type="button"
             className="flex w-full grow-0 flex-col gap-1 border-b px-4 py-3 text-left text-sm transition hover:bg-accent"
-            onClick={() => onSelect(doc.id)}
+            onClick={() => {
+              onSelect(doc.id);
+            }}
           >
             <span className="w-full truncate font-medium">{doc.title}</span>
             <span className="w-full text-xs">{buildPreview(doc.content)}</span>

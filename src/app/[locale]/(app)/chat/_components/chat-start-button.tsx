@@ -37,7 +37,7 @@ export function ChatStartButton({ workflowId }: { workflowId: string }) {
   return (
     <Button size="sm" type="button" onClick={clickHandler} disabled={loading}>
       {loading ? <Spinner className="size-3.5" /> : <Play />}
-      채팅 시작
+      <span className="sm:hidden xl:block">채팅 시작</span>
     </Button>
   );
 }

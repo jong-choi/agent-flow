@@ -75,6 +75,7 @@ const hydrateSidebarNodeOptions = async (
     ? (await getActiveAiModels()).map((aiModel) => ({
         id: aiModel.id,
         value: aiModel.modelId,
+        price: aiModel.price ?? 0,
       }))
     : null;
 

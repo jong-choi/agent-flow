@@ -10,8 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-const formatCredit = (value: number) => `${value.toLocaleString()} 크레딧`;
-
 const normalizeCreditInput = (value: string) => {
   if (value.trim() === "") {
     return 0;
@@ -76,18 +74,16 @@ export function PresetPricePublishCard({
         <div className="space-y-2 rounded-lg border bg-accent/30 p-3 text-sm">
           <div className="flex items-center justify-between gap-3">
             <span className="text-muted-foreground">예상 프리셋 가격</span>
-            <span className="font-semibold">{formatCredit(totalPrice)}</span>
+            <span className="font-semibold">{totalPrice} 크레딧</span>
           </div>
           <div className="space-y-1 pl-2 text-xs">
             <div className="flex items-center justify-between gap-3">
               <span className="text-muted-foreground">현재 프리셋</span>
-              <span className="font-medium">
-                {formatCredit(currentPresetPrice)}
-              </span>
+              <span className="font-medium">{currentPresetPrice} 크레딧</span>
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-muted-foreground">참조된 프리셋</span>
-              <span className="font-medium">{formatCredit(referencedPrice)}</span>
+              <span className="font-medium">{referencedPrice} 크레딧</span>
             </div>
           </div>
         </div>
@@ -111,4 +107,3 @@ export function PresetPricePublishCard({
     </Card>
   );
 }
-

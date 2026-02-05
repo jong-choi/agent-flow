@@ -115,6 +115,85 @@ const ensureCreditAccount = async (userId: string) => {
   return account;
 };
 
+export const getCreditBalanceByUserId = async (userId: string) => {
+  const account = await ensureCreditAccount(userId);
+  return account.balance;
+};
+
+export type SpendCreditsByUserIdResult =
+  | { ok: true; balance: number }
+  | { ok: false; reason: "insufficient_credit"; balance: number };
+
+export const spendCreditsByUserId = async ({
+  userId,
+  amount,
+  category,
+  title,
+  description,
+}: {
+  userId: string;
+  amount: number;
+  category: CreditTransactionCategory;
+  title: string;
+  description?: string | null;
+}): Promise<SpendCreditsByUserIdResult> => {
+  const normalizedAmount = Number.isFinite(amount)
+    ? Math.max(0, Math.round(amount))
+    : 0;
+
+  if (normalizedAmount === 0) {
+    const balance = await getCreditBalanceByUserId(userId);
+    return { ok: true, balance };
+  }
+
+  const occurredAt = new Date();
+
+  return db.transaction(async (tx) => {
+    await tx.insert(creditAccounts).values({ userId }).onConflictDoNothing();
+
+    const [accountSnapshot] = await tx
+      .select({ balance: creditAccounts.balance })
+      .from(creditAccounts)
+      .where(eq(creditAccounts.userId, userId))
+      .limit(1);
+
+    const [account] = await tx
+      .update(creditAccounts)
+      .set({
+        balance: sql`${creditAccounts.balance} - ${normalizedAmount}`,
+        totalSpent: sql`${creditAccounts.totalSpent} + ${normalizedAmount}`,
+        updatedAt: occurredAt,
+      })
+      .where(
+        and(
+          eq(creditAccounts.userId, userId),
+          gte(creditAccounts.balance, normalizedAmount),
+        ),
+      )
+      .returning({ balance: creditAccounts.balance });
+
+    if (!account) {
+      return {
+        ok: false,
+        reason: "insufficient_credit",
+        balance: accountSnapshot?.balance ?? 0,
+      };
+    }
+
+    await tx.insert(creditTransactions).values({
+      userId,
+      type: "spend",
+      category,
+      title,
+      description: description ?? null,
+      amount: -normalizedAmount,
+      occurredAt,
+    });
+
+    return { ok: true, balance: account.balance };
+  });
+};
+
 /**
  * 크레딧 잔액 단일 조회.
  * - 화면: 현재 직접 호출처 없음 (결제/차감 전 잔액 검증 등 공용 용도).
