@@ -6,3 +6,4 @@ export * from "@/db/schema/presets";
 export * from "@/db/schema/credit";
 export * from "@/db/schema/documents";
 export * from "@/db/schema/chat";
+export * from "@/db/schema/secrets";

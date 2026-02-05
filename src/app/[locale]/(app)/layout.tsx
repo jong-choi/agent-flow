@@ -13,6 +13,7 @@ import {
   BotMessageSquare,
   CircleUserRound,
   HandCoins,
+  KeyRound,
   type LucideProps,
   StickyNote,
   Workflow,
@@ -73,6 +74,17 @@ const navigation: NavType[] = [
     ],
   },
   { type: "Item", name: "프로필", href: "/profile", icon: CircleUserRound },
+  { type: "Separator" },
+  {
+    type: "Item",
+    name: "API",
+    href: "/developers",
+    icon: KeyRound,
+    children: [
+      { name: "서비스 키", href: "/developers" },
+      { name: "워크플로우 API", href: "/developers/apis" },
+    ],
+  },
 ];
 
 interface MainLayoutProps {
