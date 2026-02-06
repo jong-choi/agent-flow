@@ -34,7 +34,7 @@ type CanvasBackdropOptions = BackdropViewportOptions & {
  */
 type CanvasMovingBackdropOptions = BackdropViewportOptions & {
   /** 렌더링할 배경 스타일 타입 */
-  variant: "cavnas-moving";
+  variant: "canvas-moving";
   /** 격자 셀 한 칸의 크기(px) */
   gridCellSize?: number;
 };
@@ -230,7 +230,7 @@ export function LandingSectionBackdrop({
     );
   }
 
-  if (variant === "cavnas-moving") {
+  if (variant === "canvas-moving") {
     const viewBoxWidth = options.viewBoxWidth ?? defaultViewBoxWidth;
     const viewBoxHeight = options.viewBoxHeight ?? defaultViewBoxHeight;
     const gridCellSize = options.gridCellSize ?? 44;

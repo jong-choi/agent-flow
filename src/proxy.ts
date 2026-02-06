@@ -7,9 +7,6 @@ const publicPaths = ["/", "/login"];
 const intlMiddleware = createMiddleware(routing);
 
 export const proxy = auth((req) => {
-  const intlResponse = intlMiddleware(req);
-  if (intlResponse) return intlResponse;
-
   const { pathname } = req.nextUrl;
   const isPublicPath = publicPaths.includes(pathname);
 
@@ -27,7 +24,7 @@ export const proxy = auth((req) => {
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  return intlMiddleware(req);
 });
 
 // 주소에 .이 있는 경우 무시됨
