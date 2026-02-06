@@ -1,18 +1,13 @@
 import Link from "next/link";
-import { WorkflowCard } from "@/app/[locale]/(app)/chat/_components/workflow-card";
-import { WorkflowsListDialog } from "@/app/[locale]/(app)/chat/_components/workflows-list-dialog";
+import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
+import { ChatWorkflowListDialog } from "@/features/chats/components/chat-page/chat-workflow-list-dialog";
+import { type ChatPageWorkflow } from "@/features/chats/components/chat-page/chat-queries";
 import { PageHeading } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
-import { getRecentWorkflows } from "@/db/query/workflows";
-
-type GetRecentWorkflowsResult = Awaited<ReturnType<typeof getRecentWorkflows>>;
-export type ChatPageWorkflow = Pick<
-  GetRecentWorkflowsResult["data"][number],
-  "id" | "title" | "description" | "updatedAt"
->;
+import { getRecentWorkflowsForChat } from "@/features/chats/server/queries";
 
 export default async function Page() {
-  const { data, hasMore } = await getRecentWorkflows();
+  const { data, hasMore } = await getRecentWorkflowsForChat();
 
   return (
     <div className="container mx-auto">
@@ -22,12 +17,14 @@ export default async function Page() {
           <div className="flex w-3/5 min-w-[450px] flex-col gap-8">
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
               {data.map((workflow: ChatPageWorkflow) => {
-                return <WorkflowCard key={workflow.id} workflow={workflow} />;
+                return (
+                  <ChatWorkflowCard key={workflow.id} workflow={workflow} />
+                );
               })}
             </div>
           </div>
         )}
-        {hasMore && <WorkflowsListDialog />}
+        {hasMore && <ChatWorkflowListDialog />}
         {!data.length && (
           <>
             <div className="font-semibold text-muted-foreground">

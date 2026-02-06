@@ -14,9 +14,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  getDocumentTitleById,
-  getRecentDocumentsForPicker,
-} from "@/db/query/documents";
+  getDocumentTitleByIdAction,
+  getRecentDocumentsForPickerAction,
+} from "@/features/documents/server/actions";
 import { DocumentCreateButton } from "@/features/canvas/components/flow/document-reference/document-create-button";
 import { DocumentReferencePicker } from "@/features/canvas/components/flow/document-reference/document-reference-picker";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
@@ -43,13 +43,14 @@ export function DocumentReferenceDialog({
   const { data: initialDocuments = [], isLoading: isLoadingInitial } = useQuery(
     {
       queryKey: ["documents", "recent", "picker", MAX_SUGGESTIONS],
-      queryFn: () => getRecentDocumentsForPicker(MAX_SUGGESTIONS),
+      queryFn: () =>
+        getRecentDocumentsForPickerAction({ limit: MAX_SUGGESTIONS }),
     },
   );
 
   const { data: connectedTitle, isFetching: isFetchingTitle } = useQuery({
     queryKey: ["documents", "title", resolvedReferenceId],
-    queryFn: () => getDocumentTitleById({ docId: resolvedReferenceId! }),
+    queryFn: () => getDocumentTitleByIdAction({ docId: resolvedReferenceId! }),
     enabled: Boolean(resolvedReferenceId),
   });
 

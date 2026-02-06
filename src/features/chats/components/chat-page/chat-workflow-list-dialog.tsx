@@ -1,0 +1,41 @@
+import { ChevronRight } from "lucide-react";
+import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
+import { type ChatPageWorkflow } from "@/features/chats/components/chat-page/chat-queries";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { getOwnedWorkflowsForChat } from "@/features/chats/server/queries";
+
+export async function ChatWorkflowListDialog() {
+  const workflowList = await getOwnedWorkflowsForChat();
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline">
+          더 보기 <ChevronRight />
+        </Button>
+      </DialogTrigger>
+      <DialogContent
+        ariaDescribedby="workflows list dialog"
+        className="sm:max-w-5xl"
+      >
+        <DialogTitle>워크플로우 목록</DialogTitle>
+        <ScrollArea className="overflow-auto md:h-[50vh]">
+          <div className="grid grid-cols-3 gap-4">
+            {workflowList.map((workflow: ChatPageWorkflow) => {
+              return (
+                <ChatWorkflowCard key={workflow.id} workflow={workflow} />
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}

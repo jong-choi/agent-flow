@@ -2,7 +2,7 @@
 
 import { BoringCardAvatar } from "@/components/boring-avatar";
 import { Spinner } from "@/components/ui/spinner";
-import type { getPresetLibraryForCanvasAction } from "@/db/query/presets";
+import type { getPresetLibraryForCanvasAction } from "@/features/presets/server/actions";
 
 type PresetLibraryItem = Awaited<
   ReturnType<typeof getPresetLibraryForCanvasAction>

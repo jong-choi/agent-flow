@@ -22,8 +22,8 @@ import {
   getOwnedPresets,
   getPurchasedPresets,
   getPurchasedPresetsSummary,
-} from "@/db/query/presets";
-import { buildQueryString } from "@/features/chat/utils/query-string";
+} from "@/features/presets/server/actions";
+import { buildQueryString } from "@/features/chats/utils/query-string";
 
 const PAGE_SIZE = 50;
 

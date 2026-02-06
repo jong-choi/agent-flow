@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { categoryFilters } from "@/features/preset/constants/category-options";
+import { categoryFilters } from "@/features/presets/constants/category-options";
 
 const PRICE_FILTERS = [
   { label: "전체", value: "all" },

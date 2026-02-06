@@ -8,8 +8,8 @@ import {
   PageDescription,
 } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
-import { getWorkflowWithGraph } from "@/db/query/workflows";
-import { WorkflowDataView } from "@/features/preset/components/workflow-data-view";
+import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
+import { WorkflowDataView } from "@/features/workflows/components/workflow-data-view";
 import { auth } from "@/lib/auth";
 import { formatKoreanDate } from "@/lib/utils";
 

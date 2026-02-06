@@ -1,5 +1,5 @@
-import { ChatSidebar } from "@/app/[locale]/(app)/chat/_components/chat-sidebar";
-import { DVH_HEADER_OFFSET } from "@/app/_components/site-header/site-header";
+import { ChatSidebar } from "@/features/chats/components/chat-page/chat-sidebar";
+import { DVH_HEADER_OFFSET } from "@/app/_components/site-header";
 
 export default function ChatLayout({
   children,

@@ -9,9 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { createPresetAction } from "@/db/query/presets";
-import { getOwnedWorkflowById } from "@/db/query/workflows";
-import { PresetCreateForm } from "@/features/preset/components/preset-create-form";
+import { createPresetAction } from "@/features/presets/server/actions";
+import { getOwnedWorkflowById } from "@/features/workflows/server/queries";
+import { PresetCreateForm } from "@/features/presets/components/preset-create-form";
 import { formatKoreanDate } from "@/lib/utils";
 
 export default async function PresetCreateDetailPage({

@@ -1,4 +1,3 @@
-import { ProfileForm } from "@/app/[locale]/(app)/profile/_components/profile-form";
 import {
   PageContainer,
   PageHeader,
@@ -6,7 +5,9 @@ import {
   PageStack,
 } from "@/components/page-template";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getUserProfile } from "@/db/query/auth";
+import { ProfileForm } from "@/features/profile/components/profile-form";
+import { checkDisplayNameTakenAction } from "@/features/profile/server/actions";
+import { getUserProfile } from "@/features/profile/server/queries";
 
 export default async function ProfilePage() {
   const profile = await getUserProfile();
@@ -26,6 +27,7 @@ export default async function ProfilePage() {
               initialDisplayName={profile.displayName || ""}
               initialAvatarHash={profile.avatarHash || "default"}
               email={profile.email}
+              checkDisplayNameTakenAction={checkDisplayNameTakenAction}
             />
           </CardContent>
         </Card>

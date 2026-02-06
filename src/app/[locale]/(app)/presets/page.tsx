@@ -17,8 +17,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getPresets } from "@/db/query/presets";
-import { buildQueryString } from "@/features/chat/utils/query-string";
+import { getPresets } from "@/features/presets/server/actions";
+import { buildQueryString } from "@/features/chats/utils/query-string";
 
 const PAGE_SIZE = 50;
 

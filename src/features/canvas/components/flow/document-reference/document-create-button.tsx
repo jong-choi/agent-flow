@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { createDocumentAction } from "@/db/query/documents";
+import { createDocumentAction } from "@/features/documents/server/actions";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 type DocumentCreateButtonProps = {

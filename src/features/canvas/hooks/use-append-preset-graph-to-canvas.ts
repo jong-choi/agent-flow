@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { getPresetGraphForCanvasAction } from "@/db/query/presets";
+import type { getPresetGraphForCanvasAction } from "@/features/presets/server/actions";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import {
   buildImportedPresetGraph,
