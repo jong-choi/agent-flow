@@ -1,11 +1,8 @@
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
-import {
-  SecondarySidebar,
-  SidebarNav,
-} from "@/app/[locale]/(app)/_components/sidebar";
 import { AppProvider } from "@/app/[locale]/providers";
-import { SiteHeader } from "@/app/_components/site-header/site-header";
+import { SecondarySidebar, SidebarNav } from "@/app/_components/sidebar";
+import { SiteHeader } from "@/app/_components/site-header";
 import { Toaster } from "@/components/ui/sonner";
 import { routing } from "@/lib/i18n/routing";
 

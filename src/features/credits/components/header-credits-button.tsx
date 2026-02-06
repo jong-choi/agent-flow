@@ -20,7 +20,7 @@ async function getCreditsBalance(): Promise<number | null> {
   return json.balance;
 }
 
-export function CreditsButton() {
+export function HeaderCreditsButton() {
   const { data, isLoading } = useQuery({
     queryKey: ["credits", "balance"],
     queryFn: getCreditsBalance,

@@ -8,7 +8,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DropdownLogoutForm } from "@/features/auth/components/dropdown-logout-form";
 
-export function DropdownContent({ userName }: { userName: string }) {
+export function HeaderAccountMenuContent({
+  userName,
+}: {
+  userName: string;
+}) {
   return (
     <DropdownMenuContent className="w-56" align="start">
       <DropdownMenuLabel>{userName}</DropdownMenuLabel>

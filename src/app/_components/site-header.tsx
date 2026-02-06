@@ -1,4 +1,4 @@
-import { AccountMenu } from "@/app/_components/site-header/account-menu/account-menu";
+import { HeaderAccountMenu } from "@/features/auth/components/header-account-menu/header-account-menu";
 import { LocaleSelectorButton } from "@/components/locale-selector-button";
 import { Logo } from "@/components/logo";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -24,7 +24,7 @@ export function SiteHeader() {
           <Separator orientation="vertical" />
         </div>
         <div className="flex min-w-32 justify-end">
-          <AccountMenu />
+          <HeaderAccountMenu />
         </div>
       </div>
     </header>

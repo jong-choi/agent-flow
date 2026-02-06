@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { DropdownContent } from "@/app/_components/site-header/account-menu/dropdown-content";
-import { DropdownTrigger } from "@/app/_components/site-header/account-menu/dropdown-trigger";
-import { CreditsButton } from "@/app/_components/site-header/credits-button";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HeaderAccountMenuContent } from "@/features/auth/components/header-account-menu/header-account-menu-content";
+import { HeaderAccountMenuTrigger } from "@/features/auth/components/header-account-menu/header-account-menu-trigger";
+import { HeaderCreditsButton } from "@/features/credits/components/header-credits-button";
 
-export function AccountMenu() {
+export function HeaderAccountMenu() {
   const { data: session, status } = useSession();
 
   if (status === "loading") {
@@ -32,10 +32,14 @@ export function AccountMenu() {
   return (
     <div className="flex flex-col">
       <div className="flex items-center gap-2">
-        <CreditsButton />
+        <HeaderCreditsButton />
         <DropdownMenu>
-          <DropdownTrigger avatarHash={session.user.avatarHash ?? "default"} />
-          <DropdownContent userName={session.user.displayName ?? "사용자"} />
+          <HeaderAccountMenuTrigger
+            avatarHash={session.user.avatarHash ?? "default"}
+          />
+          <HeaderAccountMenuContent
+            userName={session.user.displayName ?? "사용자"}
+          />
         </DropdownMenu>
       </div>
     </div>
