@@ -28,6 +28,8 @@ const getSidebarNodesBase = async () => {
       description: sidebarNodes.description,
       type: sidebarNodes.type,
       createdAt: sidebarNodes.createdAt,
+      icon: sidebarNodes.icon,
+      backgroundColor: sidebarNodes.backgroundColor,
       content: sidebarNodeContents,
       handle: sidebarNodeHandles,
       information: sidebarNodeInformation,

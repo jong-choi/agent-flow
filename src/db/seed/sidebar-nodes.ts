@@ -15,11 +15,13 @@ import { sidebarNodesData } from "@/features/canvas/constants/flow";
 export const seedSidebarNodes = async () => {
   await db.transaction(async (tx) => {
     for (const raw of sidebarNodesData) {
-      const { type, label, description } = raw;
+      const { type, label, description, icon, backgroundColor } = raw;
       const nodeUpsert: SidebarNodeInsert = {
         type,
         label,
         description,
+        icon,
+        backgroundColor,
       };
 
       const [node] = await tx
@@ -30,6 +32,8 @@ export const seedSidebarNodes = async () => {
           set: {
             type,
             description,
+            icon,
+            backgroundColor,
           },
         })
         .returning({ id: sidebarNodes.id });

@@ -14,6 +14,8 @@ type SidebarNodeSeedItem = {
   label: string;
   description: string;
   type: NodeType;
+  icon: string;
+  backgroundColor: string;
   content: null | {
     type: "select" | "dialog";
     label: string;
@@ -39,6 +41,8 @@ const ChatNodeItem: SidebarNodeSeedItem = {
   label: "채팅",
   description: "응답 생성 노드",
   type: "chatNode",
+  icon: "MessageSquare",
+  backgroundColor: "bg-indigo-600",
   content: {
     type: "select",
     label: "Agent",
@@ -63,6 +67,8 @@ const SearchNodeItem: SidebarNodeSeedItem = {
   label: "검색",
   description: "구글 검색 노드",
   type: "searchNode",
+  icon: "Search",
+  backgroundColor: "bg-orange-500",
   content: null,
   handle: null,
   information: {
@@ -82,6 +88,8 @@ const DocumentNodeItem: SidebarNodeSeedItem = {
   label: "문서",
   description: "문서를 읽거나 수정",
   type: "documentNode",
+  icon: "FileText",
+  backgroundColor: "bg-emerald-500",
   content: {
     type: "select",
     label: "동작",
@@ -106,6 +114,8 @@ const MergeNodeItem: SidebarNodeSeedItem = {
   label: "병합",
   description: "여러 입력을 병합",
   type: "mergeNode",
+  icon: "GitMerge",
+  backgroundColor: "bg-slate-500",
   handle: {
     target: {
       count: 3,
@@ -129,6 +139,8 @@ const SplitNodeItem: SidebarNodeSeedItem = {
   label: "분할",
   description: "하나의 입력을 분할",
   type: "splitNode",
+  icon: "GitFork",
+  backgroundColor: "bg-slate-500",
   handle: {
     source: {
       count: 3,
@@ -151,6 +163,8 @@ const StartNodeItem: SidebarNodeSeedItem = {
   label: "시작",
   description: "시작 노드",
   type: "startNode",
+  icon: "Play",
+  backgroundColor: "bg-blue-600",
   handle: {
     target: {
       count: 0,
@@ -174,6 +188,8 @@ const EndNodeItem: SidebarNodeSeedItem = {
   label: "종료",
   description: "종료 노드",
   type: "endNode",
+  icon: "Square",
+  backgroundColor: "bg-rose-500",
   handle: {
     source: {
       count: 0,
@@ -197,6 +213,8 @@ const PromptNodeItem: SidebarNodeSeedItem = {
   label: "프롬프트",
   description: "텍스트를 입력",
   type: "promptNode",
+  icon: "Terminal",
+  backgroundColor: "bg-zinc-700",
   content: {
     type: "dialog",
     label: "프롬프트 수정",

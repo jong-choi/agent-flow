@@ -14,6 +14,7 @@ import {
 import { ko } from "date-fns/locale";
 import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "@/db/client";
+import { getUserId } from "@/db/query/auth";
 import {
   creditAccounts,
   creditDailyEvents,
@@ -21,7 +22,6 @@ import {
   type creditTransactionTypes,
   creditTransactions,
 } from "@/db/schema/credit";
-import { getUserId } from "@/db/query/auth";
 
 export type CreditTransactionType = (typeof creditTransactionTypes)[number];
 export type CreditTransactionCategory =
@@ -333,141 +333,106 @@ export const getCreditHistory = async (
  * - 사용처: src/app/credits/attendance/page.tsx
  * - 참고: 출석 여부는 Korea(Asia/Seoul) 기준 날짜로 계산.
  */
-export const getCreditAttendanceSummary = async (): Promise<CreditAttendanceSummary> => {
-  const userId = await getUserId();
-  const todayKey = toDateKey(new Date());
-  const today = startOfDay(parseISO(todayKey));
-  const weekStartDate = startOfWeek(today, { weekStartsOn: 1 });
-  const weekEndDate = addDays(weekStartDate, 6);
-  const weekStart = format(weekStartDate, "yyyy-MM-dd");
-  const weekEnd = format(weekEndDate, "yyyy-MM-dd");
+export const getCreditAttendanceSummary =
+  async (): Promise<CreditAttendanceSummary> => {
+    const userId = await getUserId();
+    const todayKey = toDateKey(new Date());
+    const today = startOfDay(parseISO(todayKey));
+    const weekStartDate = startOfWeek(today, { weekStartsOn: 1 });
+    const weekEndDate = addDays(weekStartDate, 6);
+    const weekStart = format(weekStartDate, "yyyy-MM-dd");
+    const weekEnd = format(weekEndDate, "yyyy-MM-dd");
 
-  const [eventsThisWeek, allEvents] = await Promise.all([
-    db
-      .select({
-        eventDate: creditDailyEvents.eventDate,
-        reward: creditDailyEvents.reward,
-      })
-      .from(creditDailyEvents)
-      .where(
-        and(
-          eq(creditDailyEvents.userId, userId),
-          gte(creditDailyEvents.eventDate, weekStart),
-          lte(creditDailyEvents.eventDate, weekEnd),
-        ),
-      )
-      .orderBy(asc(creditDailyEvents.eventDate)),
-    db
-      .select({
-        eventDate: creditDailyEvents.eventDate,
-      })
-      .from(creditDailyEvents)
-      .where(eq(creditDailyEvents.userId, userId))
-      .orderBy(asc(creditDailyEvents.eventDate)),
-  ]);
+    const [eventsThisWeek, allEvents] = await Promise.all([
+      db
+        .select({
+          eventDate: creditDailyEvents.eventDate,
+          reward: creditDailyEvents.reward,
+        })
+        .from(creditDailyEvents)
+        .where(
+          and(
+            eq(creditDailyEvents.userId, userId),
+            gte(creditDailyEvents.eventDate, weekStart),
+            lte(creditDailyEvents.eventDate, weekEnd),
+          ),
+        )
+        .orderBy(asc(creditDailyEvents.eventDate)),
+      db
+        .select({
+          eventDate: creditDailyEvents.eventDate,
+        })
+        .from(creditDailyEvents)
+        .where(eq(creditDailyEvents.userId, userId))
+        .orderBy(asc(creditDailyEvents.eventDate)),
+    ]);
 
-  const eventMap = new Map(
-    eventsThisWeek.map((event) => [event.eventDate, event.reward]),
-  );
+    const eventMap = new Map(
+      eventsThisWeek.map((event) => [event.eventDate, event.reward]),
+    );
 
-  const weeklyAttendance = Array.from({ length: 7 }, (_, index) => {
-    const date = addDays(weekStartDate, index);
-    const key = format(date, "yyyy-MM-dd");
-    const checked = eventMap.has(key);
-    const reward = eventMap.get(key) ?? DAILY_ATTENDANCE_REWARD;
+    const weeklyAttendance = Array.from({ length: 7 }, (_, index) => {
+      const date = addDays(weekStartDate, index);
+      const key = format(date, "yyyy-MM-dd");
+      const checked = eventMap.has(key);
+      const reward = eventMap.get(key) ?? DAILY_ATTENDANCE_REWARD;
 
-    return {
-      day: format(date, "EEE", { locale: ko }),
-      date: format(date, "MM/dd"),
-      checked,
-      reward,
-      isToday: differenceInCalendarDays(date, today) === 0,
-    };
-  });
+      return {
+        day: format(date, "EEE", { locale: ko }),
+        date: format(date, "MM/dd"),
+        checked,
+        reward,
+        isToday: differenceInCalendarDays(date, today) === 0,
+      };
+    });
 
-  let bestStreak = 0;
-  let latestStreak = 0;
-  let prevDate: Date | null = null;
+    let bestStreak = 0;
+    let latestStreak = 0;
+    let prevDate: Date | null = null;
 
-  allEvents.forEach((event) => {
-    const currentDate = startOfDay(parseISO(event.eventDate));
-    if (prevDate) {
-      const diff = differenceInCalendarDays(currentDate, prevDate);
-      if (diff === 1) {
-        latestStreak += 1;
-      } else if (diff > 1) {
+    allEvents.forEach((event) => {
+      const currentDate = startOfDay(parseISO(event.eventDate));
+      if (prevDate) {
+        const diff = differenceInCalendarDays(currentDate, prevDate);
+        if (diff === 1) {
+          latestStreak += 1;
+        } else if (diff > 1) {
+          latestStreak = 1;
+        }
+      } else {
         latestStreak = 1;
       }
-    } else {
-      latestStreak = 1;
-    }
-    bestStreak = Math.max(bestStreak, latestStreak);
-    prevDate = currentDate;
-  });
+      bestStreak = Math.max(bestStreak, latestStreak);
+      prevDate = currentDate;
+    });
 
-  const lastEventDate = prevDate;
-  const diffToToday = lastEventDate
-    ? differenceInCalendarDays(today, lastEventDate)
-    : Number.POSITIVE_INFINITY;
+    const lastEventDate = prevDate;
+    const diffToToday = lastEventDate
+      ? differenceInCalendarDays(today, lastEventDate)
+      : Number.POSITIVE_INFINITY;
 
-  const currentStreak = diffToToday <= 1 ? latestStreak : 0;
+    const currentStreak = diffToToday <= 1 ? latestStreak : 0;
 
-  return {
-    hasCheckedToday: eventMap.has(todayKey),
-    weeklyAttendance,
-    currentStreak,
-    bestStreak,
-    totalAttendance: allEvents.length,
-    dailyReward: DAILY_ATTENDANCE_REWARD,
+    return {
+      hasCheckedToday: eventMap.has(todayKey),
+      weeklyAttendance,
+      currentStreak,
+      bestStreak,
+      totalAttendance: allEvents.length,
+      dailyReward: DAILY_ATTENDANCE_REWARD,
+    };
   };
-};
 
 /**
  * 크레딧 메인(/credits)에서 출석 버튼 상태 확인용 경량 조회.
  * - 표시 데이터: 오늘 출석 여부 + 일일 보상 금액 문구.
  * - 사용처: src/app/credits/page.tsx
  */
-export const getDailyAttendanceStatus = async (): Promise<CreditAttendanceStatus> => {
-  const userId = await getUserId();
-  const todayKey = toDateKey(new Date());
-  const [event] = await db
-    .select({ eventDate: creditDailyEvents.eventDate })
-    .from(creditDailyEvents)
-    .where(
-      and(
-        eq(creditDailyEvents.userId, userId),
-        eq(creditDailyEvents.eventDate, todayKey),
-      ),
-    )
-    .limit(1);
-
-  return {
-    hasCheckedToday: Boolean(event),
-    dailyReward: DAILY_ATTENDANCE_REWARD,
-  };
-};
-
-/**
- * 출석 체크 이벤트 처리(일일 1회).
- * - 사용처: src/app/api/credits/attendance/route.ts (POST)
- * - 동작: 오늘 출석 기록이 없을 때만 이벤트/거래/잔액을 생성·갱신.
- * - 중복 요청: 이미 출석한 경우 credited=false + reason="already_claimed".
- * - 참고: 날짜 기준은 Korea(Asia/Seoul).
- */
-export const claimDailyAttendance = async (): Promise<AttendanceClaimResult> => {
-  const userId = await getUserId();
-  const todayKey = toDateKey(new Date());
-
-  return db.transaction(async (tx) => {
-    await tx.insert(creditAccounts).values({ userId }).onConflictDoNothing();
-
-    const [accountSnapshot] = await tx
-      .select({ balance: creditAccounts.balance })
-      .from(creditAccounts)
-      .where(eq(creditAccounts.userId, userId))
-      .limit(1);
-
-    const existingEvent = await tx
+export const getDailyAttendanceStatus =
+  async (): Promise<CreditAttendanceStatus> => {
+    const userId = await getUserId();
+    const todayKey = toDateKey(new Date());
+    const [event] = await db
       .select({ eventDate: creditDailyEvents.eventDate })
       .from(creditDailyEvents)
       .where(
@@ -478,59 +443,97 @@ export const claimDailyAttendance = async (): Promise<AttendanceClaimResult> => 
       )
       .limit(1);
 
-    if (existingEvent.length > 0) {
-      return {
-        credited: false,
-        reward: 0,
-        balance: accountSnapshot?.balance ?? 0,
-        reason: "already_claimed",
-      };
-    }
-
-    const [event] = await tx
-      .insert(creditDailyEvents)
-      .values({
-        userId,
-        eventDate: todayKey,
-        reward: DAILY_ATTENDANCE_REWARD,
-      })
-      .onConflictDoNothing()
-      .returning({ eventDate: creditDailyEvents.eventDate });
-
-    if (!event) {
-      return {
-        credited: false,
-        reward: 0,
-        balance: accountSnapshot?.balance ?? 0,
-        reason: "already_claimed",
-      };
-    }
-
-    await tx.insert(creditTransactions).values({
-      userId,
-      type: "earn",
-      category: "attendance",
-      title: "출석 체크",
-      description: "일일 출석 보상",
-      amount: DAILY_ATTENDANCE_REWARD,
-      occurredAt: new Date(),
-    });
-
-    const [account] = await tx
-      .update(creditAccounts)
-      .set({
-        balance: sql`${creditAccounts.balance} + ${DAILY_ATTENDANCE_REWARD}`,
-        totalEarned: sql`${creditAccounts.totalEarned} + ${DAILY_ATTENDANCE_REWARD}`,
-        updatedAt: new Date(),
-      })
-      .where(eq(creditAccounts.userId, userId))
-      .returning({ balance: creditAccounts.balance });
-
     return {
-      credited: true,
-      reward: DAILY_ATTENDANCE_REWARD,
-      balance: account?.balance ?? 0,
-      reason: null,
+      hasCheckedToday: Boolean(event),
+      dailyReward: DAILY_ATTENDANCE_REWARD,
     };
-  });
-};
+  };
+
+/**
+ * 출석 체크 이벤트 처리(일일 1회).
+ * - 사용처: src/app/api/credits/attendance/route.ts (POST)
+ * - 동작: 오늘 출석 기록이 없을 때만 이벤트/거래/잔액을 생성·갱신.
+ * - 중복 요청: 이미 출석한 경우 credited=false + reason="already_claimed".
+ * - 참고: 날짜 기준은 Korea(Asia/Seoul).
+ */
+export const claimDailyAttendance =
+  async (): Promise<AttendanceClaimResult> => {
+    const userId = await getUserId();
+    const todayKey = toDateKey(new Date());
+
+    return db.transaction(async (tx) => {
+      await tx.insert(creditAccounts).values({ userId }).onConflictDoNothing();
+
+      const [accountSnapshot] = await tx
+        .select({ balance: creditAccounts.balance })
+        .from(creditAccounts)
+        .where(eq(creditAccounts.userId, userId))
+        .limit(1);
+
+      const existingEvent = await tx
+        .select({ eventDate: creditDailyEvents.eventDate })
+        .from(creditDailyEvents)
+        .where(
+          and(
+            eq(creditDailyEvents.userId, userId),
+            eq(creditDailyEvents.eventDate, todayKey),
+          ),
+        )
+        .limit(1);
+
+      if (existingEvent.length > 0) {
+        return {
+          credited: false,
+          reward: 0,
+          balance: accountSnapshot?.balance ?? 0,
+          reason: "already_claimed",
+        };
+      }
+
+      const [event] = await tx
+        .insert(creditDailyEvents)
+        .values({
+          userId,
+          eventDate: todayKey,
+          reward: DAILY_ATTENDANCE_REWARD,
+        })
+        .onConflictDoNothing()
+        .returning({ eventDate: creditDailyEvents.eventDate });
+
+      if (!event) {
+        return {
+          credited: false,
+          reward: 0,
+          balance: accountSnapshot?.balance ?? 0,
+          reason: "already_claimed",
+        };
+      }
+
+      await tx.insert(creditTransactions).values({
+        userId,
+        type: "earn",
+        category: "attendance",
+        title: "출석 체크",
+        description: "일일 출석 보상",
+        amount: DAILY_ATTENDANCE_REWARD,
+        occurredAt: new Date(),
+      });
+
+      const [account] = await tx
+        .update(creditAccounts)
+        .set({
+          balance: sql`${creditAccounts.balance} + ${DAILY_ATTENDANCE_REWARD}`,
+          totalEarned: sql`${creditAccounts.totalEarned} + ${DAILY_ATTENDANCE_REWARD}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(creditAccounts.userId, userId))
+        .returning({ balance: creditAccounts.balance });
+
+      return {
+        credited: true,
+        reward: DAILY_ATTENDANCE_REWARD,
+        balance: account?.balance ?? 0,
+        reason: null,
+      };
+    });
+  };

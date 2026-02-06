@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PresetChatExampleSection } from "@/app/[locale]/(app)/presets/[id]/_components/preset-chat-example-section";
 import { BoringUserAvatar } from "@/components/boring-avatar";
+import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,8 +17,6 @@ import { Separator } from "@/components/ui/separator";
 import { getUserId } from "@/db/query/auth";
 import { getPresetDetail, getPresetPurchaseStatus } from "@/db/query/presets";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
-import { ReactMarkdownApp } from "@/features/chat/components/markdown/react-markdown-app";
-import "@/features/chat/styles/small-header-markdown.css";
 import { PresetPurchaseDialog } from "@/features/preset/components/preset-purchase-dialog";
 import { formatKoreanDate } from "@/lib/utils";
 
@@ -107,9 +106,9 @@ export default async function PresetDetailPage({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="min-h-32 rounded-lg border bg-accent/50 p-4 text-sm leading-relaxed">
-                  <ReactMarkdownApp>
+                  <ContentMarkdown>
                     {preset.description ?? "설명이 없습니다."}
-                  </ReactMarkdownApp>
+                  </ContentMarkdown>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-lg border bg-background/70 p-3">

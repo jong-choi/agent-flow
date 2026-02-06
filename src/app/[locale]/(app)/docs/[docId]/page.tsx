@@ -6,6 +6,7 @@ import { DocumentSaveButton } from "@/app/[locale]/(app)/docs/[docId]/_component
 import { DocumentEditor } from "@/app/[locale]/(app)/docs/[docId]/_components/documents-editor";
 import { DocumentTitleEditor } from "@/app/[locale]/(app)/docs/[docId]/_components/documents-title-editor";
 import { DocumentStoreProvider } from "@/app/[locale]/(app)/docs/[docId]/_store/document-store";
+import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import {
   PageContainer,
   PageDescription,
@@ -15,8 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getDocumentById } from "@/db/query/documents";
-import { ReactMarkdownApp } from "@/features/chat/components/markdown/react-markdown-app";
-import "@/features/chat/styles/small-header-markdown.css";
 import { formatKoreanDate } from "@/lib/utils";
 
 export default async function DocumentViewPage({
@@ -83,9 +82,9 @@ export default async function DocumentViewPage({
             {edit ? (
               <DocumentEditor />
             ) : (
-              <div className="min-h-96 rounded-lg border border-transparent bg-accent/50 p-4 leading-relaxed break-all">
-                <ReactMarkdownApp>{document.content}</ReactMarkdownApp>
-              </div>
+              <ContentMarkdown className="min-h-96 rounded-lg border border-transparent bg-accent/50 p-4 leading-relaxed">
+                {document.content}
+              </ContentMarkdown>
             )}
           </div>
         </div>

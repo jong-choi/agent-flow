@@ -3,19 +3,19 @@ import rehypeHighlight from "rehype-highlight";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
-import { cn } from "@/lib/utils";
 import "@/features/chat/styles/highlight-vs-code-dark.css";
+import { cn } from "@/lib/utils";
 
-type DeveloperMarkdownProps = {
+type ContentMarkdownProps = {
   className?: string;
   children?: string;
 };
 
-export function DeveloperMarkdown({ className, children }: DeveloperMarkdownProps) {
+export function ContentMarkdown({ className, children }: ContentMarkdownProps) {
   return (
     <article
       className={cn(
-        "docs-markdown break-words text-[15px] leading-7 text-foreground",
+        "docs-markdown text-[15px] leading-7 break-words text-foreground",
         "selection:bg-primary/20 selection:text-foreground",
         className,
       )}
@@ -117,12 +117,17 @@ export function DeveloperMarkdown({ className, children }: DeveloperMarkdownProp
             />
           ),
           hr: ({ className, ...props }) => (
-            <hr className={cn("my-10 border-border/70", className)} {...props} />
+            <hr
+              className={cn("my-10 border-border/70", className)}
+              {...props}
+            />
           ),
           code: ({ className, children, ...props }) => {
-            const codeClassName = typeof className === "string" ? className : "";
+            const codeClassName =
+              typeof className === "string" ? className : "";
             const isBlock =
-              codeClassName.includes("hljs") || codeClassName.includes("language-");
+              codeClassName.includes("hljs") ||
+              codeClassName.includes("language-");
 
             if (!isBlock) {
               return (
@@ -178,7 +183,10 @@ export function DeveloperMarkdown({ className, children }: DeveloperMarkdownProp
           ),
           td: ({ className, ...props }) => (
             <td
-              className={cn("border-b border-border/60 px-3 py-2 align-top", className)}
+              className={cn(
+                "border-b border-border/60 px-3 py-2 align-top",
+                className,
+              )}
               {...props}
             />
           ),

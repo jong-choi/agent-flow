@@ -1,7 +1,7 @@
-import path from "path";
 import { readFile } from "fs/promises";
-import { DeveloperMarkdown } from "@/app/[locale]/(app)/developers/_components/developer-markdown";
-import { routing, type Locale } from "@/lib/i18n/routing";
+import path from "path";
+import { ContentMarkdown } from "@/components/markdown/content-markdown";
+import { type Locale, routing } from "@/lib/i18n/routing";
 
 const isLocale = (value: unknown): value is Locale =>
   typeof value === "string" &&
@@ -21,9 +21,8 @@ export async function ApiGuideMarkdown({ locale }: { locale: string }) {
     }
   };
 
-  const content = (await read(safeLocale)) || (await read(routing.defaultLocale));
+  const content =
+    (await read(safeLocale)) || (await read(routing.defaultLocale));
 
-  return (
-    <DeveloperMarkdown className="px-0 py-0">{content}</DeveloperMarkdown>
-  );
+  return <ContentMarkdown className="px-0 py-0">{content}</ContentMarkdown>;
 }

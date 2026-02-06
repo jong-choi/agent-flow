@@ -14,7 +14,11 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { Badge } from "@/components/ui/badge";
+import {
+  PageContentTitle,
+  PageDescription,
+  PageHeader,
+} from "@/components/page-template";
 import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
 import { FlowLoadPresetButton } from "@/features/canvas/components/flow/flow-load-preset/flow-load-preset-button";
 import { FlowPresetGroupsOverlay } from "@/features/canvas/components/flow/flow-preset-groups/flow-preset-groups-overlay";
@@ -56,26 +60,8 @@ export function FlowApp({
   const checkValidGraph = useCheckValidGraph();
   const setLoading = useCanvasStore((s) => s.setIsStartLoading);
   const setWorkflow = useCanvasStore((s) => s.setWorkflow);
-
-  const estimatedCredits = useMemo(() => {
-    return nodes
-      .filter((node) => node.type === "chatNode")
-      .reduce((sum, node) => {
-        const modelId = node.data.content?.value;
-        if (typeof modelId !== "string") return sum;
-
-        const option = node.data.content?.options?.find(
-          (item) => item.value === modelId,
-        );
-        const price = typeof option?.price === "number" ? option.price : 0;
-        return sum + Math.max(0, price);
-      }, 0);
-  }, [nodes]);
-
-  const hasChatNode = useMemo(
-    () => nodes.some((node) => node.type === "chatNode"),
-    [nodes],
-  );
+  const title = useCanvasStore((s) => s.workflow.title.trim());
+  const description = useCanvasStore((s) => s.workflow.description?.trim());
 
   const isValidConnection = useIsValidConnection();
 
@@ -114,17 +100,20 @@ export function FlowApp({
 
   return (
     <div className="relative h-full w-full">
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-        <Suspense>
-          <FlowStartButton />
-        </Suspense>
-        <FlowLoadPresetButton />
-        <FlowSaveButton />
-        {hasChatNode ? (
-          <Badge variant="secondary" className="h-9">
-            예상 소모: {estimatedCredits.toLocaleString()} 크레딧
-          </Badge>
-        ) : null}
+      <div className="absolute top-4 left-4 z-10 flex flex-col items-start gap-3 rounded-lg bg-muted/50 p-4 backdrop-blur-sm">
+        <PageHeader className="flex min-w-sm flex-col gap-1">
+          <PageContentTitle>{title || "새 워크플로우"}</PageContentTitle>
+          <PageDescription>
+            {description || "설명이 기재되지 않았습니다"}
+          </PageDescription>
+        </PageHeader>
+        <div className="flex items-center gap-2">
+          <Suspense>
+            <FlowStartButton />
+          </Suspense>
+          <FlowLoadPresetButton />
+          <FlowSaveButton />
+        </div>
       </div>
       <ReactFlow
         snapToGrid
@@ -135,17 +124,28 @@ export function FlowApp({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={NODE_TYPE}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitView={true}
+        fitViewOptions={{ padding: 0.5 }}
         proOptions={{ hideAttribution: true }}
         style={{ width: "100%", height: "100%" }}
         onConnect={handleOnConnect}
         onReconnect={handleReconnect}
         onReconnectStart={handleReconnectStart}
         isValidConnection={isValidConnection}
+        defaultEdgeOptions={{
+          animated: true,
+          style: {
+            strokeWidth: 1.5,
+            animation: "dashdraw 2s linear infinite",
+          },
+        }}
       >
         <FlowPresetGroupsOverlay />
-        <Background gap={16} size={1} color="#e5e7eb" />
+        <Background
+          gap={32}
+          size={1}
+          color={theme === "dark" ? "#262626" : "#e5e5e5"}
+        />
         <Controls position="bottom-left" />
       </ReactFlow>
     </div>

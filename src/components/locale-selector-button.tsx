@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { usePathname, useRouter } from "@/lib/i18n/navigation";
-import { routing, type Locale } from "@/lib/i18n/routing";
+import { type Locale, routing } from "@/lib/i18n/routing";
 
 const localeLabels: Record<Locale, string> = {
   ko: "한국어",
@@ -34,11 +34,7 @@ export function LocaleSelectorButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label="Select language"
-        >
+        <Button variant="ghost" size="icon" aria-label="Select language">
           <Languages className="h-[1.2rem] w-[1.2rem]" />
         </Button>
       </DropdownMenuTrigger>

@@ -7,7 +7,7 @@ import {
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 
 export function useAddNode() {
-  const { fitView, setNodes, getNodes } = useCanvasReactFlow();
+  const { setNodes, getNodes } = useCanvasReactFlow();
 
   const handleAddNode = useCallback(
     (item: SidebarNodeData, position: XYPosition) => {
@@ -22,9 +22,8 @@ export function useAddNode() {
       const newNodes = [...getNodes(), nextNode];
 
       setNodes(newNodes);
-      fitView({ padding: 0.2, duration: 400 });
     },
-    [fitView, getNodes, setNodes],
+    [getNodes, setNodes],
   );
 
   return handleAddNode;

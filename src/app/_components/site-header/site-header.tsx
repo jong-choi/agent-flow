@@ -1,20 +1,30 @@
-import { Suspense } from "react";
 import { AccountMenu } from "@/app/_components/site-header/account-menu/account-menu";
+import { LocaleSelectorButton } from "@/components/locale-selector-button";
+import { Logo } from "@/components/logo";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 
 export function SiteHeader() {
   return (
-    <div className="sticky top-0 flex w-full justify-between">
-      {/* 왼쪽 영역 */}
-      <div>Logo</div>
-      {/* 오른쪽 영역 */}
-      <div className="flex gap-2">
-        <Suspense fallback={<Skeleton className="size-8 rounded-full" />}>
-          <AccountMenu />
-        </Suspense>
-        <ThemeToggleButton />
+    <header className="sticky top-0 z-50 flex h-14 w-full items-center justify-between border-b bg-background px-6">
+      {/* Left Area */}
+      <div className="flex items-center gap-6">
+        <Logo />
       </div>
-    </div>
+
+      {/* Right Area */}
+      <div className="flex items-center gap-2">
+        <div className="flex items-center text-sm font-medium text-muted-foreground">
+          <ThemeToggleButton />
+          <LocaleSelectorButton />
+        </div>
+        <div className="h-5">
+          <Separator orientation="vertical" />
+        </div>
+        <div className="flex min-w-32 justify-end">
+          <AccountMenu />
+        </div>
+      </div>
+    </header>
   );
 }

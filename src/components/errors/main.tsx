@@ -1,7 +1,6 @@
 "use client";
 
 import { isRedirectError } from "next/dist/client/components/redirect-error";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { type FallbackProps } from "react-error-boundary";
 import { Button } from "@/components/ui/button";
@@ -37,15 +36,15 @@ export function MainErrorFallback({
         <Button variant="default" className="mt-4" onClick={resetErrorBoundary}>
           {t("retry")}
         </Button>
-        <Link href={"/"}>
-          <Button
-            variant="secondary"
-            className="mt-4"
-            onClick={resetErrorBoundary}
-          >
-            {t("goHome")}
-          </Button>
-        </Link>
+        <Button
+          variant="secondary"
+          className="mt-4"
+          onClick={() => {
+            window.location.assign("/");
+          }}
+        >
+          {t("goHome")}
+        </Button>
       </div>
     </div>
   );
