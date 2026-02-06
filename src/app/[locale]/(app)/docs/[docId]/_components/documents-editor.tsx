@@ -19,14 +19,16 @@ export function DocumentEditor() {
   const { resolvedTheme } = useTheme();
   const colorMode = resolvedTheme === "dark" ? "dark" : "light";
   return (
-    <MDEditor
-      data-color-mode={colorMode}
-      value={value}
-      onChange={setValue}
-      previewOptions={{
-        rehypePlugins: [[rehypeSanitize]],
-      }}
-      className="min-h-[650px]"
-    />
+    <div data-testid="document-editor">
+      <MDEditor
+        data-color-mode={colorMode}
+        value={value}
+        onChange={setValue}
+        previewOptions={{
+          rehypePlugins: [[rehypeSanitize]],
+        }}
+        className="min-h-[650px]"
+      />
+    </div>
   );
 }

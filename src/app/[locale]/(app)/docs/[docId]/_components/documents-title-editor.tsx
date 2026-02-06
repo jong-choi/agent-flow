@@ -13,6 +13,7 @@ export function DocumentTitleEditor() {
       value={value}
       onChange={(e) => setValue(e.target.value.slice(0, 20))}
       className="!min-w-[500px] !text-xl"
+      data-testid="document-title-input"
     />
   );
 }
