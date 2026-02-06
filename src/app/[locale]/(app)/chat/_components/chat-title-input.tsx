@@ -95,6 +95,7 @@ export function ChatTitleInput({
       ref={inputRef}
       value={value}
       placeholder={placeholder}
+      data-testid="chat-title-input"
       className={cn(
         "h-auto min-h-0 border-0 bg-transparent p-0 shadow-none",
         "placeholder:text-muted-foreground/70",

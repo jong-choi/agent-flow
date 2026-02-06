@@ -99,7 +99,7 @@ export function FlowApp({
   }, [setWorkflow, workflow]);
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full" data-testid="flow-canvas">
       <div className="absolute top-4 left-4 z-10 flex flex-col items-start gap-3 rounded-lg bg-muted/50 p-4 backdrop-blur-sm">
         <PageHeader className="flex min-w-sm flex-col gap-1">
           <PageContentTitle>{title || "새 워크플로우"}</PageContentTitle>
