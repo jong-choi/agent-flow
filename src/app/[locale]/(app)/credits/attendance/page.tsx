@@ -1,5 +1,5 @@
-import { AttendanceClient } from "@/app/[locale]/(app)/credits/attendance/_components/attendance-client";
-import { getCreditAttendanceSummary } from "@/db/query/credit";
+import { AttendanceClient } from "@/features/credits/components/attendance/attendance-client";
+import { getCreditAttendanceSummary } from "@/features/credits/server/queries";
 
 export default async function AttendancePage() {
   const summary = await getCreditAttendanceSummary();

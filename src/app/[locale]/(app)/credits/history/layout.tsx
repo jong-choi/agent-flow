@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CreditHistoryFilter } from "@/app/[locale]/(app)/credits/history/_components/history-filter";
+import { CreditHistoryFilter } from "@/features/credits/components/history/history-filter";
 
 type CreditsHistoryLayoutProps = {
   children: ReactNode;

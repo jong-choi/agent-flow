@@ -9,7 +9,7 @@ import {
   ListCardTitle,
 } from "@/components/list-card";
 import { Badge } from "@/components/ui/badge";
-import { type TransactionResult } from "@/db/query/credit";
+import { type TransactionResult } from "@/features/credits/server/queries";
 import { formatYMD } from "@/lib/utils";
 
 const TRANSACTION_TYPE_META = {

@@ -1,4 +1,4 @@
-import { getCreditBalance } from "@/db/query/credit";
+import { getCreditBalance } from "@/features/credits/server/queries";
 
 export type CreditsBalanceResult = {
   balance: number;
@@ -20,4 +20,3 @@ export async function GET() {
     );
   }
 }
-

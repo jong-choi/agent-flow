@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 import {
   addDays,
@@ -27,7 +27,7 @@ export type CreditTransactionType = (typeof creditTransactionTypes)[number];
 export type CreditTransactionCategory =
   (typeof creditTransactionCategories)[number];
 
-const DAILY_ATTENDANCE_REWARD = 100;
+export const DAILY_ATTENDANCE_REWARD = 100;
 
 export type TransactionResult = {
   id: string;
@@ -39,7 +39,7 @@ export type TransactionResult = {
   occurredAt: string;
 };
 
-type CreditSummary = {
+export type CreditSummary = {
   balance: number;
   monthlyEarned: number;
   monthlySpent: number;
@@ -48,8 +48,8 @@ type CreditSummary = {
 };
 
 export type CreditHistoryFilters = {
-  from?: Date;
-  to?: Date;
+  from?: Date | string;
+  to?: Date | string;
   type?: "all" | CreditTransactionType;
   limit?: number;
 };
@@ -81,23 +81,14 @@ export type CreditAttendanceStatus = {
   dailyReward: number;
 };
 
-type AttendanceClaimResult = {
-  credited: boolean;
-  reward: number;
-  balance: number;
-  reason: "already_claimed" | null;
-};
-
 const CREDIT_TIME_ZONE = "Asia/Seoul";
 
-const toDateKey = (value: Date) =>
+export const toDateKey = (value: Date) =>
   new Intl.DateTimeFormat("en-CA", { timeZone: CREDIT_TIME_ZONE }).format(
     value,
   );
 
-const ensureCreditAccount = async (userId: string) => {
-  await db.insert(creditAccounts).values({ userId }).onConflictDoNothing();
-
+const getCreditAccountByUserId = async (userId: string) => {
   const [account] = await db
     .select({
       balance: creditAccounts.balance,
@@ -108,111 +99,29 @@ const ensureCreditAccount = async (userId: string) => {
     .where(eq(creditAccounts.userId, userId))
     .limit(1);
 
-  if (!account) {
-    throw new Error("크레딧 계정을 찾을 수 없습니다.");
-  }
-
-  return account;
+  return (
+    account ?? {
+      balance: 0,
+      totalEarned: 0,
+      totalSpent: 0,
+    }
+  );
 };
 
 export const getCreditBalanceByUserId = async (userId: string) => {
-  const account = await ensureCreditAccount(userId);
+  const account = await getCreditAccountByUserId(userId);
   return account.balance;
 };
 
-export type SpendCreditsByUserIdResult =
-  | { ok: true; balance: number }
-  | { ok: false; reason: "insufficient_credit"; balance: number };
-
-export const spendCreditsByUserId = async ({
-  userId,
-  amount,
-  category,
-  title,
-  description,
-}: {
-  userId: string;
-  amount: number;
-  category: CreditTransactionCategory;
-  title: string;
-  description?: string | null;
-}): Promise<SpendCreditsByUserIdResult> => {
-  const normalizedAmount = Number.isFinite(amount)
-    ? Math.max(0, Math.round(amount))
-    : 0;
-
-  if (normalizedAmount === 0) {
-    const balance = await getCreditBalanceByUserId(userId);
-    return { ok: true, balance };
-  }
-
-  const occurredAt = new Date();
-
-  return db.transaction(async (tx) => {
-    await tx.insert(creditAccounts).values({ userId }).onConflictDoNothing();
-
-    const [accountSnapshot] = await tx
-      .select({ balance: creditAccounts.balance })
-      .from(creditAccounts)
-      .where(eq(creditAccounts.userId, userId))
-      .limit(1);
-
-    const [account] = await tx
-      .update(creditAccounts)
-      .set({
-        balance: sql`${creditAccounts.balance} - ${normalizedAmount}`,
-        totalSpent: sql`${creditAccounts.totalSpent} + ${normalizedAmount}`,
-        updatedAt: occurredAt,
-      })
-      .where(
-        and(
-          eq(creditAccounts.userId, userId),
-          gte(creditAccounts.balance, normalizedAmount),
-        ),
-      )
-      .returning({ balance: creditAccounts.balance });
-
-    if (!account) {
-      return {
-        ok: false,
-        reason: "insufficient_credit",
-        balance: accountSnapshot?.balance ?? 0,
-      };
-    }
-
-    await tx.insert(creditTransactions).values({
-      userId,
-      type: "spend",
-      category,
-      title,
-      description: description ?? null,
-      amount: -normalizedAmount,
-      occurredAt,
-    });
-
-    return { ok: true, balance: account.balance };
-  });
-};
-
-/**
- * 크레딧 잔액 단일 조회.
- * - 화면: 현재 직접 호출처 없음 (결제/차감 전 잔액 검증 등 공용 용도).
- * - 반환: credit_accounts.balance
- */
 export const getCreditBalance = async () => {
   const userId = await getUserId();
-  const account = await ensureCreditAccount(userId);
+  const account = await getCreditAccountByUserId(userId);
   return account.balance;
 };
 
-/**
- * 크레딧 메인(/credits) 화면에 필요한 요약 정보 조회.
- * - 표시 데이터: 현재 잔액, 이번 달 획득/사용, 누적 획득, 최근 거래 5건.
- * - 사용처: src/app/credits/page.tsx
- */
 export const getCreditSummary = async (): Promise<CreditSummary> => {
   const userId = await getUserId();
-  const account = await ensureCreditAccount(userId);
+  const account = await getCreditAccountByUserId(userId);
   const monthStart = startOfMonth(new Date());
 
   const monthlyEarnedSql = sql<number>`
@@ -278,12 +187,6 @@ export const getCreditSummary = async (): Promise<CreditSummary> => {
   };
 };
 
-/**
- * 크레딧 거래 내역(/credits/history)용 리스트 조회.
- * - 표시 데이터: 기간/유형 필터 결과 목록.
- * - 제약: 조회 기간은 최대 6개월로 자동 보정.
- * - 사용처: src/app/credits/history/page.tsx
- */
 export const getCreditHistory = async (
   filters?: CreditHistoryFilters,
 ): Promise<CreditHistoryResult> => {
@@ -327,12 +230,6 @@ export const getCreditHistory = async (
   };
 };
 
-/**
- * 출석 체크(/credits/attendance) 화면용 요약 데이터 조회.
- * - 표시 데이터: 주간 출석 그리드, 연속/최고/총 출석, 오늘 출석 여부/보상.
- * - 사용처: src/app/credits/attendance/page.tsx
- * - 참고: 출석 여부는 Korea(Asia/Seoul) 기준 날짜로 계산.
- */
 export const getCreditAttendanceSummary =
   async (): Promise<CreditAttendanceSummary> => {
     const userId = await getUserId();
@@ -423,11 +320,6 @@ export const getCreditAttendanceSummary =
     };
   };
 
-/**
- * 크레딧 메인(/credits)에서 출석 버튼 상태 확인용 경량 조회.
- * - 표시 데이터: 오늘 출석 여부 + 일일 보상 금액 문구.
- * - 사용처: src/app/credits/page.tsx
- */
 export const getDailyAttendanceStatus =
   async (): Promise<CreditAttendanceStatus> => {
     const userId = await getUserId();
@@ -447,93 +339,4 @@ export const getDailyAttendanceStatus =
       hasCheckedToday: Boolean(event),
       dailyReward: DAILY_ATTENDANCE_REWARD,
     };
-  };
-
-/**
- * 출석 체크 이벤트 처리(일일 1회).
- * - 사용처: src/app/api/credits/attendance/route.ts (POST)
- * - 동작: 오늘 출석 기록이 없을 때만 이벤트/거래/잔액을 생성·갱신.
- * - 중복 요청: 이미 출석한 경우 credited=false + reason="already_claimed".
- * - 참고: 날짜 기준은 Korea(Asia/Seoul).
- */
-export const claimDailyAttendance =
-  async (): Promise<AttendanceClaimResult> => {
-    const userId = await getUserId();
-    const todayKey = toDateKey(new Date());
-
-    return db.transaction(async (tx) => {
-      await tx.insert(creditAccounts).values({ userId }).onConflictDoNothing();
-
-      const [accountSnapshot] = await tx
-        .select({ balance: creditAccounts.balance })
-        .from(creditAccounts)
-        .where(eq(creditAccounts.userId, userId))
-        .limit(1);
-
-      const existingEvent = await tx
-        .select({ eventDate: creditDailyEvents.eventDate })
-        .from(creditDailyEvents)
-        .where(
-          and(
-            eq(creditDailyEvents.userId, userId),
-            eq(creditDailyEvents.eventDate, todayKey),
-          ),
-        )
-        .limit(1);
-
-      if (existingEvent.length > 0) {
-        return {
-          credited: false,
-          reward: 0,
-          balance: accountSnapshot?.balance ?? 0,
-          reason: "already_claimed",
-        };
-      }
-
-      const [event] = await tx
-        .insert(creditDailyEvents)
-        .values({
-          userId,
-          eventDate: todayKey,
-          reward: DAILY_ATTENDANCE_REWARD,
-        })
-        .onConflictDoNothing()
-        .returning({ eventDate: creditDailyEvents.eventDate });
-
-      if (!event) {
-        return {
-          credited: false,
-          reward: 0,
-          balance: accountSnapshot?.balance ?? 0,
-          reason: "already_claimed",
-        };
-      }
-
-      await tx.insert(creditTransactions).values({
-        userId,
-        type: "earn",
-        category: "attendance",
-        title: "출석 체크",
-        description: "일일 출석 보상",
-        amount: DAILY_ATTENDANCE_REWARD,
-        occurredAt: new Date(),
-      });
-
-      const [account] = await tx
-        .update(creditAccounts)
-        .set({
-          balance: sql`${creditAccounts.balance} + ${DAILY_ATTENDANCE_REWARD}`,
-          totalEarned: sql`${creditAccounts.totalEarned} + ${DAILY_ATTENDANCE_REWARD}`,
-          updatedAt: new Date(),
-        })
-        .where(eq(creditAccounts.userId, userId))
-        .returning({ balance: creditAccounts.balance });
-
-      return {
-        credited: true,
-        reward: DAILY_ATTENDANCE_REWARD,
-        balance: account?.balance ?? 0,
-        reason: null,
-      };
-    });
   };

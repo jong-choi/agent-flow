@@ -8,8 +8,8 @@ import {
 import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
 import {
   getCreditBalanceByUserId,
-  spendCreditsByUserId,
-} from "@/db/query/credit";
+} from "@/features/credits/server/queries";
+import { spendCreditsByUserId } from "@/features/credits/server/actions";
 
 /**
  * 채팅 모델 실행 노드

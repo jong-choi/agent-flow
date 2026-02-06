@@ -21,7 +21,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { getCreditBalance } from "@/db/query/credit";
+import { getCreditBalanceAction } from "@/features/credits/server/actions";
 import {
   type PresetPurchaseResult,
   purchasePresetAction,
@@ -114,7 +114,7 @@ export function PresetPurchaseDialog({
       try {
         setIsLoadingBalance(true);
         setBalanceError(null);
-        const current = await getCreditBalance();
+        const current = await getCreditBalanceAction();
         if (isActive) {
           setBalance(current);
         }

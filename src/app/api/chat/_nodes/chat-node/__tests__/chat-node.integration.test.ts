@@ -13,7 +13,8 @@ import {
 } from "@/app/api/chat/_nodes/chat-node/models";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import { getActiveAiModels } from "@/db/query/ai-models";
-import { getCreditBalanceByUserId, spendCreditsByUserId } from "@/db/query/credit";
+import { spendCreditsByUserId } from "@/features/credits/server/actions";
+import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
 import { type AiModel } from "@/db/schema";
 
 const baseModel: AiModel = {
@@ -73,8 +74,11 @@ vi.mock("@/db/query/ai-models", () => ({
   getActiveAiModels: vi.fn(),
 }));
 
-vi.mock("@/db/query/credit", () => ({
+vi.mock("@/features/credits/server/queries", () => ({
   getCreditBalanceByUserId: vi.fn(),
+}));
+
+vi.mock("@/features/credits/server/actions", () => ({
   spendCreditsByUserId: vi.fn(),
 }));
 

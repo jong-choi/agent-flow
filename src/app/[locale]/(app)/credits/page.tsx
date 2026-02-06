@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { TransactionItem } from "@/app/[locale]/(app)/credits/_components/transaction-item";
 import {
   PageContainer,
   PageContentTitle,
@@ -12,7 +11,11 @@ import {
 } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getCreditSummary, getDailyAttendanceStatus } from "@/db/query/credit";
+import { TransactionItem } from "@/features/credits/components/transaction-item";
+import {
+  getCreditSummary,
+  getDailyAttendanceStatus,
+} from "@/features/credits/server/queries";
 
 export default async function CreditsPage() {
   const [summary, attendanceStatus] = await Promise.all([

@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import { TransactionItem } from "@/app/[locale]/(app)/credits/_components/transaction-item";
 import {
   PageContainer,
   PageDescription,
@@ -9,7 +8,11 @@ import {
 } from "@/components/page-template";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { type TransactionResult, getCreditHistory } from "@/db/query/credit";
+import { TransactionItem } from "@/features/credits/components/transaction-item";
+import {
+  type TransactionResult,
+  getCreditHistory,
+} from "@/features/credits/server/queries";
 
 export default async function CreditsHistoryPage(
   props: PageProps<"/[locale]/credits/history">,
