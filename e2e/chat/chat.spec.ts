@@ -130,14 +130,10 @@ test.describe("Chat", () => {
       name: "삭제",
       exact: true,
     });
+    await expect(confirmDelete).toBeVisible();
     await expect(confirmDelete).toBeEnabled();
-    const clicked = await confirmDelete
-      .click({ force: true })
-      .then(() => true)
-      .catch(() => false);
-    if (!clicked) {
-      await confirmDelete.dispatchEvent("click");
-    }
+    await confirmDelete.focus();
+    await page.keyboard.press("Enter");
 
     await expect(page).toHaveURL("/chat");
   });
