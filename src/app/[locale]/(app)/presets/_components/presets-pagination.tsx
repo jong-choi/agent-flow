@@ -11,7 +11,7 @@ import {
   buildQueryString,
   type QueryDefaults,
   type QueryParams,
-} from "@/features/chat/utils/query-string";
+} from "@/features/chats/utils/query-string";
 
 type PresetsPaginationProps = {
   basePath: string;

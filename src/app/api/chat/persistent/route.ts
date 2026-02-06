@@ -1,4 +1,4 @@
-import { getChatsByUser } from "@/db/query/chat";
+import { getChatsByUser } from "@/features/chats/server/queries";
 
 export async function GET() {
   try {

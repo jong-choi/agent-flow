@@ -3,7 +3,7 @@ import rehypeHighlight from "rehype-highlight";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
-import "@/features/chat/styles/highlight-vs-code-dark.css";
+import "@/features/chats/styles/highlight-vs-code-dark.css";
 import { cn } from "@/lib/utils";
 
 type ContentMarkdownProps = {

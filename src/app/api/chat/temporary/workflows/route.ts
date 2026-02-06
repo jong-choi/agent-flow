@@ -6,7 +6,7 @@ import {
   createThread,
 } from "@/app/api/chat/_engines/handle-connect";
 import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
-import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
+import { getWorkflowWithGraphForChat } from "@/features/chats/server/queries";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 import { auth } from "@/lib/auth";
 
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const workflowData = await getWorkflowWithGraph(workflowId);
+    const workflowData = await getWorkflowWithGraphForChat(workflowId);
     if (!workflowData) {
       return Response.json(
         { error: "workflowData를 불러오는 데에 실패하였습니다." },

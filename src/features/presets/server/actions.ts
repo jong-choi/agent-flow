@@ -24,7 +24,7 @@ import {
   getChatById,
   getChatsByWorkflowId,
   getPublicChatMessagesByChatId,
-} from "@/db/query/chat";
+} from "@/features/chats/server/queries";
 import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
 import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 import { users } from "@/db/schema/auth";

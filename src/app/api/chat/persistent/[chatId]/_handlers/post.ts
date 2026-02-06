@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { getChatById, insertChatMessage } from "@/db/query/chat";
+import { insertChatMessage } from "@/features/chats/server/actions";
+import { getChatById } from "@/features/chats/server/queries";
 
 const chatMessageSchema = z.object({
   message: z.string(),

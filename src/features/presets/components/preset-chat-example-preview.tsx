@@ -1,6 +1,6 @@
 import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { type ClientChatMessage } from "@/features/chat/utils/chat-message";
+import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
 import { cn } from "@/lib/utils";
 
 export function PresetChatExamplePreview({

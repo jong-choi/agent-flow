@@ -14,11 +14,11 @@ import { isValidNodeType } from "@/app/api/chat/_types/nodes";
 import {
   getChatById,
   getChatMessagesByChatId,
-  insertChatMessage,
-} from "@/db/query/chat";
-import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
-import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
+  getWorkflowWithGraphForChat,
+} from "@/features/chats/server/queries";
+import { insertChatMessage } from "@/features/chats/server/actions";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
+import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
 
 const toBaseMessage = (role: string, content: string) => {
   if (role === "user") return new HumanMessage(content);
@@ -42,7 +42,7 @@ export async function GET(
 
     const chat = await getChatById(chatId);
 
-    const workflowData = await getWorkflowWithGraph(chat.workflowId);
+    const workflowData = await getWorkflowWithGraphForChat(chat.workflowId);
     if (!workflowData) {
       return Response.json(
         { error: "workflowData를 불러오는 데에 실패하였습니다." },

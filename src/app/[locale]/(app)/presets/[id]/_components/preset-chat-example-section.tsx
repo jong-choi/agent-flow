@@ -5,9 +5,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getPublicChatMessagesByChatId } from "@/db/query/chat";
+import { getPublicChatMessagesByChatId } from "@/features/chats/server/queries";
 import { PresetChatExamplePreview } from "@/features/presets/components/preset-chat-example-preview";
-import { type ClientChatMessage } from "@/features/chat/utils/chat-message";
+import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
 
 export async function PresetChatExampleSection({
   chatId,

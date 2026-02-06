@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { type ClientChatMessage } from "@/features/chat/utils/chat-message";
+import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
 import { PresetChatExamplePreview } from "@/features/presets/components/preset-chat-example-preview";
 import { cn } from "@/lib/utils";
 
