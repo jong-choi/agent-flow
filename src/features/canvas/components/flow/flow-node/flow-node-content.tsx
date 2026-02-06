@@ -1,6 +1,5 @@
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -55,58 +54,58 @@ export function FlowNodeContent({
 
   if (content.type === "select") {
     return (
-      <CardContent className="-mt-4">
-        <div className="flex flex-col gap-2">
-          <Select
-            onValueChange={handleValueChange}
-            value={content.value || undefined}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={content.placeholder} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>{content.label} </SelectLabel>
-                {content.options?.map((option) => {
-                  return (
-                    <SelectItem value={option.value} key={option.id}>
-                      <div className="flex w-full items-center justify-between gap-2">
-                        <span className="truncate">{option.value}</span>
-                        {typeof option.price === "number" ? (
-                          <span className="right-0 text-xs text-muted-foreground">
-                            x{option.price}
-                          </span>
-                        ) : null}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+      <div className="flex flex-col gap-2">
+        <Select
+          onValueChange={handleValueChange}
+          value={content.value || undefined}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={content.placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>{content.label} </SelectLabel>
+              {content.options?.map((option) => {
+                return (
+                  <SelectItem value={option.value} key={option.id}>
+                    <div className="flex w-full items-center justify-between gap-2">
+                      <span className="truncate">{option.value}</span>
+                      {typeof option.price === "number" ? (
+                        <span className="right-0 text-xs text-muted-foreground">
+                          x{option.price}
+                        </span>
+                      ) : null}
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
 
-          {nodeType === "documentNode" ? (
-            <DocumentReferenceDialog
-              referenceId={content.referenceId}
-              onChange={(nextReferenceId) => {
-                updateNodeData(id, {
-                  content: { ...content, referenceId: nextReferenceId },
-                });
-                requestAnimationFrame(() => setSelectedNodeId(null));
-              }}
-            />
-          ) : null}
-        </div>
-      </CardContent>
+        {nodeType === "documentNode" ? (
+          <DocumentReferenceDialog
+            referenceId={content.referenceId}
+            onChange={(nextReferenceId) => {
+              updateNodeData(id, {
+                content: { ...content, referenceId: nextReferenceId },
+              });
+              requestAnimationFrame(() => setSelectedNodeId(null));
+            }}
+          />
+        ) : null}
+      </div>
     );
   }
 
   if (content.type === "dialog") {
     return (
-      <CardContent className="-mt-4">
+      <div>
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="outline">{content.label}</Button>
+            <Button variant="outline" className="w-full">
+              {content.label}
+            </Button>
           </DialogTrigger>
           <DialogTitle className="sr-only">노드 수정 다이알로그</DialogTitle>
           <DialogContent
@@ -141,7 +140,7 @@ export function FlowNodeContent({
             </form>
           </DialogContent>
         </Dialog>
-      </CardContent>
+      </div>
     );
   }
 

@@ -8,7 +8,7 @@ import { ChatStreamingMessages } from "@/features/chat/components/chat-panel/con
 import { ChatPanelInputForm } from "@/features/chat/components/chat-panel/content/chat-panel-input-form";
 import { useChatStore } from "@/features/chat/store/chat-store";
 
-const SCROLL_OFFSET = 80;
+const SCROLL_OFFSET = 100;
 export const BOTTOM_PADDING = 30;
 
 export function ChatPanelContent() {

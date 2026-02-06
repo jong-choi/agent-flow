@@ -3,7 +3,6 @@
 import { useId, useState, useTransition } from "react";
 import { Copy, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -26,9 +26,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import {
+  type UserSecretSummary,
   createUserSecretAction,
   softDeleteUserSecretAction,
-  type UserSecretSummary,
 } from "@/db/query/secrets";
 import { cn, formatKoreanDate } from "@/lib/utils";
 
@@ -95,25 +95,31 @@ export function SecretKeysManager({ initialSecrets }: SecretKeysManagerProps) {
           {empty ? "발급된 키가 없습니다." : `발급된 키 ${secrets.length}개`}
         </div>
         <Button onClick={handleCreate} disabled={!canCreate} size="sm">
-          {isPending ? <Spinner className="size-4" /> : <Plus className="size-4" />}
+          {isPending ? (
+            <Spinner className="size-4" />
+          ) : (
+            <Plus className="size-4" />
+          )}
           새 키 발급
         </Button>
       </div>
 
-      <ScrollArea className="h-56">
+      <ScrollArea className="h-56 rounded-md bg-accent/40">
         {empty ? (
-          <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+          <div className="my-auto flex h-56 items-center justify-center text-xs text-muted-foreground">
             발급된 키가 없습니다.
           </div>
         ) : (
-          <div className="space-y-2 pr-2">
+          <div className="space-y-2">
             {secrets.map((secret) => (
               <div
                 key={secret.id}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-md border bg-background px-3 py-2"
               >
                 <div className="min-w-0 space-y-1">
-                  <div className="truncate font-mono text-sm">{secret.preview}</div>
+                  <div className="truncate font-mono text-sm">
+                    {secret.preview}
+                  </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     <span>발급 {formatKoreanDate(secret.createdAt)}</span>
                     <span className={cn(!secret.lastUsedAt && "hidden")}>
@@ -136,7 +142,9 @@ export function SecretKeysManager({ initialSecrets }: SecretKeysManagerProps) {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>시크릿 키를 삭제할까요?</AlertDialogTitle>
+                      <AlertDialogTitle>
+                        시크릿 키를 삭제할까요?
+                      </AlertDialogTitle>
                       <AlertDialogDescription>
                         삭제하면 외부 서비스에서 더 이상 사용할 수 없습니다.
                       </AlertDialogDescription>
@@ -206,7 +214,12 @@ function NewSecretDialog({
           </p>
         </div>
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="secondary" onClick={onCopy} disabled={!secret}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onCopy}
+            disabled={!secret}
+          >
             <Copy className="size-4" />
             복사
           </Button>

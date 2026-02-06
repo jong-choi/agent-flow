@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useCallback, useMemo } from "react";
+import { X } from "lucide-react";
 import { type Control, useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,13 +27,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
   type FlowCanvasNode,
   type FlowNodeData,
 } from "@/db/types/sidebar-nodes";
 import { DocumentReferenceDialog } from "@/features/canvas/components/flow/document-reference/document-reference-dialog";
+import { Icons, isIconName } from "@/features/canvas/constants/icons";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
+import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import {
   handleCountRefine,
   pruneEdgesForHandleCount,
@@ -56,7 +60,9 @@ type FormValues = z.infer<typeof formSchema>;
 export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
   const { updateNodeData, getEdges, setEdges } = useCanvasReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
+  const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
   const data = node.data;
+  const IconComponent = isIconName(data.icon) ? Icons[data.icon] : Icons.Circle;
   const { label, description, content, handle } = data;
   const { targetCount, sourceCount } =
     handle != null ? handle : { targetCount: null, sourceCount: null };
@@ -169,101 +175,130 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
   );
 
   return (
-    <ScrollArea className="h-full" key={node.id}>
-      <section className="flex flex-col gap-4 p-4">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="flex flex-col gap-4"
+    <div className="ml-1 flex h-full flex-col border bg-background">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed size-8 self-end text-muted-foreground hover:text-foreground"
+        onClick={() => setSelectedNodeId(null)}
+      >
+        <X className="size-4" />
+      </Button>
+      <div className="mt-4 flex items-center justify-between px-4">
+        <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold">
+          <div
+            className={`flex size-6 shrink-0 items-center justify-center rounded-md text-white ${data.backgroundColor}`}
           >
-            <FormField
-              control={form.control}
-              name="label"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>이름</FormLabel>
-                  <FormControl>
-                    <Input placeholder="노드 이름" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>설명</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="노드 설명" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {data.content ? (
-              <ContentContentFormField
-                control={form.control}
-                content={data.content}
-                label={contentLabel ?? ""}
-              />
-            ) : null}
-
-            {node.type === "documentNode" && data.content ? (
+            <IconComponent className="size-3.5" />
+          </div>
+          <span className="truncate">{data.label}</span>
+        </h2>
+      </div>
+      <ScrollArea className="flex-1">
+        <section className="flex flex-col gap-6 p-4">
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="flex flex-col gap-6"
+            >
               <FormField
                 control={form.control}
-                name="contentReferenceId"
+                name="label"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>문서 연결</FormLabel>
+                  <FormItem className="gap-1">
+                    <FormLabel className="text-[12px] font-bold text-muted-foreground">
+                      이름
+                    </FormLabel>
                     <FormControl>
-                      <DocumentReferenceDialog
-                        referenceId={field.value}
-                        onChange={(nextReferenceId) =>
-                          field.onChange(nextReferenceId ?? "")
-                        }
-                      />
+                      <Input placeholder="Node Name" {...field} />
                     </FormControl>
-                    <FormDescription>
-                      문서 노드는 문서 연결이 있어야 실행할 수 있습니다.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            ) : null}
 
-            {data.handle && (targetCountEditable || sourceCountEditable) ? (
-              <FormItem>
-                <FormLabel>핸들 수</FormLabel>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <HandleCountFormField
-                    control={form.control}
-                    name="targetCount"
-                    label="Target"
-                    disabled={!targetCountEditable}
-                  />
-                  <HandleCountFormField
-                    control={form.control}
-                    name="sourceCount"
-                    label="Source"
-                    disabled={!sourceCountEditable}
-                  />
-                </div>
-                <FormDescription>
-                  핸들 수를 줄이면 연결이 제거될 수 있습니다.
-                </FormDescription>
-              </FormItem>
-            ) : null}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="gap-1">
+                    <FormLabel className="text-[12px] font-bold text-muted-foreground">
+                      설명
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Description..."
+                        className="h-[100px] resize-none overflow-y-auto"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button type="submit">저장</Button>
-          </form>
-        </Form>
-      </section>
-    </ScrollArea>
+              {data.content ? (
+                <ContentContentFormField
+                  control={form.control}
+                  content={data.content}
+                  label={contentLabel ?? ""}
+                />
+              ) : null}
+
+              {node.type === "documentNode" && data.content ? (
+                <FormField
+                  control={form.control}
+                  name="contentReferenceId"
+                  render={({ field }) => (
+                    <FormItem className="gap-1">
+                      <FormLabel className="text-[12px] font-bold text-muted-foreground">
+                        문서 연결
+                      </FormLabel>
+                      <FormControl>
+                        <DocumentReferenceDialog
+                          referenceId={field.value}
+                          onChange={(nextReferenceId) =>
+                            field.onChange(nextReferenceId ?? "")
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              ) : null}
+
+              {data.handle && (targetCountEditable || sourceCountEditable) ? (
+                <FormItem className="gap-1">
+                  <FormLabel className="text-[12px] font-bold text-muted-foreground">
+                    핸들
+                  </FormLabel>
+                  <div className="grid gap-4 pt-2">
+                    <HandleCountFormField
+                      control={form.control}
+                      name="targetCount"
+                      label="Target Inputs"
+                      disabled={!targetCountEditable}
+                    />
+                    <HandleCountFormField
+                      control={form.control}
+                      name="sourceCount"
+                      label="Source Outputs"
+                      disabled={!sourceCountEditable}
+                    />
+                  </div>
+                </FormItem>
+              ) : null}
+              <Separator />
+              <div>
+                <Button type="submit" className="w-full">
+                  저장하기
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </section>
+      </ScrollArea>
+    </div>
   );
 }
 
@@ -284,13 +319,21 @@ function HandleCountFormField({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <div className="mb-2 flex items-center justify-between">
+            <FormLabel className="text-xs font-normal text-muted-foreground">
+              {label}
+            </FormLabel>
+            <span className="font-mono text-xs text-primary">
+              {field.value}
+            </span>
+          </div>
           <FormControl>
             <Input
-              type="number"
+              type="range"
               min={1}
               max={5}
               disabled={disabled}
+              className="accent-primary"
               {...field}
             />
           </FormControl>
@@ -337,7 +380,7 @@ function ContentContentFormField({
                             <span className="truncate">{option.value}</span>
                             {typeof option.price === "number" ? (
                               <span className="text-xs text-muted-foreground">
-                                {option.price} 크레딧
+                                {option.price} Credits
                               </span>
                             ) : null}
                           </div>
@@ -354,16 +397,21 @@ function ContentContentFormField({
               <div>
                 <Textarea
                   placeholder={content.dialogDescription ?? undefined}
+                  className="h-[100px] resize-none overflow-y-auto"
                   {...field}
                 />
-                <FormDescription>{content.dialogDescription}</FormDescription>
+                <FormDescription className="mt-2 text-xs">
+                  {content.dialogDescription}
+                </FormDescription>
               </div>
             );
         }
 
         return (
           <FormItem>
-            <FormLabel>{label}</FormLabel>
+            <FormLabel className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+              {label}
+            </FormLabel>
             <FormControl>{contentInput}</FormControl>
             <FormMessage />
           </FormItem>

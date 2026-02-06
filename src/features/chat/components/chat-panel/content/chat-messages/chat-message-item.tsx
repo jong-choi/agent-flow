@@ -1,6 +1,6 @@
 import { Copy } from "lucide-react";
+import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import { Button } from "@/components/ui/button";
-import { MarkdownWrapper } from "@/features/chat/components/markdown/markdown-wrapper";
 import { type ClientChatMessage } from "@/features/chat/utils/chat-message";
 import { cn, formatKoreanDate } from "@/lib/utils";
 
@@ -13,24 +13,25 @@ export function ChatMessageItem({ message }: { message: ClientChatMessage }) {
       )}
     >
       <div
-        className={cn("flex flex-col", message.role === "user" ? "" : "w-full")}
+        className={cn(
+          "flex flex-col",
+          message.role === "user" ? "max-w-4/5" : "w-full",
+        )}
       >
         <div
           className={cn(
             "flex flex-col",
             message.role === "user"
-              ? "rounded-2xl bg-primary px-4 text-primary-foreground shadow-sm transition-shadow hover:shadow-md"
+              ? "items-center rounded-2xl bg-secondary p-4"
               : "w-full",
           )}
         >
-          <MarkdownWrapper className="-mt-2 text-sm leading-relaxed">
-            {message.content}
-          </MarkdownWrapper>
+          <ContentMarkdown>{message.content}</ContentMarkdown>
         </div>
         <div
           className={cn(
             "mt-1 flex items-center gap-1",
-            message.role === "user" ? "justify-end" : "justify-start pl-2",
+            message.role === "user" ? "justify-end" : "justify-start",
             !message.createdAt && "hidden",
           )}
         >

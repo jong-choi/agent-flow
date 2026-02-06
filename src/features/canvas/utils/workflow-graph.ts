@@ -47,6 +47,8 @@ export const buildFlowGraphFromWorkflow = ({
       data: {
         label: node.label ?? baseNode?.label ?? "",
         description: node.description ?? baseNode?.description ?? "",
+        icon: baseNode?.icon ?? "Circle",
+        backgroundColor: baseNode?.backgroundColor ?? "bg-neutral-800",
         content,
         handle,
         information: baseNode?.information ?? null,

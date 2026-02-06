@@ -1,29 +1,21 @@
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 export function SidebarContainer({
   children,
   className,
-  title,
-  description,
+  footer,
   ...props
-}: React.ComponentProps<"div"> & { title: string; description: string }) {
+}: React.ComponentProps<"aside"> & { footer?: React.ReactNode }) {
   return (
-    <Card className={className} {...props}>
-      <CardHeader className="px-4 py-0">
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-4 overflow-hidden px-2 pb-4">
-          {children}
-        </div>
+    <aside
+      className={cn("flex flex-col border bg-background", className)}
+      {...props}
+    >
+      <ScrollArea className="flex-1">
+        <div className="flex flex-col gap-2 p-4">{children}</div>
       </ScrollArea>
-    </Card>
+      {footer && <div className="border-t bg-muted/30 p-4">{footer}</div>}
+    </aside>
   );
 }

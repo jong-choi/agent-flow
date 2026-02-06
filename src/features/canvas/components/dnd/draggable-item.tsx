@@ -1,13 +1,9 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
+import { Icons, isIconName } from "@/features/canvas/constants/icons";
+import { cn } from "@/lib/utils";
 
 type DraggableItemProps = {
   item: SidebarNodeData;
@@ -15,13 +11,25 @@ type DraggableItemProps = {
 };
 
 export function DraggableItemView({ item }: { item: SidebarNodeData }) {
+  const IconComponent = isIconName(item.icon) ? Icons[item.icon] : Icons.Circle;
+
   return (
-    <Card className="w-full cursor-grabbing p-2 px-0">
-      <CardHeader>
-        <CardTitle>{item.label}</CardTitle>
-        <CardDescription>{item.description}</CardDescription>
-      </CardHeader>
-    </Card>
+    <div className="group flex w-full cursor-grab items-center rounded-lg border border-transparent p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+      <div
+        className={cn(
+          "mr-3 flex size-8 items-center justify-center rounded-md text-white shadow-sm",
+          item.backgroundColor,
+        )}
+      >
+        <IconComponent className="size-4" />
+      </div>
+      <div className="flex flex-col text-left">
+        <span className="text-sm leading-none font-medium">{item.label}</span>
+        <span className="mt-1 line-clamp-1 text-xs text-muted-foreground group-hover:text-accent-foreground/80">
+          {item.description}
+        </span>
+      </div>
+    </div>
   );
 }
 

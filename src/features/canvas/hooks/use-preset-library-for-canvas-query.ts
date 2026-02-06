@@ -15,7 +15,6 @@ export const usePresetLibraryForCanvasQuery = (enabled: boolean) => {
     queryKey: presetLibraryForCanvasQueryKey,
     queryFn: getPresetLibraryForCanvasAction,
     enabled,
-    staleTime: 0,
   });
 
   const presets = query.data ?? EMPTY_PRESET_LIBRARY;

@@ -9,7 +9,7 @@ export const signInWithGoogleAction = async () => {
 };
 
 export const signOutAction = async () => {
-  await signOut({ redirectTo: "/login" });
+  await signOut({ redirectTo: "/" });
 };
 
 export const devPasswordSignIn = async (formData: FormData) => {

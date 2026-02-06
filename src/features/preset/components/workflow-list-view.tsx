@@ -34,7 +34,7 @@ export async function WorkflowListView() {
           {workflowList.map((workflow) => (
             <WorkflowListCard
               key={workflow.id}
-              href={`/workflows/${workflow.id}`}
+              href={`/workflows/canvas/${workflow.id}`}
               workflowId={workflow.id}
               title={workflow.title}
               description={workflow.description}
