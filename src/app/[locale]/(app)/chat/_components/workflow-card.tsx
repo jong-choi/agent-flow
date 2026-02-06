@@ -22,7 +22,7 @@ export function WorkflowCard({ workflow }: { workflow: ChatPageWorkflow }) {
         {workflow.description}
       </div>
       <div className="mt-2 flex items-end justify-between">
-        <div className="mb-1">
+        <div className="mr-2 mb-1">
           <BoringCardAvatar
             seed={workflow.id}
             variant="bauhaus"
@@ -31,8 +31,8 @@ export function WorkflowCard({ workflow }: { workflow: ChatPageWorkflow }) {
           />
         </div>
         <div className="flex items-center justify-end gap-2">
-          <ChatStartButton workflowId={workflow.id} />
           <WorkflowPreviewDialog workflowId={workflow.id} />
+          <ChatStartButton workflowId={workflow.id} />
         </div>
       </div>
     </div>

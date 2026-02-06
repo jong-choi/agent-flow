@@ -26,7 +26,7 @@ export default async function AppLayout({
         <div className="flex h-full w-full">
           <SidebarNav />
           <div className="flex w-full flex-col">
-            <div className="sticky top-0">
+            <div className="sticky top-0 z-40">
               <SiteHeader />
             </div>
             <main className="flex flex-1 flex-col bg-background">
