@@ -1,7 +1,3 @@
-import { CreateDocumentButton } from "@/app/[locale]/(app)/docs/_components/create-document-button";
-import { DocumentsGrid } from "@/app/[locale]/(app)/docs/_components/documents-grid";
-import { DocumentsSearch } from "@/app/[locale]/(app)/docs/_components/documents-search";
-import { DocumentsSort } from "@/app/[locale]/(app)/docs/_components/documents-sort";
 import {
   PageContainer,
   PageDescription,
@@ -9,7 +5,11 @@ import {
   PageHeading,
 } from "@/components/page-template";
 import { Separator } from "@/components/ui/separator";
-import { getDocumentsByOwner } from "@/db/query/documents";
+import { CreateDocumentButton } from "@/features/documents/components/list/create-document-button";
+import { DocumentsGrid } from "@/features/documents/components/list/documents-grid";
+import { DocumentsSearch } from "@/features/documents/components/list/documents-search";
+import { DocumentsSort } from "@/features/documents/components/list/documents-sort";
+import { getDocumentsByOwner } from "@/features/documents/server/queries";
 
 export default async function DocsPage({
   searchParams,

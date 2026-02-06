@@ -6,7 +6,7 @@ import { createStore } from "zustand";
 import {
   type DocumentContentSlice,
   createDocumentContentSlice,
-} from "@/app/[locale]/(app)/docs/[docId]/_store/slices/document-content-slice";
+} from "@/features/documents/store/slices/document-content-slice";
 
 type DocumentState = DocumentContentSlice;
 

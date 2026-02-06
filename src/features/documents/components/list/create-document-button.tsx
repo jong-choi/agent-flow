@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { createDocumentAction } from "@/db/query/documents";
+import { createDocumentAction } from "@/features/documents/server/actions";
 
 export function CreateDocumentButton() {
   const router = useRouter();

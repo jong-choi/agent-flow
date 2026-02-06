@@ -11,7 +11,7 @@ import { getWorkflowWithGraph } from "@/db/query/workflows";
 import {
   getUserIdByCanvasSecret,
   getWorkflowByCanvasId,
-} from "@/db/query/secrets";
+} from "@/features/developers/server/queries";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 
 const LOCALES = ["ko", "en"] as const;

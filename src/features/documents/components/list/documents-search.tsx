@@ -13,7 +13,7 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { searchDocumentsByTitle } from "@/db/query/documents";
+import { searchDocumentsByTitleAction } from "@/features/documents/server/actions";
 import { useDebounce } from "@/hooks/use-debounce";
 
 type DocumentSuggestion = {
@@ -67,7 +67,10 @@ export function DocumentsSearch() {
     setIsLoading(true);
 
     try {
-      const results = await searchDocumentsByTitle(normalized, MAX_SUGGESTIONS);
+      const results = await searchDocumentsByTitleAction({
+        query: normalized,
+        limit: MAX_SUGGESTIONS,
+      });
       setSuggestions(results);
       setIsSuggestOpen(true);
     } catch {

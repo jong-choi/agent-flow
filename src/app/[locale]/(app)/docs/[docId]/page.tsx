@@ -1,11 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, PencilLine } from "lucide-react";
-import { DocumentDeleteDialog } from "@/app/[locale]/(app)/docs/[docId]/_components/document-delete-dialog";
-import { DocumentSaveButton } from "@/app/[locale]/(app)/docs/[docId]/_components/document-save-button";
-import { DocumentEditor } from "@/app/[locale]/(app)/docs/[docId]/_components/documents-editor";
-import { DocumentTitleEditor } from "@/app/[locale]/(app)/docs/[docId]/_components/documents-title-editor";
-import { DocumentStoreProvider } from "@/app/[locale]/(app)/docs/[docId]/_store/document-store";
 import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import {
   PageContainer,
@@ -15,7 +10,12 @@ import {
 } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { getDocumentById } from "@/db/query/documents";
+import { DocumentDeleteDialog } from "@/features/documents/components/detail/document-delete-dialog";
+import { DocumentEditor } from "@/features/documents/components/detail/document-editor";
+import { DocumentSaveButton } from "@/features/documents/components/detail/document-save-button";
+import { DocumentTitleEditor } from "@/features/documents/components/detail/document-title-editor";
+import { DocumentStoreProvider } from "@/features/documents/store/document-store";
+import { getDocumentById } from "@/features/documents/server/queries";
 import { formatKoreanDate } from "@/lib/utils";
 
 export default async function DocumentViewPage({

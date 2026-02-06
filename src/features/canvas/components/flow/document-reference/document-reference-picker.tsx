@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { searchDocumentsByTitle } from "@/db/query/documents";
+import { searchDocumentsByTitleAction } from "@/features/documents/server/actions";
 import { useDebounce } from "@/hooks/use-debounce";
 
 export type DocumentReferenceSuggestion = {
@@ -45,7 +45,10 @@ export function DocumentReferencePicker({
   const doSearch = useCallback(async (query: string) => {
     setIsSearching(true);
     try {
-      const results = await searchDocumentsByTitle(query, MAX_SUGGESTIONS);
+      const results = await searchDocumentsByTitleAction({
+        query,
+        limit: MAX_SUGGESTIONS,
+      });
       setSearchResults(results);
     } catch {
       setSearchResults([]);

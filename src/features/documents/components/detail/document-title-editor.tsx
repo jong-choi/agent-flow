@@ -1,7 +1,7 @@
 "use client";
 
-import { useDocumentStore } from "@/app/[locale]/(app)/docs/[docId]/_store/document-store";
 import { Input } from "@/components/ui/input";
+import { useDocumentStore } from "@/features/documents/store/document-store";
 
 export function DocumentTitleEditor() {
   const value = useDocumentStore((s) => s.documentTitle);

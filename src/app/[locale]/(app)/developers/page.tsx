@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { ApiGuideMarkdown } from "@/app/[locale]/(app)/developers/_components/api-guide-markdown";
-import { SecretKeysManager } from "@/app/[locale]/(app)/developers/_components/secret-keys-manager";
 import {
   PageContainer,
   PageDescription,
@@ -10,7 +8,9 @@ import {
 } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getUserSecrets } from "@/db/query/secrets";
+import { ApiGuideMarkdown } from "@/features/developers/components/api-guide-markdown";
+import { SecretKeysManager } from "@/features/developers/components/secret-keys-manager";
+import { getUserSecrets } from "@/features/developers/server/queries";
 
 export default async function DevelopersPage({
   params,
@@ -58,4 +58,3 @@ export default async function DevelopersPage({
     </PageContainer>
   );
 }
-

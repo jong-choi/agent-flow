@@ -26,10 +26,10 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import {
-  type UserSecretSummary,
   createUserSecretAction,
   softDeleteUserSecretAction,
-} from "@/db/query/secrets";
+} from "@/features/developers/server/actions";
+import { type UserSecretSummary } from "@/features/developers/server/queries";
 import { cn, formatKoreanDate } from "@/lib/utils";
 
 type SecretKeysManagerProps = {

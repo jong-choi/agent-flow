@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Save } from "lucide-react";
-import { useDocumentStore } from "@/app/[locale]/(app)/docs/[docId]/_store/document-store";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { updateDocumentAction } from "@/db/query/documents";
+import { updateDocumentAction } from "@/features/documents/server/actions";
+import { useDocumentStore } from "@/features/documents/store/document-store";
 
 export function DocumentSaveButton({ docId }: { docId: string }) {
   const title = useDocumentStore((s) => s.documentTitle);

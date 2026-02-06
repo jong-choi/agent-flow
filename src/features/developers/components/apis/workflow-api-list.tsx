@@ -23,7 +23,7 @@ import { BoringCardAvatar } from "@/components/boring-avatar";
 import {
   issueWorkflowCanvasIdAction,
   softDeleteWorkflowCanvasIdAction,
-} from "@/db/query/secrets";
+} from "@/features/developers/server/actions";
 import { cn, formatKoreanDate } from "@/lib/utils";
 
 type WorkflowSummary = {

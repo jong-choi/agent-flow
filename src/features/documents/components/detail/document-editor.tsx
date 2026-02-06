@@ -5,8 +5,8 @@ import { useTheme } from "next-themes";
 import rehypeSanitize from "rehype-sanitize";
 import "@uiw/react-markdown-preview/markdown.css";
 import "@uiw/react-md-editor/markdown-editor.css";
-import { useDocumentStore } from "@/app/[locale]/(app)/docs/[docId]/_store/document-store";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDocumentStore } from "@/features/documents/store/document-store";
 
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), {
   ssr: false,

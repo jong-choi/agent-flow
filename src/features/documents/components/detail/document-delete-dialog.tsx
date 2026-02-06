@@ -13,7 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { deleteDocumentAction } from "@/db/query/documents";
+import { deleteDocumentAction } from "@/features/documents/server/actions";
 
 type DocumentDeleteDialogProps = {
   docId: string;

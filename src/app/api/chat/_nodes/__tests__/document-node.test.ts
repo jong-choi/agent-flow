@@ -3,14 +3,21 @@ import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-conf
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import { documentNode } from "@/app/api/chat/_nodes/document-node";
 import {
-  getDocumentById,
   mergeDocumentContentById,
   replaceDocumentContentById,
-} from "@/db/query/documents";
+} from "@/features/documents/server/actions";
+import {
+  getDocumentById,
+} from "@/features/documents/server/queries";
 
-vi.mock("@/db/query/documents", () => {
+vi.mock("@/features/documents/server/queries", () => {
   return {
     getDocumentById: vi.fn(),
+  };
+});
+
+vi.mock("@/features/documents/server/actions", () => {
+  return {
     replaceDocumentContentById: vi.fn(),
     mergeDocumentContentById: vi.fn(),
   };
