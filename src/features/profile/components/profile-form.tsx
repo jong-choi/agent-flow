@@ -5,22 +5,27 @@ import { RefreshCcw } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { ProfileNameInput } from "@/app/[locale]/(app)/profile/_components/profile-name-input";
 import { BoringUserAvatar } from "@/components/boring-avatar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { updateUserAction } from "@/db/query/auth";
+import { ProfileNameInput } from "@/features/profile/components/profile-name-input";
+import { updateUserAction } from "@/features/profile/server/actions";
 
 type ProfileFormProps = {
   initialDisplayName: string | null;
   initialAvatarHash: string | null;
   email?: string | null;
+  checkDisplayNameTakenAction: (
+    displayName: string,
+    excludeUserId?: string,
+  ) => Promise<boolean>;
 };
 
 export function ProfileForm({
   initialDisplayName,
   initialAvatarHash,
   email,
+  checkDisplayNameTakenAction,
 }: ProfileFormProps) {
   const { data: session, update } = useSession();
 
@@ -111,6 +116,7 @@ export function ProfileForm({
           setNameMessage={setNameMessage}
           setValidName={setValidName}
           setChecking={setChecking}
+          checkDisplayNameTakenAction={checkDisplayNameTakenAction}
         />
       </div>
       <div className="flex items-center gap-4">

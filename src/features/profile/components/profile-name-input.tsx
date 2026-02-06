@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { type Session } from "next-auth";
 import { Input } from "@/components/ui/input";
-import { isDisplayNameTaken } from "@/db/query/auth";
 import { useDebounce } from "@/hooks/use-debounce";
 
 const DISPLAY_NAME_MAX_LEN = 30;
@@ -12,12 +11,17 @@ export function ProfileNameInput({
   setNameMessage,
   setValidName,
   setChecking,
+  checkDisplayNameTakenAction,
 }: {
   initialDisplayName: string;
   session: Session | null;
   setNameMessage: (value: string) => void;
   setValidName: (value: boolean) => void;
   setChecking: (value: boolean) => void;
+  checkDisplayNameTakenAction: (
+    displayName: string,
+    excludeUserId?: string,
+  ) => Promise<boolean>;
 }) {
   const trimmedInitialDisplayName = initialDisplayName?.trim() ?? "";
 
@@ -41,7 +45,7 @@ export function ProfileNameInput({
         setChecking(false);
         return;
       }
-      const isTaken = await isDisplayNameTaken(value, session?.user?.id);
+      const isTaken = await checkDisplayNameTakenAction(value, session?.user?.id);
       if (isTaken) {
         setValidName(false);
         setNameMessage("중복된 닉네임입니다.");
@@ -53,6 +57,7 @@ export function ProfileNameInput({
     },
     [
       session?.user?.id,
+      checkDisplayNameTakenAction,
       setChecking,
 
       setNameMessage,
