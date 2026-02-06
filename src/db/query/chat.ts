@@ -3,7 +3,7 @@
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import { getUserId } from "@/db/query/auth";
-import { getWorkflowWithGraph } from "@/db/query/workflows";
+import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 import { chatMessages, chats } from "@/db/schema";
 
 export const createChatFromWorkflow = async ({

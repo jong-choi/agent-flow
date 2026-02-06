@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { type ClientChatMessage } from "@/features/chat/utils/chat-message";
-import { PresetChatExamplePreview } from "@/features/preset/components/preset-chat-example-preview";
+import { PresetChatExamplePreview } from "@/features/presets/components/preset-chat-example-preview";
 import { cn } from "@/lib/utils";
 
 export type ChatExample = {

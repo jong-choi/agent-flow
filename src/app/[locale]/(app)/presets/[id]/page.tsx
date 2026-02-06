@@ -15,9 +15,9 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getUserId } from "@/db/query/auth";
-import { getPresetDetail, getPresetPurchaseStatus } from "@/db/query/presets";
+import { getPresetDetail, getPresetPurchaseStatus } from "@/features/presets/server/actions";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
-import { PresetPurchaseDialog } from "@/features/preset/components/preset-purchase-dialog";
+import { PresetPurchaseDialog } from "@/features/presets/components/preset-purchase-dialog";
 import { formatKoreanDate } from "@/lib/utils";
 
 const formatPrice = (price: number) =>

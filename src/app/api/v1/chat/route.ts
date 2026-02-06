@@ -6,8 +6,8 @@ import {
   langgraphStreamEventSchema,
 } from "@/app/api/chat/_types/chat-events";
 import { isValidNodeType } from "@/app/api/chat/_types/nodes";
-import { getSidebarNodesWithOptions } from "@/db/query/sidebar-nodes";
-import { getWorkflowWithGraph } from "@/db/query/workflows";
+import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
+import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 import {
   getUserIdByCanvasSecret,
   getWorkflowByCanvasId,

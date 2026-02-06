@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getPresetLibraryForCanvasAction } from "@/db/query/presets";
+import { getPresetLibraryForCanvasAction } from "@/features/presets/server/actions";
 
 const presetLibraryForCanvasQueryKey = ["preset", "library", "canvas"] as const;
 

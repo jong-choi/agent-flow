@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getOwnedWorkflows } from "@/db/query/workflows";
+import { getOwnedWorkflows } from "@/features/workflows/server/queries";
 
 export async function WorkflowsListDialog() {
   const workflowList = await getOwnedWorkflows();

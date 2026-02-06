@@ -5,8 +5,8 @@ import {
   type ThreadContext,
   createThread,
 } from "@/app/api/chat/_engines/handle-connect";
-import { getSidebarNodesWithOptions } from "@/db/query/sidebar-nodes";
-import { getWorkflowWithGraph } from "@/db/query/workflows";
+import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
+import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 import { auth } from "@/lib/auth";
 

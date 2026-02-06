@@ -1,4 +1,4 @@
-import { getSidebarNodesWithOptions } from "@/db/query/sidebar-nodes";
+import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
 import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 import { SidebarItemCard } from "@/features/canvas/components/sidebar/sidebar-item-card";
 

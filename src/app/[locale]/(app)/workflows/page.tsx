@@ -5,7 +5,7 @@ import {
   PageHeading,
 } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
-import { WorkflowListView } from "@/features/preset/components/workflow-list-view";
+import { WorkflowListView } from "@/features/workflows/components/workflow-list-view";
 
 export default async function WorkflowsPage() {
   return (

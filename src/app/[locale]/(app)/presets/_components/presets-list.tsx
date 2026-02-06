@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PresetPurchaseDialog } from "@/features/preset/components/preset-purchase-dialog";
+import { PresetPurchaseDialog } from "@/features/presets/components/preset-purchase-dialog";
 import { formatKoreanDate } from "@/lib/utils";
 
 type PresetsListVariant = "market" | "library";

@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { getWorkflowWithGraph } from "@/db/query/workflows";
+import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
 
 export async function WorkflowPreviewDialog({

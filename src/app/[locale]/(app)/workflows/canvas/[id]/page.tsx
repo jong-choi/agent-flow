@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import "@xyflow/react/dist/style.css";
-import { getSidebarNodesWithOptions } from "@/db/query/sidebar-nodes";
-import { getWorkflowWithGraph } from "@/db/query/workflows";
+import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
+import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 import { DroppableZone } from "@/features/canvas/components/dnd/droppable-zone";
 import { FlowApp } from "@/features/canvas/components/flow/flow-app";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";

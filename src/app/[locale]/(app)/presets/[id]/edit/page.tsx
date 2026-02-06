@@ -6,8 +6,8 @@ import {
   deletePresetAction,
   getOwnedPresetForEdit,
   updatePresetAction,
-} from "@/db/query/presets";
-import { PresetEditForm } from "@/features/preset/components/preset-edit-form";
+} from "@/features/presets/server/actions";
+import { PresetEditForm } from "@/features/presets/components/preset-edit-form";
 
 export type PresetEditRes = NonNullable<
   Awaited<ReturnType<typeof getOwnedPresetForEdit>>

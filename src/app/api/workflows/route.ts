@@ -1,5 +1,5 @@
 import { workflowSaveSchema } from "@/app/api/workflows/_types";
-import { createWorkflowGraph } from "@/db/query/workflows";
+import { createWorkflowGraph } from "@/features/workflows/server/actions";
 
 export async function POST(request: Request) {
   try {

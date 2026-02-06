@@ -1,7 +1,7 @@
 import { ChatHeader } from "@/app/[locale]/(app)/chat/_components/chat-header";
 import { getChatById, getChatMessagesByChatId } from "@/db/query/chat";
 import { getOwnedWorkflowChatCreditEstimate } from "@/db/query/workflow-credits";
-import { getOwnedWorkflowById } from "@/db/query/workflows";
+import { getOwnedWorkflowById } from "@/features/workflows/server/queries";
 import { ChatEventWrapper } from "@/features/chat/components/chat-panel/chat-event-wrapper";
 import { ChatPanelContent } from "@/features/chat/components/chat-panel/content/chat-panel-content";
 import { type ClientChatMessage } from "@/features/chat/utils/chat-message";

@@ -8,13 +8,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PresetDescriptionEditor } from "@/features/preset/components/form/preset-description-editor";
+import { PresetDescriptionEditor } from "@/features/presets/components/form/preset-description-editor";
 import {
   type ChatExample,
   PresetChatExampleOptions,
-} from "@/features/preset/components/preset-chat-example-options";
-import { PresetTagInput } from "@/features/preset/components/preset-tag-input";
-import { categoryOptions } from "@/features/preset/constants/category-options";
+} from "@/features/presets/components/preset-chat-example-options";
+import { PresetTagInput } from "@/features/presets/components/preset-tag-input";
+import { categoryOptions } from "@/features/presets/constants/category-options";
 
 const selectClassName =
   "border-input h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50";
@@ -151,4 +151,4 @@ export function PresetChatExampleCard({
 export {
   PresetPricePublishCard,
   type PresetPricePublishCardProps,
-} from "@/features/preset/components/form/preset-price-publish-card";
+} from "@/features/presets/components/form/preset-price-publish-card";

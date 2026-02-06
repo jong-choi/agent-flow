@@ -1,5 +1,5 @@
 import { workflowSaveSchema } from "@/app/api/workflows/_types";
-import { updateWorkflowGraph } from "@/db/query/workflows";
+import { updateWorkflowGraph } from "@/features/workflows/server/actions";
 
 export async function PUT(
   request: Request,

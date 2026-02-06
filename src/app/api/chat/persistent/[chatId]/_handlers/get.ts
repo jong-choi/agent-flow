@@ -16,8 +16,8 @@ import {
   getChatMessagesByChatId,
   insertChatMessage,
 } from "@/db/query/chat";
-import { getSidebarNodesWithOptions } from "@/db/query/sidebar-nodes";
-import { getWorkflowWithGraph } from "@/db/query/workflows";
+import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
+import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 
 const toBaseMessage = (role: string, content: string) => {

@@ -25,8 +25,8 @@ import {
   getChatsByWorkflowId,
   getPublicChatMessagesByChatId,
 } from "@/db/query/chat";
-import { getSidebarNodesWithOptions } from "@/db/query/sidebar-nodes";
-import { getWorkflowWithGraph } from "@/db/query/workflows";
+import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
+import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 import { users } from "@/db/schema/auth";
 import { chats } from "@/db/schema/chat";
 import { creditAccounts, creditTransactions } from "@/db/schema/credit";
@@ -448,8 +448,6 @@ export type PresetPurchaseResult = {
 export const purchasePresetAction = async (
   presetId: string,
 ): Promise<PresetPurchaseResult> => {
-  "use server";
-
   const buyerId = await getUserId();
   let priceSnapshot: Pick<
     PresetPurchaseResult,
@@ -703,8 +701,6 @@ const getPresetLibraryForCanvasBase = async (userId: string) => {
 };
 
 export const getPresetLibraryForCanvasAction = async () => {
-  "use server";
-
   const userId = await getUserId();
 
   const getPresetLibraryForCanvasCached = unstable_cache(
@@ -720,8 +716,6 @@ export const getPresetLibraryForCanvasAction = async () => {
 };
 
 export const getPresetGraphForCanvasAction = async (presetId: string) => {
-  "use server";
-
   const userId = await getUserId();
 
   const [preset] = await db
@@ -1306,8 +1300,6 @@ export const getPresetChatExamplesForForm = async ({
 };
 
 export const createPresetAction = async (formData: FormData) => {
-  "use server";
-
   const titleValue = formData.get("title");
 
   if (typeof titleValue !== "string" || titleValue.trim() === "") {

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   getPresetChatExamplesForForm,
   getWorkflowReferencedPresetPricingSummary,
-} from "@/db/query/presets";
+} from "@/features/presets/server/actions";
 import {
   Card,
   CardContent,
@@ -16,7 +16,7 @@ import {
   PresetChatExampleCard,
   PresetInfoCard,
   PresetPricePublishCard,
-} from "@/features/preset/components/form/preset-form-sections";
+} from "@/features/presets/components/form/preset-form-sections";
 import { formatKoreanDate } from "@/lib/utils";
 
 type PresetEditFormProps = {

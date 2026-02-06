@@ -25,7 +25,7 @@ import { getCreditBalanceAction } from "@/features/credits/server/actions";
 import {
   type PresetPurchaseResult,
   purchasePresetAction,
-} from "@/db/query/presets";
+} from "@/features/presets/server/actions";
 
 type PresetPurchaseDialogProps = {
   presetId: string;

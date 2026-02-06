@@ -6,7 +6,7 @@ import {
   PageStack,
 } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
-import { getOwnedWorkflows } from "@/db/query/workflows";
+import { getOwnedWorkflows } from "@/features/workflows/server/queries";
 import { WorkflowApiList } from "@/features/developers/components/apis/workflow-api-list";
 
 export default async function DevelopersApisPage() {

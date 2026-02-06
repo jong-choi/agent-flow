@@ -3,7 +3,7 @@ import { WorkflowCard } from "@/app/[locale]/(app)/chat/_components/workflow-car
 import { WorkflowsListDialog } from "@/app/[locale]/(app)/chat/_components/workflows-list-dialog";
 import { PageHeading } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
-import { getRecentWorkflows } from "@/db/query/workflows";
+import { getRecentWorkflows } from "@/features/workflows/server/queries";
 
 type GetRecentWorkflowsResult = Awaited<ReturnType<typeof getRecentWorkflows>>;
 export type ChatPageWorkflow = Pick<
