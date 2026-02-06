@@ -4,9 +4,11 @@ import { Logo } from "@/components/logo";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Separator } from "@/components/ui/separator";
 
+export const DVH_HEADER_OFFSET = "h-[calc(100dvh-3.5rem)]";
+
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 flex h-14 w-full items-center justify-between border-b bg-background px-6">
+    <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b bg-background px-6">
       {/* Left Area */}
       <div className="flex items-center gap-6">
         <Logo />

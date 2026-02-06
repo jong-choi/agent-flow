@@ -20,7 +20,7 @@ export default async function Page() {
         <PageHeading>워크플로우를 선택하여 채팅을 시작하세요.</PageHeading>
         {data.length && (
           <div className="flex w-3/5 min-w-[450px] flex-col gap-8">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
               {data.map((workflow: ChatPageWorkflow) => {
                 return <WorkflowCard key={workflow.id} workflow={workflow} />;
               })}

@@ -1,3 +1,4 @@
+import { View } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,8 +19,14 @@ export async function WorkflowPreviewDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline">
-          <span>그래프 보기</span>
+        <Button
+          type="button"
+          variant="ghost"
+          title="그래프 보기"
+          className="text-muted-foreground"
+          size="sm"
+        >
+          <View />
         </Button>
       </DialogTrigger>
       <DialogContent

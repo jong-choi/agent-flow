@@ -1,0 +1,320 @@
+.sectionBackdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.layer {
+  position: absolute;
+  inset: -12%;
+  height: 124%;
+  width: 124%;
+}
+
+.trackLayer {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.driftSlow {
+  animation: drift-slow 26s ease-in-out infinite alternate;
+}
+
+.driftReverse {
+  animation: drift-reverse 24s ease-in-out infinite alternate;
+}
+
+.spinSlow {
+  transform-origin: center;
+  animation: spin-slow 54s linear infinite;
+}
+
+.floatSlow {
+  animation: float-slow 14s ease-in-out infinite;
+}
+
+.waveSlide {
+  animation: wave-slide 20s linear infinite;
+}
+
+.pulseSoft {
+  animation: pulse-soft 8s ease-in-out infinite;
+}
+
+.dashFlow {
+  stroke-dasharray: 14 12;
+  animation: dash-flow 10s linear infinite;
+}
+
+.gridMove {
+  animation: grid-move 18s ease-in-out infinite alternate;
+}
+
+.dotSurface {
+  transform-origin: center;
+  animation: dot-surface-drift 12s ease-in-out infinite alternate;
+}
+
+.dotWave {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: dot-wave;
+  animation-timing-function: cubic-bezier(0.45, 0.08, 0.55, 0.95);
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+.gridWaveSurface {
+  transform-origin: center;
+  animation: grid-wave-surface-drift 14s ease-in-out infinite alternate;
+}
+
+.gridWaveWeave {
+  transform-origin: center;
+  animation: grid-wave-weave 9.5s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.gridWaveDot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: grid-dot-wave;
+  animation-timing-function: cubic-bezier(0.42, 0.06, 0.58, 0.95);
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+.infiniteNodesTrack {
+  will-change: transform;
+}
+
+.nodeLinks {
+  opacity: 0.7;
+}
+
+.nodeEdge {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-dasharray: 9 10;
+  animation: node-edge-flow 7s linear infinite;
+}
+
+.nodeEdgeSecondary {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-dasharray: 4 12;
+  opacity: 0.55;
+  animation: node-edge-flow 8.5s linear infinite;
+}
+
+.nodeCard {
+  transform-origin: center;
+  animation: node-card-drift 6.5s ease-in-out infinite;
+}
+
+.nodeCardFill {
+  opacity: 0.26;
+}
+
+.nodeIcon {
+  opacity: 0.72;
+}
+
+.nodeTitle {
+  opacity: 0.48;
+}
+
+.nodeMeta {
+  opacity: 0.32;
+}
+
+.nodeLine {
+  opacity: 0.26;
+}
+
+.nodeHandle {
+  opacity: 0.7;
+}
+
+@keyframes drift-slow {
+  from {
+    transform: translate3d(-2%, -1.5%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, 1.5%, 0) scale(1.03);
+  }
+}
+
+@keyframes drift-reverse {
+  from {
+    transform: translate3d(2%, 1.2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-2%, -1.2%, 0) scale(1.03);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes float-slow {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(10px);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-10px);
+    opacity: 0.55;
+  }
+}
+
+@keyframes wave-slide {
+  from {
+    transform: translateX(-8%);
+  }
+  to {
+    transform: translateX(8%);
+  }
+}
+
+@keyframes pulse-soft {
+  0% {
+    opacity: 0.45;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0.45;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -52;
+  }
+}
+
+@keyframes grid-move {
+  from {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0) scale(1.04);
+  }
+}
+
+@keyframes dot-surface-drift {
+  from {
+    transform: translate3d(-1.2%, 0.8%, 0) rotate(-0.55deg);
+  }
+  to {
+    transform: translate3d(1.2%, -0.8%, 0) rotate(0.55deg);
+  }
+}
+
+@keyframes dot-wave {
+  0% {
+    transform: translateY(0);
+    opacity: 0.42;
+  }
+  20% {
+    transform: translateY(-6px);
+    opacity: 0.92;
+  }
+  45% {
+    transform: translateY(4px);
+    opacity: 0.32;
+  }
+  70% {
+    transform: translateY(-3px);
+    opacity: 0.76;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 0.42;
+  }
+}
+
+@keyframes grid-wave-surface-drift {
+  from {
+    transform: translate3d(-0.9%, 0.6%, 0) rotate(-0.48deg);
+  }
+  to {
+    transform: translate3d(0.9%, -0.6%, 0) rotate(0.48deg);
+  }
+}
+
+@keyframes grid-wave-weave {
+  from {
+    transform: translate3d(-0.8%, 0, 0) scaleX(0.986) skewY(-0.44deg);
+  }
+  to {
+    transform: translate3d(0.8%, 0, 0) scaleX(1.014) skewY(0.44deg);
+  }
+}
+
+@keyframes grid-dot-wave {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.72;
+  }
+  20% {
+    transform: translate3d(var(--gw-x, 2px), calc(var(--gw-y, 6px) * -0.8), 0);
+    opacity: 0.95;
+  }
+  45% {
+    transform: translate3d(calc(var(--gw-x, 2px) * -0.92), var(--gw-y, 6px), 0);
+    opacity: 0.7;
+  }
+  70% {
+    transform: translate3d(
+      calc(var(--gw-x, 2px) * 0.62),
+      calc(var(--gw-y, 6px) * -0.42),
+      0
+    );
+    opacity: 0.88;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.72;
+  }
+}
+
+@keyframes node-edge-flow {
+  to {
+    stroke-dashoffset: -38;
+  }
+}
+
+@keyframes node-card-drift {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}

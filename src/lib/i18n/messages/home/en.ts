@@ -1,15 +1,32 @@
 const message = {
-  eyebrow: "Get started",
-  title: "To get started, edit the page.tsx file.",
-  description:
-    "Looking for a starting point or more instructions? Head over to <templates>Templates</templates> or the <learning>Learning</learning> center.",
-  cta: {
-    deploy: "Deploy Now",
-    docs: "Documentation",
+  hero: {
+    title: "Bring Your AI Visions\nto Life",
+    subtitle:
+      "Build your own AI agents through various models and a visual engine, and automate powerful workflows.",
+    cta: "Start Now",
   },
-  alt: {
-    nextLogo: "Next.js logo",
-    vercelLogo: "Vercel logomark",
+  features: {
+    canvas: {
+      title: "Visual Graph Engine",
+      desc: "Visualize complex AI logic with nodes and edges. Design sophisticated agents with simple drag-and-drop.",
+    },
+    chat: {
+      title: "Intelligent Chat Interface",
+      desc: "Infinite context chat with real-time search engine integration. Experience the most advanced way to communicate with Multi-modal AI.",
+    },
+    workflows: {
+      title: "Powerful Workflow Automation",
+      desc: "Let AI handle repetitive tasks. Open up endless possibilities with conditional logic and external API integrations.",
+    },
+    presets: {
+      title: "Verified Preset Library",
+      desc: "Get started immediately with AI templates designed by experts. Load hundreds of sophisticated settings with a single click.",
+    },
+  },
+  cta: {
+    getStarted: "Get Started",
+    learnMore: "Learn More",
+    login: "Login",
   },
 };
 
