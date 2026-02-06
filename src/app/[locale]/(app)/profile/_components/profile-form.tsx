@@ -79,6 +79,7 @@ export function ProfileForm({
         <div
           className="group relative size-16 cursor-pointer rounded-full"
           onClick={handleAvatarClick}
+          data-testid="profile-avatar-trigger"
         >
           <div className="overflow-hidden rounded-full">
             <BoringUserAvatar seed={avatarHash} size={64} className="size-16" />
