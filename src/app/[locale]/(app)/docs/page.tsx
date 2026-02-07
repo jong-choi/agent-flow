@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import {
   PageContainer,
   PageDescription,
@@ -11,22 +12,7 @@ import { DocumentsSearch } from "@/features/documents/components/list/documents-
 import { DocumentsSort } from "@/features/documents/components/list/documents-sort";
 import { getDocumentsByOwner } from "@/features/documents/server/queries";
 
-export default async function DocsPage({
-  searchParams,
-}: PageProps<"/[locale]/docs">) {
-  const { q, sort: rawSort, page: rawPage } = await searchParams;
-  const query = typeof q === "string" ? q : "";
-  const sort = isSort(rawSort) ? rawSort : "recent";
-  const page = toPageNumber(rawPage);
-
-  const { documents } = await getDocumentsByOwner(
-    {
-      query,
-      sort,
-    },
-    { page, pageSize: 100 },
-  );
-
+export default function DocsPage(props: PageProps<"/[locale]/docs">) {
   return (
     <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 pb-16">
@@ -40,13 +26,50 @@ export default async function DocsPage({
           <CreateDocumentButton />
         </div>
         <Separator />
-        <div className="flex">
-          <DocumentsSort searchParams={await searchParams} />
-          <DocumentsSearch />
-        </div>
-        <DocumentsGrid documents={documents} query={query} />
+        <Suspense fallback={<DocsContentFallback />}>
+          <DocsContent searchParamsPromise={props.searchParams} />
+        </Suspense>
       </div>
     </PageContainer>
+  );
+}
+
+async function DocsContent({
+  searchParamsPromise,
+}: {
+  searchParamsPromise: PageProps<"/[locale]/docs">["searchParams"];
+}) {
+  const resolvedSearchParams = await searchParamsPromise;
+  const { q, sort: rawSort, page: rawPage } = resolvedSearchParams;
+  const query = typeof q === "string" ? q : "";
+  const sort = isSort(rawSort) ? rawSort : "recent";
+  const page = toPageNumber(rawPage);
+
+  const { documents } = await getDocumentsByOwner(
+    {
+      query,
+      sort,
+    },
+    { page, pageSize: 100 },
+  );
+
+  return (
+    <>
+      <div className="flex">
+        <DocumentsSort searchParams={resolvedSearchParams} />
+        <DocumentsSearch />
+      </div>
+      <DocumentsGrid documents={documents} query={query} />
+    </>
+  );
+}
+
+function DocsContentFallback() {
+  return (
+    <div className="space-y-6">
+      <div className="h-9 w-full animate-pulse rounded bg-muted/70" />
+      <div className="h-48 w-full animate-pulse rounded bg-muted/60" />
+    </div>
   );
 }
 

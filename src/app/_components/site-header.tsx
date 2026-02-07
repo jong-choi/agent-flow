@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { HeaderAccountMenu } from "@/features/auth/components/header-account-menu/header-account-menu";
 import { LocaleSelectorButton } from "@/components/locale-selector-button";
 import { Logo } from "@/components/logo";
@@ -18,15 +19,27 @@ export function SiteHeader() {
       <div className="flex items-center gap-2">
         <div className="flex items-center text-sm font-medium text-muted-foreground">
           <ThemeToggleButton />
-          <LocaleSelectorButton />
+          <Suspense fallback={<HeaderLocaleFallback />}>
+            <LocaleSelectorButton />
+          </Suspense>
         </div>
         <div className="h-5">
           <Separator orientation="vertical" />
         </div>
         <div className="flex min-w-32 justify-end">
-          <HeaderAccountMenu />
+          <Suspense fallback={<HeaderAccountMenuFallback />}>
+            <HeaderAccountMenu />
+          </Suspense>
         </div>
       </div>
     </header>
   );
+}
+
+function HeaderLocaleFallback() {
+  return <div className="size-8" />;
+}
+
+function HeaderAccountMenuFallback() {
+  return <div className="h-8 min-w-32" />;
 }

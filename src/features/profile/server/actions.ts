@@ -1,9 +1,11 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import { updateTag } from "next/cache";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { profileTags } from "@/features/profile/server/cache/tags";
 import { isDisplayNameTaken } from "@/features/profile/server/queries";
 
 export const checkDisplayNameTakenAction = async (
@@ -59,6 +61,8 @@ export const updateUserAction = async (formData: FormData) => {
   if (!updated) {
     return { ok: false, error: "프로필 변경에 실패했습니다." };
   }
+
+  updateTag(profileTags.byUser(userId));
 
   return { ok: true, data: updated };
 };

@@ -1,9 +1,11 @@
 import "server-only";
 
 import { and, asc, desc, eq, ilike, isNull, sql } from "drizzle-orm";
+import { cacheTag } from "next/cache";
 import { db } from "@/db/client";
 import { getUserId } from "@/db/query/auth";
 import { documents } from "@/db/schema/documents";
+import { documentTags } from "@/features/documents/server/cache/tags";
 
 type DocumentListFilters = {
   query?: string;
@@ -28,15 +30,43 @@ export const getDocumentsByOwner = async (
   pagination?: PaginationOptions,
 ) => {
   const ownerId = await getUserId();
+  const { pageSize, offset } = resolvePagination(pagination);
+  const query = filters?.query?.trim() ?? "";
+  const sort = filters?.sort ?? "recent";
+
+  return getDocumentsByOwnerCached({
+    ownerId,
+    query,
+    sort,
+    pageSize,
+    offset,
+  });
+};
+
+const getDocumentsByOwnerCached = async ({
+  ownerId,
+  query,
+  sort,
+  pageSize,
+  offset,
+}: {
+  ownerId: string;
+  query: string;
+  sort: "recent" | "latest" | "oldest" | "name";
+  pageSize: number;
+  offset: number;
+}) => {
+  "use cache";
+  cacheTag(documentTags.allByUser(ownerId));
+  cacheTag(documentTags.listByUser(ownerId));
+
   const clauses = [eq(documents.ownerId, ownerId), isNull(documents.deletedAt)];
 
-  const trimmedQuery = filters?.query?.trim();
-  if (trimmedQuery) {
-    clauses.push(ilike(documents.title, `%${trimmedQuery}%`));
+  if (query) {
+    clauses.push(ilike(documents.title, `%${query}%`));
   }
 
   const whereClause = clauses.length === 1 ? clauses[0] : and(...clauses);
-  const sort = filters?.sort ?? "recent";
   const orderBy =
     sort === "name"
       ? [asc(documents.title)]
@@ -45,8 +75,6 @@ export const getDocumentsByOwner = async (
         : sort === "oldest"
           ? [asc(documents.createdAt)]
           : [desc(documents.updatedAt)];
-
-  const { offset, pageSize } = resolvePagination(pagination);
 
   const [documentsList, [countRow]] = await Promise.all([
     db
@@ -119,6 +147,17 @@ export const getRecentDocumentsForPicker = async (
   const userId = await getUserId();
   const safeLimit = Math.min(Math.max(limit, 1), 20);
 
+  return getRecentDocumentsForPickerCached(userId, safeLimit);
+};
+
+const getRecentDocumentsForPickerCached = async (
+  userId: string,
+  safeLimit: number,
+): Promise<DocumentSearchResult[]> => {
+  "use cache";
+  cacheTag(documentTags.allByUser(userId));
+  cacheTag(documentTags.pickerByUser(userId));
+
   return db
     .select({
       id: documents.id,
@@ -137,6 +176,16 @@ export const getDocumentTitleById = async ({
   docId: string;
 }): Promise<string | null> => {
   const ownerId = await getUserId();
+  return getDocumentTitleByIdCached(ownerId, docId);
+};
+
+const getDocumentTitleByIdCached = async (
+  ownerId: string,
+  docId: string,
+): Promise<string | null> => {
+  "use cache";
+  cacheTag(documentTags.allByUser(ownerId));
+  cacheTag(documentTags.detailByUserAndDoc(ownerId, docId));
 
   const [document] = await db
     .select({ title: documents.title })
@@ -155,6 +204,14 @@ export const getDocumentTitleById = async ({
 
 export const getDocumentById = async ({ docId }: { docId: string }) => {
   const ownerId = await getUserId();
+  return getDocumentByIdCached(ownerId, docId);
+};
+
+const getDocumentByIdCached = async (ownerId: string, docId: string) => {
+  "use cache";
+  cacheTag(documentTags.allByUser(ownerId));
+  cacheTag(documentTags.detailByUserAndDoc(ownerId, docId));
+
   const [document] = await db
     .select({
       id: documents.id,

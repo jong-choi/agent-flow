@@ -1,5 +1,9 @@
 "use client";
-import { type ForwardRefExoticComponent, type RefAttributes } from "react";
+import {
+  Suspense,
+  type ForwardRefExoticComponent,
+  type RefAttributes,
+} from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -84,6 +88,14 @@ const navigation: NavType[] = [
 const HIDE_SIDEBAR_PATHS = new Set<string>(["/", "/login"]);
 
 export function SidebarNav() {
+  return (
+    <Suspense fallback={null}>
+      <SidebarNavContent />
+    </Suspense>
+  );
+}
+
+function SidebarNavContent() {
   const session = useSession();
   const pathname = usePathname();
 
@@ -144,6 +156,14 @@ export function SidebarNav() {
 }
 
 export function SecondarySidebar() {
+  return (
+    <Suspense fallback={null}>
+      <SecondarySidebarContent />
+    </Suspense>
+  );
+}
+
+function SecondarySidebarContent() {
   const pathname = usePathname();
   const activeNavItem = navigation.find(
     (item): item is NavItem =>

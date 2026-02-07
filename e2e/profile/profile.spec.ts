@@ -33,5 +33,13 @@ test.describe("Profile: /profile", () => {
     await saveButton.click();
 
     await expect(page.getByText("닉네임이 변경되었습니다.").first()).toBeVisible();
+
+    // 하드 리프레시 없이 사이드바 이동으로 변경 반영 확인
+    await page.getByRole("link", { name: "문서" }).first().click();
+    await expect(page).toHaveURL(/\/docs/);
+
+    await page.getByRole("link", { name: "프로필" }).first().click();
+    await expect(page).toHaveURL(/\/profile/);
+    await expect(nameInput).toHaveValue(newName);
   });
 });
