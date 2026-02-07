@@ -1,6 +1,7 @@
 import { cacheTag } from "next/cache";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import "server-only";
+import { cache } from "react";
 import { db } from "@/db/client";
 import { userSecrets, workflowApiIds, workflows } from "@/db/schema";
 import { getUserId } from "@/features/auth/server/queries";
@@ -19,7 +20,7 @@ export const getUserSecrets = async (): Promise<UserSecretSummary[]> => {
   return getUserSecretsCached(userId);
 };
 
-const getUserSecretsCached = async (
+const getUserSecretsCached = cache(async (
   userId: string,
 ): Promise<UserSecretSummary[]> => {
   "use cache";
@@ -35,7 +36,7 @@ const getUserSecretsCached = async (
     .from(userSecrets)
     .where(and(eq(userSecrets.userId, userId), isNull(userSecrets.deletedAt)))
     .orderBy(desc(userSecrets.createdAt));
-};
+});
 
 export const getUserIdByCanvasSecret = async ({
   secret,
@@ -85,7 +86,7 @@ export const getWorkflowByCanvasId = async ({
   return getWorkflowByCanvasIdCached(trimmed);
 };
 
-const getWorkflowByCanvasIdCached = async (
+const getWorkflowByCanvasIdCached = cache(async (
   canvasId: string,
 ): Promise<{ workflowId: string; ownerId: string } | null> => {
   "use cache";
@@ -112,4 +113,4 @@ const getWorkflowByCanvasIdCached = async (
   cacheTag(developerTags.workflowCanvasByWorkflow(row.workflowId));
 
   return { workflowId: row.workflowId, ownerId: row.ownerId };
-};
+});

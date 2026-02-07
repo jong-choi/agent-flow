@@ -1,6 +1,7 @@
 import { cacheTag } from "next/cache";
 import { and, desc, eq, sql } from "drizzle-orm";
 import "server-only";
+import { cache } from "react";
 import { db } from "@/db/client";
 import { getUserId } from "@/features/auth/server/queries";
 import { aiModels } from "@/db/schema/ai-models";
@@ -22,7 +23,7 @@ export const getWorkflowWithGraph = async (workflowId: string) => {
   return getWorkflowWithGraphCached(trimmedWorkflowId);
 };
 
-const getWorkflowWithGraphCached = async (workflowId: string) => {
+const getWorkflowWithGraphCached = cache(async (workflowId: string) => {
   "use cache";
   cacheTag(workflowTags.graphByWorkflow(workflowId));
   cacheTag(workflowTags.metaByWorkflow(workflowId));
@@ -49,7 +50,7 @@ const getWorkflowWithGraphCached = async (workflowId: string) => {
   ]);
 
   return { workflow, nodes, edges };
-};
+});
 
 export const getRecentWorkflows = async (
   params: {
@@ -62,7 +63,7 @@ export const getRecentWorkflows = async (
   return getRecentWorkflowsCached(ownerId, safeLimit);
 };
 
-const getRecentWorkflowsCached = async (ownerId: string, limit: number) => {
+const getRecentWorkflowsCached = cache(async (ownerId: string, limit: number) => {
   "use cache";
   cacheTag(workflowTags.allByUser(ownerId));
   cacheTag(workflowTags.listByUser(ownerId));
@@ -77,14 +78,14 @@ const getRecentWorkflowsCached = async (ownerId: string, limit: number) => {
 
   const hasMore = data.length > limit;
   return { data: data.slice(0, limit), hasMore };
-};
+});
 
 export const getOwnedWorkflows = async () => {
   const ownerId = await getUserId();
   return getOwnedWorkflowsCached(ownerId);
 };
 
-const getOwnedWorkflowsCached = async (ownerId: string) => {
+const getOwnedWorkflowsCached = cache(async (ownerId: string) => {
   "use cache";
   cacheTag(workflowTags.allByUser(ownerId));
   cacheTag(workflowTags.listByUser(ownerId));
@@ -100,7 +101,7 @@ const getOwnedWorkflowsCached = async (ownerId: string) => {
     .from(workflows)
     .where(eq(workflows.ownerId, ownerId))
     .orderBy(desc(workflows.updatedAt));
-};
+});
 
 export const getOwnedWorkflowById = async (workflowId: string) => {
   const ownerId = await getUserId();
@@ -112,7 +113,7 @@ export const getOwnedWorkflowById = async (workflowId: string) => {
   return getOwnedWorkflowByIdCached(ownerId, trimmedWorkflowId);
 };
 
-const getOwnedWorkflowByIdCached = async (
+const getOwnedWorkflowByIdCached = cache(async (
   ownerId: string,
   workflowId: string,
 ) => {
@@ -134,7 +135,7 @@ const getOwnedWorkflowByIdCached = async (
     .limit(1);
 
   return workflow ?? null;
-};
+});
 
 export const getOwnedWorkflowChatCreditEstimate = async (workflowId: string) => {
   const ownerId = await getUserId();
@@ -161,7 +162,7 @@ export const getOwnedWorkflowChatCreditEstimate = async (workflowId: string) => 
   return getOwnedWorkflowChatCreditEstimateCached(trimmedWorkflowId);
 };
 
-const getOwnedWorkflowChatCreditEstimateCached = async (workflowId: string) => {
+const getOwnedWorkflowChatCreditEstimateCached = cache(async (workflowId: string) => {
   "use cache";
   cacheTag(workflowTags.graphByWorkflow(workflowId));
   cacheTag(workflowTags.metaByWorkflow(workflowId));
@@ -181,4 +182,4 @@ const getOwnedWorkflowChatCreditEstimateCached = async (workflowId: string) => {
     .limit(1);
 
   return row?.total ?? 0;
-};
+});

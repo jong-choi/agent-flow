@@ -1,6 +1,7 @@
 import { cacheTag } from "next/cache";
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import "server-only";
+import { cache } from "react";
 import { db } from "@/db/client";
 import { chatMessages, chats } from "@/db/schema";
 import { aiModels } from "@/db/schema/ai-models";
@@ -32,12 +33,12 @@ const getActiveAiModelsBase = async () => {
     .orderBy(desc(aiModels.createdAt));
 };
 
-const getActiveAiModelsCached = async () => {
+const getActiveAiModelsCached = cache(async () => {
   "use cache";
   cacheTag(chatTags.activeAiModels());
 
   return getActiveAiModelsBase();
-};
+});
 
 export const getActiveAiModels = async () => getActiveAiModelsCached();
 
@@ -65,7 +66,7 @@ export const getChatById = async (chatId: string) => {
   return getChatByIdCached(userId, normalizedChatId);
 };
 
-const getChatByIdCached = async (userId: string, chatId: string) => {
+const getChatByIdCached = cache(async (userId: string, chatId: string) => {
   "use cache";
   cacheTag(chatTags.listByUser(userId));
   cacheTag(chatTags.detailByChat(chatId));
@@ -93,9 +94,9 @@ const getChatByIdCached = async (userId: string, chatId: string) => {
   }
 
   return chat;
-};
+});
 
-export const getChatMessagesByChatId = async (chatId: string) => {
+export const getChatMessagesByChatId = cache(async (chatId: string) => {
   await getChatById(chatId);
 
   return db
@@ -109,14 +110,14 @@ export const getChatMessagesByChatId = async (chatId: string) => {
     .from(chatMessages)
     .where(eq(chatMessages.chatId, chatId))
     .orderBy(asc(chatMessages.createdAt));
-};
+});
 
 export const getChatsByUser = async () => {
   const userId = await getUserId();
   return getChatsByUserCached(userId);
 };
 
-const getChatsByUserCached = async (userId: string) => {
+const getChatsByUserCached = cache(async (userId: string) => {
   "use cache";
   cacheTag(chatTags.listByUser(userId));
 
@@ -131,7 +132,7 @@ const getChatsByUserCached = async (userId: string) => {
     .from(chats)
     .where(and(eq(chats.userId, userId), isNull(chats.deletedAt)))
     .orderBy(desc(chats.updatedAt));
-};
+});
 
 export const getPublicChatMessagesByChatId = async ({
   chatId,
@@ -151,7 +152,7 @@ export const getPublicChatMessagesByChatId = async ({
   );
 };
 
-const getPublicChatMessagesByChatIdCached = async (
+const getPublicChatMessagesByChatIdCached = cache(async (
   chatId: string,
   chatLen: number,
 ) => {
@@ -170,7 +171,7 @@ const getPublicChatMessagesByChatIdCached = async (
     .where(eq(chatMessages.chatId, chatId))
     .orderBy(asc(chatMessages.createdAt))
     .limit(chatLen);
-};
+});
 
 export const getChatsByWorkflowId = async ({
   workflowId,
@@ -187,25 +188,20 @@ export const getChatsByWorkflowId = async ({
   }
 
   const userId = await getUserId();
-  return getChatsByWorkflowIdCached({
-    workflowId: normalizedWorkflowId,
+  return getChatsByWorkflowIdCached(
+    normalizedWorkflowId,
     userId,
-    limit: normalizePositiveNumber(limit, 3),
-    chatLen: normalizePositiveNumber(chatLen, 4),
-  });
+    normalizePositiveNumber(limit, 3),
+    normalizePositiveNumber(chatLen, 4),
+  );
 };
 
-const getChatsByWorkflowIdCached = async ({
-  workflowId,
-  userId,
-  limit,
-  chatLen,
-}: {
-  workflowId: string;
-  userId: string;
-  limit: number;
-  chatLen: number;
-}) => {
+const getChatsByWorkflowIdCached = cache(async (
+  workflowId: string,
+  userId: string,
+  limit: number,
+  chatLen: number,
+) => {
   "use cache";
   cacheTag(chatTags.listByUser(userId));
 
@@ -248,4 +244,4 @@ const getChatsByWorkflowIdCached = async ({
   );
 
   return chatsWithMessages;
-};
+});

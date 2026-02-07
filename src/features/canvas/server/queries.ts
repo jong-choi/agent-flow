@@ -1,6 +1,7 @@
 import { cacheTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import "server-only";
+import { cache } from "react";
 import { z } from "zod";
 import { db } from "@/db/client";
 import {
@@ -20,7 +21,7 @@ const DOCUMENT_ACTION_OPTIONS = [
   { id: "replace", value: "대치" },
 ] as const;
 
-const getSidebarNodesCached = async () => {
+const getSidebarNodesCached = cache(async () => {
   "use cache";
   cacheTag(canvasTags.sidebarNodes());
 
@@ -59,11 +60,11 @@ const getSidebarNodesCached = async () => {
   }
 
   return parsed.data;
-};
+});
 
 export const getSidebarNodes = async () => getSidebarNodesCached();
 
-const getActiveAiModelOptionsCached = async () => {
+const getActiveAiModelOptionsCached = cache(async () => {
   "use cache";
   cacheTag(canvasTags.activeAiModels());
 
@@ -72,7 +73,7 @@ const getActiveAiModelOptionsCached = async () => {
     value: aiModel.modelId,
     price: aiModel.price ?? 0,
   }));
-};
+});
 
 const hydrateSidebarNodeOptions = async (
   nodes: SidebarNodeData[],
@@ -115,13 +116,13 @@ const hydrateSidebarNodeOptions = async (
   });
 };
 
-const getSidebarNodesWithOptionsCached = async () => {
+const getSidebarNodesWithOptionsCached = cache(async () => {
   "use cache";
   cacheTag(canvasTags.sidebarNodes());
 
   const nodes = await getSidebarNodesCached();
   return hydrateSidebarNodeOptions(nodes);
-};
+});
 
 export const getSidebarNodesWithOptions = async () =>
   getSidebarNodesWithOptionsCached();
