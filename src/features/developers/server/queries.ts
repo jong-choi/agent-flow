@@ -1,9 +1,10 @@
-import "server-only";
-
+import { cacheTag } from "next/cache";
 import { and, desc, eq, isNull } from "drizzle-orm";
+import "server-only";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import { userSecrets, workflowApiIds, workflows } from "@/db/schema";
+import { getUserId } from "@/features/auth/server/queries";
+import { developerTags } from "@/features/developers/server/cache/tags";
 import { sha256Hex } from "@/features/developers/server/utils";
 
 export type UserSecretSummary = {
@@ -15,6 +16,15 @@ export type UserSecretSummary = {
 
 export const getUserSecrets = async (): Promise<UserSecretSummary[]> => {
   const userId = await getUserId();
+  return getUserSecretsCached(userId);
+};
+
+const getUserSecretsCached = async (
+  userId: string,
+): Promise<UserSecretSummary[]> => {
+  "use cache";
+  cacheTag(developerTags.secretsByUser(userId));
+
   return db
     .select({
       id: userSecrets.id,
@@ -42,7 +52,12 @@ export const getUserIdByCanvasSecret = async ({
   const [row] = await db
     .select({ id: userSecrets.id, userId: userSecrets.userId })
     .from(userSecrets)
-    .where(and(eq(userSecrets.secretHash, secretHash), isNull(userSecrets.deletedAt)))
+    .where(
+      and(
+        eq(userSecrets.secretHash, secretHash),
+        isNull(userSecrets.deletedAt),
+      ),
+    )
     .limit(1);
 
   if (!row) {
@@ -67,6 +82,16 @@ export const getWorkflowByCanvasId = async ({
     return null;
   }
 
+  return getWorkflowByCanvasIdCached(trimmed);
+};
+
+const getWorkflowByCanvasIdCached = async (
+  canvasId: string,
+): Promise<{ workflowId: string; ownerId: string } | null> => {
+  "use cache";
+  cacheTag(developerTags.workflowCanvasLookupAll());
+  cacheTag(developerTags.workflowCanvasLookupByCanvas(canvasId));
+
   const [row] = await db
     .select({
       workflowId: workflows.id,
@@ -75,12 +100,16 @@ export const getWorkflowByCanvasId = async ({
     })
     .from(workflowApiIds)
     .innerJoin(workflows, eq(workflows.id, workflowApiIds.workflowId))
-    .where(and(eq(workflowApiIds.canvasId, trimmed), isNull(workflows.deletedAt)))
+    .where(
+      and(eq(workflowApiIds.canvasId, canvasId), isNull(workflows.deletedAt)),
+    )
     .limit(1);
 
   if (!row || row.deletedAt) {
     return null;
   }
+
+  cacheTag(developerTags.workflowCanvasByWorkflow(row.workflowId));
 
   return { workflowId: row.workflowId, ownerId: row.ownerId };
 };

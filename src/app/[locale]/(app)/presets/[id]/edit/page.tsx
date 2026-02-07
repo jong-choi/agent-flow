@@ -4,10 +4,10 @@ import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import {
   deletePresetAction,
-  getOwnedPresetForEdit,
   updatePresetAction,
 } from "@/features/presets/server/actions";
 import { PresetEditForm } from "@/features/presets/components/preset-edit-form";
+import { getOwnedPresetForEdit } from "@/features/presets/server/queries";
 
 export type PresetEditRes = NonNullable<
   Awaited<ReturnType<typeof getOwnedPresetForEdit>>

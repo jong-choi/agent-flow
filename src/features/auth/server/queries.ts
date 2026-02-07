@@ -1,31 +1,33 @@
-"use server";
-
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import "server-only";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { getRandomName } from "@/lib/unique-name";
 
-export async function getUserId(): Promise<string>;
-export async function getUserId(opts: { throwOnError?: true }): Promise<string>;
-export async function getUserId(opts: {
-  throwOnError: false;
-}): Promise<string | undefined>;
+type GetUserId = {
+  (): Promise<string>;
+  (opts: { throwOnError?: true }): Promise<string>;
+  (opts: { throwOnError: false }): Promise<string | undefined>;
+};
 
-export async function getUserId(
+export const getUserId: GetUserId = async (
   { throwOnError }: { throwOnError?: boolean } = { throwOnError: true },
-) {
+) => {
   const session = await auth();
   const userId = session?.user?.id;
 
   if (!userId) {
-    if (throwOnError === false) return undefined;
+    if (throwOnError === false) {
+      return undefined;
+    }
+
     throw new Error("사용자 정보가 없습니다.");
   }
 
   return userId;
-}
+};
 
 const isDisplayNameTakenForCreateUnique = async (displayName: string) => {
   const [user] = await db

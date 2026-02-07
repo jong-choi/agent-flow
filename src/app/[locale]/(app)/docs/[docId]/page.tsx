@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, PencilLine } from "lucide-react";
@@ -18,7 +19,15 @@ import { DocumentStoreProvider } from "@/features/documents/store/document-store
 import { getDocumentById } from "@/features/documents/server/queries";
 import { formatKoreanDate } from "@/lib/utils";
 
-export default async function DocumentViewPage({
+export default function DocumentViewPage(props: PageProps<"/[locale]/docs/[docId]">) {
+  return (
+    <Suspense fallback={<DocumentViewPageFallback />}>
+      <DocumentViewContent {...props} />
+    </Suspense>
+  );
+}
+
+async function DocumentViewContent({
   params,
   searchParams,
 }: PageProps<"/[locale]/docs/[docId]">) {
@@ -90,5 +99,18 @@ export default async function DocumentViewPage({
         </div>
       </PageContainer>
     </DocumentStoreProvider>
+  );
+}
+
+function DocumentViewPageFallback() {
+  return (
+    <PageContainer>
+      <div className="flex min-h-0 flex-1 flex-col gap-6 pt-6 pb-16">
+        <div className="h-8 w-56 animate-pulse rounded bg-muted" />
+        <div className="h-5 w-40 animate-pulse rounded bg-muted" />
+        <Separator />
+        <div className="h-72 w-full animate-pulse rounded bg-muted/70" />
+      </div>
+    </PageContainer>
   );
 }

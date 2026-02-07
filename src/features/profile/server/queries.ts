@@ -1,10 +1,12 @@
 import "server-only";
 
 import { and, eq, ne } from "drizzle-orm";
+import { cacheTag } from "next/cache";
 import { type User } from "next-auth";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { profileTags } from "@/features/profile/server/cache/tags";
 
 const getRequiredUserId = async () => {
   const session = await auth();
@@ -19,6 +21,13 @@ const getRequiredUserId = async () => {
 
 export const getUserProfile = async (): Promise<User> => {
   const userId = await getRequiredUserId();
+  return getUserProfileCached(userId);
+};
+
+const getUserProfileCached = async (userId: string): Promise<User> => {
+  "use cache";
+  cacheTag(profileTags.byUser(userId));
+
   const [user] = await db
     .select({
       id: users.id,

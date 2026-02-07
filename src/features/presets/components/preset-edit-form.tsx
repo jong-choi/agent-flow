@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   getPresetChatExamplesForForm,
   getWorkflowReferencedPresetPricingSummary,
-} from "@/features/presets/server/actions";
+} from "@/features/presets/server/queries";
 import {
   Card,
   CardContent,

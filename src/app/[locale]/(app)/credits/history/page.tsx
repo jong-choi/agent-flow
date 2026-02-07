@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { format } from "date-fns";
 import {
   PageContainer,
@@ -8,6 +9,7 @@ import {
 } from "@/components/page-template";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TransactionItem } from "@/features/credits/components/transaction-item";
 import {
   type TransactionResult,
@@ -24,7 +26,9 @@ export default async function CreditsHistoryPage(
           <PageHeading>크레딧 내역</PageHeading>
           <PageDescription>최대 조회 가능 기간은 6개월입니다.</PageDescription>
         </PageHeader>
-        <CreditHistory {...props} />
+        <Suspense fallback={<CreditHistoryFallback />}>
+          <CreditHistory {...props} />
+        </Suspense>
       </PageStack>
     </PageContainer>
   );
@@ -87,6 +91,28 @@ function List({ transactions }: { transactions: TransactionResult[] }) {
             ))}
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function CreditHistoryFallback() {
+  return (
+    <Card className="border-border/60">
+      <CardContent>
+        <div className="space-y-6 py-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-6 w-36" />
+            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-6 w-24" />
+          </div>
+          <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={index} className="h-14 w-full" />
+            ))}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

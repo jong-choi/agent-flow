@@ -58,8 +58,27 @@ test.describe("Docs: /docs", () => {
     await expect(saveButton).toBeEnabled();
     await saveButton.click();
 
-    await expect(page).toHaveURL(/\/docs\/.+/);
+    await expect(page).toHaveURL(/\/docs\/[^/?]+$/);
     await expect(page.getByRole("link", { name: "목록으로" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: newTitle })).toBeVisible();
+
+    const docUrl = new URL(page.url());
+    const docId = docUrl.pathname.split("/").pop();
+    expect(docId).toBeTruthy();
+
+    // 하드 리프레시 없이 사이드바 이동으로 변경 반영 확인
+    await page.getByRole("link", { name: "프로필" }).first().click();
+    await expect(page).toHaveURL(/\/profile(?:\?.*)?$/);
+
+    await page.getByRole("link", { name: "문서" }).first().click();
+    await expect(page).toHaveURL(/\/docs(?:\?.*)?$/);
+    await expect(page.getByText("문서 관리").first()).toBeVisible();
+
+    const createdDocLink = page.locator(`a[href="/docs/${docId}"]`).first();
+    await expect(createdDocLink).toBeVisible();
+    await createdDocLink.click();
+    await expect(page).toHaveURL(new RegExp(`/docs/${docId}$`));
+    await expect(page.getByRole("heading", { name: newTitle })).toBeVisible();
 
     const deleteButton = page.getByRole("button", {
       name: "삭제하기",

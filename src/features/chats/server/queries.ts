@@ -1,15 +1,45 @@
-import "server-only";
-
+import { cacheTag } from "next/cache";
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import "server-only";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import { chatMessages, chats } from "@/db/schema";
+import { aiModels } from "@/db/schema/ai-models";
+import { getUserId } from "@/features/auth/server/queries";
+import { chatTags } from "@/features/chats/server/cache/tags";
 import {
   getOwnedWorkflowById,
   getOwnedWorkflows,
   getRecentWorkflows,
   getWorkflowWithGraph,
 } from "@/features/workflows/server/queries";
+
+const normalizePositiveNumber = (
+  value: number | undefined,
+  fallback: number,
+) => {
+  const parsed = typeof value === "number" ? Math.trunc(value) : fallback;
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.max(1, parsed);
+};
+
+const getActiveAiModelsBase = async () => {
+  return db
+    .select()
+    .from(aiModels)
+    .where(eq(aiModels.isActive, true))
+    .orderBy(desc(aiModels.createdAt));
+};
+
+const getActiveAiModelsCached = async () => {
+  "use cache";
+  cacheTag(chatTags.activeAiModels());
+
+  return getActiveAiModelsBase();
+};
+
+export const getActiveAiModels = async () => getActiveAiModelsCached();
 
 export const getRecentWorkflowsForChat = async (
   params: {
@@ -26,7 +56,19 @@ export const getWorkflowWithGraphForChat = async (workflowId: string) =>
   getWorkflowWithGraph(workflowId);
 
 export const getChatById = async (chatId: string) => {
+  const normalizedChatId = chatId.trim();
+  if (!normalizedChatId) {
+    throw new Error("채팅을 찾을 수 없습니다.");
+  }
+
   const userId = await getUserId();
+  return getChatByIdCached(userId, normalizedChatId);
+};
+
+const getChatByIdCached = async (userId: string, chatId: string) => {
+  "use cache";
+  cacheTag(chatTags.listByUser(userId));
+  cacheTag(chatTags.detailByChat(chatId));
 
   const [chat] = await db
     .select({
@@ -54,21 +96,7 @@ export const getChatById = async (chatId: string) => {
 };
 
 export const getChatMessagesByChatId = async (chatId: string) => {
-  const userId = await getUserId();
-
-  const [chat] = await db
-    .select({ id: chats.id, ownerId: chats.userId })
-    .from(chats)
-    .where(eq(chats.id, chatId))
-    .limit(1);
-
-  if (!chat) {
-    throw new Error("채팅을 찾을 수 없습니다.");
-  }
-
-  if (chat.ownerId !== userId) {
-    throw new Error("채팅에 대한 접근 권한이 없습니다.");
-  }
+  await getChatById(chatId);
 
   return db
     .select({
@@ -85,6 +113,12 @@ export const getChatMessagesByChatId = async (chatId: string) => {
 
 export const getChatsByUser = async () => {
   const userId = await getUserId();
+  return getChatsByUserCached(userId);
+};
+
+const getChatsByUserCached = async (userId: string) => {
+  "use cache";
+  cacheTag(chatTags.listByUser(userId));
 
   return db
     .select({
@@ -106,7 +140,25 @@ export const getPublicChatMessagesByChatId = async ({
   chatId: string;
   chatLen?: number;
 }) => {
-  const messages = await db
+  const normalizedChatId = chatId.trim();
+  if (!normalizedChatId) {
+    return [];
+  }
+
+  return getPublicChatMessagesByChatIdCached(
+    normalizedChatId,
+    normalizePositiveNumber(chatLen, 4),
+  );
+};
+
+const getPublicChatMessagesByChatIdCached = async (
+  chatId: string,
+  chatLen: number,
+) => {
+  "use cache";
+  cacheTag(chatTags.messagesByChat(chatId));
+
+  return db
     .select({
       id: chatMessages.id,
       chatId: chatMessages.chatId,
@@ -118,8 +170,6 @@ export const getPublicChatMessagesByChatId = async ({
     .where(eq(chatMessages.chatId, chatId))
     .orderBy(asc(chatMessages.createdAt))
     .limit(chatLen);
-
-  return messages;
 };
 
 export const getChatsByWorkflowId = async ({
@@ -131,9 +181,34 @@ export const getChatsByWorkflowId = async ({
   limit?: number;
   chatLen?: number;
 }) => {
-  const userId = await getUserId();
+  const normalizedWorkflowId = workflowId.trim();
+  if (!normalizedWorkflowId) {
+    return [];
+  }
 
-  // 1. 해당 워크플로우의 최신 채팅들을 가져오기
+  const userId = await getUserId();
+  return getChatsByWorkflowIdCached({
+    workflowId: normalizedWorkflowId,
+    userId,
+    limit: normalizePositiveNumber(limit, 3),
+    chatLen: normalizePositiveNumber(chatLen, 4),
+  });
+};
+
+const getChatsByWorkflowIdCached = async ({
+  workflowId,
+  userId,
+  limit,
+  chatLen,
+}: {
+  workflowId: string;
+  userId: string;
+  limit: number;
+  chatLen: number;
+}) => {
+  "use cache";
+  cacheTag(chatTags.listByUser(userId));
+
   const recentChats = await db
     .select({
       id: chats.id,
@@ -153,13 +228,17 @@ export const getChatsByWorkflowId = async ({
     .orderBy(desc(chats.updatedAt))
     .limit(limit);
 
-  // 2. 각 채팅별로 최초 N개의 메시지를 개별 쿼리로 가져오기
+  recentChats.forEach((chat) => {
+    cacheTag(chatTags.detailByChat(chat.id));
+    cacheTag(chatTags.messagesByChat(chat.id));
+  });
+
   const chatsWithMessages = await Promise.all(
     recentChats.map(async (chat) => {
-      const messages = await getPublicChatMessagesByChatId({
-        chatId: chat.id,
+      const messages = await getPublicChatMessagesByChatIdCached(
+        chat.id,
         chatLen,
-      });
+      );
 
       return {
         ...chat,

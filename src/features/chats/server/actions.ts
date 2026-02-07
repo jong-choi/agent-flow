@@ -1,13 +1,24 @@
 "use server";
 
+import { updateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import { chatMessages, chats } from "@/db/schema";
+import { getUserId } from "@/features/auth/server/queries";
+import { chatTags } from "@/features/chats/server/cache/tags";
 import {
   getChatById,
   getWorkflowWithGraphForChat,
 } from "@/features/chats/server/queries";
+
+const updateChatTags = (userId: string, chatId?: string) => {
+  updateTag(chatTags.listByUser(userId));
+
+  if (chatId) {
+    updateTag(chatTags.detailByChat(chatId));
+    updateTag(chatTags.messagesByChat(chatId));
+  }
+};
 
 export const createChatFromWorkflow = async ({
   workflowId,
@@ -32,6 +43,8 @@ export const createChatFromWorkflow = async ({
   if (!chat?.chatId) {
     throw new Error("채팅 생성에 실패했습니다.");
   }
+
+  updateChatTags(userId, chat.chatId);
 
   return chat;
 };
@@ -86,6 +99,8 @@ export const updateChatTitle = async ({
     throw new Error("채팅 이름 변경에 실패했습니다.");
   }
 
+  updateChatTags(chat.userId, chat.id);
+
   return updated;
 };
 
@@ -102,6 +117,8 @@ export const softDeleteChat = async ({ chatId }: { chatId: string }) => {
   if (!deleted) {
     throw new Error("채팅 삭제에 실패했습니다.");
   }
+
+  updateChatTags(chat.userId, chat.id);
 
   return deleted;
 };

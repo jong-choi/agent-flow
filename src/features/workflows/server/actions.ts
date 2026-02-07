@@ -1,12 +1,14 @@
 "use server";
 
-import { revalidateTag, unstable_cache } from "next/cache";
-import { and, desc, eq, inArray, isNotNull, ne, or } from "drizzle-orm";
+import { revalidateTag } from "next/cache";
+import { and, eq, inArray, isNotNull, ne, or } from "drizzle-orm";
 import { type FlowEdge, type FlowNode } from "@/app/api/chat/_types/nodes";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
+import { getUserId } from "@/features/auth/server/queries";
 import { presetPurchases, presets, workflowPresets } from "@/db/schema/presets";
+import { presetTags as presetCacheTags } from "@/features/presets/server/cache/tags";
 import { workflowEdges, workflowNodes, workflows } from "@/db/schema/workflows";
+import { workflowTags } from "@/features/workflows/server/cache/tags";
 
 type WorkflowGraphInput = {
   nodes: FlowNode[];
@@ -103,134 +105,16 @@ const buildWorkflowEdgeValue = (
   targetHandle: edge.targetHandle || "target",
 });
 
-const getWorkflowWithGraphBase = async (workflowId: string) => {
-  const whereClause = and(eq(workflows.id, workflowId));
+const revalidateWorkflowTags = (ownerId: string, workflowId?: string) => {
+  revalidateTag(workflowTags.allByUser(ownerId), "max");
+  revalidateTag(workflowTags.listByUser(ownerId), "max");
+  revalidateTag(workflowTags.recentByUser(ownerId), "max");
 
-  const [workflow] = await db
-    .select()
-    .from(workflows)
-    .where(whereClause)
-    .limit(1);
-
-  if (!workflow) {
-    return null;
+  if (workflowId) {
+    revalidateTag(workflowTags.graphByWorkflow(workflowId), "max");
+    revalidateTag(workflowTags.metaByWorkflow(workflowId), "max");
+    revalidateTag(presetCacheTags.pricingByWorkflow(workflowId), "max");
   }
-
-  const nodes = await db
-    .select()
-    .from(workflowNodes)
-    .where(eq(workflowNodes.workflowId, workflowId));
-
-  const edges = await db
-    .select()
-    .from(workflowEdges)
-    .where(eq(workflowEdges.workflowId, workflowId));
-
-  return { workflow, nodes, edges };
-};
-
-export const getWorkflowWithGraph = async (workflowId: string) => {
-  const getWorkflowWithGraphCached = unstable_cache(
-    () => getWorkflowWithGraphBase(workflowId),
-
-    ["workflow_graph", workflowId],
-    {
-      revalidate: 60 * 60 * 24 * 7,
-      tags: [`workflow_graph:${workflowId}`],
-    },
-  );
-
-  return getWorkflowWithGraphCached();
-};
-
-const getRecentWorkflowsBase = async (
-  {
-    limit,
-    ownerId,
-  }: {
-    limit: number;
-    ownerId: string;
-  } = { limit: 6, ownerId: "" },
-) => {
-  if (!ownerId) {
-    throw new Error("사용자 정보를 불러올 수 없습니다.");
-  }
-  const data = await db
-    .select()
-    .from(workflows)
-    .where(eq(workflows.ownerId, ownerId))
-    .orderBy(desc(workflows.updatedAt))
-    .limit(limit + 1);
-
-  let hasMore = false;
-  if (data.length > limit) {
-    hasMore = true;
-  }
-
-  return { data: data.slice(0, limit), hasMore };
-};
-
-export const getRecentWorkflows = async (
-  params: {
-    limit: number;
-  } = { limit: 6 },
-) => {
-  const ownerId = await getUserId();
-  const getRecentWorkflowsCached = unstable_cache(
-    () => getRecentWorkflowsBase({ ...params, ownerId }),
-    ["workflow_graph", ownerId, String(params.limit)],
-    {
-      revalidate: 60 * 60 * 24 * 7,
-      tags: [`workflow_graph:list:${ownerId}`],
-    },
-  );
-
-  return getRecentWorkflowsCached();
-};
-
-const getOwnedWorkflowsBase = async (ownerId: string) => {
-  return db
-    .select({
-      id: workflows.id,
-      title: workflows.title,
-      description: workflows.description,
-      createdAt: workflows.createdAt,
-      updatedAt: workflows.updatedAt,
-    })
-    .from(workflows)
-    .where(eq(workflows.ownerId, ownerId))
-    .orderBy(desc(workflows.updatedAt));
-};
-
-export const getOwnedWorkflows = async () => {
-  const ownerId = await getUserId();
-  const getOwnedWorkflowsCached = unstable_cache(
-    () => getOwnedWorkflowsBase(ownerId),
-    ["workflow_graph", ownerId],
-    {
-      revalidate: 60 * 60 * 24 * 7,
-      tags: [`workflow_graph:list:${ownerId}`],
-    },
-  );
-
-  return getOwnedWorkflowsCached();
-};
-
-export const getOwnedWorkflowById = async (workflowId: string) => {
-  const ownerId = await getUserId();
-
-  const [workflow] = await db
-    .select({
-      id: workflows.id,
-      title: workflows.title,
-      description: workflows.description,
-      updatedAt: workflows.updatedAt,
-    })
-    .from(workflows)
-    .where(and(eq(workflows.id, workflowId), eq(workflows.ownerId, ownerId)))
-    .limit(1);
-
-  return workflow ?? null;
 };
 
 export const createWorkflowGraph = async ({
@@ -300,7 +184,7 @@ export const createWorkflowGraph = async ({
         .onConflictDoNothing();
     }
 
-    revalidateTag(`workflow_graph:list:${ownerId}`, { expire: 0 });
+    revalidateWorkflowTags(ownerId, workflowId);
     return workflow;
   });
 };
@@ -455,8 +339,7 @@ export const updateWorkflowGraph = async ({
         );
     }
 
-    revalidateTag(`workflow_graph:${workflowId}`, { expire: 0 });
-    revalidateTag(`workflow_graph:list:${ownerId}`, { expire: 0 });
+    revalidateWorkflowTags(ownerId, workflowId);
 
     return workflow;
   });

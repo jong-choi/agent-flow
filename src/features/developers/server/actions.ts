@@ -1,15 +1,26 @@
 "use server";
 
+import { updateTag } from "next/cache";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import { userSecrets, workflowApiIds, workflows } from "@/db/schema";
+import { getUserId } from "@/features/auth/server/queries";
+import { developerTags } from "@/features/developers/server/cache/tags";
 import {
   buildUserSecret,
   buildWorkflowCanvasId,
   maskAfterPrefix,
   sha256Hex,
 } from "@/features/developers/server/utils";
+
+const updateSecretTags = (userId: string) => {
+  updateTag(developerTags.secretsByUser(userId));
+};
+
+const updateWorkflowCanvasTags = (workflowId: string) => {
+  updateTag(developerTags.workflowCanvasByWorkflow(workflowId));
+  updateTag(developerTags.workflowCanvasLookupAll());
+};
 
 export const createUserSecretAction = async () => {
   const userId = await getUserId();
@@ -32,6 +43,8 @@ export const createUserSecretAction = async () => {
       if (!created) {
         throw new Error("시크릿 키 발급에 실패했습니다.");
       }
+
+      updateSecretTags(userId);
 
       return { ...created, secret };
     } catch (error) {
@@ -69,6 +82,8 @@ export const softDeleteUserSecretAction = async ({
   if (!deleted) {
     throw new Error("시크릿 키 삭제에 실패했습니다.");
   }
+
+  updateSecretTags(userId);
 
   return deleted;
 };
@@ -120,7 +135,11 @@ export const issueWorkflowCanvasIdAction = async ({
         .values({ workflowId, canvasId: nextCanvasId })
         .onConflictDoUpdate({
           target: workflowApiIds.workflowId,
-          set: { canvasId: nextCanvasId, deletedAt: null, createdAt: new Date() },
+          set: {
+            canvasId: nextCanvasId,
+            deletedAt: null,
+            createdAt: new Date(),
+          },
         })
         .returning({
           canvasId: workflowApiIds.canvasId,
@@ -130,6 +149,8 @@ export const issueWorkflowCanvasIdAction = async ({
       if (!upserted?.canvasId) {
         throw new Error("워크플로우 ID 발급에 실패했습니다.");
       }
+
+      updateWorkflowCanvasTags(workflowId);
 
       return { canvasId: upserted.canvasId, createdAt: upserted.createdAt };
     } catch (error) {
@@ -170,13 +191,18 @@ export const softDeleteWorkflowCanvasIdAction = async ({
     .update(workflowApiIds)
     .set({ deletedAt: now })
     .where(
-      and(eq(workflowApiIds.workflowId, workflowId), isNull(workflowApiIds.deletedAt)),
+      and(
+        eq(workflowApiIds.workflowId, workflowId),
+        isNull(workflowApiIds.deletedAt),
+      ),
     )
     .returning({ workflowId: workflowApiIds.workflowId });
 
   if (!deleted) {
     throw new Error("워크플로우 ID 삭제에 실패했습니다.");
   }
+
+  updateWorkflowCanvasTags(workflowId);
 
   return deleted;
 };

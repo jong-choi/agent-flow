@@ -6,16 +6,16 @@ import {
 } from "@langchain/core/messages";
 import { ChatGoogle } from "@langchain/google-gauth";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
+import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import { chatNode } from "@/app/api/chat/_nodes/chat-node";
 import {
   createChatModel,
   resolveAiModel,
 } from "@/app/api/chat/_nodes/chat-node/models";
-import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
-import { getActiveAiModels } from "@/db/query/ai-models";
+import { type AiModel } from "@/db/schema";
+import { getActiveAiModels } from "@/features/chats/server/queries";
 import { spendCreditsByUserId } from "@/features/credits/server/actions";
 import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
-import { type AiModel } from "@/db/schema";
 
 const baseModel: AiModel = {
   id: "model-id",
@@ -70,7 +70,7 @@ const buildConfig = ({
   return config;
 };
 
-vi.mock("@/db/query/ai-models", () => ({
+vi.mock("@/features/chats/server/queries", () => ({
   getActiveAiModels: vi.fn(),
 }));
 
@@ -89,7 +89,10 @@ vi.mock("@langchain/google-gauth", () => ({
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(getCreditBalanceByUserId).mockResolvedValue(9999);
-  vi.mocked(spendCreditsByUserId).mockResolvedValue({ ok: true, balance: 9999 });
+  vi.mocked(spendCreditsByUserId).mockResolvedValue({
+    ok: true,
+    balance: 9999,
+  });
 });
 
 describe("chat-node models (unit)", () => {

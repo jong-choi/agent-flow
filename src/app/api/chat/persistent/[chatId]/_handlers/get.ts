@@ -3,6 +3,7 @@ import {
   HumanMessage,
   SystemMessage,
 } from "@langchain/core/messages";
+import { revalidateTag } from "next/cache";
 import { buildInputTree, buildStateGraph } from "@/app/api/chat/_engines/build-state-graph";
 import { persistentCheckpointer } from "@/app/api/chat/_engines/handle-connect";
 import {
@@ -17,6 +18,7 @@ import {
   getWorkflowWithGraphForChat,
 } from "@/features/chats/server/queries";
 import { insertChatMessage } from "@/features/chats/server/actions";
+import { chatTags } from "@/features/chats/server/cache/tags";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
 
@@ -176,6 +178,9 @@ export async function GET(
               role: "assistant",
               content: aiMessageContent,
             });
+            revalidateTag(chatTags.messagesByChat(chat.id), "max");
+            revalidateTag(chatTags.detailByChat(chat.id), "max");
+            revalidateTag(chatTags.listByUser(chat.userId), "max");
           }
         } catch (error) {
           console.error("SSE stream error:", error);

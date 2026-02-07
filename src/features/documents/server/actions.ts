@@ -1,10 +1,12 @@
 "use server";
 
+import { revalidateTag, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq, ilike, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import { documents } from "@/db/schema/documents";
+import { getUserId } from "@/features/auth/server/queries";
+import { documentTags } from "@/features/documents/server/cache/tags";
 import {
   getDocumentTitleById,
   getRecentDocumentsForPicker,
@@ -12,6 +14,26 @@ import {
 } from "@/features/documents/server/queries";
 
 const untitledPrefix = "untitled-";
+
+const revalidateDocumentTags = (ownerId: string, docId?: string) => {
+  revalidateTag(documentTags.allByUser(ownerId), "max");
+  revalidateTag(documentTags.listByUser(ownerId), "max");
+  revalidateTag(documentTags.pickerByUser(ownerId), "max");
+
+  if (docId) {
+    revalidateTag(documentTags.detailByUserAndDoc(ownerId, docId), "max");
+  }
+};
+
+const updateDocumentTags = (ownerId: string, docId?: string) => {
+  updateTag(documentTags.allByUser(ownerId));
+  updateTag(documentTags.listByUser(ownerId));
+  updateTag(documentTags.pickerByUser(ownerId));
+
+  if (docId) {
+    updateTag(documentTags.detailByUserAndDoc(ownerId, docId));
+  }
+};
 
 const parseUntitledIndex = (title: string) => {
   const match = title.match(/^untitled-(\d+)$/i);
@@ -46,6 +68,10 @@ export const replaceDocumentContentById = async ({
     )
     .returning({ content: documents.content });
 
+  if (document) {
+    revalidateDocumentTags(ownerId, docId);
+  }
+
   return document?.content ?? null;
 };
 
@@ -71,6 +97,10 @@ export const mergeDocumentContentById = async ({
       ),
     )
     .returning({ content: documents.content });
+
+  if (document) {
+    revalidateDocumentTags(ownerId, docId);
+  }
 
   return document?.content ?? null;
 };
@@ -99,6 +129,10 @@ export const createUntitledDocument = async () => {
     .insert(documents)
     .values({ ownerId, title, content: "" })
     .returning({ id: documents.id });
+
+  if (document) {
+    updateDocumentTags(ownerId, document.id);
+  }
 
   return document ?? null;
 };
@@ -129,6 +163,10 @@ export const updateDocument = async ({
     )
     .returning({ id: documents.id });
 
+  if (document) {
+    updateDocumentTags(ownerId, docId);
+  }
+
   return document ?? null;
 };
 
@@ -148,6 +186,10 @@ export const deleteDocument = async ({ docId }: { docId: string }) => {
       ),
     )
     .returning({ id: documents.id });
+
+  if (document) {
+    updateDocumentTags(ownerId, docId);
+  }
 
   return document ?? null;
 };
@@ -214,6 +256,10 @@ export const getRecentDocumentsForPickerAction = async ({
   return getRecentDocumentsForPicker(limit);
 };
 
-export const getDocumentTitleByIdAction = async ({ docId }: { docId: string }) => {
+export const getDocumentTitleByIdAction = async ({
+  docId,
+}: {
+  docId: string;
+}) => {
   return getDocumentTitleById({ docId });
 };
