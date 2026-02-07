@@ -11,8 +11,12 @@ import { Button } from "@/components/ui/button";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { Link } from "@/lib/i18n/navigation";
 
-export default async function Home() {
-  const t = await getTranslations<AppMessageKeys>("Home");
+export default async function Home({ params }: PageProps<"/[locale]">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Home",
+  });
   const loginLabel = t("cta.login");
 
   return (

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PresetChatExampleSection } from "@/app/[locale]/(app)/presets/[id]/_components/preset-chat-example-section";
@@ -14,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getUserId } from "@/features/auth/server/queries";
 import {
   getPresetDetail,
@@ -29,12 +31,23 @@ const formatPrice = (price: number) =>
 const formatDate = (value: Date | string | null | undefined) =>
   formatKoreanDate(value, "날짜 없음");
 
-export default async function PresetDetailPage({
+export default function PresetDetailPage({
   params,
 }: PageProps<"/[locale]/presets/[id]">) {
-  const viewerId = (await getUserId({ throwOnError: false })) || undefined;
+  return (
+    <Suspense fallback={<PresetDetailPageFallback />}>
+      <PresetDetailContent paramsPromise={params} />
+    </Suspense>
+  );
+}
 
-  const { id } = await params;
+async function PresetDetailContent({
+  paramsPromise,
+}: {
+  paramsPromise: PageProps<"/[locale]/presets/[id]">["params"];
+}) {
+  const viewerId = (await getUserId({ throwOnError: false })) || undefined;
+  const { id } = await paramsPromise;
   const presetDetail = await getPresetDetail(id);
 
   if (!presetDetail) {
@@ -314,6 +327,102 @@ export default async function PresetDetailPage({
                     {formatDate(preset.updatedAt)}
                   </span>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+function PresetDetailPageFallback() {
+  return (
+    <>
+      <PageContainer>
+        <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
+          <div className="space-y-3">
+            <Skeleton className="h-9 w-28" />
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-8 w-80" />
+              <Skeleton className="h-4 w-96" />
+            </div>
+            <Skeleton className="h-4 w-72" />
+          </div>
+
+          <div className="flex flex-col gap-6">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-4 w-60" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="aspect-video w-full rounded-lg" />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-28" />
+                <Skeleton className="h-4 w-40" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Skeleton className="h-24 w-full rounded-lg" />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Skeleton className="h-16 w-full rounded-lg" />
+                  <Skeleton className="h-16 w-full rounded-lg" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-52" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Skeleton
+                    key={`preset-detail-node-fallback-${index}`}
+                    className="h-14 w-full rounded-lg"
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </PageContainer>
+
+      <aside className="fixed top-20 right-10 w-full shrink-0 lg:w-72">
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-4 w-44" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-10 w-40" />
+              <Skeleton className="h-4 w-52" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            </CardContent>
+            <CardFooter className="border-t">
+              <Skeleton className="h-9 w-full" />
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-20" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <Skeleton className="size-10 rounded-full" />
+                <Skeleton className="h-4 w-24" />
               </div>
             </CardContent>
           </Card>
