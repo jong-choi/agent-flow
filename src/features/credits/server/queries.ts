@@ -14,7 +14,6 @@ import { ko } from "date-fns/locale";
 import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
 import "server-only";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import {
   creditAccounts,
   creditDailyEvents,
@@ -22,6 +21,7 @@ import {
   type creditTransactionTypes,
   creditTransactions,
 } from "@/db/schema/credit";
+import { getUserId } from "@/features/auth/server/queries";
 import { creditTags } from "@/features/credits/server/cache/tags";
 
 export type CreditTransactionType = (typeof creditTransactionTypes)[number];

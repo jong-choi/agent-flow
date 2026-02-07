@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatHeader } from "@/features/chats/components/chat-page/chat-header";
-import { getOwnedWorkflowChatCreditEstimate } from "@/db/query/workflow-credits";
+import { getOwnedWorkflowChatCreditEstimate } from "@/features/workflows/server/queries";
 import { ChatEventWrapper } from "@/features/chats/components/chat-panel/chat-event-wrapper";
 import { ChatPanelContent } from "@/features/chats/components/chat-panel/content/chat-panel-content";
 import {

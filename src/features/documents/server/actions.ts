@@ -4,8 +4,8 @@ import { revalidateTag, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq, ilike, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import { documents } from "@/db/schema/documents";
+import { getUserId } from "@/features/auth/server/queries";
 import { documentTags } from "@/features/documents/server/cache/tags";
 import {
   getDocumentTitleById,
@@ -256,6 +256,10 @@ export const getRecentDocumentsForPickerAction = async ({
   return getRecentDocumentsForPicker(limit);
 };
 
-export const getDocumentTitleByIdAction = async ({ docId }: { docId: string }) => {
+export const getDocumentTitleByIdAction = async ({
+  docId,
+}: {
+  docId: string;
+}) => {
   return getDocumentTitleById({ docId });
 };

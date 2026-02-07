@@ -3,12 +3,12 @@
 import { revalidateTag } from "next/cache";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import {
   creditAccounts,
   creditDailyEvents,
   creditTransactions,
 } from "@/db/schema/credit";
+import { getUserId } from "@/features/auth/server/queries";
 import { creditTags } from "@/features/credits/server/cache/tags";
 import {
   type CreditTransactionCategory,
@@ -72,48 +72,48 @@ export const spendCreditsByUserId = async ({
 
   const result = await db.transaction<SpendCreditsByUserIdResult>(
     async (tx): Promise<SpendCreditsByUserIdResult> => {
-    await tx.insert(creditAccounts).values({ userId }).onConflictDoNothing();
+      await tx.insert(creditAccounts).values({ userId }).onConflictDoNothing();
 
-    const [accountSnapshot] = await tx
-      .select({ balance: creditAccounts.balance })
-      .from(creditAccounts)
-      .where(eq(creditAccounts.userId, userId))
-      .limit(1);
+      const [accountSnapshot] = await tx
+        .select({ balance: creditAccounts.balance })
+        .from(creditAccounts)
+        .where(eq(creditAccounts.userId, userId))
+        .limit(1);
 
-    const [account] = await tx
-      .update(creditAccounts)
-      .set({
-        balance: sql`${creditAccounts.balance} - ${normalizedAmount}`,
-        totalSpent: sql`${creditAccounts.totalSpent} + ${normalizedAmount}`,
-        updatedAt: occurredAt,
-      })
-      .where(
-        and(
-          eq(creditAccounts.userId, userId),
-          gte(creditAccounts.balance, normalizedAmount),
-        ),
-      )
-      .returning({ balance: creditAccounts.balance });
+      const [account] = await tx
+        .update(creditAccounts)
+        .set({
+          balance: sql`${creditAccounts.balance} - ${normalizedAmount}`,
+          totalSpent: sql`${creditAccounts.totalSpent} + ${normalizedAmount}`,
+          updatedAt: occurredAt,
+        })
+        .where(
+          and(
+            eq(creditAccounts.userId, userId),
+            gte(creditAccounts.balance, normalizedAmount),
+          ),
+        )
+        .returning({ balance: creditAccounts.balance });
 
-    if (!account) {
-      return {
-        ok: false,
-        reason: "insufficient_credit",
-        balance: accountSnapshot?.balance ?? 0,
-      };
-    }
+      if (!account) {
+        return {
+          ok: false,
+          reason: "insufficient_credit",
+          balance: accountSnapshot?.balance ?? 0,
+        };
+      }
 
-    await tx.insert(creditTransactions).values({
-      userId,
-      type: "spend",
-      category,
-      title,
-      description: description ?? null,
-      amount: -normalizedAmount,
-      occurredAt,
-    });
+      await tx.insert(creditTransactions).values({
+        userId,
+        type: "spend",
+        category,
+        title,
+        description: description ?? null,
+        amount: -normalizedAmount,
+        occurredAt,
+      });
 
-    return { ok: true, balance: account.balance };
+      return { ok: true, balance: account.balance };
     },
   );
 
@@ -131,79 +131,82 @@ export const claimDailyAttendance =
 
     const result = await db.transaction<AttendanceClaimResult>(
       async (tx): Promise<AttendanceClaimResult> => {
-      await tx.insert(creditAccounts).values({ userId }).onConflictDoNothing();
+        await tx
+          .insert(creditAccounts)
+          .values({ userId })
+          .onConflictDoNothing();
 
-      const [accountSnapshot] = await tx
-        .select({ balance: creditAccounts.balance })
-        .from(creditAccounts)
-        .where(eq(creditAccounts.userId, userId))
-        .limit(1);
+        const [accountSnapshot] = await tx
+          .select({ balance: creditAccounts.balance })
+          .from(creditAccounts)
+          .where(eq(creditAccounts.userId, userId))
+          .limit(1);
 
-      const existingEvent = await tx
-        .select({ eventDate: creditDailyEvents.eventDate })
-        .from(creditDailyEvents)
-        .where(
-          and(
-            eq(creditDailyEvents.userId, userId),
-            eq(creditDailyEvents.eventDate, todayKey),
-          ),
-        )
-        .limit(1);
+        const existingEvent = await tx
+          .select({ eventDate: creditDailyEvents.eventDate })
+          .from(creditDailyEvents)
+          .where(
+            and(
+              eq(creditDailyEvents.userId, userId),
+              eq(creditDailyEvents.eventDate, todayKey),
+            ),
+          )
+          .limit(1);
 
-      if (existingEvent.length > 0) {
-        return {
-          credited: false,
-          reward: 0,
-          balance: accountSnapshot?.balance ?? 0,
-          reason: "already_claimed",
-        };
-      }
+        if (existingEvent.length > 0) {
+          return {
+            credited: false,
+            reward: 0,
+            balance: accountSnapshot?.balance ?? 0,
+            reason: "already_claimed",
+          };
+        }
 
-      const [event] = await tx
-        .insert(creditDailyEvents)
-        .values({
+        const [event] = await tx
+          .insert(creditDailyEvents)
+          .values({
+            userId,
+            eventDate: todayKey,
+            reward: DAILY_ATTENDANCE_REWARD,
+          })
+          .onConflictDoNothing()
+          .returning({ eventDate: creditDailyEvents.eventDate });
+
+        if (!event) {
+          return {
+            credited: false,
+            reward: 0,
+            balance: accountSnapshot?.balance ?? 0,
+            reason: "already_claimed",
+          };
+        }
+
+        await tx.insert(creditTransactions).values({
           userId,
-          eventDate: todayKey,
-          reward: DAILY_ATTENDANCE_REWARD,
-        })
-        .onConflictDoNothing()
-        .returning({ eventDate: creditDailyEvents.eventDate });
+          type: "earn",
+          category: "attendance",
+          title: "출석 체크",
+          description: "일일 출석 보상",
+          amount: DAILY_ATTENDANCE_REWARD,
+          occurredAt: new Date(),
+        });
 
-      if (!event) {
+        const [account] = await tx
+          .update(creditAccounts)
+          .set({
+            balance: sql`${creditAccounts.balance} + ${DAILY_ATTENDANCE_REWARD}`,
+            totalEarned: sql`${creditAccounts.totalEarned} + ${DAILY_ATTENDANCE_REWARD}`,
+            updatedAt: new Date(),
+          })
+          .where(eq(creditAccounts.userId, userId))
+          .returning({ balance: creditAccounts.balance });
+
         return {
-          credited: false,
-          reward: 0,
-          balance: accountSnapshot?.balance ?? 0,
-          reason: "already_claimed",
+          credited: true,
+          reward: DAILY_ATTENDANCE_REWARD,
+          balance: account?.balance ?? 0,
+          reason: null,
         };
-      }
-
-      await tx.insert(creditTransactions).values({
-        userId,
-        type: "earn",
-        category: "attendance",
-        title: "출석 체크",
-        description: "일일 출석 보상",
-        amount: DAILY_ATTENDANCE_REWARD,
-        occurredAt: new Date(),
-      });
-
-      const [account] = await tx
-        .update(creditAccounts)
-        .set({
-          balance: sql`${creditAccounts.balance} + ${DAILY_ATTENDANCE_REWARD}`,
-          totalEarned: sql`${creditAccounts.totalEarned} + ${DAILY_ATTENDANCE_REWARD}`,
-          updatedAt: new Date(),
-        })
-        .where(eq(creditAccounts.userId, userId))
-        .returning({ balance: creditAccounts.balance });
-
-      return {
-        credited: true,
-        reward: DAILY_ATTENDANCE_REWARD,
-        balance: account?.balance ?? 0,
-        reason: null,
-      };
       },
     );
 

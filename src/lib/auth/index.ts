@@ -5,7 +5,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/db/client";
-import { createUniqueDisplayName } from "@/db/query/auth";
+import { createUniqueDisplayName } from "@/features/auth/server/queries";
 import { accounts, users } from "@/db/schema";
 import { jwtCallback } from "@/lib/auth/callbacks/jwt";
 

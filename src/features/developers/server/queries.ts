@@ -2,8 +2,8 @@ import { cacheTag } from "next/cache";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import "server-only";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import { userSecrets, workflowApiIds, workflows } from "@/db/schema";
+import { getUserId } from "@/features/auth/server/queries";
 import { developerTags } from "@/features/developers/server/cache/tags";
 import { sha256Hex } from "@/features/developers/server/utils";
 

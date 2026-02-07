@@ -1,9 +1,11 @@
 import { cacheTag } from "next/cache";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import "server-only";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
+import { getUserId } from "@/features/auth/server/queries";
+import { aiModels } from "@/db/schema/ai-models";
 import { workflowEdges, workflowNodes, workflows } from "@/db/schema/workflows";
+import { chatTags } from "@/features/chats/server/cache/tags";
 import { workflowTags } from "@/features/workflows/server/cache/tags";
 
 const normalizeLimit = (limit: number | undefined, fallback = 6) => {
@@ -132,4 +134,51 @@ const getOwnedWorkflowByIdCached = async (
     .limit(1);
 
   return workflow ?? null;
+};
+
+export const getOwnedWorkflowChatCreditEstimate = async (workflowId: string) => {
+  const ownerId = await getUserId();
+  const trimmedWorkflowId = workflowId.trim();
+
+  if (!trimmedWorkflowId) {
+    throw new Error("워크플로우를 찾을 수 없습니다.");
+  }
+
+  const [workflow] = await db
+    .select({ ownerId: workflows.ownerId })
+    .from(workflows)
+    .where(eq(workflows.id, trimmedWorkflowId))
+    .limit(1);
+
+  if (!workflow) {
+    throw new Error("워크플로우를 찾을 수 없습니다.");
+  }
+
+  if (workflow.ownerId !== ownerId) {
+    throw new Error("워크플로우에 대한 접근 권한이 없습니다.");
+  }
+
+  return getOwnedWorkflowChatCreditEstimateCached(trimmedWorkflowId);
+};
+
+const getOwnedWorkflowChatCreditEstimateCached = async (workflowId: string) => {
+  "use cache";
+  cacheTag(workflowTags.graphByWorkflow(workflowId));
+  cacheTag(workflowTags.metaByWorkflow(workflowId));
+  cacheTag(chatTags.activeAiModels());
+
+  const totalSql = sql<number>`
+    coalesce(sum(coalesce(${aiModels.price}, 0)), 0)
+  `.mapWith(Number);
+
+  const [row] = await db
+    .select({ total: totalSql })
+    .from(workflowNodes)
+    .leftJoin(aiModels, eq(workflowNodes.value, aiModels.modelId))
+    .where(
+      and(eq(workflowNodes.workflowId, workflowId), eq(workflowNodes.type, "chatNode")),
+    )
+    .limit(1);
+
+  return row?.total ?? 0;
 };

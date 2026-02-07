@@ -10,7 +10,7 @@ import {
   langgraphStreamEventSchema,
 } from "@/app/api/chat/_types/chat-events";
 import { isValidNodeType } from "@/app/api/chat/_types/nodes";
-import { getUserId } from "@/db/query/auth";
+import { getUserId } from "@/features/auth/server/queries";
 
 /**
  * 채팅 실행 GET 요청

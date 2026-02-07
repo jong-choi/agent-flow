@@ -1,10 +1,9 @@
-import "server-only";
-
-import { and, asc, desc, eq, ilike, isNull, sql } from "drizzle-orm";
 import { cacheTag } from "next/cache";
+import { and, asc, desc, eq, ilike, isNull, sql } from "drizzle-orm";
+import "server-only";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import { documents } from "@/db/schema/documents";
+import { getUserId } from "@/features/auth/server/queries";
 import { documentTags } from "@/features/documents/server/cache/tags";
 
 type DocumentListFilters = {

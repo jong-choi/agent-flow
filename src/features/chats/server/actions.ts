@@ -3,8 +3,8 @@
 import { updateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import { chatMessages, chats } from "@/db/schema";
+import { getUserId } from "@/features/auth/server/queries";
 import { chatTags } from "@/features/chats/server/cache/tags";
 import {
   getChatById,

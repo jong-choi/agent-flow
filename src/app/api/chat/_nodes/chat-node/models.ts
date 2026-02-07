@@ -1,6 +1,6 @@
 import { ChatGoogle } from "@langchain/google-gauth";
-import { getActiveAiModels } from "@/db/query/ai-models";
 import { type AiModel } from "@/db/schema";
+import { getActiveAiModels } from "@/features/chats/server/queries";
 
 const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
 

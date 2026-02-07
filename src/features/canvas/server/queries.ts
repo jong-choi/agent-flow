@@ -1,10 +1,8 @@
-import "server-only";
-
 import { cacheTag } from "next/cache";
 import { eq } from "drizzle-orm";
+import "server-only";
 import { z } from "zod";
 import { db } from "@/db/client";
-import { getActiveAiModels } from "@/db/query/ai-models";
 import {
   sidebarNodeContents,
   sidebarNodeHandles,
@@ -14,6 +12,7 @@ import {
 } from "@/db/schema";
 import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 import { canvasTags } from "@/features/canvas/server/cache/tags";
+import { getActiveAiModels } from "@/features/chats/server/queries";
 
 const DOCUMENT_ACTION_OPTIONS = [
   { id: "read", value: "읽기" },

@@ -19,7 +19,7 @@ import {
 } from "drizzle-orm";
 import { normalizeOptionalText } from "@/app/[locale]/(app)/presets/_utils/form-utils";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
+import { getUserId } from "@/features/auth/server/queries";
 import {
   getChatById,
   getChatsByWorkflowId,

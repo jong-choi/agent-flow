@@ -1,10 +1,10 @@
-import "server-only";
-
 import { cacheTag } from "next/cache";
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import "server-only";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import { chatMessages, chats } from "@/db/schema";
+import { aiModels } from "@/db/schema/ai-models";
+import { getUserId } from "@/features/auth/server/queries";
 import { chatTags } from "@/features/chats/server/cache/tags";
 import {
   getOwnedWorkflowById,
@@ -13,13 +13,33 @@ import {
   getWorkflowWithGraph,
 } from "@/features/workflows/server/queries";
 
-const normalizePositiveNumber = (value: number | undefined, fallback: number) => {
+const normalizePositiveNumber = (
+  value: number | undefined,
+  fallback: number,
+) => {
   const parsed = typeof value === "number" ? Math.trunc(value) : fallback;
   if (!Number.isFinite(parsed)) {
     return fallback;
   }
   return Math.max(1, parsed);
 };
+
+const getActiveAiModelsBase = async () => {
+  return db
+    .select()
+    .from(aiModels)
+    .where(eq(aiModels.isActive, true))
+    .orderBy(desc(aiModels.createdAt));
+};
+
+const getActiveAiModelsCached = async () => {
+  "use cache";
+  cacheTag(chatTags.activeAiModels());
+
+  return getActiveAiModelsBase();
+};
+
+export const getActiveAiModels = async () => getActiveAiModelsCached();
 
 export const getRecentWorkflowsForChat = async (
   params: {

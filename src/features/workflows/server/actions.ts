@@ -4,7 +4,7 @@ import { revalidateTag } from "next/cache";
 import { and, eq, inArray, isNotNull, ne, or } from "drizzle-orm";
 import { type FlowEdge, type FlowNode } from "@/app/api/chat/_types/nodes";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
+import { getUserId } from "@/features/auth/server/queries";
 import { presetPurchases, presets, workflowPresets } from "@/db/schema/presets";
 import { presetTags as presetCacheTags } from "@/features/presets/server/cache/tags";
 import { workflowEdges, workflowNodes, workflows } from "@/db/schema/workflows";

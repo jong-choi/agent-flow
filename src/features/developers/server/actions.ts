@@ -3,8 +3,8 @@
 import { updateTag } from "next/cache";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
-import { getUserId } from "@/db/query/auth";
 import { userSecrets, workflowApiIds, workflows } from "@/db/schema";
+import { getUserId } from "@/features/auth/server/queries";
 import { developerTags } from "@/features/developers/server/cache/tags";
 import {
   buildUserSecret,
