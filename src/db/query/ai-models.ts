@@ -1,9 +1,11 @@
-"use server";
+import "server-only";
 
-import { unstable_cache } from "next/cache";
+import { cacheTag } from "next/cache";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { aiModels } from "@/db/schema/ai-models";
+
+const ACTIVE_AI_MODELS_TAG = "ai-models:active";
 
 export const getActiveAiModelsBase = async () => {
   return db
@@ -13,8 +15,11 @@ export const getActiveAiModelsBase = async () => {
     .orderBy(desc(aiModels.createdAt));
 };
 
-export const getActiveAiModels = unstable_cache(
-  getActiveAiModelsBase,
-  ["ai_models"],
-  { tags: ["ai_models"], revalidate: 60 * 60 * 24 * 30 },
-);
+const getActiveAiModelsCached = async () => {
+  "use cache";
+  cacheTag(ACTIVE_AI_MODELS_TAG);
+
+  return getActiveAiModelsBase();
+};
+
+export const getActiveAiModels = async () => getActiveAiModelsCached();

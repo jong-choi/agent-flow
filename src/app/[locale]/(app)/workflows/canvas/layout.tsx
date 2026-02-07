@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CanvasContext } from "@/features/canvas/components/canvas-context";
 import { SidebarContainer } from "@/features/canvas/components/sidebar/sidebar-container";
 import { SidebarContent } from "@/features/canvas/components/sidebar/sidebar-content";
@@ -28,7 +30,9 @@ export default function CanvasLayout({
                 className="h-full w-full"
                 footer={<SidebarInfoContent />}
               >
-                <SidebarContent />
+                <Suspense fallback={<CanvasSidebarFallback />}>
+                  <SidebarContent />
+                </Suspense>
               </SidebarContainer>
             </div>
             <ResizablePanelGroup
@@ -58,6 +62,21 @@ export default function CanvasLayout({
           </CanvasContext>
         </CanvasStoreProvider>
       </ReactFlowProvider>
+    </div>
+  );
+}
+
+function CanvasSidebarFallback() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 10 }).map((_, index) => (
+        <div key={index} className="rounded-md border bg-muted/30 p-3">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
+import { cacheTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db/client";
@@ -13,6 +13,7 @@ import {
   sidebarNodesQuerySchema,
 } from "@/db/schema";
 import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
+import { canvasTags } from "@/features/canvas/server/cache/tags";
 
 const DOCUMENT_ACTION_OPTIONS = [
   { id: "read", value: "읽기" },
@@ -20,7 +21,10 @@ const DOCUMENT_ACTION_OPTIONS = [
   { id: "replace", value: "대치" },
 ] as const;
 
-const getSidebarNodesBase = async () => {
+const getSidebarNodesCached = async () => {
+  "use cache";
+  cacheTag(canvasTags.sidebarNodes());
+
   const rows = await db
     .select({
       id: sidebarNodes.id,
@@ -58,11 +62,18 @@ const getSidebarNodesBase = async () => {
   return parsed.data;
 };
 
-export const getSidebarNodes = unstable_cache(
-  getSidebarNodesBase,
-  ["sidebar_nodes"],
-  { tags: ["sidebar_nodes"], revalidate: 60 * 60 * 24 * 30 },
-);
+export const getSidebarNodes = async () => getSidebarNodesCached();
+
+const getActiveAiModelOptionsCached = async () => {
+  "use cache";
+  cacheTag(canvasTags.activeAiModels());
+
+  return (await getActiveAiModels()).map((aiModel) => ({
+    id: aiModel.id,
+    value: aiModel.modelId,
+    price: aiModel.price ?? 0,
+  }));
+};
 
 const hydrateSidebarNodeOptions = async (
   nodes: SidebarNodeData[],
@@ -74,11 +85,7 @@ const hydrateSidebarNodeOptions = async (
   );
 
   const aiModelOptions = needsAiModels
-    ? (await getActiveAiModels()).map((aiModel) => ({
-        id: aiModel.id,
-        value: aiModel.modelId,
-        price: aiModel.price ?? 0,
-      }))
+    ? await getActiveAiModelOptionsCached()
     : null;
 
   return nodes.map((node) => {
@@ -109,7 +116,13 @@ const hydrateSidebarNodeOptions = async (
   });
 };
 
-export const getSidebarNodesWithOptions = async () => {
-  const nodes = await getSidebarNodes();
+const getSidebarNodesWithOptionsCached = async () => {
+  "use cache";
+  cacheTag(canvasTags.sidebarNodes());
+
+  const nodes = await getSidebarNodesCached();
   return hydrateSidebarNodeOptions(nodes);
 };
+
+export const getSidebarNodesWithOptions = async () =>
+  getSidebarNodesWithOptionsCached();
