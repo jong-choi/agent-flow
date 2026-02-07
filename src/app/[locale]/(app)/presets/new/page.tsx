@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
@@ -8,12 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getOwnedWorkflows } from "@/features/workflows/server/queries";
 import { WorkflowListCard } from "@/features/workflows/components/workflow-list-card";
 
-export default async function PresetCreatePage() {
-  const workflowList = await getOwnedWorkflows();
-
+export default function PresetCreatePage() {
   return (
     <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -34,37 +34,67 @@ export default async function PresetCreatePage() {
             </Button>
           </div>
         </div>
-
-        {workflowList.length === 0 ? (
-          <Card className="border-dashed">
-            <CardHeader>
-              <CardTitle>워크플로우가 없습니다</CardTitle>
-              <CardDescription>
-                캔버스에서 워크플로우를 만든 뒤 프리셋을 생성해 주세요.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="secondary" asChild>
-                <Link href="/workflows/canvas">워크플로우 만들기</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {workflowList.map((workflow) => (
-              <WorkflowListCard
-                key={workflow.id}
-                href={`/presets/new/${workflow.id}`}
-                workflowId={workflow.id}
-                title={workflow.title}
-                description={workflow.description}
-                updatedAt={workflow.updatedAt}
-                actionLabel="선택하기"
-              />
-            ))}
-          </div>
-        )}
+        <Suspense fallback={<PresetCreateWorkflowListFallback />}>
+          <PresetCreateWorkflowList />
+        </Suspense>
       </div>
     </PageContainer>
+  );
+}
+
+async function PresetCreateWorkflowList() {
+  const workflowList = await getOwnedWorkflows();
+
+  if (workflowList.length === 0) {
+    return (
+      <Card className="border-dashed">
+        <CardHeader>
+          <CardTitle>워크플로우가 없습니다</CardTitle>
+          <CardDescription>
+            캔버스에서 워크플로우를 만든 뒤 프리셋을 생성해 주세요.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="secondary" asChild>
+            <Link href="/workflows/canvas">워크플로우 만들기</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {workflowList.map((workflow) => (
+        <WorkflowListCard
+          key={workflow.id}
+          href={`/presets/new/${workflow.id}`}
+          workflowId={workflow.id}
+          title={workflow.title}
+          description={workflow.description}
+          updatedAt={workflow.updatedAt}
+          actionLabel="선택하기"
+        />
+      ))}
+    </div>
+  );
+}
+
+function PresetCreateWorkflowListFallback() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <Card key={index}>
+          <CardHeader className="space-y-2">
+            <Skeleton className="h-5 w-3/5" />
+            <Skeleton className="h-4 w-full" />
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-9 w-24" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }

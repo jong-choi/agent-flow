@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag, unstable_cache } from "next/cache";
+import { cacheTag, revalidateTag, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   and,
@@ -38,11 +38,7 @@ import {
 } from "@/db/schema/presets";
 import { workflows } from "@/db/schema/workflows";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
-
-const PRESET_TAGS_MAP = {
-  presetById: (presetId: string) => `preset:detail:${presetId}`,
-  presetListByUserId: (userId: string) => `preset:list:${userId}`,
-} as const;
+import { presetTags as presetCacheTags } from "@/features/presets/server/cache/tags";
 
 const workflowReferencedPresetPricing = db
   .select({
@@ -92,6 +88,114 @@ type PresetLibraryFilters = {
 type PaginationOptions = {
   page?: number;
   pageSize?: number;
+};
+
+const getUniqueNormalizedValues = (values: string[]) =>
+  Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+
+const getUniquePresetIds = (presetIds: string[]) =>
+  getUniqueNormalizedValues(presetIds);
+
+const getUniqueUserIds = (userIds: string[]) =>
+  getUniqueNormalizedValues(userIds);
+
+const getUniqueWorkflowIds = (workflowIds: string[]) =>
+  getUniqueNormalizedValues(workflowIds);
+
+const updatePresetMarketTag = () => {
+  updateTag(presetCacheTags.market());
+};
+
+const revalidatePresetMarketTag = () => {
+  revalidateTag(presetCacheTags.market(), "max");
+};
+
+const updatePresetDetailTags = (presetIds: string[]) => {
+  getUniquePresetIds(presetIds).forEach((presetId) => {
+    updateTag(presetCacheTags.detailByPreset(presetId));
+  });
+};
+
+const revalidatePresetDetailTags = (presetIds: string[]) => {
+  getUniquePresetIds(presetIds).forEach((presetId) => {
+    revalidateTag(presetCacheTags.detailByPreset(presetId), "max");
+  });
+};
+
+const updateOwnedPresetTags = (userIds: string[]) => {
+  getUniqueUserIds(userIds).forEach((userId) => {
+    updateTag(presetCacheTags.ownedByUser(userId));
+  });
+};
+
+const revalidateOwnedPresetTags = (userIds: string[]) => {
+  getUniqueUserIds(userIds).forEach((userId) => {
+    revalidateTag(presetCacheTags.ownedByUser(userId), "max");
+  });
+};
+
+const updatePurchasedPresetTags = (userIds: string[]) => {
+  getUniqueUserIds(userIds).forEach((userId) => {
+    updateTag(presetCacheTags.purchasedByUser(userId));
+  });
+};
+
+const revalidatePurchasedPresetTags = (userIds: string[]) => {
+  getUniqueUserIds(userIds).forEach((userId) => {
+    revalidateTag(presetCacheTags.purchasedByUser(userId), "max");
+  });
+};
+
+const updateCanvasLibraryPresetTags = (userIds: string[]) => {
+  getUniqueUserIds(userIds).forEach((userId) => {
+    updateTag(presetCacheTags.canvasLibraryByUser(userId));
+  });
+};
+
+const revalidateCanvasLibraryPresetTags = (userIds: string[]) => {
+  getUniqueUserIds(userIds).forEach((userId) => {
+    revalidateTag(presetCacheTags.canvasLibraryByUser(userId), "max");
+  });
+};
+
+const updateWorkflowPricingTags = (workflowIds: string[]) => {
+  getUniqueWorkflowIds(workflowIds).forEach((workflowId) => {
+    updateTag(presetCacheTags.pricingByWorkflow(workflowId));
+  });
+};
+
+const revalidateWorkflowPricingTags = (workflowIds: string[]) => {
+  getUniqueWorkflowIds(workflowIds).forEach((workflowId) => {
+    revalidateTag(presetCacheTags.pricingByWorkflow(workflowId), "max");
+  });
+};
+
+const getBuyerIdsByPresetIds = async (presetIds: string[]) => {
+  const normalizedPresetIds = getUniquePresetIds(presetIds);
+  if (normalizedPresetIds.length === 0) {
+    return [];
+  }
+
+  const rows = await db
+    .select({ buyerId: presetPurchases.buyerId })
+    .from(presetPurchases)
+    .where(inArray(presetPurchases.presetId, normalizedPresetIds));
+
+  return getUniqueUserIds(rows.map((row) => row.buyerId));
+};
+
+const getReferencingWorkflowIdsByPresetIds = async (presetIds: string[]) => {
+  const normalizedPresetIds = getUniquePresetIds(presetIds);
+  if (normalizedPresetIds.length === 0) {
+    return [];
+  }
+
+  const rows = await db
+    .select({ workflowId: workflowPresets.workflowId })
+    .from(workflowPresets)
+    .where(inArray(workflowPresets.presetId, normalizedPresetIds));
+
+  return getUniqueWorkflowIds(rows.map((row) => row.workflowId));
 };
 
 const resolvePagination = (options?: PaginationOptions) => {
@@ -154,27 +258,68 @@ export const getPresets = async (
   filters?: PresetListFilters,
   pagination?: PaginationOptions,
 ) => {
-  const userId = await getUserId({ throwOnError: false });
+  const viewerId = await getUserId({ throwOnError: false });
+  const { page, pageSize } = resolvePagination(pagination);
+
+  return getPresetsCached({
+    viewerId: viewerId ?? null,
+    query: filters?.query?.trim() ?? "",
+    category: filters?.category ?? null,
+    priceMin: filters?.priceMin ?? null,
+    priceMax: filters?.priceMax ?? null,
+    sort:
+      filters?.sort === "popular" ||
+      filters?.sort === "latest" ||
+      filters?.sort === "rating" ||
+      filters?.sort === "price-asc"
+        ? filters.sort
+        : "latest",
+    page,
+    pageSize,
+  });
+};
+
+const getPresetsCached = async ({
+  viewerId,
+  query,
+  category,
+  priceMin,
+  priceMax,
+  sort,
+  page,
+  pageSize,
+}: {
+  viewerId: string | null;
+  query: string;
+  category: string | null;
+  priceMin: number | null;
+  priceMax: number | null;
+  sort: "popular" | "latest" | "rating" | "price-asc";
+  page: number;
+  pageSize: number;
+}) => {
+  "use cache";
+  cacheTag(presetCacheTags.market());
+
   const purchaseCount = buildPurchaseCount();
-  const isPurchased = buildIsPurchased(userId || undefined);
+  const isPurchased = buildIsPurchased(viewerId ?? undefined);
   const referencedPresetPrice =
     sql<number>`coalesce(${workflowReferencedPresetPricing.referencedPresetPrice}, 0)`.mapWith(
       Number,
     );
   const totalPrice =
     sql<number>`${presets.price} + ${referencedPresetPrice}`.mapWith(Number);
-  const isOwner = userId
-    ? sql<boolean>`${presets.ownerId} = ${userId}`.mapWith(Boolean)
+  const isOwner = viewerId
+    ? sql<boolean>`${presets.ownerId} = ${viewerId}`.mapWith(Boolean)
     : sql<boolean>`false`.mapWith(Boolean);
   const clauses = [eq(presets.isPublished, true)];
 
-  if (filters?.category) {
-    clauses.push(eq(presets.category, filters.category));
+  if (category) {
+    clauses.push(eq(presets.category, category));
   }
 
-  const trimmedQuery = filters?.query?.trim();
-  if (trimmedQuery) {
-    const pattern = `%${trimmedQuery}%`;
+  if (query) {
+    const pattern = `%${query}%`;
     const tagSearchClause = sql<boolean>`
       exists(
         select 1
@@ -194,25 +339,22 @@ export const getPresets = async (
     }
   }
 
-  if (filters?.priceMin != null) {
-    clauses.push(gte(totalPrice, filters.priceMin));
+  if (priceMin != null) {
+    clauses.push(gte(totalPrice, priceMin));
   }
 
-  if (filters?.priceMax != null) {
-    clauses.push(lte(totalPrice, filters.priceMax));
+  if (priceMax != null) {
+    clauses.push(lte(totalPrice, priceMax));
   }
 
   const whereClause = clauses.length === 1 ? clauses[0] : and(...clauses);
-
-  const sort = filters?.sort ?? "latest";
   const orderBy =
     sort === "popular" || sort === "rating"
       ? [desc(purchaseCount), desc(presets.updatedAt)]
       : sort === "price-asc"
         ? [asc(totalPrice), desc(presets.updatedAt)]
         : [desc(presets.updatedAt)];
-
-  const { pageSize, offset } = resolvePagination(pagination);
+  const offset = (page - 1) * pageSize;
 
   const [presetsList, [countRow]] = await Promise.all([
     db
@@ -303,15 +445,12 @@ const getPresetDetailBase = async (presetId: string) => {
  * - 캐시: 30일 revalidate (상세 페이지 렌더 성능 최적화).
  * - 사용처: src/app/presets/[id]/page.tsx
  */
-const getPresetDetailCached = (presetId: string) =>
-  unstable_cache(
-    () => getPresetDetailBase(presetId),
-    [PRESET_TAGS_MAP.presetById(presetId)],
-    {
-      tags: [PRESET_TAGS_MAP.presetById(presetId)],
-      revalidate: 60 * 60 * 24 * 30,
-    },
-  )();
+const getPresetDetailCached = async (presetId: string) => {
+  "use cache";
+  cacheTag(presetCacheTags.detailByPreset(presetId));
+
+  return getPresetDetailBase(presetId);
+};
 
 export const getWorkflowReferencedPresetPricingSummary = async ({
   workflowId,
@@ -320,6 +459,32 @@ export const getWorkflowReferencedPresetPricingSummary = async ({
   workflowId: string;
   excludePresetId?: string;
 }) => {
+  const normalizedWorkflowId = workflowId.trim();
+  if (!normalizedWorkflowId) {
+    return {
+      referencedPresetPrice: 0,
+      referencedPresetCount: 0,
+    };
+  }
+
+  const normalizedExcludePresetId = excludePresetId?.trim() || undefined;
+
+  return getWorkflowReferencedPresetPricingSummaryCached({
+    workflowId: normalizedWorkflowId,
+    excludePresetId: normalizedExcludePresetId,
+  });
+};
+
+const getWorkflowReferencedPresetPricingSummaryCached = async ({
+  workflowId,
+  excludePresetId,
+}: {
+  workflowId: string;
+  excludePresetId?: string;
+}) => {
+  "use cache";
+  cacheTag(presetCacheTags.pricingByWorkflow(workflowId));
+
   const clauses = [eq(workflowPresets.workflowId, workflowId)];
 
   if (excludePresetId) {
@@ -640,13 +805,15 @@ export const purchasePresetAction = async (
     });
 
     if (result.status === "success" || result.status === "already_purchased") {
-      revalidateTag(PRESET_TAGS_MAP.presetListByUserId(buyerId), { expire: 0 });
-      revalidateTag(PRESET_TAGS_MAP.presetById(presetId), { expire: 0 });
-      referencedPresetIdsSnapshot.forEach((referencedPresetId) => {
-        revalidateTag(PRESET_TAGS_MAP.presetById(referencedPresetId), {
-          expire: 0,
-        });
-      });
+      const affectedPresetIds = [presetId, ...referencedPresetIdsSnapshot];
+      updatePresetMarketTag();
+      revalidatePresetMarketTag();
+      updatePurchasedPresetTags([buyerId]);
+      revalidatePurchasedPresetTags([buyerId]);
+      updateCanvasLibraryPresetTags([buyerId]);
+      revalidateCanvasLibraryPresetTags([buyerId]);
+      updatePresetDetailTags(affectedPresetIds);
+      revalidatePresetDetailTags(affectedPresetIds);
     }
 
     return result as PresetPurchaseResult;
@@ -702,17 +869,14 @@ const getPresetLibraryForCanvasBase = async (userId: string) => {
 
 export const getPresetLibraryForCanvasAction = async () => {
   const userId = await getUserId();
+  return getPresetLibraryForCanvasCached(userId);
+};
 
-  const getPresetLibraryForCanvasCached = unstable_cache(
-    () => getPresetLibraryForCanvasBase(userId),
-    [PRESET_TAGS_MAP.presetListByUserId(userId)],
-    {
-      tags: [PRESET_TAGS_MAP.presetListByUserId(userId)],
-      revalidate: 60 * 60 * 24 * 7,
-    },
-  );
+const getPresetLibraryForCanvasCached = async (userId: string) => {
+  "use cache";
+  cacheTag(presetCacheTags.canvasLibraryByUser(userId));
 
-  return getPresetLibraryForCanvasCached();
+  return getPresetLibraryForCanvasBase(userId);
 };
 
 export const getPresetGraphForCanvasAction = async (presetId: string) => {
@@ -810,6 +974,12 @@ export const getPresetGraphForCanvasAction = async (presetId: string) => {
  */
 export const getPurchasedPresetsSummary = async () => {
   const buyerId = await getUserId();
+  return getPurchasedPresetsSummaryCached(buyerId);
+};
+
+const getPurchasedPresetsSummaryCached = async (buyerId: string) => {
+  "use cache";
+  cacheTag(presetCacheTags.purchasedByUser(buyerId));
 
   const baseWhere = and(
     eq(presetPurchases.buyerId, buyerId),
@@ -957,17 +1127,20 @@ const getPurchasedPresetsBase = async ({
 
 export const getPurchasedPresets = async (filters?: PurchasedPresetFilters) => {
   const buyerId = await getUserId();
+  return getPurchasedPresetsCached({ filters, buyerId });
+};
 
-  const getPurchasedPresetsCached = unstable_cache(
-    () => getPurchasedPresetsBase({ filters, buyerId }),
-    [PRESET_TAGS_MAP.presetListByUserId(buyerId)],
-    {
-      revalidate: 60 * 60 * 24 * 7,
-      tags: [PRESET_TAGS_MAP.presetListByUserId(buyerId)],
-    },
-  );
+const getPurchasedPresetsCached = async ({
+  filters,
+  buyerId,
+}: {
+  filters?: PurchasedPresetFilters;
+  buyerId: string;
+}) => {
+  "use cache";
+  cacheTag(presetCacheTags.purchasedByUser(buyerId));
 
-  return getPurchasedPresetsCached();
+  return getPurchasedPresetsBase({ filters, buyerId });
 };
 
 /**
@@ -1015,17 +1188,14 @@ const getOwnedPresetsBase = async (ownerId: string) => {
 
 export const getOwnedPresets = async () => {
   const ownerId = await getUserId();
+  return getOwnedPresetsCached(ownerId);
+};
 
-  const getOwnedPresetsCached = unstable_cache(
-    () => getOwnedPresetsBase(ownerId),
-    [PRESET_TAGS_MAP.presetListByUserId(ownerId)],
-    {
-      revalidate: 60 * 60 * 24 * 7,
-      tags: [PRESET_TAGS_MAP.presetListByUserId(ownerId)],
-    },
-  );
+const getOwnedPresetsCached = async (ownerId: string) => {
+  "use cache";
+  cacheTag(presetCacheTags.ownedByUser(ownerId));
 
-  return getOwnedPresetsCached();
+  return getOwnedPresetsBase(ownerId);
 };
 
 /**
@@ -1123,7 +1293,21 @@ export const createPreset = async ({
     }
   }
 
-  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), { expire: 0 });
+  updateOwnedPresetTags([ownerId]);
+  revalidateOwnedPresetTags([ownerId]);
+  updateCanvasLibraryPresetTags([ownerId]);
+  revalidateCanvasLibraryPresetTags([ownerId]);
+
+  if (isPublished) {
+    updatePresetMarketTag();
+    revalidatePresetMarketTag();
+  }
+
+  if (preset) {
+    updatePresetDetailTags([preset.id]);
+    revalidatePresetDetailTags([preset.id]);
+  }
+
   return preset ?? null;
 };
 
@@ -1162,6 +1346,11 @@ export const updatePreset = async ({
     return null;
   }
 
+  const [affectedBuyerIds, affectedWorkflowIds] = await Promise.all([
+    getBuyerIdsByPresetIds([presetId]),
+    getReferencingWorkflowIdsByPresetIds([presetId]),
+  ]);
+
   let selectedChatId = chatId ?? null;
   if (selectedChatId) {
     const [chat] = await db
@@ -1197,8 +1386,23 @@ export const updatePreset = async ({
     .where(and(eq(presets.id, presetId), eq(presets.ownerId, ownerId)))
     .returning({ id: presets.id });
 
-  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), { expire: 0 });
-  revalidateTag(PRESET_TAGS_MAP.presetById(presetId), { expire: 0 });
+  if (!preset) {
+    return null;
+  }
+
+  updateOwnedPresetTags([ownerId]);
+  revalidateOwnedPresetTags([ownerId]);
+  updatePurchasedPresetTags(affectedBuyerIds);
+  revalidatePurchasedPresetTags(affectedBuyerIds);
+  updateCanvasLibraryPresetTags([ownerId, ...affectedBuyerIds]);
+  revalidateCanvasLibraryPresetTags([ownerId, ...affectedBuyerIds]);
+  updatePresetMarketTag();
+  revalidatePresetMarketTag();
+  updatePresetDetailTags([presetId]);
+  revalidatePresetDetailTags([presetId]);
+  updateWorkflowPricingTags(affectedWorkflowIds);
+  revalidateWorkflowPricingTags(affectedWorkflowIds);
+
   return preset ?? null;
 };
 
@@ -1209,13 +1413,33 @@ export const updatePreset = async ({
  */
 export const deletePreset = async ({ presetId }: { presetId: string }) => {
   const ownerId = await getUserId();
+  const [affectedBuyerIds, affectedWorkflowIds] = await Promise.all([
+    getBuyerIdsByPresetIds([presetId]),
+    getReferencingWorkflowIdsByPresetIds([presetId]),
+  ]);
+
   const [preset] = await db
     .delete(presets)
     .where(and(eq(presets.id, presetId), eq(presets.ownerId, ownerId)))
     .returning({ id: presets.id });
 
-  revalidateTag(PRESET_TAGS_MAP.presetListByUserId(ownerId), { expire: 0 });
-  revalidateTag(PRESET_TAGS_MAP.presetById(presetId), { expire: 0 });
+  if (!preset) {
+    return null;
+  }
+
+  updateOwnedPresetTags([ownerId]);
+  revalidateOwnedPresetTags([ownerId]);
+  updatePurchasedPresetTags(affectedBuyerIds);
+  revalidatePurchasedPresetTags(affectedBuyerIds);
+  updateCanvasLibraryPresetTags([ownerId, ...affectedBuyerIds]);
+  revalidateCanvasLibraryPresetTags([ownerId, ...affectedBuyerIds]);
+  updatePresetMarketTag();
+  revalidatePresetMarketTag();
+  updatePresetDetailTags([presetId]);
+  revalidatePresetDetailTags([presetId]);
+  updateWorkflowPricingTags(affectedWorkflowIds);
+  revalidateWorkflowPricingTags(affectedWorkflowIds);
+
   return preset ?? null;
 };
 

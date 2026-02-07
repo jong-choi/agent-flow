@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import {
   PageContainer,
@@ -5,9 +6,10 @@ import {
   PageHeading,
 } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { WorkflowListView } from "@/features/workflows/components/workflow-list-view";
 
-export default async function WorkflowsPage() {
+export default function WorkflowsPage() {
   return (
     <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -22,8 +24,32 @@ export default async function WorkflowsPage() {
             <Link href="/workflows/canvas">새 워크플로우</Link>
           </Button>
         </div>
-        <WorkflowListView />
+        <Suspense fallback={<WorkflowListViewFallback />}>
+          <WorkflowListView />
+        </Suspense>
       </div>
     </PageContainer>
+  );
+}
+
+function WorkflowListViewFallback() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div
+          key={index}
+          className="rounded-lg border border-border/60 bg-background p-4"
+        >
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-full" />
+            <div className="mt-2 flex items-end justify-between">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
