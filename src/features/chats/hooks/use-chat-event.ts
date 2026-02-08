@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import { clientStreamEventSchema } from "@/app/api/chat/_types/chat-events";
 import { useChatStore } from "@/features/chats/store/chat-store";
 import { createHumanMessage } from "@/features/chats/utils/chat-message";
+import { updateCreditTagsAction } from "@/features/credits/server/actions";
 
 export function useChatEvent() {
-  const queryClient = useQueryClient();
   const eventSourceRef = useRef<EventSource | null>(null);
   const searchParams = useSearchParams();
   const searchThreadId = searchParams.get("thread_id");
@@ -87,9 +86,7 @@ export function useChatEvent() {
       }
 
       if (data.type === "endNode" && data.event === "on_chain_end") {
-        queryClient.refetchQueries({
-          queryKey: ["credits", "balance"],
-        });
+        updateCreditTagsAction().catch(() => null);
         flushStreamingToMessages();
         setIsStreaming(false);
         closeEventSource();

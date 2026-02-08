@@ -19,14 +19,6 @@ import {
 } from "drizzle-orm";
 import { normalizeOptionalText } from "@/app/[locale]/(app)/presets/_utils/form-utils";
 import { db } from "@/db/client";
-import { getUserId } from "@/features/auth/server/queries";
-import {
-  getChatById,
-  getChatsByWorkflowId,
-  getPublicChatMessagesByChatId,
-} from "@/features/chats/server/queries";
-import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
-import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 import { users } from "@/db/schema/auth";
 import { chats } from "@/db/schema/chat";
 import { creditAccounts, creditTransactions } from "@/db/schema/credit";
@@ -37,8 +29,20 @@ import {
   workflowPresets,
 } from "@/db/schema/presets";
 import { workflows } from "@/db/schema/workflows";
+import { getUserId } from "@/features/auth/server/queries";
+import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
+import {
+  getChatById,
+  getChatsByWorkflowId,
+  getPublicChatMessagesByChatId,
+} from "@/features/chats/server/queries";
+import {
+  revalidateCreditTagsByUserIds,
+  updateCreditTagsByUserIds,
+} from "@/features/credits/server/actions";
 import { presetTags as presetCacheTags } from "@/features/presets/server/cache/tags";
+import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 
 const workflowReferencedPresetPricing = db
   .select({
@@ -623,6 +627,7 @@ export const purchasePresetAction = async (
     referencedPresetPrice: 0,
   };
   let referencedPresetIdsSnapshot: string[] = [];
+  let creditAffectedUserIdsSnapshot: string[] = [];
 
   try {
     const result = await db.transaction(async (tx) => {
@@ -676,6 +681,11 @@ export const purchasePresetAction = async (
         );
 
       referencedPresetIdsSnapshot = referencedPresetsList.map((row) => row.id);
+      creditAffectedUserIdsSnapshot = [
+        buyerId,
+        preset.ownerId,
+        ...referencedPresetsList.map((row) => row.ownerId),
+      ];
 
       const referencedPresetPrice = referencedPresetsList.reduce(
         (sum, row) => sum + Math.max(0, row.price),
@@ -814,6 +824,11 @@ export const purchasePresetAction = async (
       revalidateCanvasLibraryPresetTags([buyerId]);
       updatePresetDetailTags(affectedPresetIds);
       revalidatePresetDetailTags(affectedPresetIds);
+    }
+
+    if (result.status === "success" && result.totalPrice > 0) {
+      void updateCreditTagsByUserIds(creditAffectedUserIdsSnapshot);
+      void revalidateCreditTagsByUserIds(creditAffectedUserIdsSnapshot);
     }
 
     return result as PresetPurchaseResult;

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { revalidateTag, updateTag } from "next/cache";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
@@ -40,6 +40,44 @@ const revalidateCreditTags = (
   if (options?.includeAttendance) {
     revalidateTag(creditTags.attendanceByUser(userId), "max");
   }
+};
+
+const updateCreditTags = (
+  userId: string,
+  options?: { includeAttendance?: boolean },
+) => {
+  updateTag(creditTags.allByUser(userId));
+  updateTag(creditTags.balanceByUser(userId));
+  updateTag(creditTags.summaryByUser(userId));
+  updateTag(creditTags.historyByUser(userId));
+
+  if (options?.includeAttendance) {
+    updateTag(creditTags.attendanceByUser(userId));
+  }
+};
+
+export const updateCreditTagsByUserIds = async (
+  userIds: string[],
+  options?: { includeAttendance?: boolean },
+) => {
+  const uniqueUserIds = Array.from(new Set(userIds));
+  await Promise.all(
+    uniqueUserIds.map(async (userId) => {
+      updateCreditTags(userId, options);
+    }),
+  );
+};
+
+export const revalidateCreditTagsByUserIds = async (
+  userIds: string[],
+  options?: { includeAttendance?: boolean },
+) => {
+  const uniqueUserIds = Array.from(new Set(userIds));
+  await Promise.all(
+    uniqueUserIds.map(async (userId) => {
+      revalidateCreditTags(userId, options);
+    }),
+  );
 };
 
 const ensureCreditAccountForWrite = async (userId: string) => {
@@ -236,4 +274,11 @@ export const getCreditBalanceByUserIdAction = async ({
     .limit(1);
 
   return account?.balance ?? 0;
+};
+
+export const updateCreditTagsAction = async (options?: {
+  includeAttendance?: boolean;
+}) => {
+  const userId = await getUserId();
+  updateCreditTags(userId, options);
 };
