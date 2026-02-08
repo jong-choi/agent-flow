@@ -36,7 +36,7 @@ export function ChatPanelInputForm() {
       return;
     }
 
-    sendMessage(message);
+    void sendMessage(message);
     textareaRef.current.value = "";
   };
 

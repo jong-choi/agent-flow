@@ -138,7 +138,7 @@ export function PresetPurchaseDialog({
       }
     };
 
-    fetchBalance();
+    void fetchBalance();
 
     return () => {
       isActive = false;

@@ -5,7 +5,19 @@ import { defineConfig, globalIgnores } from "eslint/config";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  // 인라인 type Import를 권장합니다.
+  // 비동기 함수의 fire-and-forget 시 void를 명시하도록 합니다.
+  {
+    files: ["**/*.{ts,tsx}"],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-floating-promises": "warn",
+    },
+  },
+  // type Import는 인라인을 권장합니다.
   {
     rules: {
       "@typescript-eslint/consistent-type-imports": [

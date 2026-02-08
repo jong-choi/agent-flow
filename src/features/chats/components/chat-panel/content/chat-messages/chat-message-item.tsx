@@ -45,7 +45,7 @@ export function ChatMessageItem({ message }: { message: ClientChatMessage }) {
             className="h-6 w-6 text-muted-foreground"
             aria-label="copy message"
             onClick={() => {
-              navigator.clipboard.writeText(message.content);
+              void navigator.clipboard.writeText(message.content);
             }}
           >
             <Copy className="h-3.5 w-3.5" />

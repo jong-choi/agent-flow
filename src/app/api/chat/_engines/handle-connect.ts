@@ -68,7 +68,7 @@ export const threadContextManager = new ThreadContextManager();
 export const resetIdleTimer = (threadId: string) => {
   try {
     threadContextManager.setIdleTimer(threadId, THREAD_IDLE_TIMEOUT_MS, () => {
-      checkpointer.deleteThread(threadId);
+      void checkpointer.deleteThread(threadId);
       threadContextManager.delete(threadId);
     });
   } catch (error) {
@@ -86,7 +86,7 @@ export const createThread = async ({
   const threadId = randomUUID();
   threadContextManager.set({ id: threadId, state, graph });
   threadContextManager.setIdleTimer(threadId, THREAD_IDLE_TIMEOUT_MS, () => {
-    checkpointer.deleteThread(threadId);
+    void checkpointer.deleteThread(threadId);
     threadContextManager.delete(threadId);
   });
   return { thread_id: threadId };

@@ -36,10 +36,12 @@ export function ChatEventWrapper({
 
   useEffect(() => {
     const controller = new AbortController();
-    try {
-      if (mode !== "temporary" || !threadId) return;
+    if (mode !== "temporary" || !threadId) {
+      return;
+    }
 
-      (async () => {
+    const checkThreadHealth = async () => {
+      try {
         const response = await fetch(`/api/chat/temporary/${threadId}/health`, {
           signal: controller.signal,
         });
@@ -56,13 +58,15 @@ export function ChatEventWrapper({
         if (threadSearchParam) {
           setSearchParams({ thread_id: null });
         }
-      })();
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        return;
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+        throw error;
       }
-      throw error;
-    }
+    };
+
+    void checkThreadHealth();
 
     return () => {
       controller.abort();
@@ -86,8 +90,6 @@ export function ChatEventWrapper({
   };
 
   return (
-    <ChatStoreProvider initialState={initialState}>
-      {children}
-    </ChatStoreProvider>
+    <ChatStoreProvider initialState={initialState}>{children}</ChatStoreProvider>
   );
 }
