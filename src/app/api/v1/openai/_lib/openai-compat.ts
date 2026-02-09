@@ -237,7 +237,9 @@ export const extractLastUserTextFromChatMessages = (
   return null;
 };
 
-export const extractLastUserTextFromResponsesInput = (input: unknown): string | null => {
+export const extractLastUserTextFromResponsesInput = (
+  input: unknown,
+): string | null => {
   if (typeof input === "string") {
     const trimmed = input.trim();
     return trimmed.length > 0 ? trimmed : null;
@@ -308,4 +310,3 @@ export const splitTextForStreaming = (text: string, chunkSize = 120) => {
 
 export const buildOpenAiId = (prefix: string) =>
   `${prefix}_${crypto.randomUUID().replaceAll("-", "")}`;
-

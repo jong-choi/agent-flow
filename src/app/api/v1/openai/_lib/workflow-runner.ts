@@ -1,5 +1,8 @@
 import { HumanMessage } from "@langchain/core/messages";
-import { buildInputTree, buildStateGraph } from "@/app/api/chat/_engines/build-state-graph";
+import {
+  buildInputTree,
+  buildStateGraph,
+} from "@/app/api/chat/_engines/build-state-graph";
 import {
   isEventName,
   langgraphStreamEventSchema,
@@ -21,7 +24,10 @@ type WorkflowStreamCallbacks = {
   onEnd?: () => void;
 };
 
-const createWorkflowRuntime = async ({ workflowId, message }: RunWorkflowParams) => {
+const createWorkflowRuntime = async ({
+  workflowId,
+  message,
+}: RunWorkflowParams) => {
   const workflowData = await getWorkflowWithGraph(workflowId);
   if (!workflowData) {
     throw new Error("워크플로우를 찾을 수 없습니다.");
@@ -59,7 +65,11 @@ export const streamWorkflowForUserMessage = async ({
   onDelta,
   onEnd,
 }: RunWorkflowParams & WorkflowStreamCallbacks) => {
-  const { app, state } = await createWorkflowRuntime({ workflowId, userId, message });
+  const { app, state } = await createWorkflowRuntime({
+    workflowId,
+    userId,
+    message,
+  });
 
   const threadId = crypto.randomUUID();
   const streamingChunkMap = new Map<string, string>();

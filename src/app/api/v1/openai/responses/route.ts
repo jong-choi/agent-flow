@@ -209,4 +209,3 @@ export async function POST(request: Request) {
     return handleOpenAiRouteError("POST /api/v1/openai/responses", error);
   }
 }
-
