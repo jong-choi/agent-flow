@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useNodes } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -13,7 +14,8 @@ export function ChatPanelInputForm() {
   const isStreaming = useChatStore((s) => s.isStreaming);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const sendMessage = useChatEvent();
-  const [isMessage, setIsMessage] = useState<boolean>(false);
+  const [draft, setDraft] = useState("");
+  const isMessage = Boolean(draft.trim());
   const isSendingAvailable = !isStreaming && isMessage;
 
   const handleCompositionStart = () => {
@@ -24,38 +26,59 @@ export function ChatPanelInputForm() {
     isComposingRef.current = false;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!isSendingAvailable || !textareaRef.current) {
+  const handleSubmit = async () => {
+    if (!isSendingAvailable) {
       return;
     }
 
-    const message = textareaRef.current.value.trim();
+    const message = draft.trim();
     if (!message) {
       return;
     }
 
-    void sendMessage(message);
-    textareaRef.current.value = "";
+    setDraft("");
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+    });
+
+    try {
+      await sendMessage(message);
+    } catch (error) {
+      setDraft((prev) => prev || message);
+      toast.error(
+        error instanceof Error ? error.message : "응답을 받을 수 없습니다.",
+      );
+    } finally {
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+      });
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    void handleSubmit();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey && !isComposingRef.current) {
+      if (!isSendingAvailable) {
+        return;
+      }
       e.preventDefault();
-      handleSubmit(e);
+      void handleSubmit();
     }
   };
 
   return (
-    <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
+    <form className="flex flex-col gap-2" onSubmit={handleFormSubmit}>
       <Textarea
         ref={textareaRef}
-        onChange={(event) => setIsMessage(Boolean(event.target.value.trim()))}
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="메시지를 입력하세요..."
         className="h-24"
-        disabled={isStreaming}
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}
       />

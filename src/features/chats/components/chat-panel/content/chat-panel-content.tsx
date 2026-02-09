@@ -18,6 +18,19 @@ export function ChatPanelContent() {
   const isStreaming = useChatStore((s) => s.isStreaming);
 
   useEffect(() => {
+    // 최초 마운트시 바닥 스크롤
+    const scrollElement = scrollAreaRef.current?.querySelector(
+      "[data-radix-scroll-area-viewport]",
+    );
+    if (scrollElement) {
+      scrollElement.scrollTo({
+        top: scrollElement.scrollHeight,
+        behavior: "instant",
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     const scrollElement = scrollAreaRef.current?.querySelector(
       "[data-radix-scroll-area-viewport]",
     );

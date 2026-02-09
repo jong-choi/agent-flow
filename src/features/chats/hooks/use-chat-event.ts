@@ -31,9 +31,12 @@ export function useChatEvent() {
 
   useEffect(() => {
     return () => {
+      if (mode === "persistent") {
+        return;
+      }
       closeEventSource();
     };
-  }, [closeEventSource]);
+  }, [closeEventSource, mode]);
 
   const resolveTarget = () => {
     let threadId = storedThreadId ?? searchThreadId;
@@ -63,90 +66,113 @@ export function useChatEvent() {
     const eventSource = eventSourceRef.current;
 
     eventSource.onmessage = (event) => {
-      const parsed = clientStreamEventSchema.safeParse(JSON.parse(event.data));
-      if (!parsed.success) {
-        throw new Error("Invalid chat stream event payload", parsed.error);
-      }
-
-      const data = parsed.data;
-
-      if (data.type === "chatNode") {
-        const nodeId = data.langgraph_node;
-        if (!nodeId) return;
-
-        if (data.event === "on_chat_model_start") {
-          initStreamingChunk({ nodeId });
+      try {
+        const parsed = clientStreamEventSchema.safeParse(
+          JSON.parse(event.data),
+        );
+        if (!parsed.success) {
+          throw new Error("Invalid chat stream event payload");
         }
 
-        if (data.event === "on_chat_model_stream") {
-          const delta = data.chunk?.content;
-          if (delta) {
-            appendStreamingChunk({ nodeId, delta });
+        const data = parsed.data;
+
+        if (data.type === "chatNode") {
+          const nodeId = data.langgraph_node;
+          if (!nodeId) return;
+
+          if (data.event === "on_chat_model_start") {
+            initStreamingChunk({ nodeId });
           }
-        }
-        return;
-      }
 
-      if (data.type === "endNode" && data.event === "on_chain_end") {
-        updateCreditTagsAction().catch(() => null);
-        flushStreamingToMessages();
+          if (data.event === "on_chat_model_stream") {
+            const delta = data.chunk?.content;
+            if (delta) {
+              appendStreamingChunk({ nodeId, delta });
+            }
+          }
+          return;
+        }
+        if (data.type === "endNode" && data.event === "on_chain_end") {
+          updateCreditTagsAction().catch(() => null);
+          flushStreamingToMessages();
+          setIsStreaming(false);
+          closeEventSource();
+        }
+      } catch (error) {
+        console.error("chat stream parse error:", error);
         setIsStreaming(false);
         closeEventSource();
       }
     };
+
+    eventSource.onerror = () => {
+      setIsStreaming(false);
+      closeEventSource();
+    };
   };
 
   const sendMessage = async (message: string) => {
+    const trimmedMessage = message.trim();
+    if (!trimmedMessage) {
+      return;
+    }
+
     const isFirstMessage = !hasMessages;
-    appendMessage(createHumanMessage(message));
+    appendMessage(createHumanMessage(trimmedMessage));
     setIsStreaming(true);
 
-    const { targetId, endpointBase } = resolveTarget();
+    try {
+      const { targetId, endpointBase } = resolveTarget();
 
-    if (!targetId) {
-      throw new Error(
-        mode === "persistent" ? "chatId가 없습니다." : "threadId가 없습니다.",
-      );
-    }
-
-    const response = await fetch(`${endpointBase}/${targetId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-    });
-
-    const payload = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      const message =
-        typeof payload?.error === "string"
-          ? payload.error
-          : "응답을 받을 수 없습니다.";
-      throw new Error(message);
-    }
-
-    if (mode === "persistent") {
-      const hasTitle = Boolean(payload?.hasTitle);
-      if (isFirstMessage && !hasTitle) {
-        void fetch(`/api/chat/persistent/${targetId}/title`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message }),
-        })
-          .then((res) => (res.ok ? res.json() : null))
-          .then((data) => {
-            const title =
-              typeof data?.title === "string" ? data.title.trim() : "";
-            if (!title) return;
-            updateChatTitleIfMissing({ chatId: targetId, title }).catch(
-              () => null,
-            );
-          })
-          .catch(() => null);
+      if (!targetId) {
+        throw new Error(
+          mode === "persistent" ? "chatId가 없습니다." : "threadId가 없습니다.",
+        );
       }
-    }
 
-    openEventSource({ endpointBase, targetId });
+      const response = await fetch(`${endpointBase}/${targetId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmedMessage }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message =
+          typeof payload?.error === "string"
+            ? payload.error
+            : "응답을 받을 수 없습니다.";
+        throw new Error(message);
+      }
+
+      if (mode === "persistent") {
+        const hasTitle = Boolean(payload?.hasTitle);
+        if (isFirstMessage && !hasTitle) {
+          void fetch(`/api/chat/persistent/${targetId}/title`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: trimmedMessage }),
+          })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              const title =
+                typeof data?.title === "string" ? data.title.trim() : "";
+              if (!title) return;
+              updateChatTitleIfMissing({ chatId: targetId, title }).catch(
+                () => null,
+              );
+            })
+            .catch(() => null);
+        }
+      }
+
+      openEventSource({ endpointBase, targetId });
+    } catch (error) {
+      setIsStreaming(false);
+      closeEventSource();
+      throw error;
+    }
   };
 
   return sendMessage;

@@ -1,3 +1,4 @@
+import { CalendarDays } from "lucide-react";
 import { BoringCardAvatar } from "@/components/boring-avatar";
 import { cn, formatKoreanDate } from "@/lib/utils";
 
@@ -50,14 +51,18 @@ export const WorkflowDescriptionText = ({
 export const WorkflowUpdatedAtText = ({
   updatedAt,
   className,
-  prefix = "최근 업데이트",
+  prefix,
 }: WorkflowUpdatedAtTextProps) => (
   <span className={cn("text-xs text-muted-foreground", className)}>
-    {prefix} {formatKoreanDate(updatedAt)}
+    {!prefix ? <CalendarDays className="mb-1 inline-block size-3.5" /> : prefix}{" "}
+    {formatKoreanDate(updatedAt)}
   </span>
 );
 
-export const WorkflowAvatar = ({ workflowId, className }: WorkflowAvatarProps) => (
+export const WorkflowAvatar = ({
+  workflowId,
+  className,
+}: WorkflowAvatarProps) => (
   <BoringCardAvatar
     seed={workflowId}
     variant="bauhaus"

@@ -3,6 +3,7 @@
 import { useId, useMemo, useState, useTransition } from "react";
 import { Copy, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { BoringCardAvatar } from "@/components/boring-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,7 +20,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { BoringCardAvatar } from "@/components/boring-avatar";
 import {
   issueWorkflowCanvasIdAction,
   softDeleteWorkflowCanvasIdAction,
@@ -234,7 +234,7 @@ const result = await client.responses.create({
               key={workflow.id}
               type="button"
               onClick={() => openWorkflow(workflow)}
-              className="rounded-lg text-left transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="rounded-lg text-left transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
             >
               <div className="flex h-full flex-col gap-1 rounded-lg border border-border/60 bg-background p-4 transition-colors hover:bg-primary/5">
                 <div className="flex items-start justify-between gap-2">
@@ -278,15 +278,12 @@ const result = await client.responses.create({
           }
         }}
       >
-        <DialogContent
-          className="sm:max-w-2xl"
-          ariaDescribedby={descriptionId}
-        >
+        <DialogContent className="sm:max-w-2xl" ariaDescribedby={descriptionId}>
           <DialogHeader>
             <DialogTitle>{selected?.title ?? "워크플로우 API"}</DialogTitle>
             <DialogDescription id={descriptionId}>
-              <code>X-CANVAS-ID</code>는 워크플로우별로 발급됩니다.{" "}
-              OpenAI 호환 라우트에서는 이 값을 <code>model</code>로 사용합니다.
+              <code>X-CANVAS-ID</code>는 워크플로우별로 발급됩니다. OpenAI 호환
+              라우트에서는 이 값을 <code>model</code>로 사용합니다.
             </DialogDescription>
           </DialogHeader>
 
@@ -359,7 +356,9 @@ const result = await client.responses.create({
                 <div className="text-sm font-semibold">cURL</div>
                 <CodeBlock
                   code={activeSnippet.curl}
-                  onCopy={() => navigator.clipboard.writeText(activeSnippet.curl)}
+                  onCopy={() =>
+                    navigator.clipboard.writeText(activeSnippet.curl)
+                  }
                 />
               </div>
 
@@ -369,7 +368,9 @@ const result = await client.responses.create({
                 </div>
                 <CodeBlock
                   code={activeSnippet.script}
-                  onCopy={() => navigator.clipboard.writeText(activeSnippet.script)}
+                  onCopy={() =>
+                    navigator.clipboard.writeText(activeSnippet.script)
+                  }
                 />
               </div>
             </div>
@@ -429,7 +430,7 @@ function CodeBlock({
         muted && "opacity-70",
       )}
     >
-      <pre className="max-h-72 overflow-auto whitespace-pre-wrap p-3 pr-10 text-xs leading-relaxed">
+      <pre className="max-h-72 overflow-auto p-3 pr-10 text-xs leading-relaxed whitespace-pre-wrap">
         <code className="font-mono">{code}</code>
       </pre>
       <Button
