@@ -13,6 +13,7 @@ import {
 import { ko } from "date-fns/locale";
 import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
 import "server-only";
+import { cache } from "react";
 import { db } from "@/db/client";
 import {
   creditAccounts,
@@ -98,7 +99,7 @@ const resolveSafeDate = (value: Date | string | undefined, fallback: Date) => {
   return Number.isNaN(resolved.getTime()) ? fallback : resolved;
 };
 
-const getCreditAccountByUserIdCached = async (userId: string) => {
+const getCreditAccountByUserIdCached = cache(async (userId: string) => {
   "use cache";
   cacheTag(creditTags.allByUser(userId));
   cacheTag(creditTags.balanceByUser(userId));
@@ -121,7 +122,7 @@ const getCreditAccountByUserIdCached = async (userId: string) => {
       totalSpent: 0,
     }
   );
-};
+});
 
 export const getCreditBalanceByUserId = async (userId: string) => {
   const account = await getCreditAccountByUserIdCached(userId);
@@ -141,7 +142,7 @@ export const getCreditSummary = async (): Promise<CreditSummary> => {
   return getCreditSummaryCached(userId, monthStart.toISOString());
 };
 
-const getCreditSummaryCached = async (
+const getCreditSummaryCached = cache(async (
   userId: string,
   monthStartIso: string,
 ): Promise<CreditSummary> => {
@@ -214,7 +215,7 @@ const getCreditSummaryCached = async (
       occurredAt: transaction.occurredAt.toISOString(),
     })),
   };
-};
+});
 
 export const getCreditHistory = async (
   filters?: CreditHistoryFilters,
@@ -232,28 +233,22 @@ export const getCreditHistory = async (
       ? filters.type
       : "all";
 
-  return getCreditHistoryCached({
+  return getCreditHistoryCached(
     userId,
-    fromIso: from.toISOString(),
-    toIso: to.toISOString(),
+    from.toISOString(),
+    to.toISOString(),
     type,
     limit,
-  });
+  );
 };
 
-const getCreditHistoryCached = async ({
-  userId,
-  fromIso,
-  toIso,
-  type,
-  limit,
-}: {
-  userId: string;
-  fromIso: string;
-  toIso: string;
-  type: "all" | CreditTransactionType;
-  limit: number;
-}): Promise<CreditHistoryResult> => {
+const getCreditHistoryCached = cache(async (
+  userId: string,
+  fromIso: string,
+  toIso: string,
+  type: "all" | CreditTransactionType,
+  limit: number,
+): Promise<CreditHistoryResult> => {
   "use cache";
   cacheTag(creditTags.allByUser(userId));
   cacheTag(creditTags.historyByUser(userId));
@@ -293,7 +288,7 @@ const getCreditHistoryCached = async ({
       occurredAt: row.occurredAt.toISOString(),
     })),
   };
-};
+});
 
 export const getCreditAttendanceSummary =
   async (): Promise<CreditAttendanceSummary> => {
@@ -303,7 +298,7 @@ export const getCreditAttendanceSummary =
     return getCreditAttendanceSummaryCached(userId, todayKey);
   };
 
-const getCreditAttendanceSummaryCached = async (
+const getCreditAttendanceSummaryCached = cache(async (
   userId: string,
   todayKey: string,
 ): Promise<CreditAttendanceSummary> => {
@@ -395,7 +390,7 @@ const getCreditAttendanceSummaryCached = async (
     totalAttendance: allEvents.length,
     dailyReward: DAILY_ATTENDANCE_REWARD,
   };
-};
+});
 
 export const getDailyAttendanceStatus =
   async (): Promise<CreditAttendanceStatus> => {
@@ -405,7 +400,7 @@ export const getDailyAttendanceStatus =
     return getDailyAttendanceStatusCached(userId, todayKey);
   };
 
-const getDailyAttendanceStatusCached = async (
+const getDailyAttendanceStatusCached = cache(async (
   userId: string,
   todayKey: string,
 ): Promise<CreditAttendanceStatus> => {
@@ -428,4 +423,4 @@ const getDailyAttendanceStatusCached = async (
     hasCheckedToday: Boolean(event),
     dailyReward: DAILY_ATTENDANCE_REWARD,
   };
-};
+});

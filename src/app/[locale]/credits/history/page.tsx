@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CreditHistoryFilter } from "@/features/credits/components/history/history-filter";
 import { TransactionItem } from "@/features/credits/components/transaction-item";
 import {
   type TransactionResult,
@@ -20,7 +21,13 @@ export default async function CreditsHistoryPage(
   props: PageProps<"/[locale]/credits/history">,
 ) {
   return (
-    <PageContainer>
+    <PageContainer
+      RightPanel={
+        <Suspense>
+          <CreditHistoryFilter />
+        </Suspense>
+      }
+    >
       <PageStack>
         <PageHeader>
           <PageHeading>크레딧 내역</PageHeading>

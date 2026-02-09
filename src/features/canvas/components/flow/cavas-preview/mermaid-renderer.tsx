@@ -9,20 +9,20 @@ export function MermaidRenderer({ chart }: { chart: string }) {
   useEffect(() => {
     mermaid.initialize({ startOnLoad: false });
 
-    (async () => {
-      if (ref.current) {
-        ref.current.innerHTML = chart;
-        requestAnimationFrame(async () => {
-          if (ref.current) {
-            try {
-              await mermaid.run({ nodes: [ref.current] });
-            } catch (e) {
-              console.error("Mermaid rendering failed:", e);
-            }
-          }
-        });
+    if (!ref.current) {
+      return;
+    }
+
+    ref.current.innerHTML = chart;
+    requestAnimationFrame(() => {
+      if (!ref.current) {
+        return;
       }
-    })();
+
+      void mermaid.run({ nodes: [ref.current] }).catch((error) => {
+        console.error("Mermaid rendering failed:", error);
+      });
+    });
   }, [chart]);
 
   return <div ref={ref} className="mermaid" />;

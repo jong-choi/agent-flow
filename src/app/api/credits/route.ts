@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { getCreditBalance } from "@/features/credits/server/queries";
 
 export type CreditsBalanceResult = {
@@ -5,6 +6,8 @@ export type CreditsBalanceResult = {
 };
 
 export async function GET() {
+  await connection();
+
   try {
     const balance = await getCreditBalance();
     return Response.json({ balance } satisfies CreditsBalanceResult);

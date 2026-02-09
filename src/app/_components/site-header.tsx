@@ -1,11 +1,9 @@
 import { Suspense } from "react";
-import { HeaderAccountMenu } from "@/features/auth/components/header-account-menu/header-account-menu";
 import { LocaleSelectorButton } from "@/components/locale-selector-button";
 import { Logo } from "@/components/logo";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Separator } from "@/components/ui/separator";
-
-export const DVH_HEADER_OFFSET = "h-[calc(100dvh-3.5rem)]";
+import { HeaderAccountMenu } from "@/features/auth/components/header-account-menu/header-account-menu";
 
 export function SiteHeader() {
   return (

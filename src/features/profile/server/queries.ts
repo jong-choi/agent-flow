@@ -3,12 +3,13 @@ import "server-only";
 import { and, eq, ne } from "drizzle-orm";
 import { cacheTag } from "next/cache";
 import { type User } from "next-auth";
+import { cache } from "react";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { profileTags } from "@/features/profile/server/cache/tags";
 
-const getRequiredUserId = async () => {
+const getRequiredUserId = cache(async () => {
   const session = await auth();
   const userId = session?.user?.id;
 
@@ -17,14 +18,14 @@ const getRequiredUserId = async () => {
   }
 
   return userId;
-};
+});
 
 export const getUserProfile = async (): Promise<User> => {
   const userId = await getRequiredUserId();
   return getUserProfileCached(userId);
 };
 
-const getUserProfileCached = async (userId: string): Promise<User> => {
+const getUserProfileCached = cache(async (userId: string): Promise<User> => {
   "use cache";
   cacheTag(profileTags.byUser(userId));
 
@@ -45,9 +46,9 @@ const getUserProfileCached = async (userId: string): Promise<User> => {
   }
 
   return user;
-};
+});
 
-export const isDisplayNameTaken = async (
+export const isDisplayNameTaken = cache(async (
   displayName: string,
   excludeUserId?: string,
 ) => {
@@ -64,4 +65,4 @@ export const isDisplayNameTaken = async (
     .limit(1);
 
   return Boolean(user);
-};
+});

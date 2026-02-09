@@ -1,7 +1,7 @@
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { AppProvider } from "@/app/[locale]/providers";
-import { SecondarySidebar, SidebarNav } from "@/app/_components/sidebar";
+import { SidebarNav } from "@/app/_components/sidebar";
 import { SiteHeader } from "@/app/_components/site-header";
 import { Toaster } from "@/components/ui/sonner";
 import { routing } from "@/lib/i18n/routing";
@@ -17,6 +17,7 @@ export default async function AppLayout({
   const { locale } = await params;
   setRequestLocale(locale);
   const messages = await getMessages({ locale });
+
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <AppProvider>
@@ -27,10 +28,7 @@ export default async function AppLayout({
               <SiteHeader />
             </div>
             <main className="flex flex-1 flex-col bg-background">
-              <div className="flex h-full w-full">
-                <SecondarySidebar />
-                {children}
-              </div>
+              <div className="flex h-full w-full">{children}</div>
             </main>
           </div>
         </div>

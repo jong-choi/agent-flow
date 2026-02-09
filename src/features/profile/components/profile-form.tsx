@@ -49,32 +49,34 @@ export function ProfileForm({
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    startTransition(() => {
-      (async () => {
-        try {
-          const result = await updateUserAction(formData);
+    const submitProfile = async () => {
+      try {
+        const result = await updateUserAction(formData);
 
-          if (!result?.ok) {
-            toast.error(result.error || "닉네임 변경 중 오류가 발생했습니다.");
-            return;
-          }
-
-          const nextDisplayName = result.data?.displayName ?? "";
-          const nextAvatarHash = result.data?.avatarHash ?? avatarHash;
-
-          await update({
-            user: {
-              displayName: nextDisplayName || null,
-              avatarHash: nextAvatarHash || null,
-            },
-          });
-          toast.success("닉네임이 변경되었습니다.");
-          setNameMessage("");
-        } catch (error) {
-          console.error(error);
-          toast.error("닉네임 변경 중 오류가 발생했습니다.");
+        if (!result?.ok) {
+          toast.error(result.error || "닉네임 변경 중 오류가 발생했습니다.");
+          return;
         }
-      })();
+
+        const nextDisplayName = result.data?.displayName ?? "";
+        const nextAvatarHash = result.data?.avatarHash ?? avatarHash;
+
+        await update({
+          user: {
+            displayName: nextDisplayName || null,
+            avatarHash: nextAvatarHash || null,
+          },
+        });
+        toast.success("닉네임이 변경되었습니다.");
+        setNameMessage("");
+      } catch (error) {
+        console.error(error);
+        toast.error("닉네임 변경 중 오류가 발생했습니다.");
+      }
+    };
+
+    startTransition(() => {
+      void submitProfile();
     });
   };
 

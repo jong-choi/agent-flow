@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { updateCreditTagsAction } from "@/features/credits/server/actions";
 
 type WeeklyAttendanceItem = {
   day: string;
@@ -64,6 +65,7 @@ export function AttendanceClient({ summary }: AttendanceClientProps) {
       setAttendance(data.attendance);
 
       if (data.credited) {
+        void updateCreditTagsAction({ includeAttendance: true });
         setShowReward(true);
         setTimeout(() => setShowReward(false), 3000);
       }

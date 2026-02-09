@@ -1,6 +1,9 @@
+import { connection } from "next/server";
 import { getChatsByUser } from "@/features/chats/server/queries";
 
 export async function GET() {
+  await connection();
+
   try {
     const chats = await getChatsByUser();
     return Response.json({ data: chats });

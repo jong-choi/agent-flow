@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { asc, ilike } from "drizzle-orm";
 import { db } from "@/db/client";
 import { presetTags } from "@/db/schema/presets";
@@ -5,6 +6,8 @@ import { presetTags } from "@/db/schema/presets";
 const MAX_RESULTS = 12;
 
 export async function GET(request: Request) {
+  await connection();
+
   try {
     const { searchParams } = new URL(request.url);
     const query = (searchParams.get("query") ?? "").trim();

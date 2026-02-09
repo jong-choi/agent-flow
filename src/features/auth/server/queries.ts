@@ -1,20 +1,25 @@
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import "server-only";
+import { cache } from "react";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { getRandomName } from "@/lib/unique-name";
 
-type GetUserId = {
-  (): Promise<string>;
-  (opts: { throwOnError?: true }): Promise<string>;
-  (opts: { throwOnError: false }): Promise<string | undefined>;
-};
+export async function getUserId(): Promise<string>;
+export async function getUserId(opts: { throwOnError?: true }): Promise<string>;
+export async function getUserId(opts: {
+  throwOnError: false;
+}): Promise<string | undefined>;
 
-export const getUserId: GetUserId = async (
-  { throwOnError }: { throwOnError?: boolean } = { throwOnError: true },
-) => {
+export async function getUserId(
+  { throwOnError = true }: { throwOnError?: boolean } = { throwOnError: true },
+) {
+  return getUserIdCached(throwOnError);
+}
+
+const getUserIdCached = cache(async (throwOnError: boolean) => {
   const session = await auth();
   const userId = session?.user?.id;
 
@@ -27,9 +32,9 @@ export const getUserId: GetUserId = async (
   }
 
   return userId;
-};
+});
 
-const isDisplayNameTakenForCreateUnique = async (displayName: string) => {
+const isDisplayNameTakenForCreateUnique = cache(async (displayName: string) => {
   const [user] = await db
     .select({ id: users.id })
     .from(users)
@@ -37,7 +42,7 @@ const isDisplayNameTakenForCreateUnique = async (displayName: string) => {
     .limit(1);
 
   return Boolean(user);
-};
+});
 
 export const createUniqueDisplayName = async () => {
   for (let attempt = 0; attempt < 10; attempt += 1) {

@@ -1,10 +1,6 @@
 import Link from "next/link";
-import { type PresetEditRes } from "@/app/[locale]/(app)/presets/[id]/edit/page";
+import { type PresetEditRes } from "@/app/[locale]/presets/[id]/edit/page";
 import { Button } from "@/components/ui/button";
-import {
-  getPresetChatExamplesForForm,
-  getWorkflowReferencedPresetPricingSummary,
-} from "@/features/presets/server/queries";
 import {
   Card,
   CardContent,
@@ -17,6 +13,10 @@ import {
   PresetInfoCard,
   PresetPricePublishCard,
 } from "@/features/presets/components/form/preset-form-sections";
+import {
+  getPresetChatExamplesForForm,
+  getWorkflowReferencedPresetPricingSummary,
+} from "@/features/presets/server/queries";
 import { formatKoreanDate } from "@/lib/utils";
 
 type PresetEditFormProps = {
@@ -76,7 +76,9 @@ export async function PresetEditForm({
             description: preset.description,
             category: preset.category,
           }}
-          hiddenFields={<input type="hidden" name="presetId" value={preset.id} />}
+          hiddenFields={
+            <input type="hidden" name="presetId" value={preset.id} />
+          }
         />
 
         <PresetChatExampleCard
