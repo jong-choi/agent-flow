@@ -2,9 +2,9 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useNodes } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
+import { ChatStreamingStatus } from "@/features/chats/components/chat-panel/content/chat-streaming-status";
 import { useChatEvent } from "@/features/chats/hooks/use-chat-event";
 import { useChatStore } from "@/features/chats/store/chat-store";
 
@@ -83,9 +83,7 @@ export function ChatPanelInputForm() {
         onCompositionEnd={handleCompositionEnd}
       />
       <div className="flex justify-between">
-        <span className="text-xs text-muted-foreground">
-          {isStreaming ? <Spinner className="size-4" /> : "대기 중"}
-        </span>
+        <ChatStreamingStatus />
 
         <div className="flex flex-col justify-end">
           <Button

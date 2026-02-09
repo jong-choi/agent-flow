@@ -1,10 +1,21 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { clientStreamEventSchema } from "@/app/api/chat/_types/chat-events";
+import { type NodeType } from "@/features/canvas/constants/node-types";
 import { updateChatTitleIfMissing } from "@/features/chats/server/actions";
 import { useChatStore } from "@/features/chats/store/chat-store";
 import { createHumanMessage } from "@/features/chats/utils/chat-message";
 import { updateCreditTagsAction } from "@/features/credits/server/actions";
+
+const TRACKED_RUNNING_NODE_TYPES = new Set<NodeType>([
+  "searchNode",
+  "documentNode",
+  "chatNode",
+]);
+
+const shouldTrackRunningNodeType = (type: NodeType) => {
+  return TRACKED_RUNNING_NODE_TYPES.has(type);
+};
 
 export function useChatEvent() {
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -20,6 +31,9 @@ export function useChatEvent() {
   const flushStreamingToMessages = useChatStore(
     (s) => s.flushStreamingToMessages,
   );
+  const startRunningNode = useChatStore((s) => s.startRunningNode);
+  const finishRunningNode = useChatStore((s) => s.finishRunningNode);
+  const resetRunningNodes = useChatStore((s) => s.resetRunningNodes);
   const hasMessages = useChatStore((s) => Boolean(s.messages.length));
 
   const closeEventSource = useCallback(() => {
@@ -82,6 +96,9 @@ export function useChatEvent() {
 
           if (data.event === "on_chat_model_start") {
             initStreamingChunk({ nodeId });
+            if (shouldTrackRunningNodeType(data.type)) {
+              startRunningNode({ id: nodeId, type: data.type });
+            }
           }
 
           if (data.event === "on_chat_model_stream") {
@@ -90,23 +107,45 @@ export function useChatEvent() {
               appendStreamingChunk({ nodeId, delta });
             }
           }
+
+          if (data.event === "on_chat_model_end") {
+            finishRunningNode(nodeId);
+          }
           return;
         }
+
+        if (data.event === "on_chain_start") {
+          const nodeId = data.langgraph_node;
+          if (nodeId && shouldTrackRunningNodeType(data.type)) {
+            startRunningNode({ id: nodeId, type: data.type });
+          }
+        }
+
+        if (data.event === "on_chain_end") {
+          const nodeId = data.langgraph_node;
+          if (nodeId && shouldTrackRunningNodeType(data.type)) {
+            finishRunningNode(nodeId);
+          }
+        }
+
         if (data.type === "endNode" && data.event === "on_chain_end") {
           updateCreditTagsAction().catch(() => null);
           flushStreamingToMessages();
           setIsStreaming(false);
+          resetRunningNodes();
           closeEventSource();
         }
       } catch (error) {
         console.error("chat stream parse error:", error);
         setIsStreaming(false);
+        resetRunningNodes();
         closeEventSource();
       }
     };
 
     eventSource.onerror = () => {
       setIsStreaming(false);
+      resetRunningNodes();
       closeEventSource();
     };
   };
@@ -119,6 +158,7 @@ export function useChatEvent() {
 
     const isFirstMessage = !hasMessages;
     appendMessage(createHumanMessage(trimmedMessage));
+    resetRunningNodes();
     setIsStreaming(true);
 
     try {
@@ -170,6 +210,7 @@ export function useChatEvent() {
       openEventSource({ endpointBase, targetId });
     } catch (error) {
       setIsStreaming(false);
+      resetRunningNodes();
       closeEventSource();
       throw error;
     }

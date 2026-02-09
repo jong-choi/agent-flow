@@ -1,26 +1,28 @@
+import { revalidateTag } from "next/cache";
 import {
   AIMessage,
   HumanMessage,
   SystemMessage,
 } from "@langchain/core/messages";
-import { revalidateTag } from "next/cache";
-import { buildInputTree, buildStateGraph } from "@/app/api/chat/_engines/build-state-graph";
+import {
+  buildInputTree,
+  buildStateGraph,
+} from "@/app/api/chat/_engines/build-state-graph";
 import { persistentCheckpointer } from "@/app/api/chat/_engines/handle-connect";
 import {
   type ClientStreamEvent,
-  isEventName,
   langgraphStreamEventSchema,
 } from "@/app/api/chat/_types/chat-events";
-import { isValidNodeType } from "@/app/api/chat/_types/nodes";
+import { mapLanggraphEventToClientEvent } from "@/app/api/chat/_utils/map-stream-event-to-client";
+import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
+import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
+import { insertChatMessage } from "@/features/chats/server/actions";
+import { chatTags } from "@/features/chats/server/cache/tags";
 import {
   getChatById,
   getChatMessagesByChatId,
   getWorkflowWithGraphForChat,
 } from "@/features/chats/server/queries";
-import { insertChatMessage } from "@/features/chats/server/actions";
-import { chatTags } from "@/features/chats/server/cache/tags";
-import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
-import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
 
 const toBaseMessage = (role: string, content: string) => {
   if (role === "user") return new HumanMessage(content);
@@ -105,14 +107,6 @@ export async function GET(
             configurable: { thread_id: chatId, user_id: chat.userId },
             durability: "exit",
           })) {
-            if (
-              !isEventName(chunk.event) ||
-              typeof chunk.metadata.type !== "string" ||
-              !isValidNodeType(chunk.metadata.type)
-            ) {
-              continue;
-            }
-
             const parsed = langgraphStreamEventSchema.safeParse(chunk);
             if (!parsed.success) {
               continue;
@@ -121,11 +115,6 @@ export async function GET(
             const event = parsed.data.event;
             const { type, langgraph_node } = parsed.data.metadata;
 
-            if (type === "startNode") {
-              if (event === "on_chain_start") {
-                emitEvent({ type, event, langgraph_node });
-              }
-            }
             if (type === "chatNode") {
               const nodeId = langgraph_node;
               if (typeof nodeId !== "string") {
@@ -138,7 +127,6 @@ export async function GET(
                 if (!completedMessageMap.has(nodeId)) {
                   completedMessageMap.set(nodeId, "");
                 }
-                emitEvent({ type, event, langgraph_node: nodeId });
               } else if (event === "on_chat_model_stream") {
                 const content = parsed.data.data?.chunk?.content;
                 if (typeof content !== "string") {
@@ -146,12 +134,6 @@ export async function GET(
                 }
                 const currentContent = streamingChunkMap.get(nodeId) ?? "";
                 streamingChunkMap.set(nodeId, currentContent + content);
-                emitEvent({
-                  type,
-                  event,
-                  langgraph_node: nodeId,
-                  chunk: { content },
-                });
               } else if (event === "on_chat_model_end") {
                 const completedContent = streamingChunkMap.get(nodeId) ?? "";
                 if (!completedMessageMap.has(nodeId)) {
@@ -159,13 +141,12 @@ export async function GET(
                 } else {
                   completedMessageMap.set(nodeId, completedContent);
                 }
-                emitEvent({ type, event, langgraph_node: nodeId });
               }
             }
-            if (type === "endNode") {
-              if (event === "on_chain_end") {
-                emitEvent({ type, event, langgraph_node });
-              }
+
+            const streamEvent = mapLanggraphEventToClientEvent(parsed.data);
+            if (streamEvent) {
+              emitEvent(streamEvent);
             }
           }
 
