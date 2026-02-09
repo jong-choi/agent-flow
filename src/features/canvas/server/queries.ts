@@ -1,5 +1,5 @@
 import { cacheTag } from "next/cache";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import "server-only";
 import { cache } from "react";
 import { z } from "zod";
@@ -31,6 +31,7 @@ const getSidebarNodesCached = cache(async () => {
       label: sidebarNodes.label,
       description: sidebarNodes.description,
       type: sidebarNodes.type,
+      order: sidebarNodes.order,
       createdAt: sidebarNodes.createdAt,
       icon: sidebarNodes.icon,
       backgroundColor: sidebarNodes.backgroundColor,
@@ -51,7 +52,7 @@ const getSidebarNodesCached = cache(async () => {
       sidebarNodeInformation,
       eq(sidebarNodeInformation.nodeId, sidebarNodes.id),
     )
-    .orderBy(sidebarNodes.createdAt);
+    .orderBy(asc(sidebarNodes.order), asc(sidebarNodes.createdAt));
 
   const parsed = z.array(sidebarNodesQuerySchema).safeParse(rows);
   if (!parsed.success) {

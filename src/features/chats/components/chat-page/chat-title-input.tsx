@@ -2,12 +2,6 @@
 
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  type ChatListItem,
-  type ChatListResponse,
-  chatListQueryKey,
-} from "@/features/chats/components/chat-page/chat-queries";
 import { Input } from "@/components/ui/input";
 import { updateChatTitle } from "@/features/chats/server/actions";
 import { cn } from "@/lib/utils";
@@ -17,30 +11,25 @@ type ChatTitleInputProps = {
   currentTitle: string | null;
   placeholder?: string;
   onClose: () => void;
+  onBlur: (title: string | null) => void;
   variant?: "sidebar" | "header";
 };
 
 export function ChatTitleInput({
   chatId,
   currentTitle,
-  placeholder = "이름을 입력하세요.",
+  placeholder = "New Message",
   onClose,
+  onBlur,
   variant = "sidebar",
 }: ChatTitleInputProps) {
-  const queryClient = useQueryClient();
   const [value, setValue] = useState(currentTitle ?? "");
   const inputRef = useRef<HTMLInputElement>(null);
   const skipCommitRef = useRef(false);
 
-  const updateCache = (updater: (items: ChatListItem[]) => ChatListItem[]) => {
-    queryClient.setQueryData<ChatListResponse>(chatListQueryKey, (old) => {
-      if (!old) return old;
-      return { ...old, data: updater(old.data) };
-    });
-  };
-
   const commitRename = async () => {
     onClose();
+    onBlur?.(value);
 
     const trimmed = value.trim();
     const nextTitle = trimmed.length ? trimmed : null;
@@ -50,25 +39,11 @@ export function ChatTitleInput({
       return;
     }
 
-    const previous =
-      queryClient.getQueryData<ChatListResponse>(chatListQueryKey);
-    const nowIso = new Date().toISOString();
-
-    updateCache((items) =>
-      items.map((item) =>
-        item.id === chatId
-          ? { ...item, title: nextTitle, updatedAt: nowIso }
-          : item,
-      ),
-    );
-
     try {
       await updateChatTitle({ chatId, title: nextTitle });
       toast.success("채팅 이름을 변경했어요.");
     } catch (error) {
-      if (previous) {
-        queryClient.setQueryData(chatListQueryKey, previous);
-      }
+      onBlur?.(null);
       const message =
         error instanceof Error
           ? error.message

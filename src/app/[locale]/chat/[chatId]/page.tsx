@@ -19,7 +19,7 @@ export default function ChatRunPage({
   return (
     <PageContainer
       className="flex h-[calc(100dvh-3.5rem)] max-w-full flex-col py-4"
-      LeftPanel={<ChatSidebar />}
+      LeftPanel={<ChatSidebar params={params} />}
       withoutRightPanel
     >
       <Suspense fallback={<ChatRunPageFallback />}>

@@ -1,8 +1,10 @@
 import { ChatGoogle } from "@langchain/google-gauth";
+import { ChatGroq } from "@langchain/groq";
 import { type AiModel } from "@/db/schema";
 import { getActiveAiModels } from "@/features/chats/server/queries";
 
 const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 export const resolveAiModel = async (
   modelId: string,
@@ -14,12 +16,25 @@ export const resolveAiModel = async (
   return model;
 };
 
+export const getSmallestModel = () => {
+  return new ChatGoogle({
+    model: "gemma-3n-e2b-it",
+    apiKey: GOOGLE_AI_API_KEY,
+  });
+};
+
 const chatModelBuilders = {
   google: (aiModel: AiModel) =>
     new ChatGoogle({
       model: aiModel.modelId,
       maxOutputTokens: aiModel.metadata?.maxOutputTokens || 8192,
       apiKey: GOOGLE_AI_API_KEY,
+    }),
+  groq: (aiModel: AiModel) =>
+    new ChatGroq({
+      model: aiModel.modelId,
+      maxTokens: aiModel.metadata?.maxOutputTokens || 8192,
+      apiKey: GROQ_API_KEY,
     }),
 } as const;
 

@@ -15,8 +15,6 @@ export function FlowStartButton() {
   const setLoading = useCanvasStore((s) => s.setIsStartLoading);
   const thread_id = useSearchParams().get("thread_id");
   const { getEdges, getNodes } = useCanvasReactFlow();
-  const PREFERRED_LOCALE = "ko";
-  const locale = PREFERRED_LOCALE;
 
   const disabled = !isValidGraph || !!thread_id || loading;
 
@@ -31,7 +29,7 @@ export function FlowStartButton() {
     const nodes = getNodes();
 
     try {
-      const requestBody: ChatCreateThreadRequest = { nodes, edges, locale };
+      const requestBody: ChatCreateThreadRequest = { nodes, edges };
 
       const response = await fetch("/api/chat/temporary", {
         method: "POST",
@@ -70,7 +68,6 @@ export function FlowStartButton() {
     setLoading,
     getEdges,
     getNodes,
-    locale,
     setSearchParams,
   ]);
 

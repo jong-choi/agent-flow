@@ -21,6 +21,7 @@ const baseModel: AiModel = {
   id: "model-id",
   modelId: "gemma-3-1b-it",
   name: "Gemma 3 (1B)",
+  order: 1,
   provider: "google",
   contextWindow: 8192,
   price: 1,

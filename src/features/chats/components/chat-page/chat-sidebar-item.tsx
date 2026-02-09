@@ -3,9 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Ellipsis } from "lucide-react";
-import { type ChatListItem } from "@/features/chats/components/chat-page/chat-queries";
-import { ChatSidebarDeleteDialog } from "@/features/chats/components/chat-page/chat-sidebar-delete-dialog";
-import { ChatTitleInput } from "@/features/chats/components/chat-page/chat-title-input";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,6 +10,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { type ChatListItem } from "@/features/chats/components/chat-page/chat-queries";
+import { ChatSidebarDeleteDialog } from "@/features/chats/components/chat-page/chat-sidebar-delete-dialog";
+import { ChatTitleInput } from "@/features/chats/components/chat-page/chat-title-input";
 import { cn, formatKoreanDate } from "@/lib/utils";
 
 type ChatSidebarItemProps = {
@@ -22,8 +22,8 @@ type ChatSidebarItemProps = {
 
 export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
   const [isEditing, setIsEditing] = useState(false);
-
-  const displayTitle = chat.title?.trim() || formatKoreanDate(chat.createdAt);
+  const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
+  const displayTitle = chat.title?.trim() || "New Message";
 
   return (
     <div
@@ -36,9 +36,9 @@ export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
         {isEditing ? (
           <ChatTitleInput
             chatId={chat.id}
-            currentTitle={chat.title}
-            placeholder={formatKoreanDate(chat.createdAt)}
+            currentTitle={chat.title?.trim() || null}
             onClose={() => setIsEditing(false)}
+            onBlur={(title) => setOptimisticTitle(title)}
             variant="sidebar"
           />
         ) : (
@@ -47,7 +47,7 @@ export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
             aria-current={isActive ? "page" : undefined}
             className="block"
           >
-            <div className="truncate">{displayTitle}</div>
+            <div className="truncate">{optimisticTitle || displayTitle}</div>
             <div className="mt-0.5 text-xs text-muted-foreground">
               {formatKoreanDate(chat.updatedAt)}
             </div>

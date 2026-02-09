@@ -33,7 +33,7 @@ export async function POST(
     revalidateTag(chatTags.detailByChat(chat.id), "max");
     revalidateTag(chatTags.listByUser(chat.userId), "max");
 
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, hasTitle: Boolean(chat.title) });
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "사용자 정보가 없습니다.") {

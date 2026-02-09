@@ -12,7 +12,7 @@ import { getRecentWorkflowsForChat } from "@/features/chats/server/queries";
 export default function Page() {
   return (
     <PageContainer
-      LeftPanel={<ChatSidebar />}
+      LeftPanel={<ChatSidebar isCreating />}
       className="max-w-full"
       withoutRightPanel
     >
