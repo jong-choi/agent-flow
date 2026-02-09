@@ -1,14 +1,41 @@
+import { SecondarySidebar } from "@/app/_components/sidebar";
+import { SidebarContainer } from "@/components/sidebar-container";
 import { cn } from "@/lib/utils";
 
-function PageContainer({ className, ...props }: React.ComponentProps<"div">) {
+function PageContainer({
+  className,
+  RightPanel,
+  LeftPanel,
+  withoutLeftPanel = false,
+  withoutRightPanel = false,
+  ...props
+}: React.ComponentProps<"div"> & {
+  LeftPanel?: React.ReactNode;
+  RightPanel?: React.ReactNode;
+  withoutLeftPanel?: boolean;
+  withoutRightPanel?: boolean;
+}) {
   return (
-    <div
-      className={cn(
-        "container mx-auto max-w-5xl items-center px-4 pt-8 pb-32",
-        className,
+    <>
+      {!withoutLeftPanel &&
+        (LeftPanel ? (
+          <SidebarContainer>{LeftPanel}</SidebarContainer>
+        ) : (
+          <SecondarySidebar />
+        ))}
+      <div
+        className={cn(
+          "container mx-auto max-w-5xl items-center px-4 pt-8 pb-16",
+          className,
+        )}
+        {...props}
+      />
+      {!withoutRightPanel && (
+        <aside className="w-72 shrink-0">
+          <div className="sticky top-20 pr-10">{RightPanel}</div>
+        </aside>
       )}
-      {...props}
-    />
+    </>
   );
 }
 

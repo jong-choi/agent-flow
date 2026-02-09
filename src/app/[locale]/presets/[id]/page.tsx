@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PresetChatExampleSection } from "@/app/[locale]/(app)/presets/[id]/_components/preset-chat-example-section";
-import { BoringUserAvatar } from "@/components/boring-avatar";
+import { PresetChatExampleSection } from "@/app/[locale]/presets/[id]/_components/preset-chat-example-section";
 import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
@@ -10,19 +9,14 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserId } from "@/features/auth/server/queries";
-import {
-  getPresetDetail,
-  getPresetPurchaseStatus,
-} from "@/features/presets/server/queries";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
-import { PresetPurchaseDialog } from "@/features/presets/components/preset-purchase-dialog";
+import { PresetDetailRightPanel } from "@/features/presets/components/preset-detail-right-panel";
+import { getPresetDetail } from "@/features/presets/server/queries";
 import { formatKoreanDate } from "@/lib/utils";
 
 const formatPrice = (price: number) =>
@@ -56,13 +50,16 @@ async function PresetDetailContent({
 
   const { preset, nodes, edges, workflow, referencedPresets } = presetDetail;
   const isOwner = viewerId ? viewerId === preset.ownerId : false;
-  const isPurchased =
-    viewerId && !isOwner ? await getPresetPurchaseStatus(preset.id) : false;
-  const canOpen = isOwner || isPurchased;
 
   return (
     <>
-      <PageContainer>
+      <PageContainer
+        RightPanel={
+          <Suspense>
+            <PresetDetailRightPanel presetId={id} />
+          </Suspense>
+        }
+      >
         <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-3">
@@ -220,118 +217,6 @@ async function PresetDetailContent({
           </div>
         </div>
       </PageContainer>
-      <aside className="fixed top-20 right-10 w-full shrink-0 lg:w-72">
-        <div className="flex flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>가격 및 구매</CardTitle>
-              <CardDescription>프리셋은 크레딧으로 결제합니다.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <p className="text-3xl font-semibold">
-                  {formatPrice(preset.totalPrice)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  구매 {preset.purchaseCount} · 업데이트{" "}
-                  {formatDate(preset.updatedAt)}
-                </p>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">제작자</span>
-                  <span className="font-medium">
-                    {preset.ownerDisplayName ?? "알 수 없음"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">노드</span>
-                  <span className="font-medium">{nodes.length}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">엣지</span>
-                  <span className="font-medium">{edges.length}</span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col items-stretch gap-2 border-t">
-              {canOpen ? (
-                <>
-                  {isOwner ? (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/presets/${preset.id}/edit`}>
-                        프리셋 수정
-                      </Link>
-                    </Button>
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  <PresetPurchaseDialog
-                    presetId={preset.id}
-                    totalPrice={preset.totalPrice}
-                    currentPresetPrice={preset.price}
-                    referencedPresetPrice={preset.referencedPresetPrice}
-                  />
-                </>
-              )}
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>제작자</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3">
-                <BoringUserAvatar
-                  seed={preset.ownerAvatarHash ?? "default"}
-                  size={40}
-                  square={false}
-                  className="size-10"
-                />
-                <div>
-                  <p className="text-sm font-medium">
-                    {preset.ownerDisplayName ?? "알 수 없음"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>프리셋 정보</CardTitle>
-              <CardDescription>워크플로우 구성 요약</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">노드</span>
-                <span className="font-medium">{nodes.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">엣지</span>
-                <span className="font-medium">{edges.length}</span>
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">생성</span>
-                  <span className="font-medium">
-                    {formatDate(preset.createdAt)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">최근 업데이트</span>
-                  <span className="font-medium">
-                    {formatDate(preset.updatedAt)}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </aside>
     </>
   );
 }
@@ -393,41 +278,6 @@ function PresetDetailPageFallback() {
           </div>
         </div>
       </PageContainer>
-
-      <aside className="fixed top-20 right-10 w-full shrink-0 lg:w-72">
-        <div className="flex flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-24" />
-              <Skeleton className="h-4 w-44" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-10 w-40" />
-              <Skeleton className="h-4 w-52" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-            </CardContent>
-            <CardFooter className="border-t">
-              <Skeleton className="h-9 w-full" />
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-20" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3">
-                <Skeleton className="size-10 rounded-full" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </aside>
     </>
   );
 }

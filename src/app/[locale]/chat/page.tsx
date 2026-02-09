@@ -1,23 +1,28 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
-import { ChatWorkflowListDialog } from "@/features/chats/components/chat-page/chat-workflow-list-dialog";
-import { type ChatPageWorkflow } from "@/features/chats/components/chat-page/chat-queries";
-import { PageHeading } from "@/components/page-template";
+import { PageContainer, PageHeading } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { type ChatPageWorkflow } from "@/features/chats/components/chat-page/chat-queries";
+import { ChatSidebar } from "@/features/chats/components/chat-page/chat-sidebar";
+import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
+import { ChatWorkflowListDialog } from "@/features/chats/components/chat-page/chat-workflow-list-dialog";
 import { getRecentWorkflowsForChat } from "@/features/chats/server/queries";
 
 export default function Page() {
   return (
-    <div className="container mx-auto">
+    <PageContainer
+      LeftPanel={<ChatSidebar />}
+      className="max-w-full"
+      withoutRightPanel
+    >
       <div className="flex h-full flex-col items-center justify-center gap-16 pb-32">
         <PageHeading>워크플로우를 선택하여 채팅을 시작하세요.</PageHeading>
         <Suspense fallback={<ChatWorkflowSectionFallback />}>
           <ChatWorkflowSection />
         </Suspense>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

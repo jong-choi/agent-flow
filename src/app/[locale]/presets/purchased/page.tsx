@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-// import { PresetsFilter } from "@/app/[locale]/(app)/presets/_components/presets-filter";
-import { PresetsList } from "@/app/[locale]/(app)/presets/_components/presets-list";
-import { PresetsPagination } from "@/app/[locale]/(app)/presets/_components/presets-pagination";
+import { PresetsFilter } from "@/app/[locale]/presets/_components/presets-filter";
+import { PresetsList } from "@/app/[locale]/presets/_components/presets-list";
+import { PresetsPagination } from "@/app/[locale]/presets/_components/presets-pagination";
 import {
   PageContainer,
   PageDescription,
@@ -20,12 +20,12 @@ import {
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { buildQueryString } from "@/features/chats/utils/query-string";
 import {
   getOwnedPresets,
   getPurchasedPresets,
   getPurchasedPresetsSummary,
 } from "@/features/presets/server/queries";
-import { buildQueryString } from "@/features/chats/utils/query-string";
 
 const PAGE_SIZE = 50;
 
@@ -36,10 +36,7 @@ type PresetsLibrarySearchParams = {
   page?: string | string[];
 };
 
-function resolveParam(
-  value: string | string[] | undefined,
-  fallback: string,
-) {
+function resolveParam(value: string | string[] | undefined, fallback: string) {
   return (Array.isArray(value) ? value[0] : value) ?? fallback;
 }
 
@@ -52,34 +49,35 @@ export default function PurchasedPresetsPage({
   searchParams,
 }: PageProps<"/[locale]/presets/purchased">) {
   return (
-    <>
-      <PageContainer>
-        <div className="flex min-h-0 flex-1 flex-col gap-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <PageHeader>
-              <PageHeading>내 프리셋</PageHeading>
-              <PageDescription>
-                생성하였거나 구매한 프리셋 목록입니다.
-              </PageDescription>
-            </PageHeader>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" asChild>
-                <Link href="/presets/new">내 프리셋 만들기</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/workflows/canvas">캔버스 열기</Link>
-              </Button>
-            </div>
+    <PageContainer
+      RightPanel={
+        <Suspense>
+          <PresetsFilter variant="purchased" />
+        </Suspense>
+      }
+    >
+      <div className="flex min-h-0 flex-1 flex-col gap-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <PageHeader>
+            <PageHeading>내 프리셋</PageHeading>
+            <PageDescription>
+              생성하였거나 구매한 프리셋 목록입니다.
+            </PageDescription>
+          </PageHeader>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/presets/new">내 프리셋 만들기</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/workflows/canvas">캔버스 열기</Link>
+            </Button>
           </div>
-          <Suspense fallback={<PurchasedPresetsContentFallback />}>
-            <PurchasedPresetsContent searchParamsPromise={searchParams} />
-          </Suspense>
         </div>
-      </PageContainer>
-      {/* <aside className="fixed top-20 right-10 w-full shrink-0 lg:w-72">
-        <PresetsFilter variant="purchased" />
-      </aside> */}
-    </>
+        <Suspense fallback={<PurchasedPresetsContentFallback />}>
+          <PurchasedPresetsContent searchParamsPromise={searchParams} />
+        </Suspense>
+      </div>
+    </PageContainer>
   );
 }
 

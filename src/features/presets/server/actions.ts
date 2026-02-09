@@ -17,7 +17,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { normalizeOptionalText } from "@/app/[locale]/(app)/presets/_utils/form-utils";
+import { normalizeOptionalText } from "@/app/[locale]/presets/_utils/form-utils";
 import { db } from "@/db/client";
 import { users } from "@/db/schema/auth";
 import { chats } from "@/db/schema/chat";

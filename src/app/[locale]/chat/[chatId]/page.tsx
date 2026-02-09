@@ -1,7 +1,8 @@
 import { Suspense } from "react";
+import { PageContainer } from "@/components/page-template";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatHeader } from "@/features/chats/components/chat-page/chat-header";
-import { getOwnedWorkflowChatCreditEstimate } from "@/features/workflows/server/queries";
+import { ChatSidebar } from "@/features/chats/components/chat-page/chat-sidebar";
 import { ChatEventWrapper } from "@/features/chats/components/chat-panel/chat-event-wrapper";
 import { ChatPanelContent } from "@/features/chats/components/chat-panel/content/chat-panel-content";
 import {
@@ -10,14 +11,21 @@ import {
   getOwnedWorkflowForChatById,
 } from "@/features/chats/server/queries";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
+import { getOwnedWorkflowChatCreditEstimate } from "@/features/workflows/server/queries";
 
 export default function ChatRunPage({
   params,
 }: PageProps<"/[locale]/chat/[chatId]">) {
   return (
-    <Suspense fallback={<ChatRunPageFallback />}>
-      <ChatRunContent paramsPromise={params} />
-    </Suspense>
+    <PageContainer
+      className="flex h-[calc(100dvh-3.5rem)] max-w-full flex-col py-4"
+      LeftPanel={<ChatSidebar />}
+      withoutRightPanel
+    >
+      <Suspense fallback={<ChatRunPageFallback />}>
+        <ChatRunContent paramsPromise={params} />
+      </Suspense>
+    </PageContainer>
   );
 }
 
@@ -44,7 +52,7 @@ async function ChatRunContent({
     }));
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col">
+    <>
       <ChatHeader
         chatId={chatId}
         chatTitle={chat.title}
@@ -64,25 +72,26 @@ async function ChatRunContent({
           </ChatEventWrapper>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
 function ChatRunPageFallback() {
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
-      <div className="border-b px-4 py-3">
-        <div className="space-y-2">
+      <div className="px-4 py-3">
+        <div className="flex justify-between space-y-2">
           <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-4 w-64" />
+          <Skeleton className="h-4 w-32" />
         </div>
       </div>
       <div className="container mx-auto flex min-h-0 max-w-5xl flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="space-y-4 p-4">
-            <Skeleton className="h-20 w-4/5" />
-            <Skeleton className="ml-auto h-20 w-3/5" />
-            <Skeleton className="h-20 w-2/3" />
+          <div className="flex flex-col gap-5 space-y-4 p-4">
+            <Skeleton className="ml-auto h-16 w-1/5" />
+            <Skeleton className="h-32" />
+            <Skeleton className="ml-auto h-16 w-3/5" />
+            <Skeleton className="h-40" />
           </div>
         </div>
       </div>

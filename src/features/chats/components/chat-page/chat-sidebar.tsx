@@ -5,13 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BotMessageSquare, SquarePen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchChats } from "@/features/chats/api/fetch-chats";
-import { chatListQueryKey } from "@/features/chats/components/chat-page/chat-queries";
-import { ChatSidebarItem } from "@/features/chats/components/chat-page/chat-sidebar-item";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchChats } from "@/features/chats/api/fetch-chats";
+import { chatListQueryKey } from "@/features/chats/components/chat-page/chat-queries";
+import { ChatSidebarItem } from "@/features/chats/components/chat-page/chat-sidebar-item";
 
 export function ChatSidebar() {
   return (
@@ -31,7 +31,7 @@ function ChatSidebarContent() {
   const chats = data?.data ?? [];
 
   return (
-    <aside className="flex h-full w-64 max-w-64 shrink-0 flex-col gap-2 border-r border-border bg-background/80 py-6 backdrop-blur">
+    <>
       <div className="h-7 px-4">
         {isCreating ? (
           <Button
@@ -86,7 +86,7 @@ function ChatSidebarContent() {
             ))}
         </nav>
       </ScrollArea>
-    </aside>
+    </>
   );
 }
 
@@ -102,7 +102,10 @@ function ChatSidebarFallback() {
       <ScrollArea className="min-h-0 flex-1 px-4">
         <nav className="flex flex-col gap-1">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div key={`chat-sidebar-fallback-${index}`} className="space-y-2 px-2 py-2">
+            <div
+              key={`chat-sidebar-fallback-${index}`}
+              className="space-y-2 px-2 py-2"
+            >
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-3 w-1/2" />
             </div>
