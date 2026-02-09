@@ -28,6 +28,7 @@ export const sidebarNodes = pgTable("sidebar_nodes", {
   type: sidebarNodeType("type").notNull(),
   icon: text("icon").notNull().default("circle"),
   backgroundColor: text("background_color").notNull().default("bg-neutral-800"),
+  order: integer("order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -109,6 +110,7 @@ export const sidebarNodesQuerySchema = sidebarNodesSelectSchema
     type: true,
     icon: true,
     backgroundColor: true,
+    order: true,
     createdAt: true,
   })
   .extend({

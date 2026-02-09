@@ -3,11 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  chatListQueryKey,
-  type ChatListResponse,
-} from "@/features/chats/components/chat-page/chat-queries";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,21 +27,12 @@ export function ChatSidebarDeleteDialog({
   isActive,
 }: ChatSidebarDeleteDialogProps) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
     if (isDeleting) return;
 
     setIsDeleting(true);
-
-    const previous =
-      queryClient.getQueryData<ChatListResponse>(chatListQueryKey);
-
-    queryClient.setQueryData<ChatListResponse>(chatListQueryKey, (old) => {
-      if (!old) return old;
-      return { ...old, data: old.data.filter((item) => item.id !== chatId) };
-    });
 
     try {
       await softDeleteChat({ chatId });
@@ -55,9 +41,6 @@ export function ChatSidebarDeleteDialog({
         router.push("/chat");
       }
     } catch (error) {
-      if (previous) {
-        queryClient.setQueryData(chatListQueryKey, previous);
-      }
       const message =
         error instanceof Error ? error.message : "채팅 삭제에 실패했습니다.";
       toast.error(message);

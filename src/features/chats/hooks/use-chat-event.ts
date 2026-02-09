@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { clientStreamEventSchema } from "@/app/api/chat/_types/chat-events";
+import { updateChatTitleIfMissing } from "@/features/chats/server/actions";
 import { useChatStore } from "@/features/chats/store/chat-store";
 import { createHumanMessage } from "@/features/chats/utils/chat-message";
 import { updateCreditTagsAction } from "@/features/credits/server/actions";
@@ -19,6 +20,7 @@ export function useChatEvent() {
   const flushStreamingToMessages = useChatStore(
     (s) => s.flushStreamingToMessages,
   );
+  const hasMessages = useChatStore((s) => Boolean(s.messages.length));
 
   const closeEventSource = useCallback(() => {
     if (eventSourceRef.current) {
@@ -95,6 +97,7 @@ export function useChatEvent() {
   };
 
   const sendMessage = async (message: string) => {
+    const isFirstMessage = !hasMessages;
     appendMessage(createHumanMessage(message));
     setIsStreaming(true);
 
@@ -112,13 +115,35 @@ export function useChatEvent() {
       body: JSON.stringify({ message }),
     });
 
+    const payload = await response.json().catch(() => null);
+
     if (!response.ok) {
-      const payload = await response.json();
       const message =
         typeof payload?.error === "string"
           ? payload.error
           : "응답을 받을 수 없습니다.";
       throw new Error(message);
+    }
+
+    if (mode === "persistent") {
+      const hasTitle = Boolean(payload?.hasTitle);
+      if (isFirstMessage && !hasTitle) {
+        void fetch(`/api/chat/persistent/${targetId}/title`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message }),
+        })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            const title =
+              typeof data?.title === "string" ? data.title.trim() : "";
+            if (!title) return;
+            updateChatTitleIfMissing({ chatId: targetId, title }).catch(
+              () => null,
+            );
+          })
+          .catch(() => null);
+      }
     }
 
     openEventSource({ endpointBase, targetId });

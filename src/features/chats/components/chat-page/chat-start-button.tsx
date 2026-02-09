@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Play } from "lucide-react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { chatListQueryKey } from "@/features/chats/components/chat-page/chat-queries";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { createChatFromWorkflow } from "@/features/chats/server/actions";
@@ -13,7 +11,6 @@ import { createChatFromWorkflow } from "@/features/chats/server/actions";
 export function ChatStartButton({ workflowId }: { workflowId: string }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const queryClient = useQueryClient();
   const clickHandler = async () => {
     if (loading) return;
     try {
@@ -22,7 +19,6 @@ export function ChatStartButton({ workflowId }: { workflowId: string }) {
       if (!chatId) {
         throw new Error("chat 생성에 실패하였습니다.");
       }
-      await queryClient.refetchQueries({ queryKey: chatListQueryKey });
       router.push(`/chat/${chatId}`);
     } catch (error) {
       if (error instanceof Error) {

@@ -30,7 +30,7 @@ const getActiveAiModelsBase = async () => {
     .select()
     .from(aiModels)
     .where(eq(aiModels.isActive, true))
-    .orderBy(desc(aiModels.createdAt));
+    .orderBy(asc(aiModels.order), desc(aiModels.createdAt));
 };
 
 const getActiveAiModelsCached = cache(async () => {

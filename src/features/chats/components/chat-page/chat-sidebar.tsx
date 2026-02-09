@@ -1,34 +1,36 @@
-"use client";
-
 import { Suspense } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { BotMessageSquare, SquarePen } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchChats } from "@/features/chats/api/fetch-chats";
-import { chatListQueryKey } from "@/features/chats/components/chat-page/chat-queries";
 import { ChatSidebarItem } from "@/features/chats/components/chat-page/chat-sidebar-item";
+import { getChatsByUser } from "@/features/chats/server/queries";
 
-export function ChatSidebar() {
+export function ChatSidebar({
+  params,
+  isCreating = false,
+}: {
+  params?: PageProps<"/[locale]/chat/[chatId]">["params"];
+  isCreating?: boolean;
+}) {
   return (
     <Suspense fallback={<ChatSidebarFallback />}>
-      <ChatSidebarContent />
+      <ChatSidebarContent params={params} isCreating={isCreating} />
     </Suspense>
   );
 }
 
-function ChatSidebarContent() {
-  const pathname = usePathname();
-  const { data, isLoading } = useQuery({
-    queryKey: chatListQueryKey,
-    queryFn: fetchChats,
-  });
-  const isCreating = pathname.endsWith("/chat");
-  const chats = data?.data ?? [];
+async function ChatSidebarContent({
+  params,
+  isCreating = false,
+}: {
+  params?: PageProps<"/[locale]/chat/[chatId]">["params"];
+  isCreating?: boolean;
+}) {
+  const chatId = params ? (await params).chatId : "";
+  const chats = await getChatsByUser();
 
   return (
     <>
@@ -61,29 +63,18 @@ function ChatSidebarContent() {
       </div>
       <ScrollArea className="min-h-0 flex-1 px-4">
         <nav className="flex flex-col gap-1">
-          {isLoading &&
-            Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={`chat-skeleton-${index}`}
-                className="space-y-2 px-2 py-2"
-              >
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
-              </div>
-            ))}
-          {!isLoading && chats.length === 0 && (
+          {chats.length === 0 && (
             <div className="rounded-md px-3 py-2 text-sm text-muted-foreground">
               아직 시작한 채팅이 없습니다.
             </div>
           )}
-          {!isLoading &&
-            chats.map((chat) => (
-              <ChatSidebarItem
-                key={chat.id}
-                chat={chat}
-                isActive={Boolean(pathname?.startsWith(`/chat/${chat.id}`))}
-              />
-            ))}
+          {chats.map((chat) => (
+            <ChatSidebarItem
+              key={chat.id}
+              chat={chat}
+              isActive={Boolean(chatId && chatId === chat.id)}
+            />
+          ))}
         </nav>
       </ScrollArea>
     </>

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { SystemMessage } from "@langchain/core/messages";
 import { buildInputTree } from "@/app/api/chat/_engines/build-state-graph";
 import {
   type ThreadContext,
@@ -7,15 +6,9 @@ import {
 } from "@/app/api/chat/_engines/handle-connect";
 import { flowEdgeSchema, flowNodeSchema } from "@/app/api/chat/_types/nodes";
 
-const LOCALES = ["ko"] as const;
-const SYSTEM_MESSAGES: Record<(typeof LOCALES)[number], string> = {
-  ko: "사용자 선호 언어 : 한국어",
-};
-
 const ChatCreateThreadRequestSchema = z.object({
   nodes: z.array(flowNodeSchema),
   edges: z.array(flowEdgeSchema),
-  locale: z.enum(LOCALES),
 });
 
 export type ChatCreateThreadRequest = z.infer<
@@ -41,7 +34,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { nodes, edges, locale } = parsed.data;
+    const { nodes, edges } = parsed.data;
 
     if (!Array.isArray(nodes) || !Array.isArray(edges)) {
       return Response.json(
@@ -51,10 +44,9 @@ export async function POST(request: Request) {
     }
 
     const graph: ThreadContext["graph"] = { nodes, edges };
-    const initialMessage = SYSTEM_MESSAGES[locale || "ko"];
 
     const state: ThreadContext["state"] = {
-      messages: [new SystemMessage(initialMessage)],
+      messages: [],
       initialInput: "",
       outputMap: {},
       inputTree: buildInputTree(graph),

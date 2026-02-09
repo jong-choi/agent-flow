@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { HumanMessage } from "@langchain/core/messages";
 import { buildInputTree, buildStateGraph } from "@/app/api/chat/_engines/build-state-graph";
 import {
   isEventName,
@@ -14,17 +14,8 @@ import {
 } from "@/features/developers/server/queries";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 
-const LOCALES = ["ko", "en"] as const;
-type Locale = (typeof LOCALES)[number];
-
-const SYSTEM_MESSAGES: Record<Locale, string> = {
-  ko: "사용자 선호 언어 : 한국어",
-  en: "User preferred language: English",
-};
-
 const V1ChatRequestSchema = z.object({
   message: z.string().trim().min(1).max(4000),
-  locale: z.enum(LOCALES).optional(),
 });
 
 const corsHeaders = {
@@ -88,7 +79,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { message, locale = "ko" } = parsed.data;
+    const { message } = parsed.data;
 
     const workflowData = await getWorkflowWithGraph(workflowRef.workflowId);
     if (!workflowData) {
@@ -113,10 +104,7 @@ export async function POST(request: Request) {
     }
 
     const state = {
-      messages: [
-        new SystemMessage(SYSTEM_MESSAGES[locale]),
-        new HumanMessage(message),
-      ],
+      messages: [new HumanMessage(message)],
       initialInput: message,
       outputMap: {},
       inputTree: buildInputTree({ nodes, edges }),

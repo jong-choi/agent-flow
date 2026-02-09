@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { SystemMessage } from "@langchain/core/messages";
 import { buildInputTree } from "@/app/api/chat/_engines/build-state-graph";
 import {
   type ThreadContext,
@@ -10,14 +9,8 @@ import { getWorkflowWithGraphForChat } from "@/features/chats/server/queries";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 import { auth } from "@/lib/auth";
 
-const LOCALES = ["ko"] as const;
-const SYSTEM_MESSAGES: Record<(typeof LOCALES)[number], string> = {
-  ko: "사용자 선호 언어 : 한국어",
-};
-
 const ChatCreateThreadRequestSchema = z.object({
   workflowId: z.uuid(),
-  locale: z.enum(LOCALES),
 });
 
 export type ChatCreateThreadRequest = z.infer<
@@ -43,7 +36,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { workflowId, locale } = parsed.data;
+    const { workflowId } = parsed.data;
 
     if (!workflowId) {
       return Response.json(
@@ -83,10 +76,9 @@ export async function POST(request: Request) {
     }
 
     const graph: ThreadContext["graph"] = { nodes, edges };
-    const initialMessage = SYSTEM_MESSAGES[locale || "ko"];
 
     const state: ThreadContext["state"] = {
-      messages: [new SystemMessage(initialMessage)],
+      messages: [],
       initialInput: "",
       outputMap: {},
       inputTree: buildInputTree(graph),

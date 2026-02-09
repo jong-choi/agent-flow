@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import { chatMessages, chats } from "@/db/schema";
 import { getUserId } from "@/features/auth/server/queries";
@@ -97,6 +97,36 @@ export const updateChatTitle = async ({
 
   if (!updated) {
     throw new Error("채팅 이름 변경에 실패했습니다.");
+  }
+
+  updateChatTags(chat.userId, chat.id);
+  return updated;
+};
+
+export const updateChatTitleIfMissing = async ({
+  chatId,
+  title,
+}: {
+  chatId: string;
+  title: string;
+}) => {
+  const chat = await getChatById(chatId);
+  if (chat.title?.trim()) {
+    return null;
+  }
+
+  const [updated] = await db
+    .update(chats)
+    .set({ title, updatedAt: new Date() })
+    .where(and(eq(chats.id, chat.id), isNull(chats.title)))
+    .returning({
+      id: chats.id,
+      title: chats.title,
+      updatedAt: chats.updatedAt,
+    });
+
+  if (!updated) {
+    return null;
   }
 
   updateChatTags(chat.userId, chat.id);
