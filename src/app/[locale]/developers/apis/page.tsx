@@ -22,7 +22,7 @@ export default function DevelopersApisPage() {
             <PageHeading>워크플로우 API</PageHeading>
             <PageDescription>
               워크플로우별 <code>X-CANVAS-ID</code>를 발급하고 호출 코드를
-              복사합니다.
+              복사합니다. (기존 API + OpenAI 호환 예제 제공)
             </PageDescription>
           </div>
           <Button asChild variant="secondary">

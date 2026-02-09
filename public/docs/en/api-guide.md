@@ -21,8 +21,7 @@ The `/api/v1/chat` endpoint is a REST API that lets you **run your workflow from
 
 ```json
 {
-  "message": "Your message",
-  "locale": "en"
+  "message": "Your message"
 }
 ```
 
@@ -31,7 +30,6 @@ The `/api/v1/chat` endpoint is a REST API that lets you **run your workflow from
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | message | string | Yes | User message (1~4000 chars) |
-| locale | "ko" \| "en" | No | System message language (default: `ko`) |
 
 ## Response
 
