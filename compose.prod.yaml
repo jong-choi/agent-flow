@@ -1,0 +1,57 @@
+services:
+  agentflow-app:
+    container_name: agentflow-app
+    build:
+      context: .
+      dockerfile: prod.Dockerfile
+      args:
+        AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET}
+        AUTH_SECRET: ${AUTH_SECRET}
+        DATABASE_URL: ${DATABASE_URL}
+
+        TEST_PASSWORD: ${TEST_PASSWORD}
+        GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+        GOOGLE_SEARCH_API_KEY: ${GOOGLE_SEARCH_API_KEY}
+        NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET}
+        BRAVE_API_KEY: ${BRAVE_API_KEY}
+        SEARXNG_API_KEY: ${SEARXNG_API_KEY}
+        GROQ_API_KEY: ${GROQ_API_KEY}
+
+        AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID}
+        AUTH_URL: ${AUTH_URL}
+        BASE_URL: ${BASE_URL}
+        NEXT_PUBLIC_ENABLE_DEV_LOGIN: ${NEXT_PUBLIC_ENABLE_DEV_LOGIN}
+        GOOGLE_SEARCH_CX: ${GOOGLE_SEARCH_CX}
+        NAVER_CLIENT_ID: ${NAVER_CLIENT_ID}
+        SEARXNG_BASE_URL: ${SEARXNG_BASE_URL}
+
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET}
+      AUTH_SECRET: ${AUTH_SECRET}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+      GOOGLE_SEARCH_API_KEY: ${GOOGLE_SEARCH_API_KEY}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET}
+      BRAVE_API_KEY: ${BRAVE_API_KEY}
+      SEARXNG_API_KEY: ${SEARXNG_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID}
+      AUTH_URL: ${AUTH_URL}
+      BASE_URL: ${BASE_URL}
+      NEXT_PUBLIC_ENABLE_DEV_LOGIN: ${NEXT_PUBLIC_ENABLE_DEV_LOGIN}
+      GOOGLE_SEARCH_CX: ${GOOGLE_SEARCH_CX}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID}
+      SEARXNG_BASE_URL: ${SEARXNG_BASE_URL}
+
+    restart: always
+
+    ports:
+      - "3000:3000"
+
+    networks:
+      - npm-network
+
+networks:
+  npm-network:
+    external: true
