@@ -1,0 +1,125 @@
+name: Deploy On Version Bump
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version_changed: ${{ steps.version-check.outputs.version_changed }}
+      current_version: ${{ steps.version-check.outputs.current_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect package version increase
+        id: version-check
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curr_version="$(jq -r '.version' package.json)"
+          prev_version=""
+
+          if git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            if git cat-file -e HEAD^:package.json 2>/dev/null; then
+              prev_version="$(git show HEAD^:package.json | jq -r '.version')"
+            fi
+          fi
+
+          version_changed="false"
+
+          if [ -z "$prev_version" ]; then
+            version_changed="true"
+          else
+            latest_version="$(printf '%s\n' "$prev_version" "$curr_version" | sort -V | tail -n1)"
+            if [ "$latest_version" = "$curr_version" ] && [ "$curr_version" != "$prev_version" ]; then
+              version_changed="true"
+            fi
+          fi
+
+          echo "current_version=$curr_version" >> "$GITHUB_OUTPUT"
+          echo "version_changed=$version_changed" >> "$GITHUB_OUTPUT"
+
+          echo "previous_version=$prev_version"
+          echo "current_version=$curr_version"
+          echo "version_changed=$version_changed"
+
+  deploy:
+    needs: check-version
+    if: needs.check-version.outputs.version_changed == 'true'
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          POSTGRES_DB: ${{ vars.POSTGRES_DB }}
+          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          AUTH_GOOGLE_ID: ${{ vars.AUTH_GOOGLE_ID }}
+          AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          AUTH_URL: ${{ vars.AUTH_URL }}
+          BASE_URL: ${{ vars.BASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          NEXT_PUBLIC_ENABLE_DEV_LOGIN: ${{ vars.NEXT_PUBLIC_ENABLE_DEV_LOGIN }}
+          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
+          GOOGLE_SEARCH_API_KEY: ${{ secrets.GOOGLE_SEARCH_API_KEY }}
+          GOOGLE_SEARCH_CX: ${{ vars.GOOGLE_SEARCH_CX }}
+          NAVER_CLIENT_ID: ${{ vars.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+          SEARXNG_API_KEY: ${{ secrets.SEARXNG_API_KEY }}
+          SEARXNG_BASE_URL: ${{ vars.SEARXNG_BASE_URL }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        with:
+          envs: POSTGRES_DB,POSTGRES_USER,POSTGRES_PASSWORD,AUTH_GOOGLE_ID,AUTH_GOOGLE_SECRET,AUTH_SECRET,AUTH_URL,BASE_URL,DATABASE_URL,TEST_PASSWORD,NEXT_PUBLIC_ENABLE_DEV_LOGIN,GOOGLE_AI_API_KEY,GOOGLE_SEARCH_API_KEY,GOOGLE_SEARCH_CX,NAVER_CLIENT_ID,NAVER_CLIENT_SECRET,BRAVE_API_KEY,SEARXNG_API_KEY,SEARXNG_BASE_URL,GROQ_API_KEY
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            trap 'echo "Deploy failed at line $LINENO"' ERR
+
+            echo "Deploying agent-flow v${{ needs.check-version.outputs.current_version }}"
+
+            mkdir -p ~/.ssh
+            ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
+            REPO_DIR=~/agent-flow
+            if [ ! -d "$REPO_DIR/.git" ]; then
+              git clone --depth 1 https://github.com/${{ github.repository }}.git "$REPO_DIR"
+            fi
+
+            cd "$REPO_DIR"
+            git fetch --prune --depth=1 origin main
+            git reset --hard origin/main
+
+            : "${POSTGRES_DB:=agent_flow}"
+            : "${POSTGRES_USER:=agent_flow}"
+
+            if [ -z "${POSTGRES_PASSWORD:-}" ]; then
+              echo "POSTGRES_PASSWORD is required"
+              exit 1
+            fi
+
+            if [ -z "${DATABASE_URL:-}" ]; then
+              export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@agent-flow-postgres:5432/${POSTGRES_DB}"
+            fi
+
+            # Create/start Postgres first (first deployment + health warm-up).
+            docker compose -f compose.prod.yaml up -d postgres
+
+            docker compose -f compose.prod.yaml build --pull agent-flow
+            docker compose -f compose.prod.yaml up -d --remove-orphans agent-flow
+
+            docker image prune -f
+
+            echo "Deploy complete"
