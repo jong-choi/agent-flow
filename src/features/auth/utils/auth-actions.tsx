@@ -8,7 +8,9 @@ export const signInWithGoogleAction = async (formData: FormData) => {
   const rawCallbackUrl = formData.get("callbackUrl");
   const callbackUrl = typeof rawCallbackUrl === "string" ? rawCallbackUrl : "";
   const redirectTo =
-    callbackUrl.startsWith("/") && !callbackUrl.startsWith("/login")
+    callbackUrl.startsWith("/") &&
+    !callbackUrl.startsWith("//") &&
+    !callbackUrl.startsWith("/login")
       ? callbackUrl
       : "/";
 

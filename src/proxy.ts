@@ -23,8 +23,16 @@ export const proxy = auth((req) => {
   // 로그인된 사용자가 로그인 페이지에 접속 시
   if (pathname === "/login" && req.auth?.user) {
     const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
-    if (callbackUrl?.startsWith("/") && !callbackUrl.startsWith("/login")) {
-      return NextResponse.redirect(new URL(callbackUrl, req.nextUrl.origin));
+    const origin = req.nextUrl.origin;
+    if (
+      callbackUrl?.startsWith("/") &&
+      !callbackUrl.startsWith("//") &&
+      !callbackUrl.startsWith("/login")
+    ) {
+      const targetUrl = new URL(callbackUrl, origin);
+      if (targetUrl.origin === origin) {
+        return NextResponse.redirect(targetUrl);
+      }
     }
 
     const fallbackUrl = req.nextUrl.clone();
