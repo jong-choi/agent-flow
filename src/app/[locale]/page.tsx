@@ -6,6 +6,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { HomeQuickLink } from "@/app/_components/home-quick-links";
 import { LandingSectionBackdrop } from "@/components/landing/landing-section-backdrop";
 import { Button } from "@/components/ui/button";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
@@ -86,6 +87,14 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
             <p className="mt-4 text-base leading-7 text-muted-foreground">
               {t("features.canvas.desc")}
             </p>
+            <div className="mt-6">
+              <HomeQuickLink
+                href="/workflows"
+                label="캔버스로 이동"
+                arrowSize={18}
+                className="rounded-2xl px-5"
+              />
+            </div>
           </div>
 
           <div className="rounded-3xl border border-border/50 bg-accent/25 p-6 backdrop-blur-xl">
@@ -159,6 +168,13 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
               <div className="rounded-xl border border-border/50 bg-accent/25 px-2 py-2">
                 Action
               </div>
+            </div>
+            <div className="pt-2">
+              <HomeQuickLink
+                href="/credits/attendance"
+                label="무료 크레딧 받기"
+                className="rounded-2xl px-5"
+              />
             </div>
           </div>
         </div>
@@ -249,6 +265,15 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
           </div>
 
           <div className="space-y-4 rounded-3xl border border-border/50 bg-accent/25 p-6 backdrop-blur-xl">
+            <p className="text-sm font-semibold tracking-[0.14em] text-muted-foreground">
+              바로가기
+            </p>
+            <HomeQuickLink
+              href="/presets"
+              label="프리셋 마켓으로 이동"
+              arrowSize={18}
+              className="h-auto w-full justify-between rounded-2xl px-5 py-3"
+            />
             <Button asChild className="h-auto w-full rounded-2xl px-5 py-3">
               <Link href="/login">
                 {loginLabel}

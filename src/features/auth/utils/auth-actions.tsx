@@ -4,8 +4,15 @@ import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import { TEST_PASSWORD, signIn, signOut } from "@/lib/auth";
 
-export const signInWithGoogleAction = async () => {
-  await signIn("google", { redirectTo: "/" });
+export const signInWithGoogleAction = async (formData: FormData) => {
+  const rawCallbackUrl = formData.get("callbackUrl");
+  const callbackUrl = typeof rawCallbackUrl === "string" ? rawCallbackUrl : "";
+  const redirectTo =
+    callbackUrl.startsWith("/") && !callbackUrl.startsWith("/login")
+      ? callbackUrl
+      : "/";
+
+  await signIn("google", { redirectTo });
 };
 
 export const signOutAction = async () => {
