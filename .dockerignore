@@ -21,6 +21,7 @@ pnpm-debug.log*
 
 # git
 .git
+.github
 .gitignore
 
 # OS

@@ -1,0 +1,116 @@
+name: Manual Deploy (no-cache build)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "Production"
+        type: choice
+        options:
+          - Production
+          - Staging
+      compose_file:
+        description: "Compose file path on server"
+        required: true
+        default: "compose.prod.yaml"
+        type: string
+      confirm_deploy:
+        description: 'Type "deploy" to confirm deployment'
+        required: true
+        type: string
+
+concurrency:
+  group: manual-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate-inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate deployment confirmation
+        shell: bash
+        run: |
+          if [ "${{ github.event.inputs.confirm_deploy }}" != "deploy" ]; then
+            echo "❌ Deployment cancelled. Please type 'deploy' to confirm."
+            exit 1
+          fi
+          echo "✅ Deployment confirmed"
+
+  manual-deploy:
+    needs: validate-inputs
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Deploy on VPS (no-cache build)
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
+          GOOGLE_SEARCH_API_KEY: ${{ secrets.GOOGLE_SEARCH_API_KEY }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+          SEARXNG_API_KEY: ${{ secrets.SEARXNG_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
+          AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
+          AUTH_URL: ${{ vars.AUTH_URL }}
+          BASE_URL: ${{ vars.BASE_URL }}
+          NEXT_PUBLIC_ENABLE_DEV_LOGIN: ${{ vars.NEXT_PUBLIC_ENABLE_DEV_LOGIN }}
+          GOOGLE_SEARCH_CX: ${{ vars.GOOGLE_SEARCH_CX }}
+          NAVER_CLIENT_ID: ${{ vars.NAVER_CLIENT_ID }}
+          SEARXNG_BASE_URL: ${{ vars.SEARXNG_BASE_URL }}
+
+          # Optional for private repo:
+          # GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+        with:
+          envs: >
+            DATABASE_URL,AUTH_GOOGLE_SECRET,AUTH_SECRET,
+            TEST_PASSWORD,GOOGLE_AI_API_KEY,GOOGLE_SEARCH_API_KEY,NAVER_CLIENT_SECRET,BRAVE_API_KEY,SEARXNG_API_KEY,GROQ_API_KEY,
+            AUTH_GOOGLE_ID,AUTH_URL,BASE_URL,NEXT_PUBLIC_ENABLE_DEV_LOGIN,GOOGLE_SEARCH_CX,NAVER_CLIENT_ID,SEARXNG_BASE_URL
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            trap 'echo "❌ Deploy failed at line $LINENO"' ERR
+
+            echo "🚀 Starting manual deployment (no-cache)..."
+
+            mkdir -p ~/.ssh
+            ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+            # Ensure external docker network exists
+            if ! docker network inspect npm-network >/dev/null 2>&1; then
+              echo "🕸️  Creating docker network: npm-network"
+              docker network create npm-network
+            fi
+
+            REPO_DIR=~/${{ github.event.repository.name }}
+            COMPOSE_FILE="${{ github.event.inputs.compose_file }}"
+
+            if [ ! -d "$REPO_DIR/.git" ]; then
+              echo "📥 Cloning repository..."
+              git clone --depth 1 https://github.com/${{ github.repository }}.git "$REPO_DIR"
+              # private repo:
+              # git clone --depth 1 https://${GITHUB_PAT}@github.com/${{ github.repository }}.git "$REPO_DIR"
+            else
+              echo "🔄 Updating existing repository..."
+            fi
+
+            cd "$REPO_DIR"
+            git fetch --prune --depth=1 origin main
+            git reset --hard origin/main
+
+            echo "🏗️  Building with --no-cache --pull..."
+            docker compose -f "$COMPOSE_FILE" build --no-cache --pull
+
+            e
