@@ -13,7 +13,7 @@ import {
 import { type ChatListItem } from "@/features/chats/components/chat-page/chat-queries";
 import { ChatSidebarDeleteDialog } from "@/features/chats/components/chat-page/chat-sidebar-delete-dialog";
 import { ChatTitleInput } from "@/features/chats/components/chat-page/chat-title-input";
-import { cn, formatKoreanDate } from "@/lib/utils";
+import { cn, formatYMD } from "@/lib/utils";
 
 type ChatSidebarItemProps = {
   chat: ChatListItem;
@@ -49,7 +49,7 @@ export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
           >
             <div className="truncate">{optimisticTitle || displayTitle}</div>
             <div className="mt-0.5 text-xs text-muted-foreground">
-              {formatKoreanDate(chat.updatedAt)}
+              {formatYMD(chat.updatedAt)}
             </div>
           </Link>
         )}

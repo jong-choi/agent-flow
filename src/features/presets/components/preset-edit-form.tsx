@@ -17,7 +17,7 @@ import {
   getPresetChatExamplesForForm,
   getWorkflowReferencedPresetPricingSummary,
 } from "@/features/presets/server/queries";
-import { formatKoreanDate } from "@/lib/utils";
+import { formatYMD } from "@/lib/utils";
 
 type PresetEditFormProps = {
   preset: PresetEditRes;
@@ -56,8 +56,7 @@ export async function PresetEditForm({
                 {preset.workflowTitle ?? "워크플로우"}
               </p>
               <p className="text-xs text-muted-foreground">
-                최근 업데이트{" "}
-                {formatKoreanDate(preset.workflowUpdatedAt, "날짜 없음")}
+                최근 업데이트 {formatYMD(preset.workflowUpdatedAt)}
               </p>
             </div>
             <Button variant="outline" size="sm" asChild>

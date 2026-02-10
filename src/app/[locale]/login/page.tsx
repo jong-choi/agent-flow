@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LogoIcon } from "@/components/logo";
 import {
   Card,
@@ -7,10 +8,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DevLoginCardContent } from "@/features/auth/components/dev-login/dev-login-card-content";
-import { GoogleLoginForm } from "@/features/auth/components/google-login-form";
+import {
+  GoogleLoginForm,
+  GoogleLoginFormFallback,
+} from "@/features/auth/components/google-login-form";
 import { ENABLE_DEV_LOGIN } from "@/lib/auth";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: PageProps<"/[locale]/login">) {
   return (
     <div className="relative flex min-h-[calc(80vh-3.5rem)] w-full items-center justify-center overflow-hidden bg-gradient-to-b from-muted to-background p-4">
       {/* Login Card */}
@@ -36,7 +42,13 @@ export default async function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
-          <GoogleLoginForm label="Google 계정으로 계속하기" className="mt-0" />
+          <Suspense fallback={<GoogleLoginFormFallback />}>
+            <GoogleLoginForm
+              label="Google 계정으로 계속하기"
+              className="mt-0"
+              searchParams={searchParams}
+            />
+          </Suspense>
 
           {ENABLE_DEV_LOGIN && (
             <div className="rounded-lg bg-muted/30 p-1">

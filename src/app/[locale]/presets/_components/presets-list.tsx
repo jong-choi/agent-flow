@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PresetPurchaseDialog } from "@/features/presets/components/preset-purchase-dialog";
-import { formatKoreanDate } from "@/lib/utils";
+import { formatYMD } from "@/lib/utils";
 
 type PresetsListVariant = "market" | "library";
 
@@ -41,7 +41,7 @@ const formatPrice = (price: number) =>
   price === 0 ? "무료" : `${price} 크레딧`;
 
 const formatDate = (value: Date | string | null | undefined) =>
-  formatKoreanDate(value, "날짜 없음");
+  formatYMD(value);
 
 export function PresetsCard({
   preset,
