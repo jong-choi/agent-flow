@@ -1,6 +1,6 @@
 import { CalendarDays } from "lucide-react";
 import { BoringCardAvatar } from "@/components/boring-avatar";
-import { cn, formatKoreanDate } from "@/lib/utils";
+import { cn, formatYMD } from "@/lib/utils";
 
 type WorkflowTitleTextProps = {
   title: string;
@@ -55,7 +55,7 @@ export const WorkflowUpdatedAtText = ({
 }: WorkflowUpdatedAtTextProps) => (
   <span className={cn("text-xs text-muted-foreground", className)}>
     {!prefix ? <CalendarDays className="mb-1 inline-block size-3.5" /> : prefix}{" "}
-    {formatKoreanDate(updatedAt)}
+    {formatYMD(updatedAt)}
   </span>
 );
 

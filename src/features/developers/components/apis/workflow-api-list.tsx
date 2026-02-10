@@ -24,7 +24,7 @@ import {
   issueWorkflowCanvasIdAction,
   softDeleteWorkflowCanvasIdAction,
 } from "@/features/developers/server/actions";
-import { cn, formatKoreanDate } from "@/lib/utils";
+import { cn, formatYMD } from "@/lib/utils";
 
 type WorkflowSummary = {
   id: string;
@@ -242,7 +242,7 @@ const result = await client.responses.create({
                     {workflow.title}
                   </div>
                   <div className="shrink-0 text-xs text-muted-foreground">
-                    업데이트 {formatKoreanDate(workflow.updatedAt)}
+                    업데이트 {formatYMD(workflow.updatedAt)}
                   </div>
                 </div>
                 <div className="h-6 truncate text-sm text-foreground/80">

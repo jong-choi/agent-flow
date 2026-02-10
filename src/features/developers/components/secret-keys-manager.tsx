@@ -30,7 +30,7 @@ import {
   softDeleteUserSecretAction,
 } from "@/features/developers/server/actions";
 import { type UserSecretSummary } from "@/features/developers/server/queries";
-import { cn, formatKoreanDate } from "@/lib/utils";
+import { cn, formatYMD } from "@/lib/utils";
 
 type SecretKeysManagerProps = {
   initialSecrets: UserSecretSummary[];
@@ -121,9 +121,9 @@ export function SecretKeysManager({ initialSecrets }: SecretKeysManagerProps) {
                     {secret.preview}
                   </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span>발급 {formatKoreanDate(secret.createdAt)}</span>
+                    <span>발급 {formatYMD(secret.createdAt)}</span>
                     <span className={cn(!secret.lastUsedAt && "hidden")}>
-                      최근 사용 {formatKoreanDate(secret.lastUsedAt)}
+                      최근 사용 {formatYMD(secret.lastUsedAt)}
                     </span>
                   </div>
                 </div>

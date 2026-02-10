@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { WorkflowDataView } from "@/features/workflows/components/workflow-data-view";
 import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 import { auth } from "@/lib/auth";
-import { formatKoreanDate } from "@/lib/utils";
+import { formatYMD } from "@/lib/utils";
 
 export default function WorkflowDetailPage({
   params,
@@ -60,7 +60,7 @@ async function WorkflowDetailContent({
             </PageDescription>
             <div className="flex w-full items-center gap-1 pt-4 text-xs text-muted-foreground">
               <Calendar className="size-3.5" />
-              <div>최근 업데이트 {formatKoreanDate(workflow.updatedAt)}</div>
+              <div>최근 업데이트 {formatYMD(workflow.updatedAt)}</div>
             </div>
           </div>
         </div>

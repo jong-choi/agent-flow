@@ -11,10 +11,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PresetCreateForm } from "@/features/presets/components/preset-create-form";
 import { createPresetAction } from "@/features/presets/server/actions";
 import { getOwnedWorkflowById } from "@/features/workflows/server/queries";
-import { PresetCreateForm } from "@/features/presets/components/preset-create-form";
-import { formatKoreanDate } from "@/lib/utils";
+import { formatYMD } from "@/lib/utils";
 
 export default function PresetCreateDetailPage({
   params,
@@ -75,7 +75,7 @@ async function PresetCreateDetailContent({
               {workflow.description ?? "설명이 없습니다."}
             </p>
             <p className="text-xs text-muted-foreground">
-              최근 업데이트 {formatKoreanDate(workflow.updatedAt)}
+              최근 업데이트 {formatYMD(workflow.updatedAt)}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

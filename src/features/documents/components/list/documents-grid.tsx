@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { formatKoreanDate } from "@/lib/utils";
+import { formatYMD } from "@/lib/utils";
 
 type DocumentSummary = {
   id: string;
@@ -72,7 +72,7 @@ function DocumentCard({ doc }: { doc: DocumentSummary }) {
         <CardFooter className="mt-auto space-y-3">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <Clock className="size-3" />
-            <span>업데이트 {formatKoreanDate(doc.updatedAt)}</span>
+            <span>업데이트 {formatYMD(doc.updatedAt)}</span>
           </div>
         </CardFooter>
       </Card>

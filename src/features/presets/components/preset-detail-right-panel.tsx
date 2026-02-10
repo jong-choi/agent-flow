@@ -11,18 +11,18 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getUserId } from "@/features/auth/server/queries";
+import { PresetPurchaseDialog } from "@/features/presets/components/preset-purchase-dialog";
 import {
   getPresetDetail,
   getPresetPurchaseStatus,
 } from "@/features/presets/server/queries";
-import { PresetPurchaseDialog } from "@/features/presets/components/preset-purchase-dialog";
-import { formatKoreanDate } from "@/lib/utils";
+import { formatYMD } from "@/lib/utils";
 
 const formatPrice = (price: number) =>
   price === 0 ? "무료" : `${price} 크레딧`;
 
 const formatDate = (value: Date | string | null | undefined) =>
-  formatKoreanDate(value, "날짜 없음");
+  formatYMD(value);
 
 type PresetDetailRightPanelProps = {
   presetId: string;
@@ -53,9 +53,12 @@ export async function PresetDetailRightPanel({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1">
-            <p className="text-3xl font-semibold">{formatPrice(preset.totalPrice)}</p>
+            <p className="text-3xl font-semibold">
+              {formatPrice(preset.totalPrice)}
+            </p>
             <p className="text-xs text-muted-foreground">
-              구매 {preset.purchaseCount} · 업데이트 {formatDate(preset.updatedAt)}
+              구매 {preset.purchaseCount} · 업데이트{" "}
+              {formatDate(preset.updatedAt)}
             </p>
           </div>
           <div className="space-y-2 text-sm">
@@ -134,11 +137,15 @@ export async function PresetDetailRightPanel({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">생성</span>
-              <span className="font-medium">{formatDate(preset.createdAt)}</span>
+              <span className="font-medium">
+                {formatDate(preset.createdAt)}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">최근 업데이트</span>
-              <span className="font-medium">{formatDate(preset.updatedAt)}</span>
+              <span className="font-medium">
+                {formatDate(preset.updatedAt)}
+              </span>
             </div>
           </div>
         </CardContent>

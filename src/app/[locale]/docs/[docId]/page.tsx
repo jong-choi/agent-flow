@@ -15,11 +15,13 @@ import { DocumentDeleteDialog } from "@/features/documents/components/detail/doc
 import { DocumentEditor } from "@/features/documents/components/detail/document-editor";
 import { DocumentSaveButton } from "@/features/documents/components/detail/document-save-button";
 import { DocumentTitleEditor } from "@/features/documents/components/detail/document-title-editor";
-import { DocumentStoreProvider } from "@/features/documents/store/document-store";
 import { getDocumentById } from "@/features/documents/server/queries";
-import { formatKoreanDate } from "@/lib/utils";
+import { DocumentStoreProvider } from "@/features/documents/store/document-store";
+import { formatYMD } from "@/lib/utils";
 
-export default function DocumentViewPage(props: PageProps<"/[locale]/docs/[docId]">) {
+export default function DocumentViewPage(
+  props: PageProps<"/[locale]/docs/[docId]">,
+) {
   return (
     <Suspense fallback={<DocumentViewPageFallback />}>
       <DocumentViewContent {...props} />
@@ -64,7 +66,7 @@ async function DocumentViewContent({
               )}
               <PageDescription className="flex items-center gap-1">
                 <Calendar className="size-3" />
-                마지막 업데이트 {formatKoreanDate(document.updatedAt)}
+                마지막 업데이트 {formatYMD(document.updatedAt)}
               </PageDescription>
             </PageHeader>
             {edit ? (

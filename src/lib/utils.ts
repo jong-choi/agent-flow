@@ -1,38 +1,41 @@
 import { type ClassValue, clsx } from "clsx";
-import dayjs from "dayjs";
+import dayjs, { type ConfigType } from "dayjs";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatYMDT(str: string) {
-  return dayjs(str).format("YYYY-MM-DD HH:mm:ss");
+export function formatYMD(value: ConfigType, fallback = "-") {
+  const day = dayjs(value);
+  if (!value || !day.isValid()) {
+    return fallback;
+  }
+  return day.format("YYYY.MM.DD");
 }
 
-export function formatYMD(str: string) {
-  return dayjs(str).format("YYYY.MM.DD");
+function formatYMDT(value: ConfigType, fallback = "-") {
+  const day = dayjs(value);
+  if (!value || !day.isValid()) {
+    return fallback;
+  }
+  return day.format("YYYY-MM-DD HH:mm:ss");
 }
 
-export function formatHHMM(str: string) {
-  return dayjs(str).format("HH:mm");
+function formatHMS(value: ConfigType, fallback = "-") {
+  const day = dayjs(value);
+  if (!value || !day.isValid()) {
+    return fallback;
+  }
+  return day.format("HH:mm:ss");
 }
 
-export function formatKoreanDate(
-  value: Date | string | null | undefined,
-  fallback = "-",
-) {
-  if (!value) {
+export function formatTimeToday(value: ConfigType, fallback = "-") {
+  const day = dayjs(value);
+  if (!value || !day.isValid()) {
     return fallback;
   }
 
-  const parsed = dayjs(value);
-
-  if (!parsed.isValid()) {
-    return fallback;
-  }
-
-  return new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(
-    parsed.toDate(),
-  );
+  const isToday = day.isSame(dayjs(), "day");
+  return isToday ? formatHMS(value, fallback) : formatYMDT(value, fallback);
 }
