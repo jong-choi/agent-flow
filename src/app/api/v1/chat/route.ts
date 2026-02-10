@@ -1,18 +1,21 @@
 import { z } from "zod";
 import { HumanMessage } from "@langchain/core/messages";
-import { buildInputTree, buildStateGraph } from "@/app/api/chat/_engines/build-state-graph";
+import {
+  buildInputTree,
+  buildStateGraph,
+} from "@/app/api/chat/_engines/build-state-graph";
 import {
   isEventName,
   langgraphStreamEventSchema,
 } from "@/app/api/chat/_types/chat-events";
 import { isValidNodeType } from "@/app/api/chat/_types/nodes";
 import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
-import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
+import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 import {
   getUserIdByCanvasSecret,
   getWorkflowByCanvasId,
 } from "@/features/developers/server/queries";
-import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
+import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 
 const V1ChatRequestSchema = z.object({
   message: z.string().trim().min(1).max(4000),

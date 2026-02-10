@@ -6,10 +6,9 @@ import {
 } from "@/app/api/chat/_engines/handle-connect";
 import {
   type ClientStreamEvent,
-  isEventName,
   langgraphStreamEventSchema,
 } from "@/app/api/chat/_types/chat-events";
-import { isValidNodeType } from "@/app/api/chat/_types/nodes";
+import { mapLanggraphEventToClientEvent } from "@/app/api/chat/_utils/map-stream-event-to-client";
 import { getUserId } from "@/features/auth/server/queries";
 
 /**
@@ -62,49 +61,13 @@ export async function GET(
             configurable: { thread_id: threadId, user_id: userId },
             durability: "exit", // 랭그래프 종료 시점에만 상태 업데이트
           })) {
-            if (
-              !isEventName(chunk.event) ||
-              typeof chunk.metadata.type !== "string" ||
-              !isValidNodeType(chunk.metadata.type)
-            ) {
-              continue;
-            }
-
             const parsed = langgraphStreamEventSchema.safeParse(chunk);
             if (!parsed.success) {
               continue;
             }
-
-            const event = parsed.data.event;
-            const { type, langgraph_node } = parsed.data.metadata;
-
-            if (type === "startNode") {
-              if (event === "on_chain_start") {
-                emitEvent({ type, event, langgraph_node });
-              }
-            }
-            if (type === "chatNode") {
-              if (event === "on_chat_model_start") {
-                emitEvent({ type, event, langgraph_node });
-              } else if (event === "on_chat_model_stream") {
-                const content = parsed.data.data?.chunk?.content;
-                if (typeof content !== "string") {
-                  continue;
-                }
-                emitEvent({
-                  type,
-                  event,
-                  langgraph_node,
-                  chunk: { content },
-                });
-              } else if (event === "on_chat_model_end") {
-                emitEvent({ type, event, langgraph_node });
-              }
-            }
-            if (type === "endNode") {
-              if (event === "on_chain_end") {
-                emitEvent({ type, event, langgraph_node });
-              }
+            const streamEvent = mapLanggraphEventToClientEvent(parsed.data);
+            if (streamEvent) {
+              emitEvent(streamEvent);
             }
           }
         } catch (error) {

@@ -3,6 +3,7 @@
 import { useId, useMemo, useState, useTransition } from "react";
 import { Copy, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { BoringCardAvatar } from "@/components/boring-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,7 +20,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { BoringCardAvatar } from "@/components/boring-avatar";
 import {
   issueWorkflowCanvasIdAction,
   softDeleteWorkflowCanvasIdAction,
@@ -38,6 +38,8 @@ type WorkflowApiListProps = {
   baseUrl: string;
 };
 
+type SnippetTab = "agentflow" | "openai-chat" | "openai-responses";
+
 const SECRET_PLACEHOLDER = "lc-**********************";
 const CANVAS_ID_PLACEHOLDER = "lc-id-*******************";
 
@@ -46,6 +48,7 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<WorkflowSummary | null>(null);
   const [canvasId, setCanvasId] = useState<string | null>(null);
+  const [snippetTab, setSnippetTab] = useState<SnippetTab>("agentflow");
 
   const [isPending, startTransition] = useTransition();
 
@@ -63,6 +66,7 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
   const openWorkflow = (workflow: WorkflowSummary) => {
     setSelected(workflow);
     setCanvasId(null);
+    setSnippetTab("agentflow");
     setOpen(true);
 
     startTransition(async () => {
@@ -110,11 +114,16 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
   };
 
   const canvasIdValue = canvasId ?? CANVAS_ID_PLACEHOLDER;
-  const endpoint = effectiveBaseUrl
+  const agentFlowEndpoint = effectiveBaseUrl
     ? `${effectiveBaseUrl}/api/v1/chat`
     : "/api/v1/chat";
+  const openAiBaseUrl = effectiveBaseUrl
+    ? `${effectiveBaseUrl}/api/v1/openai`
+    : "/api/v1/openai";
+  const openAiChatEndpoint = `${openAiBaseUrl}/chat/completions`;
+  const openAiResponsesEndpoint = `${openAiBaseUrl}/responses`;
 
-  const curlSnippet = `curl -X POST "${endpoint}" \\
+  const agentFlowCurlSnippet = `curl -X POST "${agentFlowEndpoint}" \\
   -H "Content-Type: application/json" \\
   -H "X-CANVAS-SECRET: ${SECRET_PLACEHOLDER}" \\
   -H "X-CANVAS-ID: ${canvasIdValue}" \\
@@ -122,7 +131,7 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
     "message": "강아지 키우는 법을 검색해줘"
   }'`;
 
-  const jsSnippet = `await fetch("${endpoint}", {
+  const agentFlowJsSnippet = `await fetch("${agentFlowEndpoint}", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -133,6 +142,79 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
     message: "강아지 키우는 법을 검색해줘"
   })
 });`;
+
+  const openAiChatCurlSnippet = `curl -X POST "${openAiChatEndpoint}" \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${SECRET_PLACEHOLDER}" \\
+  -d '{
+    "model": "${canvasIdValue}",
+    "messages": [
+      { "role": "user", "content": "강아지 키우는 법을 검색해줘" }
+    ]
+  }'`;
+
+  const openAiChatSdkSnippet = `import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "${SECRET_PLACEHOLDER}",
+  baseURL: "${openAiBaseUrl}"
+});
+
+const result = await client.chat.completions.create({
+  model: "${canvasIdValue}",
+  messages: [{ role: "user", content: "강아지 키우는 법을 검색해줘" }]
+});`;
+
+  const openAiResponsesCurlSnippet = `curl -X POST "${openAiResponsesEndpoint}" \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${SECRET_PLACEHOLDER}" \\
+  -d '{
+    "model": "${canvasIdValue}",
+    "input": "강아지 키우는 법을 검색해줘"
+  }'`;
+
+  const openAiResponsesSdkSnippet = `import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "${SECRET_PLACEHOLDER}",
+  baseURL: "${openAiBaseUrl}"
+});
+
+const result = await client.responses.create({
+  model: "${canvasIdValue}",
+  input: "강아지 키우는 법을 검색해줘"
+});`;
+
+  const snippetMeta: Record<
+    SnippetTab,
+    {
+      description: string;
+      curl: string;
+      scriptLabel: string;
+      script: string;
+    }
+  > = {
+    agentflow: {
+      description: "AgentFlow API 가이드",
+      curl: agentFlowCurlSnippet,
+      scriptLabel: "JavaScript (fetch)",
+      script: agentFlowJsSnippet,
+    },
+    "openai-chat": {
+      description: "OpenAI Chat Completions 호환 호출",
+      curl: openAiChatCurlSnippet,
+      scriptLabel: "JavaScript (OpenAI SDK)",
+      script: openAiChatSdkSnippet,
+    },
+    "openai-responses": {
+      description: "OpenAI Responses 호환 호출",
+      curl: openAiResponsesCurlSnippet,
+      scriptLabel: "JavaScript (OpenAI SDK)",
+      script: openAiResponsesSdkSnippet,
+    },
+  };
+
+  const activeSnippet = snippetMeta[snippetTab];
 
   return (
     <>
@@ -152,7 +234,7 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
               key={workflow.id}
               type="button"
               onClick={() => openWorkflow(workflow)}
-              className="rounded-lg text-left transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="rounded-lg text-left transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
             >
               <div className="flex h-full flex-col gap-1 rounded-lg border border-border/60 bg-background p-4 transition-colors hover:bg-primary/5">
                 <div className="flex items-start justify-between gap-2">
@@ -192,18 +274,16 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
           if (!next) {
             setSelected(null);
             setCanvasId(null);
+            setSnippetTab("agentflow");
           }
         }}
       >
-        <DialogContent
-          className="sm:max-w-2xl"
-          ariaDescribedby={descriptionId}
-        >
+        <DialogContent className="sm:max-w-2xl" ariaDescribedby={descriptionId}>
           <DialogHeader>
             <DialogTitle>{selected?.title ?? "워크플로우 API"}</DialogTitle>
             <DialogDescription id={descriptionId}>
-              <code>X-CANVAS-ID</code>는 워크플로우별로 발급됩니다.{" "}
-              <code>X-CANVAS-SECRET</code>는 서비스 키입니다.
+              <code>X-CANVAS-ID</code>는 워크플로우별로 발급됩니다. OpenAI 호환
+              라우트에서는 이 값을 <code>model</code>로 사용합니다.
             </DialogDescription>
           </DialogHeader>
 
@@ -247,20 +327,52 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
               />
             </div>
 
-            <div className="space-y-2">
-              <div className="text-sm font-semibold">cURL</div>
-              <CodeBlock
-                code={curlSnippet}
-                onCopy={() => navigator.clipboard.writeText(curlSnippet)}
-              />
-            </div>
+            <div className="space-y-3">
+              <div className="overflow-x-auto">
+                <div className="inline-flex min-w-full gap-1 rounded-lg border border-border/60 bg-muted/40 p-1">
+                  <SnippetTabButton
+                    active={snippetTab === "agentflow"}
+                    onClick={() => setSnippetTab("agentflow")}
+                    label="AgentFlow API 가이드"
+                  />
+                  <SnippetTabButton
+                    active={snippetTab === "openai-chat"}
+                    onClick={() => setSnippetTab("openai-chat")}
+                    label="OpenAI Chat Completions"
+                  />
+                  <SnippetTabButton
+                    active={snippetTab === "openai-responses"}
+                    onClick={() => setSnippetTab("openai-responses")}
+                    label="OpenAI Responses"
+                  />
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <div className="text-sm font-semibold">JavaScript</div>
-              <CodeBlock
-                code={jsSnippet}
-                onCopy={() => navigator.clipboard.writeText(jsSnippet)}
-              />
+              <p className="text-xs text-muted-foreground">
+                {activeSnippet.description}
+              </p>
+
+              <div className="space-y-2">
+                <div className="text-sm font-semibold">cURL</div>
+                <CodeBlock
+                  code={activeSnippet.curl}
+                  onCopy={() =>
+                    navigator.clipboard.writeText(activeSnippet.curl)
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-sm font-semibold">
+                  {activeSnippet.scriptLabel}
+                </div>
+                <CodeBlock
+                  code={activeSnippet.script}
+                  onCopy={() =>
+                    navigator.clipboard.writeText(activeSnippet.script)
+                  }
+                />
+              </div>
             </div>
           </div>
 
@@ -272,6 +384,31 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function SnippetTabButton({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
+        active
+          ? "bg-background text-foreground shadow-sm"
+          : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -293,7 +430,7 @@ function CodeBlock({
         muted && "opacity-70",
       )}
     >
-      <pre className="max-h-72 overflow-auto whitespace-pre-wrap p-3 pr-10 text-xs leading-relaxed">
+      <pre className="max-h-72 overflow-auto p-3 pr-10 text-xs leading-relaxed whitespace-pre-wrap">
         <code className="font-mono">{code}</code>
       </pre>
       <Button
