@@ -85,12 +85,11 @@ export const proxy = auth((req) => {
   const rewriteHeader = response.headers.get("x-middleware-rewrite");
   if (rewriteHeader) {
     try {
-      const rewriteUrl = new URL(rewriteHeader);
-      if (rewriteUrl.origin !== req.nextUrl.origin) {
-        rewriteUrl.protocol = req.nextUrl.protocol;
-        rewriteUrl.host = req.nextUrl.host;
-        response.headers.set("x-middleware-rewrite", rewriteUrl.toString());
-      }
+      // relative(/ko)와 absolute 모두 허용하고, 현재 요청 origin 기준으로 고정한다.
+      const rewriteUrl = new URL(rewriteHeader, req.nextUrl.origin);
+      rewriteUrl.protocol = req.nextUrl.protocol;
+      rewriteUrl.host = req.nextUrl.host;
+      response.headers.set("x-middleware-rewrite", rewriteUrl.toString());
     } catch {
       // ignore invalid rewrite header
     }
