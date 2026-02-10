@@ -13,6 +13,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   validate-inputs:
     runs-on: ubuntu-latest
@@ -34,6 +37,7 @@ jobs:
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.2.0
         env:
+          GH_REPO_TOKEN: ${{ github.token }}
           POSTGRES_DB: ${{ vars.POSTGRES_DB }}
           POSTGRES_USER: ${{ vars.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
@@ -55,7 +59,7 @@ jobs:
           SEARXNG_BASE_URL: ${{ vars.SEARXNG_BASE_URL }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         with:
-          envs: POSTGRES_DB,POSTGRES_USER,POSTGRES_PASSWORD,AUTH_GOOGLE_ID,AUTH_GOOGLE_SECRET,AUTH_SECRET,AUTH_URL,BASE_URL,DATABASE_URL,TEST_PASSWORD,NEXT_PUBLIC_ENABLE_DEV_LOGIN,GOOGLE_AI_API_KEY,GOOGLE_SEARCH_API_KEY,GOOGLE_SEARCH_CX,NAVER_CLIENT_ID,NAVER_CLIENT_SECRET,BRAVE_API_KEY,SEARXNG_API_KEY,SEARXNG_BASE_URL,GROQ_API_KEY
+          envs: GH_REPO_TOKEN,POSTGRES_DB,POSTGRES_USER,POSTGRES_PASSWORD,AUTH_GOOGLE_ID,AUTH_GOOGLE_SECRET,AUTH_SECRET,AUTH_URL,BASE_URL,DATABASE_URL,TEST_PASSWORD,NEXT_PUBLIC_ENABLE_DEV_LOGIN,GOOGLE_AI_API_KEY,GOOGLE_SEARCH_API_KEY,GOOGLE_SEARCH_CX,NAVER_CLIENT_ID,NAVER_CLIENT_SECRET,BRAVE_API_KEY,SEARXNG_API_KEY,SEARXNG_BASE_URL,GROQ_API_KEY
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
@@ -65,16 +69,17 @@ jobs:
 
             BRANCH="${{ github.event.inputs.branch }}"
             REPO_DIR=~/agent-flow
+            AUTH_HEADER="AUTHORIZATION: bearer ${GH_REPO_TOKEN}"
 
             mkdir -p ~/.ssh
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts
 
             if [ ! -d "$REPO_DIR/.git" ]; then
-              git clone --depth 1 --branch "$BRANCH" https://github.com/${{ github.repository }}.git "$REPO_DIR"
+              git -c http.extraheader="$AUTH_HEADER" clone --depth 1 --branch "$BRANCH" https://github.com/${{ github.repository }}.git "$REPO_DIR"
             fi
 
             cd "$REPO_DIR"
-            git fetch --prune origin "$BRANCH"
+            git -c http.extraheader="$AUTH_HEADER" fetch --prune origin "$BRANCH"
             git checkout -B "$BRANCH" "origin/$BRANCH"
             git reset --hard "origin/$BRANCH"
 
