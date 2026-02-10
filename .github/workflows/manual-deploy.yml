@@ -69,13 +69,12 @@ jobs:
           NAVER_CLIENT_ID: ${{ vars.NAVER_CLIENT_ID }}
           SEARXNG_BASE_URL: ${{ vars.SEARXNG_BASE_URL }}
 
-          # Optional for private repo:
-          # GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+          GH_PAT: ${{ secrets.GH_PAT }}
         with:
           envs: >
             DATABASE_URL,AUTH_GOOGLE_SECRET,AUTH_SECRET,
             TEST_PASSWORD,GOOGLE_AI_API_KEY,GOOGLE_SEARCH_API_KEY,NAVER_CLIENT_SECRET,BRAVE_API_KEY,SEARXNG_API_KEY,GROQ_API_KEY,
-            AUTH_GOOGLE_ID,AUTH_URL,BASE_URL,NEXT_PUBLIC_ENABLE_DEV_LOGIN,GOOGLE_SEARCH_CX,NAVER_CLIENT_ID,SEARXNG_BASE_URL
+            AUTH_GOOGLE_ID,AUTH_URL,BASE_URL,NEXT_PUBLIC_ENABLE_DEV_LOGIN,GOOGLE_SEARCH_CX,NAVER_CLIENT_ID,SEARXNG_BASE_URL,GH_PAT
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
@@ -83,12 +82,25 @@ jobs:
             set -e
             trap 'echo "❌ Deploy failed at line $LINENO"' ERR
 
+            : "${GH_PAT:?missing}"
+
             echo "🚀 Starting manual deployment (no-cache)..."
 
             mkdir -p ~/.ssh
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null
 
-            # Ensure external docker network exists
+            # Git HTTPS auth (private repo)
+            export GIT_TERMINAL_PROMPT=0
+            export GIT_ASKPASS=/tmp/git-askpass.sh
+            cat > "$GIT_ASKPASS" <<'EOF'
+            #!/bin/sh
+            case "$1" in
+              *Username*) echo "x-access-token" ;;
+              *Password*) echo "$GH_PAT" ;;
+            esac
+            EOF
+            chmod +x "$GIT_ASKPASS"
+
             if ! docker network inspect npm-network >/dev/null 2>&1; then
               echo "🕸️  Creating docker network: npm-network"
               docker network create npm-network
@@ -96,12 +108,11 @@ jobs:
 
             REPO_DIR=~/${{ github.event.repository.name }}
             COMPOSE_FILE="${{ github.event.inputs.compose_file }}"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
 
             if [ ! -d "$REPO_DIR/.git" ]; then
               echo "📥 Cloning repository..."
-              git clone --depth 1 https://github.com/${{ github.repository }}.git "$REPO_DIR"
-              # private repo:
-              # git clone --depth 1 https://${GITHUB_PAT}@github.com/${{ github.repository }}.git "$REPO_DIR"
+              git clone --depth 1 "$REPO_URL" "$REPO_DIR"
             else
               echo "🔄 Updating existing repository..."
             fi
@@ -113,4 +124,13 @@ jobs:
             echo "🏗️  Building with --no-cache --pull..."
             docker compose -f "$COMPOSE_FILE" build --no-cache --pull
 
-            e
+            echo "▶️  Starting services..."
+            docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
+
+            echo "🧹 Pruning unused images..."
+            docker image prune -f
+
+            rm -f "$GIT_ASKPASS"
+            unset GIT_ASKPASS
+
+            echo "✅ Manual deployment completed!"
