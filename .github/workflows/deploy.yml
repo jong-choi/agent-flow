@@ -1,0 +1,155 @@
+name: Auto Deploy (on main, version bump)
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version_changed: ${{ steps.current.outputs.version_changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine whether version increased (package.json)
+        id: current
+        shell: bash
+        run: |
+          set -e
+
+          # package.json이 없으면 버전 비교가 불가하므로 배포 허용
+          if [ ! -f package.json ]; then
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # jq가 없을 수도 있어 설치 (ubuntu-latest에는 보통 있지만 안전하게)
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y jq
+          fi
+
+          CURR_VERSION="$(jq -r '.version // empty' package.json)"
+
+          # 이전 커밋에 package.json이 없거나 버전이 없으면 배포 허용
+          if ! git show HEAD^:package.json >/dev/null 2>&1; then
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PREV_VERSION="$(git show HEAD^:package.json | jq -r '.version // empty')"
+
+          if [ -z "$CURR_VERSION" ] || [ -z "$PREV_VERSION" ]; then
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          LATEST_VERSION="$(
+            printf '%s\n' "$PREV_VERSION" "$CURR_VERSION" \
+            | sort -V \
+            | tail -n1
+          )"
+
+          if [ "$LATEST_VERSION" != "$PREV_VERSION" ]; then
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "version_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: check-version
+    if: needs.check-version.outputs.version_changed == 'true'
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Deploy on VPS (build & up)
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          # ---- App env / build args ----
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
+          GOOGLE_SEARCH_API_KEY: ${{ secrets.GOOGLE_SEARCH_API_KEY }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+          SEARXNG_API_KEY: ${{ secrets.SEARXNG_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
+          AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
+          AUTH_URL: ${{ vars.AUTH_URL }}
+          BASE_URL: ${{ vars.BASE_URL }}
+          NEXT_PUBLIC_ENABLE_DEV_LOGIN: ${{ vars.NEXT_PUBLIC_ENABLE_DEV_LOGIN }}
+          GOOGLE_SEARCH_CX: ${{ vars.GOOGLE_SEARCH_CX }}
+          NAVER_CLIENT_ID: ${{ vars.NAVER_CLIENT_ID }}
+          SEARXNG_BASE_URL: ${{ vars.SEARXNG_BASE_URL }}
+
+          # ---- Optional (private repo) ----
+          # GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+        with:
+          envs: >
+            DATABASE_URL,AUTH_GOOGLE_SECRET,AUTH_SECRET,
+            TEST_PASSWORD,GOOGLE_AI_API_KEY,GOOGLE_SEARCH_API_KEY,NAVER_CLIENT_SECRET,BRAVE_API_KEY,SEARXNG_API_KEY,GROQ_API_KEY,
+            AUTH_GOOGLE_ID,AUTH_URL,BASE_URL,NEXT_PUBLIC_ENABLE_DEV_LOGIN,GOOGLE_SEARCH_CX,NAVER_CLIENT_ID,SEARXNG_BASE_URL
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            trap 'echo "❌ Deploy failed at line $LINENO"' ERR
+
+            # 필수 환경변수 누락 체크(이름만 출력, 값은 출력 안됨)
+            : "${DATABASE_URL:?missing}"
+            : "${AUTH_SECRET:?missing}"
+            : "${AUTH_GOOGLE_SECRET:?missing}"
+
+            echo "🚀 Starting auto deployment..."
+
+            # GitHub known_hosts
+            mkdir -p ~/.ssh
+            ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+            # Ensure external docker network exists
+            if ! docker network inspect npm-network >/dev/null 2>&1; then
+              echo "🕸️  Creating docker network: npm-network"
+              docker network create npm-network
+            fi
+
+            REPO_DIR=~/${{ github.event.repository.name }}
+            COMPOSE_FILE=compose.prod.yaml
+
+            # Clone if not exists
+            if [ ! -d "$REPO_DIR/.git" ]; then
+              echo "📥 Cloning repository to $REPO_DIR"
+              # Public repo:
+              git clone --depth 1 https://github.com/${{ github.repository }}.git "$REPO_DIR"
+
+              # If private repo, use PAT (uncomment + set GITHUB_PAT):
+              # git clone --depth 1 https://${GITHUB_PAT}@github.com/${{ github.repository }}.git "$REPO_DIR"
+            fi
+
+            cd "$REPO_DIR"
+            echo "🔄 Updating repository (main)..."
+            git fetch --prune --depth=1 origin main
+            git reset --hard origin/main
+
+            echo "🏗️  Building images (pull latest base images)..."
+            docker compose -f "$COMPOSE_FILE" build --pull
+
+            echo "▶️  Starting services..."
+            docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
+
+            echo "✅ Auto deployment completed!"
