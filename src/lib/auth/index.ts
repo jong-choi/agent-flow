@@ -53,6 +53,8 @@ if (ENABLE_DEV_LOGIN) {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Reverse proxy/NPM 뒤에서 Host 헤더 기준 검증으로 인한 500을 방지한다.
+  trustHost: true,
   adapter: {
     ...DrizzleAdapter(db, {
       usersTable: users,
