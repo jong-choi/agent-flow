@@ -78,7 +78,25 @@ export const proxy = auth((req) => {
     return NextResponse.next();
   }
 
-  return intlMiddleware(req);
+  const response = intlMiddleware(req);
+
+  // Reverse proxy 환경에서 origin 인식이 달라지면 외부 도메인으로 재프록시를 시도할 수 있다.
+  // 동일 경로 rewrite는 현재 요청 origin으로 정규화해 내부 rewrite로 유지한다.
+  const rewriteHeader = response.headers.get("x-middleware-rewrite");
+  if (rewriteHeader) {
+    try {
+      const rewriteUrl = new URL(rewriteHeader);
+      if (rewriteUrl.origin !== req.nextUrl.origin) {
+        rewriteUrl.protocol = req.nextUrl.protocol;
+        rewriteUrl.host = req.nextUrl.host;
+        response.headers.set("x-middleware-rewrite", rewriteUrl.toString());
+      }
+    } catch {
+      // ignore invalid rewrite header
+    }
+  }
+
+  return response;
 });
 
 // 주소에 .이 있는 경우 무시됨
