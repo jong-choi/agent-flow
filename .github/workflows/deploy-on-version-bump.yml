@@ -93,7 +93,13 @@ jobs:
             trap 'echo "Deploy failed at line $LINENO"' ERR
 
             echo "Deploying agent-flow v${{ needs.check-version.outputs.current_version }}"
-            AUTH_HEADER="AUTHORIZATION: bearer ${GH_REPO_TOKEN}"
+            if [ -z "${GH_REPO_TOKEN:-}" ]; then
+              echo "GH_REPO_TOKEN is required"
+              exit 1
+            fi
+
+            BASIC_AUTH="$(printf 'x-access-token:%s' "${GH_REPO_TOKEN}" | base64 | tr -d '\n')"
+            AUTH_HEADER="AUTHORIZATION: basic ${BASIC_AUTH}"
 
             mkdir -p ~/.ssh
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts
