@@ -80,18 +80,19 @@ export const proxy = auth((req) => {
 
   const response = intlMiddleware(req);
 
-  // Reverse proxy 환경에서 x-middleware-rewrite가 절대 URL이면
-  // Next 런타임이 외부 프록시 요청으로 처리할 수 있다.
-  // 내부 locale rewrite는 path-only 형식으로 강제해 재프록시/루프를 방지한다.
+  // Reverse proxy 환경에서 intl middleware가 도메인 절대 URL을 넣으면
+  // 외부 프록시로 취급될 수 있어, 현재 요청 origin 기준 절대 URL로 정규화한다.
   const rewriteHeader = response.headers.get("x-middleware-rewrite");
   if (rewriteHeader) {
     try {
       const rewriteUrl = new URL(rewriteHeader);
-      const normalizedPath =
-        `${rewriteUrl.pathname}${rewriteUrl.search}` || "/";
-      response.headers.set("x-middleware-rewrite", normalizedPath);
+      if (rewriteUrl.origin !== req.nextUrl.origin) {
+        rewriteUrl.protocol = req.nextUrl.protocol;
+        rewriteUrl.host = req.nextUrl.host;
+        response.headers.set("x-middleware-rewrite", rewriteUrl.toString());
+      }
     } catch {
-      // Keep relative rewrite value as-is.
+      // ignore invalid rewrite header
     }
   }
 
