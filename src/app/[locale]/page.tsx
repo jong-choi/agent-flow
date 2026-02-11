@@ -433,7 +433,7 @@ console.log(result.choices[0].message.content);`}
 
         {/* Marquee */}
         <div className="relative z-10 mb-20 overflow-hidden border-y border-brutal-background/20 py-4">
-          <div className="animate-ticker flex whitespace-nowrap">
+          <div className="animate-ticker inline-flex w-max whitespace-nowrap will-change-transform">
             {Array(2)
               .fill([
                 "GEMMA-3-1B",
@@ -450,7 +450,7 @@ console.log(result.choices[0].message.content);`}
               .map((tech, i) => (
                 <span
                   key={`${tech}-${i}`}
-                  className="mx-8 text-sm font-black tracking-widest uppercase italic opacity-30 transition-opacity hover:text-brutal-background hover:opacity-100"
+                  className="px-4 text-sm font-black tracking-widest uppercase italic opacity-30 transition-opacity hover:text-brutal-background hover:opacity-100"
                 >
                   {tech}
                 </span>
