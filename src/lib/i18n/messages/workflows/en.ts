@@ -134,6 +134,7 @@ const message = {
       },
       labels: {
         action: "Action",
+        promptEdit: "Edit Prompt",
         selectValue: "Selected Value",
         dialogValue: "Dialog Value",
         name: "Name",
@@ -147,6 +148,10 @@ const message = {
       placeholders: {
         name: "Node Name",
         description: "Description...",
+        action: "Select action",
+        agent: "Select Agent",
+        promptInputHint:
+          "Use '{input}' to receive output from the previous node.",
       },
       save: "Save",
     },

@@ -133,6 +133,7 @@ const message = {
       },
       labels: {
         action: "동작",
+        promptEdit: "프롬프트 수정",
         selectValue: "선택 값",
         dialogValue: "대화 값",
         name: "이름",
@@ -146,6 +147,9 @@ const message = {
       placeholders: {
         name: "노드 이름",
         description: "설명을 입력하세요...",
+        action: "동작 선택",
+        agent: "Agent를 선택하기",
+        promptInputHint: "'{input}'으로 이전 노드의 결과물을 받을 수 있습니다",
       },
       save: "저장하기",
     },
