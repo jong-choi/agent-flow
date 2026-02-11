@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import {
   issueWorkflowCanvasIdAction,
@@ -347,32 +348,31 @@ const result = await client.responses.create({
                   />
                 </div>
               </div>
-
               <p className="text-xs text-muted-foreground">
                 {activeSnippet.description}
               </p>
-
-              <div className="space-y-2">
-                <div className="text-sm font-semibold">cURL</div>
-                <CodeBlock
-                  code={activeSnippet.curl}
-                  onCopy={() =>
-                    navigator.clipboard.writeText(activeSnippet.curl)
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="text-sm font-semibold">
-                  {activeSnippet.scriptLabel}
+              <ScrollArea className="h-[500px] min-h-0 overflow-auto">
+                <div className="space-y-2">
+                  <div className="text-sm font-semibold">cURL</div>
+                  <CodeBlock
+                    code={activeSnippet.curl}
+                    onCopy={() =>
+                      navigator.clipboard.writeText(activeSnippet.curl)
+                    }
+                  />
                 </div>
-                <CodeBlock
-                  code={activeSnippet.script}
-                  onCopy={() =>
-                    navigator.clipboard.writeText(activeSnippet.script)
-                  }
-                />
-              </div>
+                <div className="space-y-2">
+                  <div className="text-sm font-semibold">
+                    {activeSnippet.scriptLabel}
+                  </div>
+                  <CodeBlock
+                    code={activeSnippet.script}
+                    onCopy={() =>
+                      navigator.clipboard.writeText(activeSnippet.script)
+                    }
+                  />
+                </div>
+              </ScrollArea>
             </div>
           </div>
 

@@ -1,37 +1,8 @@
-import Avatar from "boring-avatars";
+import { Suspense } from "react";
+import { BoringAvatarClient } from "@/components/boring-avatar-client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
-const generateColorsFromSeed = (param: string): string[] => {
-  const baseColors = [
-    "#ea580c",
-    "#0284c7",
-    "#65a30d",
-    "#d97706",
-    "#db2777",
-    "#16a34a",
-    "#9333ea",
-    "#0891b2",
-  ];
-
-  const seed = param.padEnd(5, "0");
-  const chunkSize = Math.floor(seed.length / 5);
-  const chunks = [];
-
-  for (let i = 0; i < 5; i++) {
-    const start = i * chunkSize;
-    const end = i === 4 ? seed.length : (i + 1) * chunkSize;
-    chunks.push(seed.slice(start, end));
-  }
-
-  return chunks.map((chunk) => {
-    let sum = 0;
-    for (let i = 0; i < chunk.length; i++) {
-      sum += chunk.charCodeAt(i);
-    }
-
-    const index = sum % baseColors.length;
-    return baseColors[index];
-  });
-};
 export function BoringUserAvatar({
   seed = "default",
   size = 80,
@@ -44,14 +15,19 @@ export function BoringUserAvatar({
   square?: boolean;
 }) {
   return (
-    <Avatar
-      name={seed}
-      variant="beam"
-      square={square}
-      size={size}
-      className={className}
-      colors={generateColorsFromSeed(seed)}
-    />
+    <Suspense
+      fallback={
+        <AvatarSkeleton size={size} square={square} className={className} />
+      }
+    >
+      <BoringAvatarClient
+        seed={seed}
+        variant="beam"
+        square={square}
+        size={size}
+        className={className}
+      />
+    </Suspense>
   );
 }
 
@@ -69,13 +45,35 @@ export function BoringCardAvatar({
   variant?: "bauhaus" | "marble";
 }) {
   return (
-    <Avatar
-      name={seed}
-      variant={variant}
-      square={square}
-      size={size}
-      className={className}
-      colors={generateColorsFromSeed(seed)}
+    <Suspense
+      fallback={
+        <AvatarSkeleton size={size} square={square} className={className} />
+      }
+    >
+      <BoringAvatarClient
+        seed={seed}
+        variant={variant}
+        square={square}
+        size={size}
+        className={className}
+      />
+    </Suspense>
+  );
+}
+
+function AvatarSkeleton({
+  size,
+  square,
+  className,
+}: {
+  size: number;
+  square: boolean;
+  className?: string;
+}) {
+  return (
+    <Skeleton
+      className={cn(square ? "rounded-md" : "rounded-full", className)}
+      style={{ width: size, height: size }}
     />
   );
 }
