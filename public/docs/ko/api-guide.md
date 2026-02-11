@@ -27,9 +27,9 @@
 
 ### 요청 파라미터
 
-| 파라미터 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| message | string | 필수 | 사용자가 전송하는 메시지 (1~4000자) |
+| 파라미터 | 타입   | 필수 | 설명                                |
+| -------- | ------ | ---- | ----------------------------------- |
+| message  | string | 필수 | 사용자가 전송하는 메시지 (1~4000자) |
 
 ## 응답 형식
 
@@ -95,7 +95,7 @@
 ### cURL
 
 ```bash
-curl -X POST "${baseUrl}/api/v1/chat" \
+curl -X POST "https://agentflow.jongchoi.com/api/v1/chat" \
   -H "Content-Type: application/json" \
   -H "X-CANVAS-SECRET: af-**********************" \
   -H "X-CANVAS-ID: af-id-*******************" \
@@ -107,16 +107,16 @@ curl -X POST "${baseUrl}/api/v1/chat" \
 ### JavaScript (fetch)
 
 ```js
-await fetch(`${baseUrl}/api/v1/chat`, {
+await fetch(`https://agentflow.jongchoi.com/api/v1/chat`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
     "X-CANVAS-SECRET": "af-**********************",
-    "X-CANVAS-ID": "af-id-*******************"
+    "X-CANVAS-ID": "af-id-*******************",
   },
   body: JSON.stringify({
-    message: "강아지 키우는 법을 검색해줘"
-  })
+    message: "강아지 키우는 법을 검색해줘",
+  }),
 });
 ```
 

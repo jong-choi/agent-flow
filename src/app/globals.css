@@ -184,15 +184,6 @@
   }
 }
 
-/* 원형 그래디언트 배경 */
-.landing-radial-glow {
-  background: radial-gradient(
-    circle at center,
-    color-mix(in srgb, var(--brand) 10%, transparent) 0,
-    transparent 70%
-  );
-}
-
 /* 무한 이동하는 */
 @keyframes ticker {
   0% {
@@ -204,7 +195,7 @@
 }
 
 .animate-ticker {
-  animation: ticker 25s linear infinite;
+  animation: ticker 5s linear infinite;
 }
 
 /* 그룹 호버시에 늘어나는 선 */

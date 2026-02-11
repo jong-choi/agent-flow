@@ -12,10 +12,6 @@ import {
   BrutalRadialGlow,
 } from "@/components/main/ui/brutal-utils";
 
-/**
- * AgentFlow Brutal Landing Page
- * Reinterpretation of Amber page using brutal tokens.
- */
 export default function BrutalLandingPage() {
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-brutal-background font-sans text-brutal-foreground transition-colors duration-300">
@@ -54,6 +50,7 @@ export default function BrutalLandingPage() {
         </div>
       </BrutalSection>
 
+      {/* 캔버스 섹션 */}
       <BrutalSection
         variant="inverse"
         className="overflow-hidden border-t-2 border-brutal-border"
@@ -93,12 +90,12 @@ export default function BrutalLandingPage() {
           >
             <div className="grid grid-cols-3 gap-4">
               {[
-                "Trigger",
+                "Presets",
                 "LLM Call",
                 "Search",
-                "Condition",
+                "Document",
+                "Fan-out",
                 "Output",
-                "Tool",
               ].map((node, i) => (
                 <div
                   key={node}
@@ -119,6 +116,8 @@ export default function BrutalLandingPage() {
           </BrutalCard>
         </div>
       </BrutalSection>
+
+      {/* 캔버스 섹션 보조 설명 */}
       <BrutalSection
         className="border-t-2 border-brutal-border"
         id="how-it-works"
@@ -139,8 +138,8 @@ export default function BrutalLandingPage() {
             },
             {
               step: "03",
-              title: "Test",
-              desc: "채팅 인터페이스에서 워크플로우를 즉시 테스트합니다.",
+              title: "Chat",
+              desc: "채팅 인터페이스에서 워크플로우를 테스트합니다.",
               variant: "default" as const,
             },
             {
@@ -179,9 +178,7 @@ export default function BrutalLandingPage() {
         </BrutalGrid>
       </BrutalSection>
 
-      {/* ═══════════════════════════════════════════
-          SECTION 5 — AI Chat
-          ═══════════════════════════════════════════ */}
+      {/* AI Chat 섹션 */}
       <BrutalSection
         variant="inverse"
         className="overflow-hidden border-t-2 border-brutal-border"
@@ -242,9 +239,7 @@ export default function BrutalLandingPage() {
         </div>
       </BrutalSection>
 
-      {/* ═══════════════════════════════════════════
-          SECTION 6 — Preset Marketplace
-          ═══════════════════════════════════════════ */}
+      {/* 프리셋 섹션 */}
       <BrutalSection className="border-t-2 border-brutal-border" id="presets">
         <div className="grid items-start gap-16 lg:grid-cols-[1fr_1.4fr]">
           <div>
@@ -302,9 +297,7 @@ export default function BrutalLandingPage() {
         </div>
       </BrutalSection>
 
-      {/* ═══════════════════════════════════════════
-          SECTION 9 — Credits & Attendance
-          ═══════════════════════════════════════════ */}
+      {/* 크레딧 섹션 */}
       <BrutalSection
         variant="inverse"
         className="overflow-hidden border-t-2 border-brutal-border"
@@ -332,9 +325,7 @@ export default function BrutalLandingPage() {
               className="mt-8 border-brutal-background text-brutal-background hover:bg-brutal-background hover:text-brutal-foreground"
               asChild
             >
-              <Link href="http://localhost:3000/credits/attendance">
-                출석체크하기 →
-              </Link>
+              <Link href="/credits/attendance">출석체크하기 →</Link>
             </BrutalButton>
           </div>
 
@@ -386,9 +377,7 @@ export default function BrutalLandingPage() {
         </div>
       </BrutalSection>
 
-      {/* ═══════════════════════════════════════════
-          SECTION 11 — Developer API
-          ═══════════════════════════════════════════ */}
+      {/* API콜 섹션 */}
       <BrutalSection
         className="border-t-2 border-brutal-border"
         id="developer-api"
@@ -438,9 +427,7 @@ console.log(result.choices[0].message.content);`}
         </div>
       </BrutalSection>
 
-      {/* ═══════════════════════════════════════════
-          SECTION 13 — Footer CTA
-          ═══════════════════════════════════════════ */}
+      {/* CTA */}
       <BrutalSection variant="inverse" className="overflow-hidden py-32">
         <BrutalRadialGlow />
 
@@ -449,16 +436,15 @@ console.log(result.choices[0].message.content);`}
           <div className="animate-ticker flex whitespace-nowrap">
             {Array(2)
               .fill([
-                "XYFLOW",
-                "NEXT.JS",
-                "REACT",
-                "TAILWIND",
-                "DRIZZLE",
-                "OPENAI",
-                "CLAUDE",
-                "GEMINI",
-                "POSTGRES",
-                "VERCEL",
+                "GEMMA-3-1B",
+                "GEMMA-3N-E4B",
+                "GEMMA-3-4B",
+                "GEMMA-3-27B",
+                "GPT-OSS-20B",
+                "GPT-OSS-120B",
+                "LLAMA-3.1-8B",
+                "LLAMA-4-SCOUT",
+                "LLAMA-4-MAVERICK",
               ])
               .flat()
               .map((tech, i) => (
@@ -481,7 +467,7 @@ console.log(result.choices[0].message.content);`}
             </span>
           </BrutalHeading>
           <p className="mx-auto mb-12 max-w-lg font-bold uppercase opacity-40">
-            지금 로그인하고 무료 크레딧을 받으세요.
+            지금 시작하고 무료 크레딧을 받으세요.
             <br /> 코딩없이 AI 에이전트를 만드세요.
           </p>
           <BrutalButton

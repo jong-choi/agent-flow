@@ -15,7 +15,7 @@
 
 ## 기본 규칙
 
-- Base URL: `${baseUrl}/api/v1/openai`
+- Base URL: `https://agentflow.jongchoi.com/api/v1/openai`
 - 인증:
   - 권장: `Authorization: Bearer <SERVICE_KEY>`
   - 호환: `X-CANVAS-SECRET: <SERVICE_KEY>`
@@ -33,16 +33,14 @@
 ```json
 {
   "model": "af-id-xxxxxxxxxxxxxxxx",
-  "messages": [
-    { "role": "user", "content": "강아지 키우는 법을 알려줘" }
-  ]
+  "messages": [{ "role": "user", "content": "강아지 키우는 법을 알려줘" }]
 }
 ```
 
 ### cURL 예시
 
 ```bash
-curl -X POST "${baseUrl}/api/v1/openai/chat/completions" \
+curl -X POST "https://agentflow.jongchoi.com/api/v1/openai/chat/completions" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer af-**********************" \
   -d '{
@@ -60,7 +58,7 @@ import OpenAI from "openai";
 
 const client = new OpenAI({
   apiKey: "af-**********************",
-  baseURL: `${baseUrl}/api/v1/openai`,
+  baseURL: `https://agentflow.jongchoi.com/api/v1/openai`,
 });
 
 const result = await client.chat.completions.create({
@@ -85,7 +83,7 @@ const result = await client.chat.completions.create({
 ### cURL 예시
 
 ```bash
-curl -X POST "${baseUrl}/api/v1/openai/responses" \
+curl -X POST "https://agentflow.jongchoi.com/api/v1/openai/responses" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer af-**********************" \
   -d '{
@@ -101,7 +99,7 @@ import OpenAI from "openai";
 
 const client = new OpenAI({
   apiKey: "af-**********************",
-  baseURL: `${baseUrl}/api/v1/openai`,
+  baseURL: `https://agentflow.jongchoi.com/api/v1/openai`,
 });
 
 const result = await client.responses.create({
@@ -153,4 +151,3 @@ OpenAI 스타일 에러 포맷을 사용합니다.
 
 - 서비스 키는 발급 시 1회만 노출됩니다.
 - 키 유출 시 `/developers`에서 즉시 비활성화 후 재발급하세요.
-

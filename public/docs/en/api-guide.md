@@ -27,9 +27,9 @@ The `/api/v1/chat` endpoint is a REST API that lets you **run your workflow from
 
 ### Parameters
 
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| message | string | Yes | User message (1~4000 chars) |
+| Field   | Type   | Required | Description                 |
+| ------- | ------ | -------- | --------------------------- |
+| message | string | Yes      | User message (1~4000 chars) |
 
 ## Response
 
@@ -87,7 +87,7 @@ In the snippets below, `baseUrl` refers to the `BASE_URL` env (e.g. `http://loca
 ### cURL
 
 ```bash
-curl -X POST "${baseUrl}/api/v1/chat" \
+curl -X POST "https://agentflow.jongchoi.com/api/v1/chat" \
   -H "Content-Type: application/json" \
   -H "X-CANVAS-SECRET: af-**********************" \
   -H "X-CANVAS-ID: af-id-*******************" \
@@ -99,16 +99,16 @@ curl -X POST "${baseUrl}/api/v1/chat" \
 ### JavaScript (fetch)
 
 ```js
-await fetch(`${baseUrl}/api/v1/chat`, {
+await fetch(`https://agentflow.jongchoi.com/api/v1/chat`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
     "X-CANVAS-SECRET": "af-**********************",
-    "X-CANVAS-ID": "af-id-*******************"
+    "X-CANVAS-ID": "af-id-*******************",
   },
   body: JSON.stringify({
-    message: "Search how to raise a puppy"
-  })
+    message: "Search how to raise a puppy",
+  }),
 });
 ```
 

@@ -15,7 +15,7 @@ You can call your workflow through an OpenAI-compatible interface via:
 
 ## Core Rules
 
-- Base URL: `${baseUrl}/api/v1/openai`
+- Base URL: `https://agentflow.jongchoi.com/api/v1/openai`
 - Auth:
   - Recommended: `Authorization: Bearer <SERVICE_KEY>`
   - Compatibility: `X-CANVAS-SECRET: <SERVICE_KEY>`
@@ -33,16 +33,14 @@ You can call your workflow through an OpenAI-compatible interface via:
 ```json
 {
   "model": "af-id-xxxxxxxxxxxxxxxx",
-  "messages": [
-    { "role": "user", "content": "How do I take care of a puppy?" }
-  ]
+  "messages": [{ "role": "user", "content": "How do I take care of a puppy?" }]
 }
 ```
 
 ### cURL example
 
 ```bash
-curl -X POST "${baseUrl}/api/v1/openai/chat/completions" \
+curl -X POST "https://agentflow.jongchoi.com/api/v1/openai/chat/completions" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer af-**********************" \
   -d '{
@@ -60,7 +58,7 @@ import OpenAI from "openai";
 
 const client = new OpenAI({
   apiKey: "af-**********************",
-  baseURL: `${baseUrl}/api/v1/openai`,
+  baseURL: `https://agentflow.jongchoi.com/api/v1/openai`,
 });
 
 const result = await client.chat.completions.create({
@@ -85,7 +83,7 @@ const result = await client.chat.completions.create({
 ### cURL example
 
 ```bash
-curl -X POST "${baseUrl}/api/v1/openai/responses" \
+curl -X POST "https://agentflow.jongchoi.com/api/v1/openai/responses" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer af-**********************" \
   -d '{
@@ -101,7 +99,7 @@ import OpenAI from "openai";
 
 const client = new OpenAI({
   apiKey: "af-**********************",
-  baseURL: `${baseUrl}/api/v1/openai`,
+  baseURL: `https://agentflow.jongchoi.com/api/v1/openai`,
 });
 
 const result = await client.responses.create({
@@ -153,4 +151,3 @@ Errors follow an OpenAI-style envelope:
 
 - Service keys are shown only once at issuance.
 - If leaked, revoke and re-issue from `/developers` immediately.
-
