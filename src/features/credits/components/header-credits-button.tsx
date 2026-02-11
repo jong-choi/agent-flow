@@ -7,18 +7,21 @@ export async function HeaderCreditsButton() {
   const balance = await getCreditBalance();
 
   return (
-    <div className="flex items-center rounded-lg border bg-muted p-1">
-      <Button
-        asChild
-        variant="ghost"
-        size="sm"
-        className="h-6 min-w-17 bg-background text-xs shadow-sm hover:bg-background"
+    <Button
+      asChild
+      variant="ghost"
+      size="sm"
+      className="h-7 min-w-18 text-xs"
+      title="현재 크레딧"
+    >
+      <Link
+        href="/credits"
+        aria-label="View credits"
+        className="flex items-center"
       >
-        <Link href="/credits" aria-label="View credits">
-          <Sparkle className="size-3 fill-current" />
-          <span>{balance}</span>
-        </Link>
-      </Button>
-    </div>
+        <Sparkle className="size-3 fill-current" />
+        <span>{balance}</span>
+      </Link>
+    </Button>
   );
 }

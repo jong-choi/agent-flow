@@ -18,6 +18,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { BrutalCI } from "@/components/main/ui/brutal-logo";
 import { SidebarContainer } from "@/components/sidebar-container";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -91,7 +92,10 @@ const HIDE_SIDEBAR_PATHS = new Set<string>(["/", "/login"]);
 
 export function SidebarNav() {
   return (
-    <aside className="sticky top-0 flex h-screen w-20 flex-col items-center gap-2 border-r border-border bg-card bg-gradient-to-br from-fuchsia-900 via-purple-900 to-indigo-900 py-6 dark:border-neutral-800 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-800">
+    <aside className="sticky top-0 flex h-screen w-20 flex-col items-center gap-2 bg-brutal-primary pb-6 text-brutal-primary-foreground dark:bg-neutral-800">
+      <div className="py-4">
+        <BrutalCI className="text-neutral-50" />
+      </div>
       <Suspense fallback={null}>
         <SidebarNavContent />
       </Suspense>
@@ -121,12 +125,7 @@ function SidebarNavContent() {
     <nav className="flex flex-1 flex-col items-center gap-2 space-y-1">
       {navigation.map((item, index) => {
         if (item.type === "Separator") {
-          return (
-            <Separator
-              key={"Separator" + index}
-              className="my-2 bg-neutral-50/50 dark:bg-neutral-200/50"
-            />
-          );
+          return <Separator key={"Separator" + index} className="my-2" />;
         }
 
         const isActive = pathname?.startsWith(item.href);

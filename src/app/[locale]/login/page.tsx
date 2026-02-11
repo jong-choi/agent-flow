@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { LogoIcon } from "@/components/logo";
+import { BrutalCI } from "@/components/main/ui/brutal-logo";
 import {
   Card,
   CardContent,
@@ -27,13 +27,8 @@ export default async function LoginPage({
               <div className="relative">
                 <div className="absolute inset-0 rounded-full bg-indigo-500/20 blur-2xl" />
                 <div className="relative transform transition-transform duration-500 hover:scale-110">
-                  <LogoIcon size="lg" />
+                  <BrutalCI />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-                  AgentFlow
-                </h1>
               </div>
             </div>
           </CardTitle>

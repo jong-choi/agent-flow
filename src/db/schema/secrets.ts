@@ -5,7 +5,7 @@ import { workflows } from "@/db/schema/workflows";
 /**
  * 사용자가 발급할 수 있는 서비스용 시크릿 키.
  * - 실제 키 문자열은 DB에 저장하지 않고(secretHash만 저장) 발급 시 1회만 노출한다.
- * - 조회 화면에서는 preview만 노출한다. (예: lc-4c********************)
+ * - 조회 화면에서는 preview만 노출한다. (예: af-4c********************)
  */
 export const userSecrets = pgTable("user_secrets", {
   id: uuid("id").defaultRandom().primaryKey(),

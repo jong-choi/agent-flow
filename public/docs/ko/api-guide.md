@@ -14,8 +14,8 @@
 - **메서드**: `POST`
 - **Content-Type**: `application/json`
 - **인증 헤더**
-  - `X-CANVAS-SECRET`: 서비스 키 (예: `lc-**********************`)
-  - `X-CANVAS-ID`: 워크플로우 ID (예: `lc-id-*******************`)
+  - `X-CANVAS-SECRET`: 서비스 키 (예: `af-**********************`)
+  - `X-CANVAS-ID`: 워크플로우 ID (예: `af-id-*******************`)
 
 ## 요청 형식
 
@@ -27,9 +27,9 @@
 
 ### 요청 파라미터
 
-| 파라미터 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| message | string | 필수 | 사용자가 전송하는 메시지 (1~4000자) |
+| 파라미터 | 타입   | 필수 | 설명                                |
+| -------- | ------ | ---- | ----------------------------------- |
+| message  | string | 필수 | 사용자가 전송하는 메시지 (1~4000자) |
 
 ## 응답 형식
 
@@ -39,7 +39,7 @@
 {
   "data": {
     "response": "AI 응답 문자열",
-    "canvasId": "lc-id-...",
+    "canvasId": "af-id-...",
     "workflowId": "워크플로우 UUID"
   }
 }
@@ -95,10 +95,10 @@
 ### cURL
 
 ```bash
-curl -X POST "${baseUrl}/api/v1/chat" \
+curl -X POST "https://agentflow.jongchoi.com/api/v1/chat" \
   -H "Content-Type: application/json" \
-  -H "X-CANVAS-SECRET: lc-**********************" \
-  -H "X-CANVAS-ID: lc-id-*******************" \
+  -H "X-CANVAS-SECRET: af-**********************" \
+  -H "X-CANVAS-ID: af-id-*******************" \
   -d '{
     "message": "강아지 키우는 법을 검색해줘"
   }'
@@ -107,16 +107,16 @@ curl -X POST "${baseUrl}/api/v1/chat" \
 ### JavaScript (fetch)
 
 ```js
-await fetch(`${baseUrl}/api/v1/chat`, {
+await fetch(`https://agentflow.jongchoi.com/api/v1/chat`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "X-CANVAS-SECRET": "lc-**********************",
-    "X-CANVAS-ID": "lc-id-*******************"
+    "X-CANVAS-SECRET": "af-**********************",
+    "X-CANVAS-ID": "af-id-*******************",
   },
   body: JSON.stringify({
-    message: "강아지 키우는 법을 검색해줘"
-  })
+    message: "강아지 키우는 법을 검색해줘",
+  }),
 });
 ```
 

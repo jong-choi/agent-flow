@@ -15,12 +15,12 @@ You can call your workflow through an OpenAI-compatible interface via:
 
 ## Core Rules
 
-- Base URL: `${baseUrl}/api/v1/openai`
+- Base URL: `https://agentflow.jongchoi.com/api/v1/openai`
 - Auth:
   - Recommended: `Authorization: Bearer <SERVICE_KEY>`
   - Compatibility: `X-CANVAS-SECRET: <SERVICE_KEY>`
 - Workflow identifier: `model = X-CANVAS-ID`
-  - Example: `"model": "lc-id-xxxxxxxxxxxxxxxx"`
+  - Example: `"model": "af-id-xxxxxxxxxxxxxxxx"`
 
 ## Supported Endpoints
 
@@ -32,21 +32,19 @@ You can call your workflow through an OpenAI-compatible interface via:
 
 ```json
 {
-  "model": "lc-id-xxxxxxxxxxxxxxxx",
-  "messages": [
-    { "role": "user", "content": "How do I take care of a puppy?" }
-  ]
+  "model": "af-id-xxxxxxxxxxxxxxxx",
+  "messages": [{ "role": "user", "content": "How do I take care of a puppy?" }]
 }
 ```
 
 ### cURL example
 
 ```bash
-curl -X POST "${baseUrl}/api/v1/openai/chat/completions" \
+curl -X POST "https://agentflow.jongchoi.com/api/v1/openai/chat/completions" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer lc-**********************" \
+  -H "Authorization: Bearer af-**********************" \
   -d '{
-    "model": "lc-id-*******************",
+    "model": "af-id-*******************",
     "messages": [
       { "role": "user", "content": "How do I take care of a puppy?" }
     ]
@@ -59,12 +57,12 @@ curl -X POST "${baseUrl}/api/v1/openai/chat/completions" \
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: "lc-**********************",
-  baseURL: `${baseUrl}/api/v1/openai`,
+  apiKey: "af-**********************",
+  baseURL: `https://agentflow.jongchoi.com/api/v1/openai`,
 });
 
 const result = await client.chat.completions.create({
-  model: "lc-id-*******************",
+  model: "af-id-*******************",
   messages: [{ role: "user", content: "How do I take care of a puppy?" }],
 });
 ```
@@ -77,7 +75,7 @@ const result = await client.chat.completions.create({
 
 ```json
 {
-  "model": "lc-id-xxxxxxxxxxxxxxxx",
+  "model": "af-id-xxxxxxxxxxxxxxxx",
   "input": "How do I take care of a puppy?"
 }
 ```
@@ -85,11 +83,11 @@ const result = await client.chat.completions.create({
 ### cURL example
 
 ```bash
-curl -X POST "${baseUrl}/api/v1/openai/responses" \
+curl -X POST "https://agentflow.jongchoi.com/api/v1/openai/responses" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer lc-**********************" \
+  -H "Authorization: Bearer af-**********************" \
   -d '{
-    "model": "lc-id-*******************",
+    "model": "af-id-*******************",
     "input": "How do I take care of a puppy?"
   }'
 ```
@@ -100,12 +98,12 @@ curl -X POST "${baseUrl}/api/v1/openai/responses" \
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: "lc-**********************",
-  baseURL: `${baseUrl}/api/v1/openai`,
+  apiKey: "af-**********************",
+  baseURL: `https://agentflow.jongchoi.com/api/v1/openai`,
 });
 
 const result = await client.responses.create({
-  model: "lc-id-*******************",
+  model: "af-id-*******************",
   input: "How do I take care of a puppy?",
 });
 ```
@@ -153,4 +151,3 @@ Errors follow an OpenAI-style envelope:
 
 - Service keys are shown only once at issuance.
 - If leaked, revoke and re-issue from `/developers` immediately.
-
