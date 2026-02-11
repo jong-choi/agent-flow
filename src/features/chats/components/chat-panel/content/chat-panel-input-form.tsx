@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useNodes } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
@@ -7,9 +8,11 @@ import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
 import { ChatStreamingStatus } from "@/features/chats/components/chat-panel/content/chat-streaming-status";
 import { useChatEvent } from "@/features/chats/hooks/use-chat-event";
 import { useChatStore } from "@/features/chats/store/chat-store";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function ChatPanelInputForm() {
   const isComposingRef = useRef<boolean>(false);
+  const t = useTranslations<AppMessageKeys>("Chat");
   const mode = useChatStore((s) => s.mode);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -43,11 +46,9 @@ export function ChatPanelInputForm() {
 
     try {
       await sendMessage(message);
-    } catch (error) {
+    } catch {
       setDraft((prev) => prev || message);
-      toast.error(
-        error instanceof Error ? error.message : "응답을 받을 수 없습니다.",
-      );
+      toast.error(t("toast.responseUnavailable"));
     } finally {
       requestAnimationFrame(() => {
         textareaRef.current?.focus();
@@ -77,7 +78,7 @@ export function ChatPanelInputForm() {
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="메시지를 입력하세요..."
+        placeholder={t("input.placeholder")}
         className="h-24"
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}
@@ -91,7 +92,7 @@ export function ChatPanelInputForm() {
             className="self-end-safe"
             disabled={!isSendingAvailable}
           >
-            전송
+            {t("action.send")}
           </Button>
           {mode === "temporary" ? (
             <TemporaryWorkflowCreditEstimate />
@@ -105,6 +106,7 @@ export function ChatPanelInputForm() {
 }
 
 function TemporaryWorkflowCreditEstimate() {
+  const t = useTranslations<AppMessageKeys>("Chat");
   const nodes = useNodes<FlowCanvasNode>();
 
   const { hasChatNode, estimatedCredits } = useMemo(() => {
@@ -131,18 +133,19 @@ function TemporaryWorkflowCreditEstimate() {
 
   return (
     <span className="text-end text-[10px] text-muted-foreground">
-      {estimatedCredits} 크레딧
+      {t("input.credits", { count: estimatedCredits.toLocaleString() })}
     </span>
   );
 }
 
 function PersistentWorkflowCreditEstimate() {
   const estimatedCredits = useChatStore((s) => s.estimatedCredits);
+  const t = useTranslations<AppMessageKeys>("Chat");
   if (estimatedCredits == null) return null;
 
   return (
     <span className="text-end text-[10px] text-muted-foreground">
-      {estimatedCredits} 크레딧
+      {t("input.credits", { count: estimatedCredits.toLocaleString() })}
     </span>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { softDeleteChat } from "@/features/chats/server/actions";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type ChatSidebarDeleteDialogProps = {
   chatId: string;
@@ -28,6 +30,7 @@ export function ChatSidebarDeleteDialog({
 }: ChatSidebarDeleteDialogProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const t = useTranslations<AppMessageKeys>("Chat");
 
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -36,14 +39,12 @@ export function ChatSidebarDeleteDialog({
 
     try {
       await softDeleteChat({ chatId });
-      toast.success("채팅을 삭제했어요.");
+      toast.success(t("toast.deleteSuccess"));
       if (isActive) {
         router.push("/chat");
       }
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "채팅 삭제에 실패했습니다.";
-      toast.error(message);
+    } catch {
+      toast.error(t("toast.deleteFailed"));
     } finally {
       setIsDeleting(false);
     }
@@ -52,17 +53,21 @@ export function ChatSidebarDeleteDialog({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <DropdownMenuItem variant="destructive">삭제</DropdownMenuItem>
+        <DropdownMenuItem variant="destructive">
+          {t("action.delete")}
+        </DropdownMenuItem>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>채팅을 삭제할까요?</AlertDialogTitle>
+          <AlertDialogTitle>{t("dialog.chatDeleteTitle")}</AlertDialogTitle>
           <AlertDialogDescription>
-            삭제한 채팅은 복구할 수 없습니다.
+            {t("dialog.chatDeleteDescription")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>
+            {t("action.cancel")}
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
               void handleDelete();
@@ -70,7 +75,7 @@ export function ChatSidebarDeleteDialog({
             disabled={isDeleting}
             className="bg-destructive text-white hover:bg-destructive/90"
           >
-            삭제
+            {t("action.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

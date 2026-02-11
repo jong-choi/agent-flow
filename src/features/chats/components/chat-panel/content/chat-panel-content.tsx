@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessages } from "@/features/chats/components/chat-panel/content/chat-messages/chat-messages";
 import { ChatNoMessage } from "@/features/chats/components/chat-panel/content/chat-messages/chat-no-message";
 import { ChatStreamingMessages } from "@/features/chats/components/chat-panel/content/chat-messages/chat-streaming-messages";
 import { ChatPanelInputForm } from "@/features/chats/components/chat-panel/content/chat-panel-input-form";
 import { useChatStore } from "@/features/chats/store/chat-store";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 const SCROLL_OFFSET = 100;
 export const BOTTOM_PADDING = 30;
@@ -14,6 +16,7 @@ export const BOTTOM_PADDING = 30;
 const NEAR_BOTTOM = 80; // 바닥 근처 판정 px
 
 export function ChatPanelContent() {
+  const t = useTranslations<AppMessageKeys>("Chat");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isAutoScrollRef = useRef(true);
 
@@ -93,7 +96,7 @@ export function ChatPanelContent() {
           <ChatStreamingMessages />
         </ScrollArea>
       )}
-      {!isMessage && <ChatNoMessage />}
+      {!isMessage && <ChatNoMessage message={t("input.noMessage")} />}
       <div className="shrink-0">
         <ChatPanelInputForm />
       </div>

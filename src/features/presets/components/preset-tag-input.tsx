@@ -8,13 +8,14 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslations } from "next-intl";
 import { PlusIcon, XIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useDebounce } from "@/hooks/use-debounce";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-const DEFAULT_DESCRIPTION = "검색해서 추가하거나 Enter로 직접 입력하세요.";
 const MAX_SUGGESTIONS = 8;
 
 const normalizeTag = (value: string) => value.trim().replace(/\s+/g, " ");
@@ -31,10 +32,15 @@ type PresetTagInputProps = {
 export function PresetTagInput({
   name = "tags",
   id = "preset-tags",
-  label = "태그",
-  description = DEFAULT_DESCRIPTION,
-  placeholder = "태그 검색 또는 입력",
+  label,
+  description,
+  placeholder,
 }: PresetTagInputProps) {
+  const t = useTranslations<AppMessageKeys>("Presets");
+  const resolvedLabel = label ?? t("tagInput.label");
+  const resolvedDescription = description ?? t("tagInput.defaultDescription");
+  const resolvedPlaceholder = placeholder ?? t("tagInput.placeholder");
+
   const [tags, setTags] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -64,7 +70,7 @@ export function PresetTagInput({
       );
 
       if (!response.ok) {
-        throw new Error("태그 검색 실패");
+        throw new Error("TAG_SEARCH_FAILED");
       }
 
       const payload = (await response.json()) as { tags?: string[] };
@@ -169,11 +175,11 @@ export function PresetTagInput({
     <div className="grid gap-2">
       <div className="flex items-center justify-between">
         <label htmlFor={id} className="text-sm font-medium">
-          {label}
+          {resolvedLabel}
         </label>
         {tags.length > 0 ? (
           <span className="text-xs text-muted-foreground">
-            {tags.length}개 선택됨
+            {t("tagInput.selectedCount", { count: tags.length })}
           </span>
         ) : null}
       </div>
@@ -185,7 +191,7 @@ export function PresetTagInput({
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           aria-expanded={shouldShowList}
           aria-controls={`${id}-suggestions`}
           autoComplete="off"
@@ -200,7 +206,7 @@ export function PresetTagInput({
               {isLoading ? (
                 <div className="flex items-center gap-2 px-3 py-2 text-muted-foreground">
                   <Spinner className="size-3" />
-                  검색 중...
+                  {t("tagInput.loading")}
                 </div>
               ) : null}
               {showCreateOption ? (
@@ -213,7 +219,7 @@ export function PresetTagInput({
                   onClick={() => addTag(normalizedInput)}
                 >
                   <PlusIcon className="size-3" />
-                  <span>추가: {normalizedInput}</span>
+                  <span>{t("tagInput.addOption", { tag: normalizedInput })}</span>
                 </button>
               ) : null}
               {visibleSuggestions.map((tag) => (
@@ -233,15 +239,15 @@ export function PresetTagInput({
               !showCreateOption &&
               visibleSuggestions.length === 0 ? (
                 <div className="px-3 py-2 text-xs text-muted-foreground">
-                  검색 결과가 없습니다.
+                  {t("tagInput.noResults")}
                 </div>
               ) : null}
             </div>
           </div>
         ) : null}
       </div>
-      {description ? (
-        <p className="text-xs text-muted-foreground">{description}</p>
+      {resolvedDescription ? (
+        <p className="text-xs text-muted-foreground">{resolvedDescription}</p>
       ) : null}
       {tags.length > 0 ? (
         <div className="flex flex-wrap gap-2">
@@ -254,7 +260,7 @@ export function PresetTagInput({
                 className="rounded-full p-0.5 transition hover:bg-muted"
               >
                 <XIcon className="size-3" />
-                <span className="sr-only">태그 삭제</span>
+                <span className="sr-only">{t("tagInput.removeTagSrOnly")}</span>
               </button>
             </Badge>
           ))}

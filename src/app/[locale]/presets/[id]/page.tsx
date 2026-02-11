@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { PresetChatExampleSection } from "@/app/[locale]/presets/[id]/_components/preset-chat-example-section";
 import { ContentMarkdown } from "@/components/markdown/content-markdown";
@@ -16,13 +17,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserId } from "@/features/auth/server/queries";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
+import { resolvePresetCategoryKey } from "@/features/presets/constants/category-options";
 import { PresetDetailRightPanel } from "@/features/presets/components/preset-detail-right-panel";
 import { getPresetDetail } from "@/features/presets/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale, resolveMetadataTitle } from "@/lib/metadata";
 import { formatYMD } from "@/lib/utils";
 
-const formatPrice = (price: number) =>
-  price === 0 ? "무료" : `${price} 크레딧`;
+const formatPrice = (
+  t: Awaited<ReturnType<typeof getTranslations<AppMessageKeys>>>,
+  price: number,
+) => (price === 0 ? t("common.free") : t("common.priceCredits", { count: price }));
 
 const formatDate = (value: Date | string | null | undefined) =>
   formatYMD(value);
@@ -32,12 +37,28 @@ const presetFallbackTitles = {
   en: "Presets",
 } as const;
 
+const resolveCategoryLabel = (
+  t: Awaited<ReturnType<typeof getTranslations<AppMessageKeys>>>,
+  category: string | null | undefined,
+) => {
+  if (!category) {
+    return t("common.uncategorized");
+  }
+
+  const key = resolvePresetCategoryKey(category);
+  return key ? t(`categories.${key}`) : category;
+};
+
 export async function generateMetadata({
   params,
 }: PageProps<"/[locale]/presets/[id]">): Promise<Metadata> {
   const { locale: requestedLocale, id } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
-  const fallbackTitle = presetFallbackTitles[locale];
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
+  const fallbackTitle = t("meta.detailFallbackTitle");
 
   try {
     const presetDetail = await getPresetDetail(id);
@@ -69,6 +90,7 @@ async function PresetDetailContent({
 }: {
   paramsPromise: PageProps<"/[locale]/presets/[id]">["params"];
 }) {
+  const t = await getTranslations<AppMessageKeys>("Presets");
   const viewerId = (await getUserId({ throwOnError: false })) || undefined;
   const { id } = await paramsPromise;
   const presetDetail = await getPresetDetail(id);
@@ -94,28 +116,36 @@ async function PresetDetailContent({
             <div className="space-y-3">
               {isOwner ? (
                 <Button variant="outline" asChild>
-                  <Link href="/presets/purchased">내 프리셋</Link>
+                  <Link href="/presets/purchased">{t("detailPage.myPresets")}</Link>
                 </Button>
               ) : (
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/presets">마켓으로</Link>
+                  <Link href="/presets">{t("detailPage.backToMarket")}</Link>
                 </Button>
               )}
 
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">
-                  {preset.category ?? "미분류"} 프리셋
+                  {t("detailPage.categoryPreset", {
+                    category: resolveCategoryLabel(t, preset.category),
+                  })}
                 </p>
                 <h1 className="text-2xl font-semibold">{preset.title}</h1>
                 <p className="text-sm text-muted-foreground">
-                  {preset.summary ?? "설명이 없습니다."}
+                  {preset.summary ?? t("common.noDescription")}
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                <span>구매 {preset.purchaseCount}</span>
-                <span>업데이트 {formatDate(preset.updatedAt)}</span>
+                <span>
+                  {t("detailPage.purchaseCount", {
+                    count: preset.purchaseCount ?? 0,
+                  })}
+                </span>
+                <span>
+                  {t("detailPage.updatedAt", { date: formatDate(preset.updatedAt) })}
+                </span>
                 {workflow?.title ? (
-                  <span>워크플로우 {workflow.title}</span>
+                  <span>{t("detailPage.workflowLabel", { title: workflow.title })}</span>
                 ) : null}
               </div>
             </div>
@@ -123,15 +153,13 @@ async function PresetDetailContent({
           <div className="flex flex-col gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>미리보기</CardTitle>
-                <CardDescription>
-                  캔버스에서 실행 흐름을 확인할 수 있습니다.
-                </CardDescription>
+                <CardTitle>{t("detailPage.previewTitle")}</CardTitle>
+                <CardDescription>{t("detailPage.previewDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {nodes.length === 0 ? (
                   <div className="flex aspect-video items-center justify-center rounded-lg border bg-background/70 text-sm text-muted-foreground">
-                    캔버스 미리보기 준비 중
+                    {t("detailPage.previewPending")}
                   </div>
                 ) : (
                   <CanvasPreview nodes={nodes} edges={edges} />
@@ -143,24 +171,28 @@ async function PresetDetailContent({
 
             <Card>
               <CardHeader>
-                <CardTitle>프리셋 소개</CardTitle>
-                <CardDescription>주요 특징과 구성 요소</CardDescription>
+                <CardTitle>{t("detailPage.introTitle")}</CardTitle>
+                <CardDescription>{t("detailPage.introDescription")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="min-h-32 rounded-lg border bg-accent/50 p-4 text-sm leading-relaxed">
                   <ContentMarkdown>
-                    {preset.description ?? "설명이 없습니다."}
+                    {preset.description ?? t("common.noDescription")}
                   </ContentMarkdown>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-lg border bg-background/70 p-3">
-                    <p className="text-sm font-medium">카테고리</p>
+                    <p className="text-sm font-medium">
+                      {t("detailPage.infoCategoryLabel")}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {preset.category ?? "미분류"}
+                      {resolveCategoryLabel(t, preset.category)}
                     </p>
                   </div>
                   <div className="rounded-lg border bg-background/70 p-3">
-                    <p className="text-sm font-medium">업데이트</p>
+                    <p className="text-sm font-medium">
+                      {t("detailPage.infoUpdatedAtLabel")}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {formatDate(preset.updatedAt)}
                     </p>
@@ -171,15 +203,13 @@ async function PresetDetailContent({
 
             <Card>
               <CardHeader>
-                <CardTitle>워크플로우 구성</CardTitle>
-                <CardDescription>
-                  그래프에 포함된 노드를 확인합니다.
-                </CardDescription>
+                <CardTitle>{t("detailPage.workflowConfigTitle")}</CardTitle>
+                <CardDescription>{t("detailPage.workflowConfigDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {nodes.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    노드가 아직 없습니다.
+                    {t("detailPage.noNodes")}
                   </p>
                 ) : (
                   <div className="scrollbar-slim max-h-80 space-y-3 overflow-auto pr-2">
@@ -191,7 +221,7 @@ async function PresetDetailContent({
                         <div className="min-w-0 space-y-1">
                           <p className="text-sm font-medium">{node.label}</p>
                           <p className="text-xs text-muted-foreground">
-                            {node.description ?? "설명이 없습니다."}
+                            {node.description ?? t("common.noDescription")}
                           </p>
                         </div>
                         <span className="shrink-0 text-xs text-muted-foreground">
@@ -206,15 +236,13 @@ async function PresetDetailContent({
 
             <Card>
               <CardHeader>
-                <CardTitle>사용된 프리셋</CardTitle>
-                <CardDescription>
-                  이 프리셋에 포함된(참조된) 프리셋 목록입니다.
-                </CardDescription>
+                <CardTitle>{t("detailPage.referencedTitle")}</CardTitle>
+                <CardDescription>{t("detailPage.referencedDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {referencedPresets.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    참조된 프리셋이 없습니다.
+                    {t("detailPage.noReferenced")}
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -230,12 +258,14 @@ async function PresetDetailContent({
                           </p>
                           {usedPreset.ownerDisplayName ? (
                             <p className="truncate text-xs text-muted-foreground">
-                              제작자 {usedPreset.ownerDisplayName}
+                              {t("detailPage.creatorLabel", {
+                                name: usedPreset.ownerDisplayName,
+                              })}
                             </p>
                           ) : null}
                         </div>
                         <span className="shrink-0 text-sm font-semibold">
-                          {formatPrice(usedPreset.price)}
+                          {formatPrice(t, usedPreset.price)}
                         </span>
                       </Link>
                     ))}

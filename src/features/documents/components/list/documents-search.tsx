@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { searchDocumentsByTitleAction } from "@/features/documents/server/actions";
 import { useDebounce } from "@/hooks/use-debounce";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type DocumentSuggestion = {
   id: string;
@@ -25,6 +27,7 @@ type DocumentSuggestion = {
 const MAX_SUGGESTIONS = 6;
 
 export function DocumentsSearch() {
+  const t = useTranslations<AppMessageKeys>("Docs");
   const router = useRouter();
   const searchParams = useSearchParams();
   const appliedQuery = searchParams.get("q") ?? "";
@@ -143,13 +146,13 @@ export function DocumentsSearch() {
             }}
             onFocus={handleFocus}
             onBlur={handleBlur}
-            placeholder="문서 제목으로 검색"
+            placeholder={t("search.placeholder")}
             className="pl-9"
             autoComplete="off"
           />
         </div>
         <Button type="submit" variant="secondary">
-          검색
+          {t("search.submit")}
         </Button>
       </div>
       {isSuggestOpen ? (
@@ -158,12 +161,12 @@ export function DocumentsSearch() {
             {isLoading ? (
               <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
                 <Spinner className="size-3" />
-                검색 중...
+                {t("search.loading")}
               </div>
             ) : null}
             {!isLoading && suggestions.length === 0 ? (
               <div className="px-4 py-3 text-sm text-muted-foreground">
-                검색 결과가 없습니다.
+                {t("search.noResults")}
               </div>
             ) : null}
             {suggestions.map((doc) => (

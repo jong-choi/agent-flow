@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import {
   PageContainer,
   PageDescription,
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorkflowApiList } from "@/features/developers/components/apis/workflow-api-list";
 import { getOwnedWorkflows } from "@/features/workflows/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -18,13 +20,24 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/developers/apis">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Developers",
+  });
 
   return {
-    title: locale === "ko" ? "워크플로우 API" : "Workflow API",
+    title: t("meta.workflowApiTitle"),
   };
 }
 
-export default function DevelopersApisPage() {
+export default async function DevelopersApisPage({
+  params,
+}: PageProps<"/[locale]/developers/apis">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Developers",
+  });
   const baseUrl = process.env.BASE_URL || "";
 
   return (
@@ -32,14 +45,15 @@ export default function DevelopersApisPage() {
       <PageStack>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
-            <PageHeading>워크플로우 API</PageHeading>
+            <PageHeading>{t("apisPage.heading")}</PageHeading>
             <PageDescription>
-              워크플로우별 <code>X-CANVAS-ID</code>를 발급하고 호출 코드를
-              복사합니다.
+              {t.rich("apisPage.description", {
+                code: (chunks) => <code>{chunks}</code>,
+              })}
             </PageDescription>
           </div>
           <Button asChild variant="secondary">
-            <Link href="/developers">서비스 키 관리</Link>
+            <Link href="/developers">{t("apisPage.serviceKeysButton")}</Link>
           </Button>
         </div>
 

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { clientStreamEventSchema } from "@/app/api/chat/_types/chat-events";
 import { type NodeType } from "@/features/canvas/constants/node-types";
 import { updateChatTitleIfMissing } from "@/features/chats/server/actions";
 import { useChatStore } from "@/features/chats/store/chat-store";
 import { createHumanMessage } from "@/features/chats/utils/chat-message";
 import { updateCreditTagsAction } from "@/features/credits/server/actions";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 const TRACKED_RUNNING_NODE_TYPES = new Set<NodeType>([
   "searchNode",
@@ -18,6 +20,7 @@ const shouldTrackRunningNodeType = (type: NodeType) => {
 };
 
 export function useChatEvent() {
+  const t = useTranslations<AppMessageKeys>("Chat");
   const eventSourceRef = useRef<EventSource | null>(null);
   const searchParams = useSearchParams();
   const searchThreadId = searchParams.get("thread_id");
@@ -166,7 +169,9 @@ export function useChatEvent() {
 
       if (!targetId) {
         throw new Error(
-          mode === "persistent" ? "chatId가 없습니다." : "threadId가 없습니다.",
+          mode === "persistent"
+            ? t("errors.missingChatId")
+            : t("errors.missingThreadId"),
         );
       }
 
@@ -179,11 +184,7 @@ export function useChatEvent() {
       const payload = await response.json().catch(() => null);
 
       if (!response.ok) {
-        const message =
-          typeof payload?.error === "string"
-            ? payload.error
-            : "응답을 받을 수 없습니다.";
-        throw new Error(message);
+        throw new Error(t("errors.responseUnavailable"));
       }
 
       if (mode === "persistent") {

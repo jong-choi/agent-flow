@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { PresetsFilter } from "@/app/[locale]/presets/_components/presets-filter";
 import { PresetsList } from "@/app/[locale]/presets/_components/presets-list";
 import { PresetsPagination } from "@/app/[locale]/presets/_components/presets-pagination";
@@ -27,6 +28,7 @@ import {
   getPurchasedPresets,
   getPurchasedPresetsSummary,
 } from "@/features/presets/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 const PAGE_SIZE = 50;
@@ -36,9 +38,13 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/presets/purchased">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
 
   return {
-    title: locale === "ko" ? "내 프리셋" : "My Presets",
+    title: t("meta.libraryTitle"),
   };
 }
 
@@ -58,9 +64,16 @@ function resolvePage(value: string | string[] | undefined) {
   return Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
 }
 
-export default function PurchasedPresetsPage({
+export default async function PurchasedPresetsPage({
+  params,
   searchParams,
 }: PageProps<"/[locale]/presets/purchased">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
+
   return (
     <PageContainer
       RightPanel={
@@ -72,17 +85,17 @@ export default function PurchasedPresetsPage({
       <div className="flex min-h-0 flex-1 flex-col gap-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <PageHeader>
-            <PageHeading>내 프리셋</PageHeading>
-            <PageDescription>
-              생성하였거나 구매한 프리셋 목록입니다.
-            </PageDescription>
+            <PageHeading>{t("purchasedPage.heading")}</PageHeading>
+            <PageDescription>{t("purchasedPage.description")}</PageDescription>
           </PageHeader>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" asChild>
-              <Link href="/presets/new">내 프리셋 만들기</Link>
+              <Link href="/presets/new">{t("purchasedPage.createPreset")}</Link>
             </Button>
             <Button asChild>
-              <Link href="/workflows/canvas">캔버스 열기</Link>
+              <Link href="/workflows/canvas">
+                {t("purchasedPage.openCanvas")}
+              </Link>
             </Button>
           </div>
         </div>
@@ -99,6 +112,7 @@ async function PurchasedPresetsContent({
 }: {
   searchParamsPromise: Promise<PresetsLibrarySearchParams> | undefined;
 }) {
+  const t = await getTranslations<AppMessageKeys>("Presets");
   const resolvedSearchParams = await searchParamsPromise;
   const selectedCategory = resolveParam(resolvedSearchParams?.category, "all");
   const selectedSort = resolveParam(resolvedSearchParams?.sort, "latest");
@@ -158,34 +172,39 @@ async function PurchasedPresetsContent({
       <Card className="py-4">
         <CardContent className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-sm font-medium">내 프리셋 라이브러리</p>
+            <p className="text-sm font-medium">{t("librarySummary.title")}</p>
             <p className="text-sm text-muted-foreground">
-              전체 {totalPresetsCount}개 · 만든 {createdCount}개 · 구매{" "}
-              {purchasedCount}개
+              {t("librarySummary.stats", {
+                total: totalPresetsCount,
+                created: createdCount,
+                purchased: purchasedCount,
+              })}
             </p>
           </div>
           <Button variant="secondary" size="sm" asChild>
-            <Link href="/presets">프리셋 마켓</Link>
+            <Link href="/presets">{t("librarySummary.marketButton")}</Link>
           </Button>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">내가 만든 프리셋</CardTitle>
+          <CardTitle className="text-base">{t("ownedSection.title")}</CardTitle>
         </CardHeader>
         <CardContent>
           {ownedPresets.length === 0 ? (
             <Card className="border-dashed">
               <CardHeader>
-                <CardTitle>아직 만든 프리셋이 없습니다</CardTitle>
+                <CardTitle>{t("ownedSection.emptyTitle")}</CardTitle>
                 <CardDescription>
-                  캔버스에서 새 프리셋을 만들고 저장해 보세요.
+                  {t("ownedSection.emptyDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button variant="secondary" asChild>
-                  <Link href="/workflows/canvas">캔버스에서 만들기</Link>
+                  <Link href="/workflows/canvas">
+                    {t("ownedSection.createFromCanvas")}
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
@@ -200,34 +219,38 @@ async function PurchasedPresetsContent({
       </Card>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          구매한 프리셋 {purchasedPageResult.totalCount}개
+          {t("purchasedSection.totalCount", {
+            count: purchasedPageResult.totalCount,
+          })}
         </p>
       </div>
       {!hasPurchasedPresets ? (
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>구매한 프리셋이 없습니다</CardTitle>
+            <CardTitle>{t("purchasedSection.emptyTitle")}</CardTitle>
             <CardDescription>
-              프리셋 마켓에서 새로운 프리셋을 둘러보세요.
+              {t("purchasedSection.emptyDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="secondary" asChild>
-              <Link href="/presets">프리셋 마켓 보기</Link>
+              <Link href="/presets">{t("purchasedSection.viewMarket")}</Link>
             </Button>
           </CardContent>
         </Card>
       ) : purchasedPageResult.totalCount === 0 ? (
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>필터 결과가 없습니다</CardTitle>
+            <CardTitle>{t("purchasedSection.filteredEmptyTitle")}</CardTitle>
             <CardDescription>
-              선택한 조건에 맞는 구매 프리셋이 없습니다. 필터를 변경해 주세요.
+              {t("purchasedSection.filteredEmptyDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="secondary" asChild>
-              <Link href="/presets/purchased">필터 초기화</Link>
+              <Link href="/presets/purchased">
+                {t("purchasedSection.resetFilter")}
+              </Link>
             </Button>
           </CardContent>
         </Card>

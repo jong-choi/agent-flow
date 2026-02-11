@@ -2,6 +2,7 @@ import { type ReactNode, Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import {
   PageContainer,
   PageDescription,
@@ -20,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiGuideMarkdown } from "@/features/developers/components/api-guide-markdown";
 import { SecretKeysManager } from "@/features/developers/components/secret-keys-manager";
 import { getUserSecrets } from "@/features/developers/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -27,9 +29,13 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/developers">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Developers",
+  });
 
   return {
-    title: locale === "ko" ? "개발자 API" : "Developer API",
+    title: t("meta.developerApiTitle"),
   };
 }
 
@@ -37,30 +43,35 @@ export default async function DevelopersPage({
   params,
 }: PageProps<"/[locale]/developers">) {
   const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Developers",
+  });
 
   return (
     <PageContainer>
       <PageStack>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <PageHeader>
-            <PageHeading>Developer API</PageHeading>
-            <PageDescription>
-              서비스 키를 발급하고 워크플로우를 외부에서 실행할 수 있습니다.
-            </PageDescription>
+            <PageHeading>{t("indexPage.heading")}</PageHeading>
+            <PageDescription>{t("indexPage.description")}</PageDescription>
           </PageHeader>
           <Button asChild variant="secondary">
-            <Link href="/developers/apis">워크플로우 API</Link>
+            <Link href="/developers/apis">
+              {t("indexPage.workflowApiButton")}
+            </Link>
           </Button>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>서비스 키</CardTitle>
+            <CardTitle>{t("indexPage.secretCardTitle")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              API 호출 시 <code>X-CANVAS-SECRET</code> 헤더로 전달합니다. 키는
-              발급 시 1회만 노출됩니다.
+              {t.rich("indexPage.secretCardDescription", {
+                code: (chunks) => <code>{chunks}</code>,
+              })}
             </p>
             <Suspense fallback={<SecretKeysManagerFallback />}>
               <SecretKeysManagerServer />
@@ -70,12 +81,12 @@ export default async function DevelopersPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Developer API 사용 가이드</CardTitle>
+            <CardTitle>{t("indexPage.guidesCardTitle")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <GuideCollapsible
-              title="OpenAI 호환 가이드"
-              description="OpenAI SDK/클라이언트에서 바로 호출하는 방법"
+              title={t("indexPage.openAiGuideTitle")}
+              description={t("indexPage.openAiGuideDescription")}
             >
               <Suspense fallback={<ApiGuideMarkdownFallback />}>
                 <ApiGuideMarkdown
@@ -86,8 +97,8 @@ export default async function DevelopersPage({
             </GuideCollapsible>
 
             <GuideCollapsible
-              title="AgentFlow API 가이드"
-              description="/api/v1/chat (X-CANVAS-SECRET + X-CANVAS-ID)"
+              title={t("indexPage.agentflowGuideTitle")}
+              description={t("indexPage.agentflowGuideDescription")}
             >
               <Suspense fallback={<ApiGuideMarkdownFallback />}>
                 <ApiGuideMarkdown locale={locale} docName="api-guide" />
@@ -145,7 +156,10 @@ function GuideCollapsible({
   children: ReactNode;
 }) {
   return (
-    <Collapsible className="rounded-lg border border-border/60" defaultOpen={false}>
+    <Collapsible
+      className="rounded-lg border border-border/60"
+      defaultOpen={false}
+    >
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/40 [&[data-state=open]>svg]:rotate-180">
         <div className="space-y-0.5">
           <p className="text-sm font-semibold text-foreground">{title}</p>

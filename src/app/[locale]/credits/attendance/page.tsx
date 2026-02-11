@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import {
   PageContainer,
   PageHeader,
@@ -10,6 +11,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AttendanceClient } from "@/features/credits/components/attendance/attendance-client";
 import { getCreditAttendanceSummary } from "@/features/credits/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -17,15 +19,29 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/credits/attendance">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Credits",
+  });
 
   return {
-    title: locale === "ko" ? "출석 체크" : "Attendance",
+    title: t("meta.attendanceTitle"),
   };
 }
 
-export default function AttendancePage() {
+export default async function AttendancePage({
+  params,
+}: PageProps<"/[locale]/credits/attendance">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Credits",
+  });
+
   return (
-    <Suspense fallback={<AttendancePageFallback />}>
+    <Suspense
+      fallback={<AttendancePageFallback heading={t("attendance.heading")} />}
+    >
       <AttendancePageContent />
     </Suspense>
   );
@@ -37,12 +53,12 @@ async function AttendancePageContent() {
   return <AttendanceClient summary={summary} />;
 }
 
-function AttendancePageFallback() {
+function AttendancePageFallback({ heading }: { heading: string }) {
   return (
     <PageContainer>
       <PageStack>
         <PageHeader>
-          <PageHeading>출석 체크</PageHeading>
+          <PageHeading>{heading}</PageHeading>
           <div className="text-sm text-muted-foreground">
             <Skeleton className="h-4 w-56" />
           </div>

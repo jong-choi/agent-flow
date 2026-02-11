@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import {
   PageContainer,
   PageContentTitle,
@@ -16,11 +17,10 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TransactionItem } from "@/features/credits/components/transaction-item";
 import {
-  type CreditAttendanceStatus,
-  type CreditSummary,
   getCreditSummary,
   getDailyAttendanceStatus,
 } from "@/features/credits/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -28,24 +28,32 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/credits">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Credits",
+  });
 
   return {
-    title: locale === "ko" ? "크레딧" : "Credits",
+    title: t("meta.creditsTitle"),
   };
 }
 
-export default function CreditsPage() {
+export default async function CreditsPage({
+  params,
+}: PageProps<"/[locale]/credits">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Credits",
+  });
+
   return (
     <PageContainer>
       <PageStack>
         <PageHeader>
-          <PageHeading>크레딧</PageHeading>
-          <PageDescription>
-            출석체크 이벤트를 통해 크레딧을 수집할 수 있습니다.
-          </PageDescription>
-          <PageDescription>
-            크레딧은 프리셋을 구매하거나 워크플로우를 실행할 때 사용됩니다.
-          </PageDescription>
+          <PageHeading>{t("page.heading")}</PageHeading>
+          <PageDescription>{t("page.descriptionLine1")}</PageDescription>
+          <PageDescription>{t("page.descriptionLine2")}</PageDescription>
         </PageHeader>
         <Suspense fallback={<CreditsSummaryFallback />}>
           <CreditsSummaryContent />
@@ -56,31 +64,20 @@ export default function CreditsPage() {
 }
 
 async function CreditsSummaryContent() {
+  const t = await getTranslations<AppMessageKeys>("Credits");
   const [summary, attendanceStatus] = await Promise.all([
     getCreditSummary(),
     getDailyAttendanceStatus(),
   ]);
 
-  return (
-    <CreditsSummaryView summary={summary} attendanceStatus={attendanceStatus} />
-  );
-}
-
-function CreditsSummaryView({
-  summary,
-  attendanceStatus,
-}: {
-  summary: CreditSummary;
-  attendanceStatus: CreditAttendanceStatus;
-}) {
-  const CREDIT_STATS = [
+  const creditStats = [
     {
-      label: "이번 달 획득",
+      label: t("summary.monthlyEarned"),
       value: `+${summary.monthlyEarned.toLocaleString()}`,
       color: "text-chart-2",
     },
     {
-      label: "이번 달 사용",
+      label: t("summary.monthlySpent"),
       value: `-${summary.monthlySpent.toLocaleString()}`,
       color: "text-chart-1",
     },
@@ -90,15 +87,15 @@ function CreditsSummaryView({
     <>
       <div className="flex flex-col gap-6">
         <div>
-          <PageContentTitle>크레딧 잔액</PageContentTitle>
+          <PageContentTitle>{t("summary.balance")}</PageContentTitle>
           <div className="text-4xl font-extralight tracking-tighter">
             {summary.balance.toLocaleString()}
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {CREDIT_STATS.map((stat) => (
-            <div key={stat.value}>
+          {creditStats.map((stat) => (
+            <div key={stat.label}>
               <PageContentTitle className="text-sm">
                 {stat.label}
               </PageContentTitle>
@@ -106,7 +103,7 @@ function CreditsSummaryView({
                 <div
                   className={`text-2xl font-extralight tracking-tighter ${stat.color}`}
                 >
-                  {stat.value.toLocaleString()}
+                  {stat.value}
                 </div>
               </div>
             </div>
@@ -117,18 +114,22 @@ function CreditsSummaryView({
       <Card className="py-0 shadow-none">
         <div className="flex items-center justify-between rounded-lg p-4 transition-colors">
           <div>
-            <div className="font-medium">출석 체크</div>
+            <div className="font-medium">{t("summary.attendanceTitle")}</div>
             <div className="text-sm text-muted-foreground">
-              매일 {attendanceStatus.dailyReward.toLocaleString()} 크레딧 획득
+              {t("summary.attendanceReward", {
+                count: attendanceStatus.dailyReward.toLocaleString(),
+              })}
             </div>
           </div>
           {attendanceStatus.hasCheckedToday ? (
             <Button disabled variant="secondary">
-              출석 완료
+              {t("summary.attendanceDone")}
             </Button>
           ) : (
             <Link href="/credits/attendance">
-              <Button className="cursor-pointer">출석하러 가기</Button>
+              <Button className="cursor-pointer">
+                {t("summary.goAttendance")}
+              </Button>
             </Link>
           )}
         </div>
@@ -137,10 +138,12 @@ function CreditsSummaryView({
       <div className="flex flex-col gap-4">
         <div>
           <div className="flex items-center justify-between">
-            <PageSectionTitle>최근 거래 내역</PageSectionTitle>
+            <PageSectionTitle>
+              {t("summary.recentTransactions")}
+            </PageSectionTitle>
             <Link href="/credits/history">
               <Button variant="ghost" size="sm">
-                전체 보기
+                {t("summary.viewAll")}
                 <ChevronRight />
               </Button>
             </Link>
@@ -149,7 +152,7 @@ function CreditsSummaryView({
         <div>
           {summary.recentTransactions.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              최근 거래 내역이 없습니다.
+              {t("summary.noRecentTransactions")}
             </div>
           ) : (
             <div className="space-y-3">
@@ -158,6 +161,10 @@ function CreditsSummaryView({
                   <TransactionItem
                     key={transaction.id}
                     transaction={transaction}
+                    typeLabels={{
+                      earn: t("transaction.earn"),
+                      spend: t("transaction.spend"),
+                    }}
                   />
                 );
               })}
@@ -174,13 +181,13 @@ function CreditsSummaryFallback() {
     <>
       <div className="flex flex-col gap-6">
         <div>
-          <PageContentTitle>크레딧 잔액</PageContentTitle>
+          <Skeleton className="h-5 w-24" />
           <Skeleton className="mt-2 h-11 w-40" />
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {["이번 달 획득", "이번 달 사용"].map((label) => (
-            <div key={label}>
-              <PageContentTitle className="text-sm">{label}</PageContentTitle>
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div key={index}>
+              <Skeleton className="h-4 w-20" />
               <Skeleton className="mt-2 h-8 w-28" />
             </div>
           ))}
@@ -188,22 +195,17 @@ function CreditsSummaryFallback() {
       </div>
       <Card className="py-0 shadow-none">
         <div className="flex items-center justify-between rounded-lg p-4 transition-colors">
-          <div>
-            <div className="font-medium">출석 체크</div>
-            <Skeleton className="mt-2 h-4 w-44" />
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-4 w-44" />
           </div>
           <Skeleton className="h-9 w-24" />
         </div>
       </Card>
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <PageSectionTitle>최근 거래 내역</PageSectionTitle>
-          <Link href="/credits/history">
-            <Button variant="ghost" size="sm">
-              전체 보기
-              <ChevronRight />
-            </Button>
-          </Link>
+          <Skeleton className="h-5 w-28" />
+          <Skeleton className="h-8 w-20" />
         </div>
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, index) => (

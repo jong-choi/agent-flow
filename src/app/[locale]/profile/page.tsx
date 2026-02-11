@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import {
   PageContainer,
   PageHeader,
@@ -10,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileForm } from "@/features/profile/components/profile-form";
 import { checkDisplayNameTakenAction } from "@/features/profile/server/actions";
 import { getUserProfile } from "@/features/profile/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -17,22 +19,34 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/profile">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Profile",
+  });
 
   return {
-    title: locale === "ko" ? "프로필" : "Profile",
+    title: t("meta.profileTitle"),
   };
 }
 
-export default function ProfilePage() {
+export default async function ProfilePage({
+  params,
+}: PageProps<"/[locale]/profile">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Profile",
+  });
+
   return (
     <PageContainer>
       <PageStack>
         <PageHeader>
-          <PageHeading>프로필 설정</PageHeading>
+          <PageHeading>{t("page.heading")}</PageHeading>
         </PageHeader>
         <Card>
           <CardHeader>
-            <CardTitle>기본 정보</CardTitle>
+            <CardTitle>{t("page.basicInfo")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <Suspense fallback={<ProfileCardContentFallback />}>

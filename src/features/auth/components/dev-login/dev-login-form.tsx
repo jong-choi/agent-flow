@@ -1,8 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { devPasswordSignIn } from "@/features/auth/utils/auth-actions";
+import { getTranslations } from "next-intl/server";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-export function DevLoginForm() {
+export async function DevLoginForm() {
+  const t = await getTranslations<AppMessageKeys>("Auth");
+
   return (
     <form
       action={devPasswordSignIn}
@@ -13,11 +17,11 @@ export function DevLoginForm() {
         name="password"
         autoComplete="off"
         type="password"
-        placeholder="password"
+        placeholder={t("login.devPasswordPlaceholder")}
         className="w-full text-center"
       />
       <Button type="submit" className="w-full">
-        Dev password로 로그인
+        {t("login.devPasswordSubmit")}
       </Button>
     </form>
   );

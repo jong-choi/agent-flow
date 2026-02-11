@@ -8,12 +8,15 @@ import {
 import { getPublicChatMessagesByChatId } from "@/features/chats/server/queries";
 import { PresetChatExamplePreview } from "@/features/presets/components/preset-chat-example-preview";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
+import { getTranslations } from "next-intl/server";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export async function PresetChatExampleSection({
   chatId,
 }: {
   chatId?: string | null;
 }) {
+  const t = await getTranslations<AppMessageKeys>("Presets");
   const rawMessages = chatId
     ? await getPublicChatMessagesByChatId({ chatId })
     : [];
@@ -30,15 +33,15 @@ export async function PresetChatExampleSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>채팅 예시</CardTitle>
-        <CardDescription>마켓에 노출된 채팅 예시입니다.</CardDescription>
+        <CardTitle>{t("chatExampleSection.title")}</CardTitle>
+        <CardDescription>{t("chatExampleSection.description")}</CardDescription>
       </CardHeader>
       <CardContent>
         {chatId ? (
           <PresetChatExamplePreview messages={messages} />
         ) : (
           <div className="flex h-[320px] items-center justify-center rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
-            연결된 채팅이 없습니다.
+            {t("chatExampleSection.noLinkedChat")}
           </div>
         )}
       </CardContent>

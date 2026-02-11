@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
 import { PresetChatExamplePreview } from "@/features/presets/components/preset-chat-example-preview";
 import { cn } from "@/lib/utils";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export type ChatExample = {
   id: string;
@@ -22,6 +24,7 @@ export function PresetChatExampleOptions({
   pinnedChat = null,
   defaultSelectedId = null,
 }: PresetChatExampleOptionsProps) {
+  const t = useTranslations<AppMessageKeys>("Presets");
   const deduped = chats.filter((chat) => chat.id !== pinnedChat?.id);
   const chatOptions = pinnedChat ? [pinnedChat, ...deduped] : deduped;
 
@@ -35,16 +38,21 @@ export function PresetChatExampleOptions({
       <input type="hidden" name="chatId" value={selectedId} />
       <div className="flex flex-wrap gap-3">
         <ChatExampleOptionCard
-          label="선택 안함"
-          count={0}
+          label={t("chatExampleCard.noneOption")}
+          messageCountLabel={t("chatExampleCard.messageCount", { count: 0 })}
           selected={!selectedId || selectedId === ""}
           onSelect={() => setSelectedId("")}
         />
         {chatOptions.map((chat, index) => (
           <ChatExampleOptionCard
             key={chat.id}
-            label={chat.title || `채팅 ${index + 1}`}
-            count={chat.messages.length}
+            label={
+              chat.title ||
+              t("chatExampleCard.chatFallbackLabel", { index: index + 1 })
+            }
+            messageCountLabel={t("chatExampleCard.messageCount", {
+              count: chat.messages.length,
+            })}
             selected={selectedId === chat.id}
             onSelect={() => setSelectedId(chat.id)}
           />
@@ -57,14 +65,14 @@ export function PresetChatExampleOptions({
 
 type ChatExampleOptionCardProps = {
   label: string;
-  count: number;
+  messageCountLabel: string;
   selected: boolean;
   onSelect: () => void;
 };
 
 function ChatExampleOptionCard({
   label,
-  count,
+  messageCountLabel,
   selected,
   onSelect,
 }: ChatExampleOptionCardProps) {
@@ -81,7 +89,7 @@ function ChatExampleOptionCard({
     >
       <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
         <span className="font-semibold">{label}</span>
-        <span>{`메시지 ${count}개`}</span>
+        <span>{messageCountLabel}</span>
       </div>
     </button>
   );

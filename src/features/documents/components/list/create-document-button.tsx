@@ -1,13 +1,16 @@
 "use client";
 
 import { useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { createDocumentAction } from "@/features/documents/server/actions";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function CreateDocumentButton() {
+  const t = useTranslations<AppMessageKeys>("Docs");
   const router = useRouter();
   const [isCreating, startCreateTransition] = useTransition();
   const handleCreate = () => {
@@ -26,7 +29,7 @@ export function CreateDocumentButton() {
       ) : (
         <Plus className="size-4" />
       )}
-      새 문서
+      {t("listPage.createDocument")}
     </Button>
   );
 }

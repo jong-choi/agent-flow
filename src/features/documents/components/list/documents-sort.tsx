@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 const sortOptions = [
-  { label: "최근 업데이트 순", value: "recent" },
-  { label: "최신순", value: "latest" },
-  { label: "오래된 순", value: "oldest" },
-  { label: "이름 순", value: "name" },
+  { key: "recent", value: "recent" },
+  { key: "latest", value: "latest" },
+  { key: "oldest", value: "oldest" },
+  { key: "name", value: "name" },
 ] as const;
 
 type SortValue = (typeof sortOptions)[number]["value"];
@@ -24,11 +26,12 @@ function buildHref(searchParams: SearchParams, nextSort: SortValue) {
   return `?${params.toString()}`;
 }
 
-export function DocumentsSort({
+export async function DocumentsSort({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
+  const t = await getTranslations<AppMessageKeys>("Docs");
   const currentSort =
     typeof searchParams.sort === "string"
       ? (searchParams.sort as SortValue)
@@ -44,7 +47,7 @@ export function DocumentsSort({
           asChild
         >
           <Link href={buildHref(searchParams, opt.value)} replace>
-            {opt.label}
+            {t(`sort.options.${opt.key}`)}
           </Link>
         </Button>
       ))}

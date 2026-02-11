@@ -35,8 +35,7 @@ export async function generateMetadata({
 export default async function BrutalLandingPage({
   params,
 }: PageProps<"/[locale]">) {
-  const { locale: requestedLocale } = await params;
-  const locale = resolveMetadataLocale(requestedLocale);
+  const { locale } = await params;
   const t = await getTranslations<AppMessageKeys>({
     locale,
     namespace: "Home",

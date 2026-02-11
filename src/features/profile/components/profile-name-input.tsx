@@ -1,7 +1,9 @@
 import { useCallback } from "react";
 import { type Session } from "next-auth";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 const DISPLAY_NAME_MAX_LEN = 30;
 
@@ -23,18 +25,21 @@ export function ProfileNameInput({
     excludeUserId?: string,
   ) => Promise<boolean>;
 }) {
+  const t = useTranslations<AppMessageKeys>("Profile");
   const trimmedInitialDisplayName = initialDisplayName?.trim() ?? "";
 
   const checkDisplayName = useCallback(
     async (value: string) => {
       if (!value) {
-        setNameMessage("닉네임을 입력해주세요.");
+        setNameMessage(t("validation.displayNameRequired"));
         setValidName(false);
         setChecking(false);
         return;
       }
       if (value.length > DISPLAY_NAME_MAX_LEN) {
-        setNameMessage(`닉네임은 ${DISPLAY_NAME_MAX_LEN}자 이내여야합니다.`);
+        setNameMessage(
+          t("validation.displayNameTooLong", { max: DISPLAY_NAME_MAX_LEN }),
+        );
         setValidName(false);
         setChecking(false);
         return;
@@ -48,10 +53,10 @@ export function ProfileNameInput({
       const isTaken = await checkDisplayNameTakenAction(value, session?.user?.id);
       if (isTaken) {
         setValidName(false);
-        setNameMessage("중복된 닉네임입니다.");
+        setNameMessage(t("validation.displayNameTaken"));
       } else {
         setValidName(true);
-        setNameMessage("사용 가능한 닉네임입니다.");
+        setNameMessage(t("validation.displayNameAvailable"));
       }
       setChecking(false);
     },
@@ -62,6 +67,7 @@ export function ProfileNameInput({
 
       setNameMessage,
       setValidName,
+      t,
       trimmedInitialDisplayName,
     ],
   );
@@ -81,7 +87,7 @@ export function ProfileNameInput({
         setChecking(true);
         debouncedCheck(trimmedValue);
       }}
-      placeholder="닉네임을 입력하세요"
+      placeholder={t("form.displayNamePlaceholder")}
       autoComplete="nickname"
       required
     />

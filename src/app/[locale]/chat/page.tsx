@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { PageContainer, PageHeading } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +10,7 @@ import { ChatSidebar } from "@/features/chats/components/chat-page/chat-sidebar"
 import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
 import { ChatWorkflowListDialog } from "@/features/chats/components/chat-page/chat-workflow-list-dialog";
 import { getRecentWorkflowsForChat } from "@/features/chats/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -16,21 +18,31 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/chat">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Chat",
+  });
 
   return {
-    title: locale === "ko" ? "채팅" : "Chat",
+    title: t("meta.chatTitle"),
   };
 }
 
-export default function Page() {
+export default async function Page({ params }: PageProps<"/[locale]/chat">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Chat",
+  });
+
   return (
     <PageContainer
-      LeftPanel={<ChatSidebar isCreating />}
+      LeftPanel={<ChatSidebar params={params} isCreating />}
       className="max-w-full"
       withoutRightPanel
     >
       <div className="flex h-full flex-col items-center justify-center gap-16 pb-32">
-        <PageHeading>워크플로우를 선택하여 채팅을 시작하세요.</PageHeading>
+        <PageHeading>{t("page.heading")}</PageHeading>
         <Suspense fallback={<ChatWorkflowSectionFallback />}>
           <ChatWorkflowSection />
         </Suspense>
@@ -40,6 +52,7 @@ export default function Page() {
 }
 
 async function ChatWorkflowSection() {
+  const t = await getTranslations<AppMessageKeys>("Chat");
   const { data, hasMore } = await getRecentWorkflowsForChat();
 
   return (
@@ -57,10 +70,12 @@ async function ChatWorkflowSection() {
       {data.length === 0 ? (
         <>
           <div className="font-semibold text-muted-foreground">
-            저장된 워크플로우가 없습니다.
+            {t("page.empty.noWorkflows")}
           </div>
           <Button asChild>
-            <Link href="/workflows/canvas">워크플로우 생성하기</Link>
+            <Link href="/workflows/canvas">
+              {t("page.empty.createWorkflow")}
+            </Link>
           </Button>
         </>
       ) : null}

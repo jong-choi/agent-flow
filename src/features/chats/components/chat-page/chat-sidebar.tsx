@@ -1,18 +1,20 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { BotMessageSquare, SquarePen } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatSidebarItem } from "@/features/chats/components/chat-page/chat-sidebar-item";
 import { getChatsByUser } from "@/features/chats/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function ChatSidebar({
   params,
   isCreating = false,
 }: {
-  params?: PageProps<"/[locale]/chat/[chatId]">["params"];
+  params: PageProps<"/[locale]/chat">["params"] & Promise<{ chatId?: string }>;
   isCreating?: boolean;
 }) {
   return (
@@ -26,10 +28,18 @@ async function ChatSidebarContent({
   params,
   isCreating = false,
 }: {
-  params?: PageProps<"/[locale]/chat/[chatId]">["params"];
+  params: PageProps<"/[locale]/chat">["params"] & Promise<{ chatId?: string }>;
+
   isCreating?: boolean;
 }) {
-  const chatId = params ? (await params).chatId : "";
+  const resolevedParams = await params;
+  const locale = resolevedParams.locale;
+  const chatId = resolevedParams.chatId;
+
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Chat",
+  });
   const chats = await getChatsByUser();
 
   return (
@@ -43,7 +53,7 @@ async function ChatSidebarContent({
             disabled
           >
             <BotMessageSquare className="size-4" strokeWidth={1.75} />
-            채팅
+            {t("sidebar.currentChat")}
           </Button>
         ) : (
           <Button
@@ -53,7 +63,8 @@ async function ChatSidebarContent({
             className="w-full justify-start"
           >
             <Link href="/chat">
-              <SquarePen className="size-4" strokeWidth={1.75} />새 채팅
+              <SquarePen className="size-4" strokeWidth={1.75} />
+              {t("sidebar.newChat")}
             </Link>
           </Button>
         )}
@@ -65,7 +76,7 @@ async function ChatSidebarContent({
         <nav className="flex flex-col gap-1">
           {chats.length === 0 && (
             <div className="rounded-md px-3 py-2 text-sm text-muted-foreground">
-              아직 시작한 채팅이 없습니다.
+              {t("sidebar.empty")}
             </div>
           )}
           {chats.map((chat) => (

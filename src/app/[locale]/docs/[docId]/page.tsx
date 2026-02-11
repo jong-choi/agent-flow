@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, PencilLine } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import {
   PageContainer,
@@ -18,20 +19,20 @@ import { DocumentSaveButton } from "@/features/documents/components/detail/docum
 import { DocumentTitleEditor } from "@/features/documents/components/detail/document-title-editor";
 import { getDocumentById } from "@/features/documents/server/queries";
 import { DocumentStoreProvider } from "@/features/documents/store/document-store";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale, resolveMetadataTitle } from "@/lib/metadata";
 import { formatYMD } from "@/lib/utils";
-
-const documentFallbackTitles = {
-  ko: "문서",
-  en: "Document",
-} as const;
 
 export async function generateMetadata({
   params,
 }: PageProps<"/[locale]/docs/[docId]">): Promise<Metadata> {
   const { locale: requestedLocale, docId } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
-  const fallbackTitle = documentFallbackTitles[locale];
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Docs",
+  });
+  const fallbackTitle = t("meta.documentFallbackTitle");
 
   try {
     const document = await getDocumentById({ docId });
@@ -40,7 +41,10 @@ export async function generateMetadata({
       title: resolveMetadataTitle({
         title: document?.title,
         locale,
-        localizedFallbacks: documentFallbackTitles,
+        localizedFallbacks: {
+          ko: fallbackTitle,
+          en: fallbackTitle,
+        },
       }),
     };
   } catch {
@@ -62,7 +66,11 @@ async function DocumentViewContent({
   params,
   searchParams,
 }: PageProps<"/[locale]/docs/[docId]">) {
-  const { docId } = await params;
+  const { docId, locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Docs",
+  });
   const document = await getDocumentById({ docId });
 
   if (!document) {
@@ -82,7 +90,7 @@ async function DocumentViewContent({
         <Button variant="outline" size="sm" asChild>
           <Link href="/docs">
             <ArrowLeft className="size-4" />
-            목록으로
+            {t("detailPage.backToList")}
           </Link>
         </Button>
         <div className="flex min-h-0 flex-1 flex-col gap-6 pt-6 pb-16">
@@ -95,14 +103,16 @@ async function DocumentViewContent({
               )}
               <PageDescription className="flex items-center gap-1">
                 <Calendar className="size-3" />
-                마지막 업데이트 {formatYMD(document.updatedAt)}
+                {t("detailPage.updatedAt", {
+                  date: formatYMD(document.updatedAt),
+                })}
               </PageDescription>
             </PageHeader>
             {edit ? (
               <div className="flex flex-col gap-2">
                 <DocumentSaveButton docId={docId} />
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={`/docs/${docId}`}>취소</Link>
+                  <Link href={`/docs/${docId}`}>{t("detailPage.cancel")}</Link>
                 </Button>
               </div>
             ) : (
@@ -110,7 +120,7 @@ async function DocumentViewContent({
                 <Button size="sm" asChild>
                   <Link href={`/docs/${docId}?edit=true`}>
                     <PencilLine className="size-4" />
-                    수정하기
+                    {t("detailPage.edit")}
                   </Link>
                 </Button>
                 <DocumentDeleteDialog docId={docId} />

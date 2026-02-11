@@ -1,10 +1,16 @@
+"use client";
+
 import { Copy } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import { Button } from "@/components/ui/button";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn, formatTimeToday } from "@/lib/utils";
 
 export function ChatMessageItem({ message }: { message: ClientChatMessage }) {
+  const t = useTranslations<AppMessageKeys>("Chat");
+
   return (
     <div
       className={cn(
@@ -43,7 +49,7 @@ export function ChatMessageItem({ message }: { message: ClientChatMessage }) {
             variant="ghost"
             size="icon-sm"
             className="h-6 w-6 text-muted-foreground"
-            aria-label="copy message"
+            aria-label={t("action.copyMessageAria")}
             onClick={() => {
               void navigator.clipboard.writeText(message.content);
             }}

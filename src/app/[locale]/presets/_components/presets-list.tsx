@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { BoringCardAvatar } from "@/components/boring-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { resolvePresetCategoryKey } from "@/features/presets/constants/category-options";
 import { PresetPurchaseDialog } from "@/features/presets/components/preset-purchase-dialog";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { formatYMD } from "@/lib/utils";
 
 type PresetsListVariant = "market" | "library";
@@ -37,18 +40,34 @@ type PresetsListProps = {
   variant?: PresetsListVariant;
 };
 
-const formatPrice = (price: number) =>
-  price === 0 ? "무료" : `${price} 크레딧`;
-
 const formatDate = (value: Date | string | null | undefined) =>
   formatYMD(value);
 
-export function PresetsCard({
+type PresetsTranslator = Awaited<ReturnType<typeof getTranslations<AppMessageKeys>>>;
+
+const formatPrice = (t: PresetsTranslator, price: number) =>
+  price === 0 ? t("common.free") : t("common.priceCredits", { count: price });
+
+const resolveCategoryLabel = (
+  t: PresetsTranslator,
+  category: string | null | undefined,
+) => {
+  if (!category) {
+    return t("common.uncategorized");
+  }
+
+  const key = resolvePresetCategoryKey(category);
+  return key ? t(`categories.${key}`) : category;
+};
+
+function PresetsCard({
   preset,
   variant = "market",
+  t,
 }: {
   preset: PresetListItem;
   variant?: PresetsListVariant;
+  t: PresetsTranslator;
 }) {
   const isOwned =
     variant === "library"
@@ -61,9 +80,9 @@ export function PresetsCard({
       <CardHeader>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-            {preset.category ?? "미분류"}
+            {resolveCategoryLabel(t, preset.category)}
           </span>
-          <span>업데이트 {formatDate(preset.updatedAt)}</span>
+          <span>{t("list.updatedAt", { date: formatDate(preset.updatedAt) })}</span>
         </div>
         <div className="flex items-center gap-3">
           <BoringCardAvatar
@@ -75,25 +94,33 @@ export function PresetsCard({
           <div className="min-w-0 space-y-1">
             <CardTitle className="text-lg">{preset.title}</CardTitle>
             <CardDescription className="line-clamp-2">
-              {preset.summary ?? "설명이 없습니다."}
+              {preset.summary ?? t("common.noDescription")}
             </CardDescription>
           </div>
         </div>
         <CardAction>
           <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
-            {formatPrice(preset.totalPrice)}
+            {formatPrice(t, preset.totalPrice)}
           </span>
         </CardAction>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-          {showPurchaseCount ? <span>구매 {preset.purchaseCount}</span> : null}
-          <span>제작자 {preset.ownerDisplayName ?? "알 수 없음"}</span>
+          {showPurchaseCount ? (
+            <span>
+              {t("list.purchaseCount", { count: preset.purchaseCount ?? 0 })}
+            </span>
+          ) : null}
+          <span>
+            {t("list.creator", {
+              name: preset.ownerDisplayName ?? t("common.unknownOwner"),
+            })}
+          </span>
         </div>
       </CardContent>
       <CardFooter className="gap-2 border-t">
         <Button variant="outline" size="sm" className="flex-1" asChild>
-          <Link href={`/presets/${preset.id}`}>상세 보기</Link>
+          <Link href={`/presets/${preset.id}`}>{t("list.detailButton")}</Link>
         </Button>
         <PresetPurchaseDialog
           presetId={preset.id}
@@ -109,11 +136,16 @@ export function PresetsCard({
   );
 }
 
-export function PresetsList({ items, variant = "market" }: PresetsListProps) {
+export async function PresetsList({
+  items,
+  variant = "market",
+}: PresetsListProps) {
+  const t = await getTranslations<AppMessageKeys>("Presets");
+
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {items.map((preset) => (
-        <PresetsCard key={preset.id} preset={preset} variant={variant} />
+        <PresetsCard key={preset.id} preset={preset} variant={variant} t={t} />
       ))}
     </div>
   );

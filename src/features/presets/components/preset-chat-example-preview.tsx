@@ -1,6 +1,10 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
 export function PresetChatExamplePreview({
@@ -8,6 +12,8 @@ export function PresetChatExamplePreview({
 }: {
   messages: ClientChatMessage[];
 }) {
+  const t = useTranslations<AppMessageKeys>("Presets");
+
   return (
     <div className="h-[320px] rounded-lg border bg-muted/20">
       <ScrollArea className="h-full p-4">
@@ -29,7 +35,11 @@ export function PresetChatExamplePreview({
                 )}
               >
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                  {message.role}
+                  {message.role === "user"
+                    ? t("chatExamplePreview.userRole")
+                    : message.role === "assistant"
+                      ? t("chatExamplePreview.assistantRole")
+                      : message.role}
                 </p>
                 <ContentMarkdown className="text-sm leading-relaxed">
                   {message.content}

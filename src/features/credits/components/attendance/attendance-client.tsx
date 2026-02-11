@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { CalendarCheck, CheckCircle2, Square } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { type AttendanceResult } from "@/app/api/credits/attendance/route";
 import {
   PageContainer,
@@ -19,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { updateCreditTagsAction } from "@/features/credits/server/actions";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type WeeklyAttendanceItem = {
   day: string;
@@ -41,7 +44,18 @@ type AttendanceClientProps = {
   summary: AttendanceSummary;
 };
 
+const WEEKDAY_KEYS = [
+  "mon",
+  "tue",
+  "wed",
+  "thu",
+  "fri",
+  "sat",
+  "sun",
+] as const;
+
 export function AttendanceClient({ summary }: AttendanceClientProps) {
+  const t = useTranslations<AppMessageKeys>("Credits");
   const [attendance, setAttendance] = useState<AttendanceSummary>(summary);
   const [showReward, setShowReward] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,7 +73,7 @@ export function AttendanceClient({ summary }: AttendanceClientProps) {
       const data: AttendanceResult = await response.json();
 
       if (!response.ok) {
-        throw new Error("출석체크에 실패하였습니다.");
+        throw new Error(t("attendance.checkInFailed"));
       }
 
       setAttendance(data.attendance);
@@ -69,6 +83,8 @@ export function AttendanceClient({ summary }: AttendanceClientProps) {
         setShowReward(true);
         setTimeout(() => setShowReward(false), 3000);
       }
+    } catch {
+      toast.error(t("attendance.checkInFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -78,9 +94,11 @@ export function AttendanceClient({ summary }: AttendanceClientProps) {
     <PageContainer>
       <PageStack>
         <PageHeader>
-          <PageHeading>출석 체크</PageHeading>
+          <PageHeading>{t("attendance.heading")}</PageHeading>
           <PageDescription>
-            매일 체크인하고 100크레딧을 받으세요
+            {t("attendance.description", {
+              count: attendance.dailyReward.toLocaleString(),
+            })}
           </PageDescription>
         </PageHeader>
         <Card>
@@ -89,10 +107,13 @@ export function AttendanceClient({ summary }: AttendanceClientProps) {
               {!attendance.hasCheckedToday ? (
                 <>
                   <CalendarCheck className="mx-auto mb-4 h-16 w-16 text-primary" />
-                  <h2 className="mb-2 text-2xl font-bold">오늘의 출석</h2>
+                  <h2 className="mb-2 text-2xl font-bold">
+                    {t("attendance.todayTitle")}
+                  </h2>
                   <p className="mb-6 text-muted-foreground">
-                    출석 체크하고 {attendance.dailyReward.toLocaleString()}{" "}
-                    크레딧을 받으세요
+                    {t("attendance.todayDescription", {
+                      count: attendance.dailyReward.toLocaleString(),
+                    })}
                   </p>
                   <Button
                     size="lg"
@@ -100,16 +121,21 @@ export function AttendanceClient({ summary }: AttendanceClientProps) {
                     className="px-8 text-lg"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "처리 중..." : "출석 체크하기"}
+                    {isSubmitting
+                      ? t("attendance.processing")
+                      : t("attendance.checkIn")}
                   </Button>
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-chart-2" />
-                  <h2 className="mb-2 text-2xl font-bold">출석 완료!</h2>
+                  <h2 className="mb-2 text-2xl font-bold">
+                    {t("attendance.completedTitle")}
+                  </h2>
                   <p className="mb-4 text-muted-foreground">
-                    {attendance.dailyReward.toLocaleString()} 크레딧을
-                    획득했습니다
+                    {t("attendance.completedDescription", {
+                      count: attendance.dailyReward.toLocaleString(),
+                    })}
                   </p>
                   {showReward && (
                     <div className="animate-bounce text-4xl font-bold text-chart-2">
@@ -124,42 +150,42 @@ export function AttendanceClient({ summary }: AttendanceClientProps) {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Card>
             <CardHeader>
-              <CardDescription>현재 연속</CardDescription>
+              <CardDescription>{t("attendance.currentStreak")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {attendance.currentStreak}일
+                {t("attendance.dayCount", { count: attendance.currentStreak })}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardDescription>최고 연속</CardDescription>
+              <CardDescription>{t("attendance.bestStreak")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-chart-1">
-                {attendance.bestStreak}일
+                {t("attendance.dayCount", { count: attendance.bestStreak })}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardDescription>총 출석</CardDescription>
+              <CardDescription>{t("attendance.totalAttendance")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-chart-2">
-                {attendance.totalAttendance}일
+                {t("attendance.dayCount", { count: attendance.totalAttendance })}
               </div>
             </CardContent>
           </Card>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">이번 주 출석 현황</CardTitle>
+            <CardTitle className="text-lg">{t("attendance.weeklyTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-7 gap-2">
-              {attendance.weeklyAttendance.map((day) => (
+              {attendance.weeklyAttendance.map((day, index) => (
                 <div
                   key={day.date}
                   className={`rounded-lg border-2 p-4 text-center transition-colors ${
@@ -170,7 +196,9 @@ export function AttendanceClient({ summary }: AttendanceClientProps) {
                         : "border-border"
                   } `}
                 >
-                  <div className="mb-1 font-bold">{day.day}</div>
+                  <div className="mb-1 font-bold">
+                    {t(`attendance.weeklyDays.${WEEKDAY_KEYS[index]}`)}
+                  </div>
                   <div className="mb-2 text-xs text-muted-foreground">
                     {day.date}
                   </div>

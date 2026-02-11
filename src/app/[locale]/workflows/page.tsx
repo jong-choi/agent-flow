@@ -31,8 +31,7 @@ export async function generateMetadata({
 export default async function WorkflowsPage({
   params,
 }: PageProps<"/[locale]/workflows">) {
-  const { locale: requestedLocale } = await params;
-  const locale = resolveMetadataLocale(requestedLocale);
+  const { locale } = await params;
   const t = await getTranslations<AppMessageKeys>({
     locale,
     namespace: "Workflows",

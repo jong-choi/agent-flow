@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,25 +14,26 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { categoryFilters } from "@/features/presets/constants/category-options";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 const PRICE_FILTERS = [
-  { label: "전체", value: "all" },
-  { label: "무료", value: "free" },
-  { label: "1~2 크레딧", value: "1-2" },
-  { label: "3~5 크레딧", value: "3-5" },
+  { key: "all", value: "all" },
+  { key: "free", value: "free" },
+  { key: "oneToTwo", value: "1-2" },
+  { key: "threeToFive", value: "3-5" },
 ] as const;
 
 const MARKET_SORT_OPTIONS = [
-  { label: "인기순", value: "popular" },
-  { label: "최신순", value: "latest" },
-  { label: "평점순", value: "rating" },
-  { label: "가격 낮은 순", value: "price-asc" },
+  { key: "popular", value: "popular" },
+  { key: "latest", value: "latest" },
+  { key: "rating", value: "rating" },
+  { key: "priceAsc", value: "price-asc" },
 ] as const;
 
 const PURCHASED_SORT_OPTIONS = [
-  { label: "최신순", value: "latest" },
-  { label: "구매일순", value: "purchase" },
-  { label: "이름순", value: "name" },
+  { key: "latest", value: "latest" },
+  { key: "purchase", value: "purchase" },
+  { key: "name", value: "name" },
 ] as const;
 
 type PresetsFilterVariant = "market" | "purchased";
@@ -48,13 +50,14 @@ const resolveOption = (
 
 const FILTER_CONFIGS = {
   market: {
-    description: "조건을 선택하고 적용을 눌러 주세요.",
-    searchPlaceholder: "워크플로우, 기능, 키워드로 검색",
-    categoryLabel: "카테고리",
-    priceLabel: "가격",
-    sortLabel: "정렬",
+    descriptionKey: "filters.marketDescription",
+    searchPlaceholderKey: "filters.marketSearchPlaceholder",
+    categoryLabelKey: "filters.categoryLabel",
+    priceLabelKey: "filters.priceLabel",
+    sortLabelKey: "filters.sortLabel",
     priceOptions: PRICE_FILTERS,
     sortOptions: MARKET_SORT_OPTIONS,
+    sortOptionGroup: "marketSortOptions",
     defaults: {
       category: "all",
       price: "all",
@@ -62,13 +65,14 @@ const FILTER_CONFIGS = {
     },
   },
   purchased: {
-    description: "조건을 선택하고 적용을 눌러 주세요.",
-    searchPlaceholder: "프리셋 이름이나 키워드로 검색",
-    categoryLabel: "카테고리",
-    priceLabel: null,
-    sortLabel: "정렬",
+    descriptionKey: "filters.purchasedDescription",
+    searchPlaceholderKey: "filters.purchasedSearchPlaceholder",
+    categoryLabelKey: "filters.categoryLabel",
+    priceLabelKey: null,
+    sortLabelKey: "filters.sortLabel",
     priceOptions: null,
     sortOptions: PURCHASED_SORT_OPTIONS,
+    sortOptionGroup: "purchasedSortOptions",
     defaults: {
       category: "all",
       price: "",
@@ -78,6 +82,7 @@ const FILTER_CONFIGS = {
 } as const;
 
 export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
+  const t = useTranslations<AppMessageKeys>("Presets");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -138,8 +143,8 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">필터</CardTitle>
-        <CardDescription>{config.description}</CardDescription>
+        <CardTitle className="text-lg">{t("filters.title")}</CardTitle>
+        <CardDescription>{t(config.descriptionKey)}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="grid gap-4">
@@ -148,24 +153,24 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
               htmlFor="preset-search"
               className="text-xs font-medium text-muted-foreground"
             >
-              검색
+              {t("filters.searchLabel")}
             </label>
             <Input
               id="preset-search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder={config.searchPlaceholder}
+              placeholder={t(config.searchPlaceholderKey)}
             />
           </div>
 
           <div className="space-y-2">
             <p className="text-xs font-medium text-muted-foreground">
-              {config.categoryLabel}
+              {t(config.categoryLabelKey)}
             </p>
             <div className="flex flex-wrap gap-2">
               {categoryFilters.map((filter) => (
                 <Button
-                  key={filter.label}
+                  key={filter.value}
                   type="button"
                   variant={
                     filter.value === selectedCategory ? "secondary" : "outline"
@@ -175,7 +180,7 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
                   aria-pressed={filter.value === selectedCategory}
                   onClick={() => setSelectedCategory(filter.value)}
                 >
-                  {filter.label}
+                  {t(`categories.${filter.key}`)}
                 </Button>
               ))}
             </div>
@@ -184,12 +189,12 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
           {config.priceOptions ? (
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">
-                {config.priceLabel}
+                {config.priceLabelKey ? t(config.priceLabelKey) : null}
               </p>
               <div className="flex flex-wrap gap-2">
                 {config.priceOptions.map((filter) => (
                   <Button
-                    key={filter.label}
+                    key={filter.value}
                     type="button"
                     variant={
                       filter.value === selectedPrice ? "secondary" : "outline"
@@ -199,7 +204,7 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
                     aria-pressed={filter.value === selectedPrice}
                     onClick={() => setSelectedPrice(filter.value)}
                   >
-                    {filter.label}
+                    {t(`filters.priceOptions.${filter.key}`)}
                   </Button>
                 ))}
               </div>
@@ -208,12 +213,12 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
 
           <div className="space-y-2">
             <p className="text-xs font-medium text-muted-foreground">
-              {config.sortLabel}
+              {t(config.sortLabelKey)}
             </p>
             <div className="flex flex-wrap gap-2">
               {config.sortOptions.map((option) => (
                 <Button
-                  key={option.label}
+                  key={option.value}
                   type="button"
                   variant={
                     option.value === selectedSort ? "secondary" : "outline"
@@ -222,16 +227,16 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
                   aria-pressed={option.value === selectedSort}
                   onClick={() => setSelectedSort(option.value)}
                 >
-                  {option.label}
+                  {t(`filters.${config.sortOptionGroup}.${option.key}`)}
                 </Button>
               ))}
             </div>
           </div>
 
           <div className="flex items-end gap-2">
-            <Button type="submit">적용</Button>
+            <Button type="submit">{t("filters.apply")}</Button>
             <Button variant="outline" asChild>
-              <Link href={pathname}>초기화</Link>
+              <Link href={pathname}>{t("filters.reset")}</Link>
             </Button>
           </div>
         </form>

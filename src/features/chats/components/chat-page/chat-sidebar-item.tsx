@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Ellipsis } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,6 +14,7 @@ import {
 import { type ChatListItem } from "@/features/chats/components/chat-page/chat-queries";
 import { ChatSidebarDeleteDialog } from "@/features/chats/components/chat-page/chat-sidebar-delete-dialog";
 import { ChatTitleInput } from "@/features/chats/components/chat-page/chat-title-input";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn, formatYMD } from "@/lib/utils";
 
 type ChatSidebarItemProps = {
@@ -23,7 +25,8 @@ type ChatSidebarItemProps = {
 export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
-  const displayTitle = chat.title?.trim() || "New chat";
+  const t = useTranslations<AppMessageKeys>("Chat");
+  const displayTitle = chat.title?.trim() || t("title.newChat");
 
   return (
     <div
@@ -62,7 +65,7 @@ export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
               variant="ghost"
               size="icon-sm"
               className="text-muted-foreground hover:text-foreground"
-              aria-label="채팅 메뉴"
+              aria-label={t("title.chatMenuAria")}
             >
               <Ellipsis className="size-4" />
             </Button>
@@ -73,7 +76,7 @@ export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
                 setIsEditing(true);
               }}
             >
-              이름 바꾸기
+              {t("title.rename")}
             </DropdownMenuItem>
             <ChatSidebarDeleteDialog chatId={chat.id} isActive={isActive} />
           </DropdownMenuContent>

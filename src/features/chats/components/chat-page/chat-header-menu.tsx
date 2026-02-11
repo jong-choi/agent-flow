@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Ellipsis } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { ChatStartMenuItem } from "@/features/chats/components/chat-page/chat-start-menu-item";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,16 +10,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type ChatHeaderMenuProps = {
   workflowId?: string | null;
   workflowTitle: string;
 };
 
-export function ChatHeaderMenu({
+export async function ChatHeaderMenu({
   workflowId,
   workflowTitle,
 }: ChatHeaderMenuProps) {
+  const t = await getTranslations<AppMessageKeys>("Chat");
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -33,7 +37,7 @@ export function ChatHeaderMenu({
       <DropdownMenuContent align="end" className="w-56">
         <div className="px-2 py-1.5">
           <div className="text-xs font-medium text-muted-foreground">
-            워크플로우
+            {t("header.workflowLabel")}
           </div>
           <div className="truncate text-sm font-semibold text-foreground">
             {workflowTitle}
@@ -43,10 +47,12 @@ export function ChatHeaderMenu({
         <ChatStartMenuItem workflowId={workflowId} />
         {workflowId ? (
           <DropdownMenuItem asChild>
-            <Link href={`/workflows/${workflowId}`}>상세 보기</Link>
+            <Link href={`/workflows/${workflowId}`}>
+              {t("header.viewDetail")}
+            </Link>
           </DropdownMenuItem>
         ) : (
-          <DropdownMenuItem disabled>상세 보기</DropdownMenuItem>
+          <DropdownMenuItem disabled>{t("header.viewDetail")}</DropdownMenuItem>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
