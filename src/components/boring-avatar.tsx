@@ -2,16 +2,14 @@ import Avatar from "boring-avatars";
 
 const generateColorsFromSeed = (param: string): string[] => {
   const baseColors = [
-    "#667EEA",
-    "#764BA2",
-    "#F093FB",
-    "#4FACFE",
-    "#00F2FE",
-    "#43E97B",
-    "#FA709A",
-    "#FEE140",
-    "#30CFD0",
-    "#A8EDEA",
+    "#ea580c",
+    "#0284c7",
+    "#65a30d",
+    "#d97706",
+    "#db2777",
+    "#16a34a",
+    "#9333ea",
+    "#0891b2",
   ];
 
   const seed = param.padEnd(5, "0");
