@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LandingSectionBackdrop } from "@/components/landing/landing-section-backdrop";
 import { BrutalBadge } from "@/components/main/ui/brutal-badge";
 import { BrutalButton } from "@/components/main/ui/brutal-button";
 import { BrutalCard } from "@/components/main/ui/brutal-card";
 import { BrutalHeading } from "@/components/main/ui/brutal-heading";
 import { BrutalHeadingAccent } from "@/components/main/ui/brutal-heading-accent";
 import { BrutalSection } from "@/components/main/ui/brutal-section";
-import { BrutalTag } from "@/components/main/ui/brutal-tag";
 import {
   BrutalExpandLine,
   BrutalGrid,
@@ -33,37 +33,40 @@ export default function BrutalLandingPage() {
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-brutal-background font-sans text-brutal-foreground transition-colors duration-300">
       {/* 히어로 섹션 */}
-      <BrutalSection container="hero" id="hero">
-        <div className="mb-12 border-l-[32px] border-brutal-foreground bg-brutal-muted/30 p-12">
-          <div className="grid gap-10 sm:grid-cols-1 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div className="col-span-1">
-              <BrutalHeading variant="label" as="p" className="mb-2">
-                Let
-              </BrutalHeading>
-              <BrutalHeading variant="label" as="p" className="mb-2">
-                your
-              </BrutalHeading>
-              <BrutalHeading variant="hero" as="h1">
-                AGENT
-                <br />
-                <span className="mt-4 inline-block bg-brutal-foreground px-4 pr-6 text-brutal-background">
-                  FLOW
-                </span>
-              </BrutalHeading>
+      <BrutalSection container="hero" className="overflow-hidden" id="hero">
+        <div className="relative z-10">
+          <LandingSectionBackdrop options={{ variant: "infinite-nodes" }} />
+          <div className="z-10 mb-12 border-l-[32px] border-brutal-foreground bg-brutal-muted/30 p-12 backdrop-blur-xs">
+            <div className="grid gap-10 sm:grid-cols-1 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div className="col-span-1">
+                <BrutalHeading variant="label" as="p" className="mb-2">
+                  Let
+                </BrutalHeading>
+                <BrutalHeading variant="label" as="p" className="mb-2">
+                  your
+                </BrutalHeading>
+                <BrutalHeading variant="hero" as="h1">
+                  AGENT
+                  <br />
+                  <span className="mt-4 inline-block bg-brutal-foreground px-4 pr-6 text-brutal-background">
+                    FLOW
+                  </span>
+                </BrutalHeading>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-12">
-          <BrutalButton size="lg" asChild>
-            <Link href="/workflows/canvas">시작하기</Link>
-          </BrutalButton>
-          <p className="max-w-sm text-2xl leading-[1.1] font-black uppercase">
-            플로우차트 에이전트
-            <br />
-            <span className="text-brutal-muted-foreground">
-              나만의 인공지능 에이전트 만들기
-            </span>
-          </p>
+          <div className="flex flex-wrap items-center gap-12">
+            <BrutalButton size="lg" asChild>
+              <Link href="/workflows/canvas">시작하기</Link>
+            </BrutalButton>
+            <p className="max-w-sm text-2xl leading-[1.1] font-black uppercase">
+              플로우차트 에이전트
+              <br />
+              <span className="text-brutal-muted-foreground">
+                나만의 인공지능 에이전트 만들기
+              </span>
+            </p>
+          </div>
         </div>
       </BrutalSection>
 
@@ -247,11 +250,32 @@ export default function BrutalLandingPage() {
               설계한 워크플로우를 즉시 채팅 인터페이스로 실행하세요. <br />
               메모리와 컨텍스트를 유지하며 멀티턴 대화를 지원합니다.
             </p>
-            <div className="flex gap-4">
-              <BrutalTag variant="outline">Memory</BrutalTag>
-              <BrutalTag variant="outline">Search</BrutalTag>
-              <BrutalTag variant="outline">Tool_Call</BrutalTag>
-            </div>
+          </div>
+        </div>
+        {/* Marquee */}
+        <div className="relative z-10 mt-20 -mb-10 overflow-hidden border-y border-brutal-background/20 py-4">
+          <div className="animate-ticker inline-flex w-max whitespace-nowrap will-change-transform">
+            {Array(2)
+              .fill([
+                "GEMMA-3-1B",
+                "GEMMA-3N-E4B",
+                "GEMMA-3-4B",
+                "GEMMA-3-27B",
+                "GPT-OSS-20B",
+                "GPT-OSS-120B",
+                "LLAMA-3.1-8B",
+                "LLAMA-4-SCOUT",
+                "LLAMA-4-MAVERICK",
+              ])
+              .flat()
+              .map((tech, i) => (
+                <span
+                  key={`${tech}-${i}`}
+                  className="px-4 text-sm font-black tracking-widest uppercase italic opacity-30 transition-opacity hover:text-brutal-background hover:opacity-100"
+                >
+                  {tech}
+                </span>
+              ))}
           </div>
         </div>
       </BrutalSection>
@@ -437,35 +461,16 @@ console.log(result.choices[0].message.content);`}
 
       {/* CTA */}
       <BrutalSection variant="inverse" className="overflow-hidden py-32">
+        <LandingSectionBackdrop
+          options={{
+            variant: "grid-waving",
+            tone: "inverse",
+            dotRadius: 0.8,
+            spreadXBase: 42,
+            spreadXDepthBoost: 24,
+          }}
+        />
         <BrutalRadialGlow />
-
-        {/* Marquee */}
-        <div className="relative z-10 mb-20 overflow-hidden border-y border-brutal-background/20 py-4">
-          <div className="animate-ticker inline-flex w-max whitespace-nowrap will-change-transform">
-            {Array(2)
-              .fill([
-                "GEMMA-3-1B",
-                "GEMMA-3N-E4B",
-                "GEMMA-3-4B",
-                "GEMMA-3-27B",
-                "GPT-OSS-20B",
-                "GPT-OSS-120B",
-                "LLAMA-3.1-8B",
-                "LLAMA-4-SCOUT",
-                "LLAMA-4-MAVERICK",
-              ])
-              .flat()
-              .map((tech, i) => (
-                <span
-                  key={`${tech}-${i}`}
-                  className="px-4 text-sm font-black tracking-widest uppercase italic opacity-30 transition-opacity hover:text-brutal-background hover:opacity-100"
-                >
-                  {tech}
-                </span>
-              ))}
-          </div>
-        </div>
-
         <div className="relative z-10 mx-auto max-w-7xl px-12 text-center">
           <BrutalHeading variant="h2" className="mb-8 md:text-8xl">
             START
