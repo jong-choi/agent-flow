@@ -45,13 +45,13 @@ export function WorkflowListCard({
           <div className="shrink-0">
             <WorkflowAvatar workflowId={workflowId} />
           </div>
-          <div className="flex flex-col items-end text-xs text-muted-foreground">
+          <div className="flex min-h-10 flex-col-reverse items-end text-xs text-muted-foreground">
+            <WorkflowUpdatedAtText updatedAt={updatedAt} />
             {!!actionLabel && (
               <span className="hidden text-primary group-hover:block">
                 {actionLabel}
               </span>
             )}
-            <WorkflowUpdatedAtText updatedAt={updatedAt} />
           </div>
         </CardFooter>
       </Card>
