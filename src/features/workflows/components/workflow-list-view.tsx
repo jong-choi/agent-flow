@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,8 +10,10 @@ import {
 } from "@/components/ui/card";
 import { getOwnedWorkflows } from "@/features/workflows/server/queries";
 import { WorkflowListCard } from "@/features/workflows/components/workflow-list-card";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export async function WorkflowListView() {
+  const t = await getTranslations<AppMessageKeys>("Workflows");
   const workflowList = await getOwnedWorkflows();
 
   return (
@@ -18,14 +21,14 @@ export async function WorkflowListView() {
       {workflowList.length === 0 ? (
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>아직 워크플로우가 없습니다</CardTitle>
+            <CardTitle>{t("listView.emptyTitle")}</CardTitle>
             <CardDescription>
-              캔버스에서 첫 워크플로우를 만들어 보세요.
+              {t("listView.emptyDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="secondary" asChild>
-              <Link href="/workflows/canvas">워크플로우 만들기</Link>
+              <Link href="/workflows/canvas">{t("listView.createWorkflow")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -39,7 +42,7 @@ export async function WorkflowListView() {
               title={workflow.title}
               description={workflow.description}
               updatedAt={workflow.updatedAt}
-              actionLabel="상세보기"
+              actionLabel={t("listView.detail")}
             />
           ))}
         </div>

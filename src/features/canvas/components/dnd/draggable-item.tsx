@@ -1,8 +1,10 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
+import { useLocale, useTranslations } from "next-intl";
 import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 import { Icons, isIconName } from "@/features/canvas/constants/icons";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
 type DraggableItemProps = {
@@ -10,8 +12,26 @@ type DraggableItemProps = {
   onMouseDown: React.MouseEventHandler<HTMLDivElement>;
 };
 
+const nodeTypeMessageKey = {
+  startNode: "start",
+  endNode: "end",
+  chatNode: "chat",
+  promptNode: "prompt",
+  searchNode: "search",
+  documentNode: "document",
+  splitNode: "split",
+  mergeNode: "merge",
+} as const;
+
 export function DraggableItemView({ item }: { item: SidebarNodeData }) {
+  const locale = useLocale();
+  const t = useTranslations<AppMessageKeys>("Nodes");
   const IconComponent = isIconName(item.icon) ? Icons[item.icon] : Icons.Circle;
+  const messageKey = nodeTypeMessageKey[item.type];
+  const displayLabel =
+    locale === "en" ? t(`node.${messageKey}.label`) : item.label;
+  const displayDescription =
+    locale === "en" ? t(`node.${messageKey}.summary`) : item.description;
 
   return (
     <div className="group flex w-full cursor-grab items-center rounded-lg border border-transparent p-2 transition-all hover:bg-accent hover:text-accent-foreground">
@@ -24,9 +44,9 @@ export function DraggableItemView({ item }: { item: SidebarNodeData }) {
         <IconComponent className="size-4" />
       </div>
       <div className="flex flex-col text-left">
-        <span className="text-sm leading-none font-medium">{item.label}</span>
+        <span className="text-sm leading-none font-medium">{displayLabel}</span>
         <span className="mt-1 line-clamp-1 text-xs text-muted-foreground group-hover:text-accent-foreground/80">
-          {item.description}
+          {displayDescription}
         </span>
       </div>
     </div>

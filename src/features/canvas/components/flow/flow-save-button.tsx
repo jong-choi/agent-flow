@@ -2,6 +2,7 @@
 
 import { type FormEvent, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { type WorkflowSaveRequest } from "@/app/api/workflows/_types";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { extractPresetIdsFromNodes } from "@/features/canvas/utils/preset-import";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function FlowSaveButton() {
+  const t = useTranslations<AppMessageKeys>("Workflows");
   const router = useRouter();
   const { getEdges, getNodes } = useCanvasReactFlow();
   const workflow = useCanvasStore((s) => s.workflow);
@@ -49,8 +52,9 @@ export function FlowSaveButton() {
         return;
       }
 
-      if (!title) {
-        toast.error("워크플로우 이름을 입력해주세요.");
+      const normalizedTitle = title.trim();
+      if (!normalizedTitle) {
+        toast.error(t("canvas.save.validation.titleRequired"));
         return;
       }
 
@@ -59,7 +63,7 @@ export function FlowSaveButton() {
       const presetIds = extractPresetIdsFromNodes(nodes);
 
       const requestBody: WorkflowSaveRequest = {
-        title,
+        title: normalizedTitle,
         description,
         nodes,
         edges,
@@ -84,7 +88,7 @@ export function FlowSaveButton() {
           const message =
             typeof payload?.error === "string"
               ? payload.error
-              : "워크플로우 저장에 실패했습니다.";
+              : t("canvas.save.errors.saveFailed");
           throw new Error(message);
         }
 
@@ -99,17 +103,19 @@ export function FlowSaveButton() {
 
         setWorkflow({
           id: nextId ?? workflowId,
-          title: payload?.data?.title ?? title,
+          title: payload?.data?.title ?? normalizedTitle,
           description:
             payload?.data?.description ?? requestBody.description ?? null,
         });
 
         setOpen(false);
-        toast.success("저장되었습니다.");
+        toast.success(t("canvas.save.toast.success"));
       } catch (error) {
-        console.error("워크플로우 저장 중 오류:", error);
+        console.error("Error while saving workflow:", error);
         const message =
-          error instanceof Error ? error.message : "워크플로우 저장 실패";
+          error instanceof Error
+            ? error.message
+            : t("canvas.save.errors.fallback");
         toast.error(message);
       } finally {
         setIsSaving(false);
@@ -123,6 +129,7 @@ export function FlowSaveButton() {
       isValidGraph,
       router,
       setWorkflow,
+      t,
       title,
       workflow.id,
     ],
@@ -132,7 +139,7 @@ export function FlowSaveButton() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline" disabled={!isValidGraph}>
-          저장
+          {t("canvas.actions.save")}
         </Button>
       </DialogTrigger>
       <DialogContent
@@ -140,25 +147,29 @@ export function FlowSaveButton() {
         ariaDescribedby="workflow save dialog"
       >
         <DialogHeader>
-          <DialogTitle>워크플로우 저장</DialogTitle>
+          <DialogTitle>{t("canvas.save.dialog.title")}</DialogTitle>
           <DialogDescription>
-            이름과 설명을 입력한 뒤 저장하세요.
+            {t("canvas.save.dialog.description")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="workflow-dialog-title">이름</Label>
+            <Label htmlFor="workflow-dialog-title">
+              {t("canvas.save.dialog.nameLabel")}
+            </Label>
             <Input
               id="workflow-dialog-title"
               name="title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="워크플로우 이름"
+              placeholder={t("canvas.save.dialog.namePlaceholder")}
               autoComplete="off"
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="workflow-dialog-description">설명</Label>
+            <Label htmlFor="workflow-dialog-description">
+              {t("canvas.save.dialog.descriptionLabel")}
+            </Label>
             <Textarea
               id="workflow-dialog-description"
               name="description"
@@ -168,12 +179,12 @@ export function FlowSaveButton() {
                   event.target.value.replace(/[\r\n]+/g, "").slice(0, 140),
                 )
               }
-              placeholder="워크플로우 설명"
+              placeholder={t("canvas.save.dialog.descriptionPlaceholder")}
               className="h-30 overflow-y-auto"
               maxLength={140}
             />
             <p className="text-xs text-muted-foreground">
-              최대 140자까지 입력할 수 있어요.
+              {t("canvas.save.dialog.descriptionLimit")}
             </p>
           </div>
           <DialogFooter>
@@ -184,15 +195,15 @@ export function FlowSaveButton() {
                 disabled={isSaving}
                 className="w-16"
               >
-                닫기
+                {t("canvas.save.dialog.close")}
               </Button>
             </DialogClose>
             <Button
               type="submit"
-              disabled={isSaving || !title || !isValidGraph}
+              disabled={isSaving || !title.trim() || !isValidGraph}
               className="w-16"
             >
-              {isSaving ? <Spinner className="size-4" /> : "저장"}
+              {isSaving ? <Spinner className="size-4" /> : t("canvas.save.dialog.submit")}
             </Button>
           </DialogFooter>
         </form>

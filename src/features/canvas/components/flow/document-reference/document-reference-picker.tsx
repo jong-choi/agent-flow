@@ -2,10 +2,12 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { searchDocumentsByTitleAction } from "@/features/documents/server/actions";
 import { useDebounce } from "@/hooks/use-debounce";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export type DocumentReferenceSuggestion = {
   id: string;
@@ -15,10 +17,10 @@ export type DocumentReferenceSuggestion = {
 
 const MAX_SUGGESTIONS = 6;
 
-const buildPreview = (content: string) => {
+const buildPreview = (content: string, emptyContentLabel: string) => {
   const MAX_TEXT_LEN = 40;
   let trimmed = content.replace(/\s+/g, " ").trim().slice(0, MAX_TEXT_LEN);
-  if (!trimmed) return "내용이 없습니다.";
+  if (!trimmed) return emptyContentLabel;
 
   if (content.length > MAX_TEXT_LEN) {
     trimmed = trimmed + "...";
@@ -36,6 +38,7 @@ export function DocumentReferencePicker({
   isInitialLoading: boolean;
   onSelect: (docId: string) => void;
 }) {
+  const t = useTranslations<AppMessageKeys>("Workflows");
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<
     DocumentReferenceSuggestion[]
@@ -87,7 +90,7 @@ export function DocumentReferencePicker({
 
             debouncedSearch(nextQuery);
           }}
-          placeholder="문서 제목으로 검색"
+          placeholder={t("canvas.document.picker.searchPlaceholder")}
           autoComplete="off"
         />
       </div>
@@ -96,13 +99,15 @@ export function DocumentReferencePicker({
         {isLoading ? (
           <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
             <Spinner className="size-3" />
-            불러오는 중...
+            {t("canvas.document.picker.loading")}
           </div>
         ) : null}
 
         {!isLoading && visibleDocuments.length === 0 ? (
           <div className="px-4 py-3 text-sm text-muted-foreground">
-            {showingInitial ? "문서가 없습니다." : "검색 결과가 없습니다."}
+            {showingInitial
+              ? t("canvas.document.picker.noDocuments")
+              : t("canvas.document.picker.noSearchResults")}
           </div>
         ) : null}
 
@@ -116,7 +121,9 @@ export function DocumentReferencePicker({
             }}
           >
             <span className="w-full truncate font-medium">{doc.title}</span>
-            <span className="w-full text-xs">{buildPreview(doc.content)}</span>
+            <span className="w-full text-xs">
+              {buildPreview(doc.content, t("canvas.document.picker.emptyContent"))}
+            </span>
           </button>
         ))}
       </div>

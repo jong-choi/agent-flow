@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { type Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import "@xyflow/react/dist/style.css";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DroppableZone } from "@/features/canvas/components/dnd/droppable-zone";
@@ -12,39 +13,26 @@ import {
   getWorkflowWithGraph,
 } from "@/features/workflows/server/queries";
 import { auth } from "@/lib/auth";
-import {
-  resolveMetadataLocale,
-  resolveMetadataTitle,
-  withMetadataSuffix,
-} from "@/lib/metadata";
-
-const canvasFallbackTitles = {
-  ko: "캔버스",
-  en: "Canvas",
-} as const;
+import { type AppMessageKeys } from "@/lib/i18n/messages";
+import { resolveMetadataLocale, withMetadataSuffix } from "@/lib/metadata";
 
 export async function generateMetadata({
   params,
 }: PageProps<"/[locale]/workflows/canvas/[id]">): Promise<Metadata> {
   const { locale: requestedLocale, id } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
-  const fallbackTitle = withMetadataSuffix(
-    canvasFallbackTitles[locale],
-    "CANVAS",
-  );
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Workflows",
+  });
+  const fallbackTitle = withMetadataSuffix(t("meta.canvasTitle"), "CANVAS");
 
   try {
     const title = await getWorkflowTitleWithAuth(id);
+    const normalizedTitle = title?.trim() || t("meta.canvasTitle");
 
     return {
-      title: withMetadataSuffix(
-        resolveMetadataTitle({
-          title,
-          locale,
-          localizedFallbacks: canvasFallbackTitles,
-        }),
-        "CANVAS",
-      ),
+      title: withMetadataSuffix(normalizedTitle, "CANVAS"),
     };
   } catch {
     return { title: fallbackTitle };

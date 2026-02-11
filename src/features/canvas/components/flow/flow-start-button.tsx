@@ -2,14 +2,18 @@
 
 import { useCallback } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { type ChatCreateThreadRequest } from "@/app/api/chat/temporary/route";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function FlowStartButton() {
+  const t = useTranslations<AppMessageKeys>("Workflows");
   const isValidGraph = useCanvasStore((s) => s.isValidGraph);
   const loading = useCanvasStore((s) => s.isStartLoading);
   const setLoading = useCanvasStore((s) => s.setIsStartLoading);
@@ -42,7 +46,7 @@ export function FlowStartButton() {
         const message =
           typeof payload?.error === "string"
             ? payload.error
-            : "채팅을 생성하지 못했습니다.";
+            : t("canvas.start.errors.createFailed");
         throw new Error(message);
       }
 
@@ -52,12 +56,17 @@ export function FlowStartButton() {
       const nextThreadId = payload?.data?.thread_id;
 
       if (!nextThreadId) {
-        throw new Error("채팅 ID가 발급되지 않았습니다.");
+        throw new Error(t("canvas.start.errors.missingThreadId"));
       }
 
       setSearchParams({ thread_id: nextThreadId });
     } catch (error) {
-      console.error("채팅 생성 중 오류:", error);
+      console.error("Error while starting chat:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("canvas.start.errors.fallback");
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -69,6 +78,7 @@ export function FlowStartButton() {
     getEdges,
     getNodes,
     setSearchParams,
+    t,
   ]);
 
   return (
@@ -78,7 +88,7 @@ export function FlowStartButton() {
       disabled={disabled}
       onClick={handleStart}
     >
-      {loading ? <Spinner className="size-4" /> : "채팅하기"}
+      {loading ? <Spinner className="size-4" /> : t("canvas.actions.startChat")}
     </Button>
   );
 }

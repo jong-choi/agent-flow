@@ -18,11 +18,13 @@ import {
   Workflow,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { BrutalCI } from "@/components/main/ui/brutal-logo";
 import { SidebarContainer } from "@/components/sidebar-container";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
 type LucideIcon = ForwardRefExoticComponent<
@@ -45,45 +47,56 @@ type NavSeparator = {
 };
 
 type NavType = NavItem | NavSeparator;
+type SidebarTranslator = ReturnType<typeof useTranslations>;
 
-const navigation: NavType[] = [
-  { type: "Item", name: "플로우", href: "/workflows", Icon: Workflow },
-  { type: "Item", name: "채팅", href: "/chat", Icon: BotMessageSquare },
+const createNavigation = (t: SidebarTranslator): NavType[] => [
+  {
+    type: "Item",
+    name: t("nav.workflows"),
+    href: "/workflows",
+    Icon: Workflow,
+  },
+  { type: "Item", name: t("nav.chat"), href: "/chat", Icon: BotMessageSquare },
   { type: "Separator" },
   {
     type: "Item",
-    name: "프리셋",
+    name: t("nav.presets"),
     href: "/presets",
     Icon: Blocks,
     children: [
-      { name: "마켓", href: "/presets" },
-      { name: "내 프리셋", href: "/presets/purchased" },
-      { name: "프리셋 만들기", href: "/presets/new" },
+      { name: t("presets.market"), href: "/presets" },
+      { name: t("presets.myPresets"), href: "/presets/purchased" },
+      { name: t("presets.createPreset"), href: "/presets/new" },
     ],
   },
-  { type: "Item", name: "문서", href: "/docs", Icon: StickyNote },
+  { type: "Item", name: t("nav.docs"), href: "/docs", Icon: StickyNote },
   { type: "Separator" },
   {
     type: "Item",
-    name: "크레딧",
+    name: t("nav.credits"),
     href: "/credits",
     Icon: HandCoins,
     children: [
-      { name: "홈", href: "/credits" },
-      { name: "내역", href: "/credits/history" },
-      { name: "출석 체크", href: "/credits/attendance" },
+      { name: t("credits.home"), href: "/credits" },
+      { name: t("credits.history"), href: "/credits/history" },
+      { name: t("credits.attendance"), href: "/credits/attendance" },
     ],
   },
-  { type: "Item", name: "프로필", href: "/profile", Icon: CircleUserRound },
+  {
+    type: "Item",
+    name: t("nav.profile"),
+    href: "/profile",
+    Icon: CircleUserRound,
+  },
   { type: "Separator" },
   {
     type: "Item",
-    name: "API",
+    name: t("nav.api"),
     href: "/developers",
     Icon: KeyRound,
     children: [
-      { name: "서비스 키", href: "/developers" },
-      { name: "워크플로우 API", href: "/developers/apis" },
+      { name: t("api.serviceKey"), href: "/developers" },
+      { name: t("api.workflowApi"), href: "/developers/apis" },
     ],
   },
 ];
@@ -116,6 +129,8 @@ export function SidebarNav() {
 function SidebarNavContent() {
   const session = useSession();
   const pathname = usePathname();
+  const t = useTranslations<AppMessageKeys>("Sidebar");
+  const navigation = createNavigation(t);
 
   if (!session.data?.user && HIDE_SIDEBAR_PATHS.has(pathname)) {
     return null;
@@ -168,6 +183,8 @@ export function SecondarySidebar() {
 
 function SecondarySidebarContent() {
   const pathname = usePathname();
+  const t = useTranslations<AppMessageKeys>("Sidebar");
+  const navigation = createNavigation(t);
   const activeNavItem = navigation.find(
     (item): item is NavItem =>
       item.type === "Item" &&

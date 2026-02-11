@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { Link2Off } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,18 +21,20 @@ import {
 import { DocumentCreateButton } from "@/features/canvas/components/flow/document-reference/document-create-button";
 import { DocumentReferencePicker } from "@/features/canvas/components/flow/document-reference/document-reference-picker";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 const MAX_SUGGESTIONS = 6;
 
 export function DocumentReferenceDialog({
   referenceId,
   onChange,
-  triggerLabel = "문서연결",
+  triggerLabel,
 }: {
   referenceId: string | null | undefined;
   onChange: (nextReferenceId: string | null) => void;
   triggerLabel?: string;
 }) {
+  const t = useTranslations<AppMessageKeys>("Workflows");
   const [open, setOpen] = useState(false);
   const isCreatingDocument = useCanvasStore((s) => s.isCreatingDocument);
   const handleOpenChange = useCallback((nextOpen: boolean) => {
@@ -54,11 +57,13 @@ export function DocumentReferenceDialog({
     enabled: Boolean(resolvedReferenceId),
   });
 
+  const resolvedTriggerLabel =
+    triggerLabel ?? t("canvas.document.reference.triggerLabel");
   const triggerText = resolvedReferenceId
     ? isFetchingTitle
       ? ""
-      : connectedTitle?.trim()
-    : triggerLabel;
+      : connectedTitle?.trim() || resolvedTriggerLabel
+    : resolvedTriggerLabel;
 
   const handleCreated = useCallback(
     (docId: string) => {
@@ -89,7 +94,7 @@ export function DocumentReferenceDialog({
             size="icon-sm"
             className="shrink-0"
             onClick={() => onChange(null)}
-            title="연결 해제"
+            title={t("canvas.document.reference.unlink")}
           >
             <Link2Off className="size-4" />
           </Button>
@@ -101,7 +106,7 @@ export function DocumentReferenceDialog({
         ariaDescribedby="document reference picker"
       >
         <DialogHeader>
-          <DialogTitle>문서 선택</DialogTitle>
+          <DialogTitle>{t("canvas.document.reference.dialogTitle")}</DialogTitle>
         </DialogHeader>
 
         {open ? (
@@ -124,7 +129,7 @@ export function DocumentReferenceDialog({
           </div>
           <DialogClose asChild>
             <Button type="button" variant="secondary">
-              닫기
+              {t("canvas.document.reference.close")}
             </Button>
           </DialogClose>
         </DialogFooter>

@@ -15,16 +15,23 @@ const requestConfig = async ({
     ? requested
     : routing.defaultLocale;
 
-  const [Home, ErrorBoundary, NotFound] = await Promise.all([
-    getMessage["Home"][locale](),
-    getMessage["ErrorBoundary"][locale](),
-    getMessage["NotFound"][locale](),
-  ]);
+  const [Home, Sidebar, Nodes, Workflows, ErrorBoundary, NotFound] =
+    await Promise.all([
+      getMessage["Home"][locale](),
+      getMessage["Sidebar"][locale](),
+      getMessage["Nodes"][locale](),
+      getMessage["Workflows"][locale](),
+      getMessage["ErrorBoundary"][locale](),
+      getMessage["NotFound"][locale](),
+    ]);
 
   return {
     locale,
     messages: {
       Home,
+      Sidebar,
+      Nodes,
+      Workflows,
       ErrorBoundary,
       NotFound,
     },

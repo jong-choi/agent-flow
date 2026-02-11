@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,6 +25,7 @@ import { type FlowNodeData } from "@/db/types/sidebar-nodes";
 import { DocumentReferenceDialog } from "@/features/canvas/components/flow/document-reference/document-reference-dialog";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function FlowNodeContent({
   content,
@@ -34,6 +36,8 @@ export function FlowNodeContent({
   id: string;
   nodeType?: string;
 }) {
+  const locale = useLocale();
+  const t = useTranslations<AppMessageKeys>("Workflows");
   const { updateNodeData } = useCanvasReactFlow();
   const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
 
@@ -49,7 +53,7 @@ export function FlowNodeContent({
     const formData = new FormData(e.currentTarget);
     const value = String(formData.get("textValue") ?? "");
     handleValueChange(value);
-    toast.success("저장되었습니다.");
+    toast.success(t("canvas.node.savedToast"));
   };
 
   if (content.type === "select") {
@@ -66,10 +70,15 @@ export function FlowNodeContent({
             <SelectGroup>
               <SelectLabel>{content.label} </SelectLabel>
               {content.options?.map((option) => {
+                const optionLabel =
+                  nodeType === "documentNode" && locale !== "ko"
+                    ? option.id
+                    : option.value;
+
                 return (
                   <SelectItem value={option.value} key={option.id}>
                     <div className="flex w-full items-center justify-between gap-2">
-                      <span className="truncate">{option.value}</span>
+                      <span className="truncate">{optionLabel}</span>
                       {typeof option.price === "number" ? (
                         <span className="right-0 text-xs text-muted-foreground">
                           x{option.price}
@@ -107,7 +116,9 @@ export function FlowNodeContent({
               {content.label}
             </Button>
           </DialogTrigger>
-          <DialogTitle className="sr-only">노드 수정 다이알로그</DialogTitle>
+          <DialogTitle className="sr-only">
+            {t("canvas.node.editDialogSrOnly")}
+          </DialogTitle>
           <DialogContent
             className="sm:max-w-md"
             ariaDescribedby="node edit dialog"
@@ -130,11 +141,11 @@ export function FlowNodeContent({
               <DialogFooter className="sm:justify-start">
                 <DialogClose asChild>
                   <Button type="button" variant="secondary">
-                    닫기
+                    {t("canvas.node.close")}
                   </Button>
                 </DialogClose>
                 <DialogClose asChild>
-                  <Button type="submit">저장하기</Button>
+                  <Button type="submit">{t("canvas.node.save")}</Button>
                 </DialogClose>
               </DialogFooter>
             </form>
