@@ -10,7 +10,7 @@ import {
   sidebarNodeInformation,
   sidebarNodes,
 } from "@/db/schema";
-import { sidebarNodesData } from "@/features/canvas/constants/flow";
+import { sidebarNodesData } from "@/features/canvas/constants/node-seed-data";
 
 export const seedSidebarNodes = async () => {
   await db.transaction(async (tx) => {
