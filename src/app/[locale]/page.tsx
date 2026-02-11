@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { HeroFlowGraph } from "@/components/main/hero-flow-graph";
 import { BrutalBadge } from "@/components/main/ui/brutal-badge";
 import { BrutalButton } from "@/components/main/ui/brutal-button";
 import { BrutalCard } from "@/components/main/ui/brutal-card";
