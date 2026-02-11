@@ -16,9 +16,10 @@ type CanvasLayout = {
 
 export default function CanvasLayout({
   children,
+  params,
   chat_panel: chatPanel,
   node_panel: nodePanel,
-}: CanvasLayout) {
+}: LayoutProps<"/[locale]/workflows/canvas">) {
   return (
     <div className="flex flex-1 bg-muted/50 p-2">
       <ReactFlowProvider>
@@ -31,7 +32,7 @@ export default function CanvasLayout({
                 footer={<SidebarInfoContent />}
               >
                 <Suspense fallback={<CanvasSidebarFallback />}>
-                  <SidebarContent />
+                  <SidebarContent params={params} />
                 </Suspense>
               </SidebarContainer>
             </div>

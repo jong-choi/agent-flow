@@ -23,25 +23,11 @@ export const sidebarSelectSource = pgEnum("sidebar_options_source", [
 
 export const sidebarNodes = pgTable("sidebar_nodes", {
   id: uuid("id").defaultRandom().primaryKey(),
-  label: text("label").notNull().unique(),
-  description: text("description").notNull(),
-  type: sidebarNodeType("type").notNull(),
+  type: sidebarNodeType("type").notNull().unique(),
   icon: text("icon").notNull().default("circle"),
   backgroundColor: text("background_color").notNull().default("bg-neutral-800"),
   order: integer("order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const sidebarNodeInformation = pgTable("sidebar_node_information", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  nodeId: uuid("node_id")
-    .notNull()
-    .references(() => sidebarNodes.id, { onDelete: "cascade" })
-    .unique(),
-  title: text("title").notNull(),
-  summary: text("summary").notNull(),
-  description: text("description"),
-  guides: text("guides").array().notNull(),
 });
 
 export const sidebarNodeContents = pgTable("sidebar_node_contents", {
@@ -51,12 +37,8 @@ export const sidebarNodeContents = pgTable("sidebar_node_contents", {
     .references(() => sidebarNodes.id, { onDelete: "cascade" })
     .unique(),
   type: sidebarContentType("type").notNull(),
-  label: text("label").notNull(),
-  placeholder: text("placeholder"),
   value: text("value"),
   optionsSource: sidebarSelectSource("options_source"),
-  dialogTitle: text("dialog_title"),
-  dialogDescription: text("dialog_description"),
 });
 
 export const sidebarNodeHandles = pgTable("sidebar_node_handles", {
@@ -72,10 +54,6 @@ export const sidebarNodeHandles = pgTable("sidebar_node_handles", {
 export type SidebarNode = typeof sidebarNodes.$inferSelect;
 export type SidebarNodeInsert = typeof sidebarNodes.$inferInsert;
 
-export type SidebarNodeInformation = typeof sidebarNodeInformation.$inferSelect;
-export type SidebarNodeInformationInsert =
-  typeof sidebarNodeInformation.$inferInsert;
-
 export type SidebarNodeContent = typeof sidebarNodeContents.$inferSelect;
 export type SidebarNodeContentInsert = typeof sidebarNodeContents.$inferInsert;
 
@@ -83,12 +61,12 @@ export type SidebarNodeHandle = typeof sidebarNodeHandles.$inferSelect;
 export type SidebarNodeHandleInsert = typeof sidebarNodeHandles.$inferInsert;
 
 const sidebarNodesSelectSchema = createSelectSchema(sidebarNodes);
-const sidebarNodeInformationSelectSchema = createSelectSchema(
-  sidebarNodeInformation,
-);
-const sidebarNodeContentsSelectSchema = createSelectSchema(
-  sidebarNodeContents,
-).extend({
+const sidebarNodeContentsBaseSelectSchema = createSelectSchema(sidebarNodeContents);
+const sidebarNodeContentsSelectSchema = sidebarNodeContentsBaseSelectSchema.extend({
+  label: z.string().optional(),
+  placeholder: z.string().optional(),
+  dialogTitle: z.string().optional(),
+  dialogDescription: z.string().optional(),
   options: z
     .array(
       z.object({
@@ -102,11 +80,18 @@ const sidebarNodeContentsSelectSchema = createSelectSchema(
 });
 const sidebarNodeHandlesSelectSchema = createSelectSchema(sidebarNodeHandles);
 
-export const sidebarNodesQuerySchema = sidebarNodesSelectSchema
+export const sidebarNodeInformationQuerySchema = z.object({
+  id: z.string(),
+  nodeId: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  description: z.string(),
+  guides: z.array(z.string()),
+});
+
+export const sidebarNodesRawQuerySchema = sidebarNodesSelectSchema
   .pick({
     id: true,
-    label: true,
-    description: true,
     type: true,
     icon: true,
     backgroundColor: true,
@@ -114,7 +99,13 @@ export const sidebarNodesQuerySchema = sidebarNodesSelectSchema
     createdAt: true,
   })
   .extend({
-    content: sidebarNodeContentsSelectSchema.nullable(),
+    content: sidebarNodeContentsBaseSelectSchema.nullable(),
     handle: sidebarNodeHandlesSelectSchema.nullable(),
-    information: sidebarNodeInformationSelectSchema.nullable(),
   });
+
+export const sidebarNodesQuerySchema = sidebarNodesRawQuerySchema.extend({
+  label: z.string(),
+  description: z.string(),
+  content: sidebarNodeContentsSelectSchema.nullable(),
+  information: sidebarNodeInformationQuerySchema.nullable(),
+});

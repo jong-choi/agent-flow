@@ -54,7 +54,8 @@ async function CanvasWorkflowContent({
 }: {
   paramsPromise: PageProps<"/[locale]/workflows/canvas/[id]">["params"];
 }) {
-  const { id } = await paramsPromise;
+  const { id, locale: requestedLocale } = await paramsPromise;
+  const locale = resolveMetadataLocale(requestedLocale);
   const workflowData = await getWorkflowWithGraph(id);
   const session = await auth();
   const userId = session?.user?.id;
@@ -63,7 +64,7 @@ async function CanvasWorkflowContent({
     notFound();
   }
 
-  const sidebarNodes = await getSidebarNodesWithOptions();
+  const sidebarNodes = await getSidebarNodesWithOptions(locale);
   const { nodes, edges } = buildFlowGraphFromWorkflow({
     workflowNodes: workflowData.nodes,
     workflowEdges: workflowData.edges,

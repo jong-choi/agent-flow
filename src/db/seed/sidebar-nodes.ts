@@ -3,11 +3,9 @@ import { db } from "@/db/client";
 import {
   type SidebarNodeContentInsert,
   type SidebarNodeHandleInsert,
-  type SidebarNodeInformationInsert,
   type SidebarNodeInsert,
   sidebarNodeContents,
   sidebarNodeHandles,
-  sidebarNodeInformation,
   sidebarNodes,
 } from "@/db/schema";
 import { sidebarNodesData } from "@/features/canvas/constants/node-seed-data";
@@ -15,11 +13,9 @@ import { sidebarNodesData } from "@/features/canvas/constants/node-seed-data";
 export const seedSidebarNodes = async () => {
   await db.transaction(async (tx) => {
     for (const raw of sidebarNodesData) {
-      const { type, label, description, icon, backgroundColor, order } = raw;
+      const { type, icon, backgroundColor, order } = raw;
       const nodeUpsert: SidebarNodeInsert = {
         type,
-        label,
-        description,
         icon,
         backgroundColor,
         order,
@@ -29,10 +25,8 @@ export const seedSidebarNodes = async () => {
         .insert(sidebarNodes)
         .values(nodeUpsert)
         .onConflictDoUpdate({
-          target: sidebarNodes.label,
+          target: sidebarNodes.type,
           set: {
-            type,
-            description,
             icon,
             backgroundColor,
             order,
@@ -80,23 +74,6 @@ export const seedSidebarNodes = async () => {
             set: {
               targetCount: handleInsert.targetCount,
               sourceCount: handleInsert.sourceCount,
-            },
-          });
-      }
-
-      if (raw.information) {
-        const informationInsert: SidebarNodeInformationInsert = {
-          nodeId,
-          ...raw.information,
-        };
-
-        await tx
-          .insert(sidebarNodeInformation)
-          .values(informationInsert)
-          .onConflictDoUpdate({
-            target: sidebarNodeInformation.nodeId,
-            set: {
-              ...raw.information,
             },
           });
       }

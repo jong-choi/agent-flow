@@ -43,6 +43,7 @@ import {
 } from "@/features/credits/server/actions";
 import { presetTags as presetCacheTags } from "@/features/presets/server/cache/tags";
 import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
+import { routing, type Locale } from "@/lib/i18n/routing";
 
 const workflowReferencedPresetPricing = db
   .select({
@@ -894,7 +895,10 @@ const getPresetLibraryForCanvasCached = async (userId: string) => {
   return getPresetLibraryForCanvasBase(userId);
 };
 
-export const getPresetGraphForCanvasAction = async (presetId: string) => {
+export const getPresetGraphForCanvasAction = async (
+  presetId: string,
+  locale: Locale = routing.defaultLocale,
+) => {
   const userId = await getUserId();
 
   const [preset] = await db
@@ -932,7 +936,7 @@ export const getPresetGraphForCanvasAction = async (presetId: string) => {
     throw new Error("프리셋 워크플로우 데이터를 불러오지 못했습니다.");
   }
 
-  const sidebarNodes = await getSidebarNodesWithOptions();
+  const sidebarNodes = await getSidebarNodesWithOptions(locale);
   const { nodes, edges } = buildFlowGraphFromWorkflow({
     workflowNodes: workflowData.nodes,
     workflowEdges: workflowData.edges,

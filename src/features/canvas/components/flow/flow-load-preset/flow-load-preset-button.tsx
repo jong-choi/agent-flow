@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,8 +22,10 @@ import { usePresetLibraryForCanvasQuery } from "@/features/canvas/hooks/use-pres
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { filterPresetLibrary } from "@/features/canvas/utils/preset-library";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
+import { type Locale } from "@/lib/i18n/routing";
 
 export function FlowLoadPresetButton() {
+  const locale = useLocale() as Locale;
   const t = useTranslations<AppMessageKeys>("Workflows");
   const workflowId = useCanvasStore((s) => s.workflow.id);
 
@@ -79,7 +81,7 @@ export function FlowLoadPresetButton() {
 
       try {
         setActivePresetId(presetId);
-        const graph = await getPresetGraphForCanvasAction(presetId);
+        const graph = await getPresetGraphForCanvasAction(presetId, locale);
 
         if (graph.nodes.length === 0) {
           throw new Error(t("canvas.loadPreset.errors.noNodes"));
@@ -99,7 +101,7 @@ export function FlowLoadPresetButton() {
         setActivePresetId(null);
       }
     },
-    [activePresetId, appendPresetGraphToCanvas, t],
+    [activePresetId, appendPresetGraphToCanvas, locale, t],
   );
 
   return (

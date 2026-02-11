@@ -132,8 +132,10 @@ const message = {
         handleRange: "0 이상, 5이하의 정수를 입력해주세요",
       },
       labels: {
+        agent: "Agent",
         action: "동작",
         promptEdit: "프롬프트 수정",
+        promptDialogTitle: "프롬프트 입력",
         selectValue: "선택 값",
         dialogValue: "대화 값",
         name: "이름",

@@ -133,8 +133,10 @@ const message = {
         handleRange: "Enter an integer between 0 and 5.",
       },
       labels: {
+        agent: "Agent",
         action: "Action",
         promptEdit: "Edit Prompt",
+        promptDialogTitle: "Prompt Input",
         selectValue: "Selected Value",
         dialogValue: "Dialog Value",
         name: "Name",
