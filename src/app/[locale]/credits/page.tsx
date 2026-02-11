@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import {
@@ -20,6 +21,18 @@ import {
   getCreditSummary,
   getDailyAttendanceStatus,
 } from "@/features/credits/server/queries";
+import { resolveMetadataLocale } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/credits">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+
+  return {
+    title: locale === "ko" ? "크레딧" : "Credits",
+  };
+}
 
 export default function CreditsPage() {
   return (

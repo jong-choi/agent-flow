@@ -22,7 +22,7 @@ export function ChatHeaderTitle({ chatId, chatTitle }: ChatHeaderTitleProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
 
-  const displayTitle = chatTitle?.trim() || "New Message";
+  const displayTitle = chatTitle?.trim() || "New chat";
 
   return (
     <div className="flex items-center gap-2 md:max-w-[50vw]">

@@ -1,15 +1,54 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PresetEditForm } from "@/features/presets/components/preset-edit-form";
 import {
   deletePresetAction,
   updatePresetAction,
 } from "@/features/presets/server/actions";
-import { PresetEditForm } from "@/features/presets/components/preset-edit-form";
 import { getOwnedPresetForEdit } from "@/features/presets/server/queries";
+import {
+  resolveMetadataLocale,
+  resolveMetadataTitle,
+  withMetadataSuffix,
+} from "@/lib/metadata";
+
+const presetFallbackTitles = {
+  ko: "프리셋",
+  en: "Presets",
+} as const;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/presets/[id]/edit">): Promise<Metadata> {
+  const { locale: requestedLocale, id } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+  const fallbackTitle = withMetadataSuffix(
+    presetFallbackTitles[locale],
+    "EDIT",
+  );
+
+  try {
+    const preset = await getOwnedPresetForEdit(id);
+
+    return {
+      title: withMetadataSuffix(
+        resolveMetadataTitle({
+          title: preset?.title,
+          locale,
+          localizedFallbacks: presetFallbackTitles,
+        }),
+        "EDIT",
+      ),
+    };
+  } catch {
+    return { title: fallbackTitle };
+  }
+}
 
 export type PresetEditRes = NonNullable<
   Awaited<ReturnType<typeof getOwnedPresetForEdit>>

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import {
   PageContainer,
   PageDescription,
@@ -11,6 +12,18 @@ import { DocumentsGrid } from "@/features/documents/components/list/documents-gr
 import { DocumentsSearch } from "@/features/documents/components/list/documents-search";
 import { DocumentsSort } from "@/features/documents/components/list/documents-sort";
 import { getDocumentsByOwner } from "@/features/documents/server/queries";
+import { resolveMetadataLocale } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/docs">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+
+  return {
+    title: locale === "ko" ? "문서" : "Documents",
+  };
+}
 
 export default function DocsPage(props: PageProps<"/[locale]/docs">) {
   return (

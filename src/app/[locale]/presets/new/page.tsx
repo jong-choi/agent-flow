@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,19 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { getOwnedWorkflows } from "@/features/workflows/server/queries";
 import { WorkflowListCard } from "@/features/workflows/components/workflow-list-card";
+import { resolveMetadataLocale, withMetadataSuffix } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/presets/new">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+  const title = locale === "ko" ? "프리셋 만들기" : "Create Preset";
+
+  return {
+    title: withMetadataSuffix(title, "NEW"),
+  };
+}
 
 export default function PresetCreatePage() {
   return (

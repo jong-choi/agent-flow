@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   PageContainer,
@@ -10,6 +11,18 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorkflowApiList } from "@/features/developers/components/apis/workflow-api-list";
 import { getOwnedWorkflows } from "@/features/workflows/server/queries";
+import { resolveMetadataLocale } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/developers/apis">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+
+  return {
+    title: locale === "ko" ? "워크플로우 API" : "Workflow API",
+  };
+}
 
 export default function DevelopersApisPage() {
   const baseUrl = process.env.BASE_URL || "";

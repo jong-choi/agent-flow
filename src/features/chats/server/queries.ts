@@ -1,7 +1,7 @@
+import { cache } from "react";
 import { cacheTag } from "next/cache";
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import "server-only";
-import { cache } from "react";
 import { db } from "@/db/client";
 import { chatMessages, chats } from "@/db/schema";
 import { aiModels } from "@/db/schema/ai-models";
@@ -85,12 +85,8 @@ const getChatByIdCached = cache(async (userId: string, chatId: string) => {
     .where(eq(chats.id, chatId))
     .limit(1);
 
-  if (!chat || chat.deletedAt) {
+  if (!chat || chat.deletedAt || chat.userId !== userId) {
     throw new Error("채팅을 찾을 수 없습니다.");
-  }
-
-  if (chat.userId !== userId) {
-    throw new Error("채팅에 대한 접근 권한이 없습니다.");
   }
 
   return chat;
@@ -152,26 +148,25 @@ export const getPublicChatMessagesByChatId = async ({
   );
 };
 
-const getPublicChatMessagesByChatIdCached = cache(async (
-  chatId: string,
-  chatLen: number,
-) => {
-  "use cache";
-  cacheTag(chatTags.messagesByChat(chatId));
+const getPublicChatMessagesByChatIdCached = cache(
+  async (chatId: string, chatLen: number) => {
+    "use cache";
+    cacheTag(chatTags.messagesByChat(chatId));
 
-  return db
-    .select({
-      id: chatMessages.id,
-      chatId: chatMessages.chatId,
-      role: chatMessages.role,
-      content: chatMessages.content,
-      createdAt: chatMessages.createdAt,
-    })
-    .from(chatMessages)
-    .where(eq(chatMessages.chatId, chatId))
-    .orderBy(asc(chatMessages.createdAt))
-    .limit(chatLen);
-});
+    return db
+      .select({
+        id: chatMessages.id,
+        chatId: chatMessages.chatId,
+        role: chatMessages.role,
+        content: chatMessages.content,
+        createdAt: chatMessages.createdAt,
+      })
+      .from(chatMessages)
+      .where(eq(chatMessages.chatId, chatId))
+      .orderBy(asc(chatMessages.createdAt))
+      .limit(chatLen);
+  },
+);
 
 export const getChatsByWorkflowId = async ({
   workflowId,
@@ -196,52 +191,54 @@ export const getChatsByWorkflowId = async ({
   );
 };
 
-const getChatsByWorkflowIdCached = cache(async (
-  workflowId: string,
-  userId: string,
-  limit: number,
-  chatLen: number,
-) => {
-  "use cache";
-  cacheTag(chatTags.listByUser(userId));
+const getChatsByWorkflowIdCached = cache(
+  async (
+    workflowId: string,
+    userId: string,
+    limit: number,
+    chatLen: number,
+  ) => {
+    "use cache";
+    cacheTag(chatTags.listByUser(userId));
 
-  const recentChats = await db
-    .select({
-      id: chats.id,
-      workflowId: chats.workflowId,
-      title: chats.title,
-      createdAt: chats.createdAt,
-      updatedAt: chats.updatedAt,
-    })
-    .from(chats)
-    .where(
-      and(
-        eq(chats.userId, userId),
-        eq(chats.workflowId, workflowId),
-        isNull(chats.deletedAt),
-      ),
-    )
-    .orderBy(desc(chats.updatedAt))
-    .limit(limit);
+    const recentChats = await db
+      .select({
+        id: chats.id,
+        workflowId: chats.workflowId,
+        title: chats.title,
+        createdAt: chats.createdAt,
+        updatedAt: chats.updatedAt,
+      })
+      .from(chats)
+      .where(
+        and(
+          eq(chats.userId, userId),
+          eq(chats.workflowId, workflowId),
+          isNull(chats.deletedAt),
+        ),
+      )
+      .orderBy(desc(chats.updatedAt))
+      .limit(limit);
 
-  recentChats.forEach((chat) => {
-    cacheTag(chatTags.detailByChat(chat.id));
-    cacheTag(chatTags.messagesByChat(chat.id));
-  });
+    recentChats.forEach((chat) => {
+      cacheTag(chatTags.detailByChat(chat.id));
+      cacheTag(chatTags.messagesByChat(chat.id));
+    });
 
-  const chatsWithMessages = await Promise.all(
-    recentChats.map(async (chat) => {
-      const messages = await getPublicChatMessagesByChatIdCached(
-        chat.id,
-        chatLen,
-      );
+    const chatsWithMessages = await Promise.all(
+      recentChats.map(async (chat) => {
+        const messages = await getPublicChatMessagesByChatIdCached(
+          chat.id,
+          chatLen,
+        );
 
-      return {
-        ...chat,
-        messages,
-      };
-    }),
-  );
+        return {
+          ...chat,
+          messages,
+        };
+      }),
+    );
 
-  return chatsWithMessages;
-});
+    return chatsWithMessages;
+  },
+);

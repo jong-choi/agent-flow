@@ -37,7 +37,7 @@ function BrutalCI({
   return (
     <Link href="/" className="cursor-pointer">
       <div className={cn(logoVariants({ variant, className }))} {...props}>
-        <span className="px-1 py-0.5">{label}</span>
+        <span className="px-1 py-2.5">{label}</span>
       </div>
     </Link>
   );

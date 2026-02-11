@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageContainer } from "@/components/page-template";
@@ -14,7 +15,45 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PresetCreateForm } from "@/features/presets/components/preset-create-form";
 import { createPresetAction } from "@/features/presets/server/actions";
 import { getOwnedWorkflowById } from "@/features/workflows/server/queries";
+import {
+  resolveMetadataLocale,
+  resolveMetadataTitle,
+  withMetadataSuffix,
+} from "@/lib/metadata";
 import { formatYMD } from "@/lib/utils";
+
+const presetCreateFallbackTitles = {
+  ko: "프리셋 만들기",
+  en: "Create Preset",
+} as const;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/presets/new/[workflowId]">): Promise<Metadata> {
+  const { locale: requestedLocale, workflowId } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+  const fallbackTitle = withMetadataSuffix(
+    presetCreateFallbackTitles[locale],
+    "PRESET",
+  );
+
+  try {
+    const workflow = await getOwnedWorkflowById(workflowId);
+
+    return {
+      title: withMetadataSuffix(
+        resolveMetadataTitle({
+          title: workflow?.title,
+          locale,
+          localizedFallbacks: presetCreateFallbackTitles,
+        }),
+        "PRESET",
+      ),
+    };
+  } catch {
+    return { title: fallbackTitle };
+  }
+}
 
 export default function PresetCreateDetailPage({
   params,

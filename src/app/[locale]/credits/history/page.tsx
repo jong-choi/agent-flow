@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { format } from "date-fns";
 import {
   PageContainer,
@@ -16,6 +17,18 @@ import {
   type TransactionResult,
   getCreditHistory,
 } from "@/features/credits/server/queries";
+import { resolveMetadataLocale } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/credits/history">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+
+  return {
+    title: locale === "ko" ? "크레딧 내역" : "Credit History",
+  };
+}
 
 export default async function CreditsHistoryPage(
   props: PageProps<"/[locale]/credits/history">,
