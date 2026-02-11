@@ -41,6 +41,13 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-brutal-background: var(--brutal-background);
+  --color-brutal-foreground: var(--brutal-foreground);
+  --color-brutal-primary: var(--brutal-primary);
+  --color-brutal-primary-foreground: var(--brutal-primary-foreground);
+  --color-brutal-muted: var(--brutal-muted);
+  --color-brutal-muted-foreground: var(--brutal-muted-foreground);
+  --color-brutal-border: var(--brutal-border);
 }
 
 :root {
@@ -51,8 +58,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  /* --primary: oklch(0.205 0 0); */
-  --primary: var(--color-indigo-900);
+  --primary: oklch(0.205 0 0);
+  /* --primary: var(--color-indigo-900); */
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -77,6 +84,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Brutal Tokens */
+  --brutal-background: var(--color-neutral-50);
+  --brutal-foreground: var(--color-neutral-950);
+  --brutal-primary: var(--color-neutral-900);
+  --brutal-primary-foreground: var(--color-neutral-50);
+  --brutal-muted: var(--color-neutral-200);
+  --brutal-muted-foreground: var(--color-neutral-500);
+  --brutal-border: var(--color-neutral-300);
 }
 
 .dark {
@@ -111,6 +127,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Brutal Tokens */
+  --brutal-background: var(--color-neutral-950);
+  --brutal-foreground: var(--color-neutral-200);
+  --brutal-primary: var(--color-neutral-100);
+  --brutal-primary-foreground: var(--color-neutral-950);
+  --brutal-muted: var(--color-neutral-900);
+  --brutal-muted-foreground: var(--color-neutral-400);
+  --brutal-border: var(--color-neutral-800);
 }
 
 @layer base {
@@ -157,4 +182,39 @@
   .scrollbar-slim::-webkit-scrollbar-corner {
     background: transparent;
   }
+}
+
+/* 원형 그래디언트 배경 */
+.landing-radial-glow {
+  background: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--brand) 10%, transparent) 0,
+    transparent 70%
+  );
+}
+
+/* 무한 이동하는 */
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-ticker {
+  animation: ticker 25s linear infinite;
+}
+
+/* 그룹 호버시에 늘어나는 선 */
+.hover-expand-line {
+  height: 2px;
+  background: currentColor;
+  width: 0;
+  transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.group:hover .hover-expand-line {
+  width: 100%;
 }

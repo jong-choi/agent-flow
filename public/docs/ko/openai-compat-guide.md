@@ -20,7 +20,7 @@
   - 권장: `Authorization: Bearer <SERVICE_KEY>`
   - 호환: `X-CANVAS-SECRET: <SERVICE_KEY>`
 - 워크플로우 식별: `model = X-CANVAS-ID`
-  - 예: `"model": "lc-id-xxxxxxxxxxxxxxxx"`
+  - 예: `"model": "af-id-xxxxxxxxxxxxxxxx"`
 
 ## 지원 엔드포인트
 
@@ -32,7 +32,7 @@
 
 ```json
 {
-  "model": "lc-id-xxxxxxxxxxxxxxxx",
+  "model": "af-id-xxxxxxxxxxxxxxxx",
   "messages": [
     { "role": "user", "content": "강아지 키우는 법을 알려줘" }
   ]
@@ -44,9 +44,9 @@
 ```bash
 curl -X POST "${baseUrl}/api/v1/openai/chat/completions" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer lc-**********************" \
+  -H "Authorization: Bearer af-**********************" \
   -d '{
-    "model": "lc-id-*******************",
+    "model": "af-id-*******************",
     "messages": [
       { "role": "user", "content": "강아지 키우는 법을 알려줘" }
     ]
@@ -59,12 +59,12 @@ curl -X POST "${baseUrl}/api/v1/openai/chat/completions" \
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: "lc-**********************",
+  apiKey: "af-**********************",
   baseURL: `${baseUrl}/api/v1/openai`,
 });
 
 const result = await client.chat.completions.create({
-  model: "lc-id-*******************",
+  model: "af-id-*******************",
   messages: [{ role: "user", content: "강아지 키우는 법을 알려줘" }],
 });
 ```
@@ -77,7 +77,7 @@ const result = await client.chat.completions.create({
 
 ```json
 {
-  "model": "lc-id-xxxxxxxxxxxxxxxx",
+  "model": "af-id-xxxxxxxxxxxxxxxx",
   "input": "강아지 키우는 법을 알려줘"
 }
 ```
@@ -87,9 +87,9 @@ const result = await client.chat.completions.create({
 ```bash
 curl -X POST "${baseUrl}/api/v1/openai/responses" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer lc-**********************" \
+  -H "Authorization: Bearer af-**********************" \
   -d '{
-    "model": "lc-id-*******************",
+    "model": "af-id-*******************",
     "input": "강아지 키우는 법을 알려줘"
   }'
 ```
@@ -100,12 +100,12 @@ curl -X POST "${baseUrl}/api/v1/openai/responses" \
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: "lc-**********************",
+  apiKey: "af-**********************",
   baseURL: `${baseUrl}/api/v1/openai`,
 });
 
 const result = await client.responses.create({
-  model: "lc-id-*******************",
+  model: "af-id-*******************",
   input: "강아지 키우는 법을 알려줘",
 });
 ```

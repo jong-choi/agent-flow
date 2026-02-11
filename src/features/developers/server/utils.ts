@@ -2,8 +2,8 @@ import "server-only";
 
 import { nanoid } from "nanoid";
 
-const USER_SECRET_PREFIX = "lc-";
-const WORKFLOW_CANVAS_ID_PREFIX = "lc-id-";
+const USER_SECRET_PREFIX = "af-";
+const WORKFLOW_CANVAS_ID_PREFIX = "af-id-";
 
 const USER_SECRET_NANOID_LENGTH = 22;
 const WORKFLOW_CANVAS_ID_NANOID_LENGTH = 19;

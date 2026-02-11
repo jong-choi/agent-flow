@@ -40,8 +40,8 @@ type WorkflowApiListProps = {
 
 type SnippetTab = "agentflow" | "openai-chat" | "openai-responses";
 
-const SECRET_PLACEHOLDER = "lc-**********************";
-const CANVAS_ID_PLACEHOLDER = "lc-id-*******************";
+const SECRET_PLACEHOLDER = "af-**********************";
+const CANVAS_ID_PLACEHOLDER = "af-id-*******************";
 
 export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
   const descriptionId = useId();

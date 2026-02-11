@@ -14,8 +14,8 @@ The `/api/v1/chat` endpoint is a REST API that lets you **run your workflow from
 - **Method**: `POST`
 - **Content-Type**: `application/json`
 - **Auth headers**
-  - `X-CANVAS-SECRET`: service key (e.g. `lc-**********************`)
-  - `X-CANVAS-ID`: workflow id (e.g. `lc-id-*******************`)
+  - `X-CANVAS-SECRET`: service key (e.g. `af-**********************`)
+  - `X-CANVAS-ID`: workflow id (e.g. `af-id-*******************`)
 
 ## Request
 
@@ -39,7 +39,7 @@ The `/api/v1/chat` endpoint is a REST API that lets you **run your workflow from
 {
   "data": {
     "response": "AI response text",
-    "canvasId": "lc-id-...",
+    "canvasId": "af-id-...",
     "workflowId": "workflow UUID"
   }
 }
@@ -89,8 +89,8 @@ In the snippets below, `baseUrl` refers to the `BASE_URL` env (e.g. `http://loca
 ```bash
 curl -X POST "${baseUrl}/api/v1/chat" \
   -H "Content-Type: application/json" \
-  -H "X-CANVAS-SECRET: lc-**********************" \
-  -H "X-CANVAS-ID: lc-id-*******************" \
+  -H "X-CANVAS-SECRET: af-**********************" \
+  -H "X-CANVAS-ID: af-id-*******************" \
   -d '{
     "message": "Search how to raise a puppy"
   }'
@@ -103,8 +103,8 @@ await fetch(`${baseUrl}/api/v1/chat`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "X-CANVAS-SECRET": "lc-**********************",
-    "X-CANVAS-ID": "lc-id-*******************"
+    "X-CANVAS-SECRET": "af-**********************",
+    "X-CANVAS-ID": "af-id-*******************"
   },
   body: JSON.stringify({
     message: "Search how to raise a puppy"

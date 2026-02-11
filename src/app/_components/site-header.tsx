@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { LocaleSelectorButton } from "@/components/locale-selector-button";
-import { Logo } from "@/components/logo";
+import { BrutalLogo } from "@/components/main/ui/brutal-logo";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Separator } from "@/components/ui/separator";
 import { HeaderAccountMenu } from "@/features/auth/components/header-account-menu/header-account-menu";
@@ -8,12 +8,10 @@ import { HeaderAccountMenu } from "@/features/auth/components/header-account-men
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b bg-background px-6">
-      {/* Left Area */}
       <div className="flex items-center gap-6">
-        <Logo />
+        <BrutalLogo />
       </div>
 
-      {/* Right Area */}
       <div className="flex items-center gap-2">
         <div className="flex items-center text-sm font-medium text-muted-foreground">
           <ThemeToggleButton />
