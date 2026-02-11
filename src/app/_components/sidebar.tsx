@@ -136,6 +136,7 @@ function SidebarNavContent() {
             href={item.href}
             title={item.name}
             className="group flex cursor-pointer flex-col items-center transition-all"
+            prefetch
           >
             <Button
               className={cn(
@@ -201,6 +202,7 @@ function SecondarySidebarContent() {
                   "rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted",
                   isActive && "bg-muted text-foreground",
                 )}
+                prefetch
               >
                 {child.name}
               </Link>

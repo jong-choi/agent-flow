@@ -24,7 +24,6 @@ export function MainErrorFallback({
       className="flex h-screen w-screen flex-col items-center justify-center"
       role="alert"
     >
-      {" "}
       <h2 className="text-lg font-semibold">{t("unknown")}</h2>
       <div className="flex gap-4">
         <Button

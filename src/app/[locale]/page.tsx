@@ -335,7 +335,6 @@ export default function BrutalLandingPage() {
             </BrutalHeading>
             <p className="max-w-md leading-relaxed font-bold uppercase opacity-70">
               매일 출석 체크로 무료 크레딧을 획득하세요. <br />
-              연속 출석 보너스로 더 많은 크레딧을 받을 수 있습니다.
             </p>
             <BrutalButton
               variant="outline"
@@ -358,14 +357,6 @@ export default function BrutalLandingPage() {
                 </div>
                 <div className="text-4xl leading-none font-black text-brutal-primary italic">
                   1,240C
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="mb-1 text-sm font-black tracking-wide text-brutal-muted-foreground uppercase italic">
-                  Streak
-                </div>
-                <div className="text-2xl font-black text-brutal-foreground italic">
-                  7 DAYS
                 </div>
               </div>
             </div>
