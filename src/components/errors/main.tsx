@@ -1,6 +1,7 @@
 "use client";
 
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { type FallbackProps } from "react-error-boundary";
 import { Button } from "@/components/ui/button";
@@ -11,29 +12,29 @@ export function MainErrorFallback({
   resetErrorBoundary,
 }: FallbackProps) {
   const t = useTranslations<AppMessageKeys>("ErrorBoundary");
+  const router = useRouter();
 
   if (isRedirectError(error)) {
     // NEXT_REDIRECT는 바이패스로 내보내기
     throw error;
   }
 
-  const { message } = error;
-
   return (
     <div
       className="flex h-screen w-screen flex-col items-center justify-center"
       role="alert"
     >
-      {message ? (
-        <>
-          <h2 className="text-lg font-semibold">{t("withMessage")}</h2>
-          <div className="text-sm text-muted-foreground">{message}</div>
-        </>
-      ) : (
-        <h2 className="text-lg font-semibold">{t("unknown")}</h2>
-      )}
+      {" "}
+      <h2 className="text-lg font-semibold">{t("unknown")}</h2>
       <div className="flex gap-4">
-        <Button variant="default" className="mt-4" onClick={resetErrorBoundary}>
+        <Button
+          variant="default"
+          className="mt-4"
+          onClick={() => {
+            resetErrorBoundary();
+            router.refresh();
+          }}
+        >
           {t("retry")}
         </Button>
         <Button

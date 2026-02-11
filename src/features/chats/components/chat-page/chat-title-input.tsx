@@ -18,7 +18,7 @@ type ChatTitleInputProps = {
 export function ChatTitleInput({
   chatId,
   currentTitle,
-  placeholder = "New Message",
+  placeholder = "New chat",
   onClose,
   onBlur,
   variant = "sidebar",

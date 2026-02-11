@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import {
   PageContainer,
   PageHeader,
@@ -9,6 +10,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileForm } from "@/features/profile/components/profile-form";
 import { checkDisplayNameTakenAction } from "@/features/profile/server/actions";
 import { getUserProfile } from "@/features/profile/server/queries";
+import { resolveMetadataLocale } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/profile">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+
+  return {
+    title: locale === "ko" ? "프로필" : "Profile",
+  };
+}
 
 export default function ProfilePage() {
   return (

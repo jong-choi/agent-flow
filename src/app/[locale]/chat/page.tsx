@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageContainer, PageHeading } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,18 @@ import { ChatSidebar } from "@/features/chats/components/chat-page/chat-sidebar"
 import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
 import { ChatWorkflowListDialog } from "@/features/chats/components/chat-page/chat-workflow-list-dialog";
 import { getRecentWorkflowsForChat } from "@/features/chats/server/queries";
+import { resolveMetadataLocale } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/chat">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+
+  return {
+    title: locale === "ko" ? "채팅" : "Chat",
+  };
+}
 
 export default function Page() {
   return (

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { type Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Calendar, ChevronLeft } from "lucide-react";
@@ -11,9 +12,40 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorkflowDataView } from "@/features/workflows/components/workflow-data-view";
-import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
+import {
+  getWorkflowTitleWithAuth,
+  getWorkflowWithGraph,
+} from "@/features/workflows/server/queries";
 import { auth } from "@/lib/auth";
+import { resolveMetadataLocale, resolveMetadataTitle } from "@/lib/metadata";
 import { formatYMD } from "@/lib/utils";
+
+const workflowFallbackTitles = {
+  ko: "워크플로우",
+  en: "Workflow",
+} as const;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/workflows/[id]">): Promise<Metadata> {
+  const { locale: requestedLocale, id } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+  const fallbackTitle = workflowFallbackTitles[locale];
+
+  try {
+    const title = await getWorkflowTitleWithAuth(id);
+
+    return {
+      title: resolveMetadataTitle({
+        title,
+        locale,
+        localizedFallbacks: workflowFallbackTitles,
+      }),
+    };
+  } catch {
+    return { title: fallbackTitle };
+  }
+}
 
 export default function WorkflowDetailPage({
   params,

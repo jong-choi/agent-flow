@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PresetsFilter } from "@/app/[locale]/presets/_components/presets-filter";
@@ -21,8 +22,20 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
 import { getPresets } from "@/features/presets/server/queries";
+import { resolveMetadataLocale } from "@/lib/metadata";
 
 const PAGE_SIZE = 50;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/presets">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+
+  return {
+    title: locale === "ko" ? "프리셋 마켓" : "Preset Market",
+  };
+}
 
 type PresetsPageSearchParams = {
   q?: string | string[];

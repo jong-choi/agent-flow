@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import {
   PageContainer,
   PageHeader,
@@ -9,6 +10,18 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AttendanceClient } from "@/features/credits/components/attendance/attendance-client";
 import { getCreditAttendanceSummary } from "@/features/credits/server/queries";
+import { resolveMetadataLocale } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/credits/attendance">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+
+  return {
+    title: locale === "ko" ? "출석 체크" : "Attendance",
+  };
+}
 
 export default function AttendancePage() {
   return (

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { BrutalCI } from "@/components/main/ui/brutal-logo";
 import {
   Card,
@@ -13,6 +14,18 @@ import {
   GoogleLoginFormFallback,
 } from "@/features/auth/components/google-login-form";
 import { ENABLE_DEV_LOGIN } from "@/lib/auth";
+import { resolveMetadataLocale } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/login">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+
+  return {
+    title: locale === "ko" ? "로그인" : "Login",
+  };
+}
 
 export default async function LoginPage({
   searchParams,

@@ -23,7 +23,7 @@ type ChatSidebarItemProps = {
 export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
-  const displayTitle = chat.title?.trim() || "New Message";
+  const displayTitle = chat.title?.trim() || "New chat";
 
   return (
     <div

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, PencilLine } from "lucide-react";
@@ -17,7 +18,35 @@ import { DocumentSaveButton } from "@/features/documents/components/detail/docum
 import { DocumentTitleEditor } from "@/features/documents/components/detail/document-title-editor";
 import { getDocumentById } from "@/features/documents/server/queries";
 import { DocumentStoreProvider } from "@/features/documents/store/document-store";
+import { resolveMetadataLocale, resolveMetadataTitle } from "@/lib/metadata";
 import { formatYMD } from "@/lib/utils";
+
+const documentFallbackTitles = {
+  ko: "문서",
+  en: "Document",
+} as const;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/docs/[docId]">): Promise<Metadata> {
+  const { locale: requestedLocale, docId } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+  const fallbackTitle = documentFallbackTitles[locale];
+
+  try {
+    const document = await getDocumentById({ docId });
+
+    return {
+      title: resolveMetadataTitle({
+        title: document?.title,
+        locale,
+        localizedFallbacks: documentFallbackTitles,
+      }),
+    };
+  } catch {
+    return { title: fallbackTitle };
+  }
+}
 
 export default function DocumentViewPage(
   props: PageProps<"/[locale]/docs/[docId]">,

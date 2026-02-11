@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BrutalBadge } from "@/components/main/ui/brutal-badge";
 import { BrutalButton } from "@/components/main/ui/brutal-button";
@@ -11,6 +12,22 @@ import {
   BrutalGrid,
   BrutalRadialGlow,
 } from "@/components/main/ui/brutal-utils";
+import { resolveMetadataLocale } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+
+  return {
+    title: "AgentFlow",
+    description:
+      locale === "ko"
+        ? "플로우차트 기반으로 AI 에이전트를 만들고 실행하는 플랫폼"
+        : "A visual platform for building and running AI agents with flowcharts.",
+  };
+}
 
 export default function BrutalLandingPage() {
   return (

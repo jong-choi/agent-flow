@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PresetChatExampleSection } from "@/app/[locale]/presets/[id]/_components/preset-chat-example-section";
@@ -17,6 +18,7 @@ import { getUserId } from "@/features/auth/server/queries";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
 import { PresetDetailRightPanel } from "@/features/presets/components/preset-detail-right-panel";
 import { getPresetDetail } from "@/features/presets/server/queries";
+import { resolveMetadataLocale, resolveMetadataTitle } from "@/lib/metadata";
 import { formatYMD } from "@/lib/utils";
 
 const formatPrice = (price: number) =>
@@ -24,6 +26,33 @@ const formatPrice = (price: number) =>
 
 const formatDate = (value: Date | string | null | undefined) =>
   formatYMD(value);
+
+const presetFallbackTitles = {
+  ko: "프리셋",
+  en: "Presets",
+} as const;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/presets/[id]">): Promise<Metadata> {
+  const { locale: requestedLocale, id } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+  const fallbackTitle = presetFallbackTitles[locale];
+
+  try {
+    const presetDetail = await getPresetDetail(id);
+
+    return {
+      title: resolveMetadataTitle({
+        title: presetDetail?.preset.title,
+        locale,
+        localizedFallbacks: presetFallbackTitles,
+      }),
+    };
+  } catch {
+    return { title: fallbackTitle };
+  }
+}
 
 export default function PresetDetailPage({
   params,

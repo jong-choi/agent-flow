@@ -1,4 +1,5 @@
 import { type ReactNode, Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import {
@@ -19,6 +20,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiGuideMarkdown } from "@/features/developers/components/api-guide-markdown";
 import { SecretKeysManager } from "@/features/developers/components/secret-keys-manager";
 import { getUserSecrets } from "@/features/developers/server/queries";
+import { resolveMetadataLocale } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/developers">): Promise<Metadata> {
+  const { locale: requestedLocale } = await params;
+  const locale = resolveMetadataLocale(requestedLocale);
+
+  return {
+    title: locale === "ko" ? "개발자 API" : "Developer API",
+  };
+}
 
 export default async function DevelopersPage({
   params,
