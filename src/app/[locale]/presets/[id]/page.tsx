@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserId } from "@/features/auth/server/queries";
-import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
+import { CanvasPreview } from "@/features/canvas/components/cavas-preview/canvas-preview";
 import { PresetDetailRightPanel } from "@/features/presets/components/preset-detail-right-panel";
 import { resolvePresetCategoryKey } from "@/features/presets/constants/category-options";
 import { getPresetDetail } from "@/features/presets/server/queries";

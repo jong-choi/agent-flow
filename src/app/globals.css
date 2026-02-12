@@ -1,6 +1,33 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@plugin "tailwindcss-github-markdown";
+
+/* 깃헙 마크다운 스타일에서 블록 확장 막기 위한 break-all 적용 */
+.prose {
+  @apply bg-transparent;
+
+  /* 긴 URL/토큰 */
+  :where(a, code, kbd, samp, td, th) {
+    @apply break-all;
+  }
+
+  /* 코드블록 */
+  pre {
+    @apply break-all whitespace-pre-wrap;
+  }
+
+  /* 테이블 */
+  table {
+    @apply block w-full overflow-x-auto;
+  }
+
+  /* 일반 텍스트는 anywhere로 끊기 */
+  :where(p, li, blockquote, dd, dt) {
+    overflow-wrap: anywhere;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

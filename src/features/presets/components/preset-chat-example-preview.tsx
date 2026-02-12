@@ -15,8 +15,8 @@ export function PresetChatExamplePreview({
   const t = useTranslations<AppMessageKeys>("Presets");
 
   return (
-    <div className="h-[320px] rounded-lg border bg-muted/20">
-      <ScrollArea className="h-full p-4">
+    <div className="h-[600px] rounded-lg border bg-muted/20">
+      <ScrollArea className="h-full p-8">
         <div className="space-y-3">
           {messages.map((message) => (
             <div

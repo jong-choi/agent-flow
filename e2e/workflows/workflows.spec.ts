@@ -46,6 +46,60 @@ test.describe("Workflows", () => {
     }
   });
 
+  test("수정 캔버스 저장 다이얼로그가 현재 워크플로우 값을 채운다", async ({
+    page,
+  }) => {
+    await page.goto("/workflows");
+
+    const workflowCard = page.locator('a[href^="/workflows/canvas/"]').first();
+    if (!(await workflowCard.count())) {
+      test.skip(
+        true,
+        "워크플로우가 없어 캔버스 수정 다이얼로그를 확인할 수 없습니다.",
+      );
+    }
+
+    await workflowCard.press("Enter");
+    await expect(page).toHaveURL(/\/workflows\/canvas\/.+/);
+
+    const saveButton = page.getByRole("button", { name: "저장" });
+    if (!(await saveButton.isEnabled())) {
+      test.skip(
+        true,
+        "그래프가 유효하지 않아 저장 다이얼로그를 열 수 없습니다.",
+      );
+    }
+
+    const headerTitle = (
+      await page.getByTestId("flow-canvas").locator("h3").first().textContent()
+    )?.trim();
+    const headerDescription = (
+      await page.getByTestId("flow-canvas").locator("p").first().textContent()
+    )?.trim();
+    const expectedTitle = headerTitle ?? "";
+    const expectedDescription =
+      headerDescription === "설명이 기재되지 않았습니다"
+        ? ""
+        : (headerDescription ?? "");
+
+    await saveButton.click();
+    await expect(page.getByText("워크플로우 수정 저장").first()).toBeVisible();
+
+    const titleInput = page.locator("#workflow-dialog-title");
+    const descriptionInput = page.locator("#workflow-dialog-description");
+
+    await expect(titleInput).toHaveValue(expectedTitle);
+    await expect(descriptionInput).toHaveValue(expectedDescription);
+
+    await titleInput.fill("임시 제목");
+    await descriptionInput.fill("임시 설명");
+    await page.getByRole("button", { name: "닫기" }).click();
+
+    await saveButton.click();
+    await expect(titleInput).toHaveValue(expectedTitle);
+    await expect(descriptionInput).toHaveValue(expectedDescription);
+  });
+
   test("워크플로우 상세 페이지에서 캔버스로 이동한다", async ({ page }) => {
     await page.goto("/workflows");
 

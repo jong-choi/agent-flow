@@ -45,7 +45,7 @@ export async function PresetChatExampleSection({
         {chatId ? (
           <PresetChatExamplePreview messages={messages} />
         ) : (
-          <div className="flex h-[320px] items-center justify-center rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
+          <div className="flex h-[600px] items-center justify-center rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
             {t("chatExampleSection.noLinkedChat")}
           </div>
         )}
