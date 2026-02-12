@@ -55,7 +55,11 @@ const message = {
       },
       dialog: {
         title: "워크플로우 저장",
+        titleCreate: "워크플로우 저장",
+        titleEdit: "워크플로우 수정 저장",
         description: "이름과 설명을 입력한 뒤 저장하세요.",
+        descriptionCreate: "이름과 설명을 입력한 뒤 저장하세요.",
+        descriptionEdit: "현재 워크플로우 정보를 확인하고 수정 저장하세요.",
         nameLabel: "이름",
         namePlaceholder: "워크플로우 이름",
         descriptionLabel: "설명",
@@ -63,6 +67,8 @@ const message = {
         descriptionLimit: "최대 140자까지 입력할 수 있어요.",
         close: "닫기",
         submit: "저장",
+        submitCreate: "저장",
+        submitEdit: "수정",
       },
       toast: {
         success: "저장되었습니다.",

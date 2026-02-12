@@ -55,7 +55,11 @@ const message = {
       },
       dialog: {
         title: "Save Workflow",
+        titleCreate: "Save Workflow",
+        titleEdit: "Update Workflow",
         description: "Enter a name and description, then save.",
+        descriptionCreate: "Enter a name and description, then save.",
+        descriptionEdit: "Review the current name and description, then update.",
         nameLabel: "Name",
         namePlaceholder: "Workflow name",
         descriptionLabel: "Description",
@@ -63,6 +67,8 @@ const message = {
         descriptionLimit: "You can enter up to 140 characters.",
         close: "Close",
         submit: "Save",
+        submitCreate: "Save",
+        submitEdit: "Update",
       },
       toast: {
         success: "Saved.",
