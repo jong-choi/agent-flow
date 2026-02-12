@@ -1,23 +1,28 @@
-import { Skeleton } from "@/components/ui/skeleton";
 import { getTranslations } from "next-intl/server";
+import { Skeleton } from "@/components/ui/skeleton";
 import { GoogleSignInButton } from "@/features/auth/components/ui/google";
 import { signInWithGoogleAction } from "@/features/auth/utils/auth-actions";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
 type GoogleLoginFormProps = React.ComponentProps<"form"> & {
+  locale: string;
   className?: string;
   label?: React.ReactNode;
   searchParams?: PageProps<"/[locale]/login">["searchParams"];
 };
 
 export async function GoogleLoginForm({
+  locale,
   className,
   label,
   searchParams,
   ...formProps
 }: GoogleLoginFormProps) {
-  const t = await getTranslations<AppMessageKeys>("Auth");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Auth",
+  });
   const resolvedSearchParams = searchParams ? await searchParams : null;
   const rawCallbackUrl = resolvedSearchParams?.callbackUrl;
   const callbackUrl = typeof rawCallbackUrl === "string" ? rawCallbackUrl : "";

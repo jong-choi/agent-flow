@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import {
   Card,
   CardContent,
@@ -6,17 +7,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getPublicChatMessagesByChatId } from "@/features/chats/server/queries";
-import { PresetChatExamplePreview } from "@/features/presets/components/preset-chat-example-preview";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
-import { getTranslations } from "next-intl/server";
+import { PresetChatExamplePreview } from "@/features/presets/components/preset-chat-example-preview";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export async function PresetChatExampleSection({
   chatId,
+  locale,
 }: {
   chatId?: string | null;
+  locale: string;
 }) {
-  const t = await getTranslations<AppMessageKeys>("Presets");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
   const rawMessages = chatId
     ? await getPublicChatMessagesByChatId({ chatId })
     : [];

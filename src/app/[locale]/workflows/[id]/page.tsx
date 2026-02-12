@@ -111,7 +111,7 @@ async function WorkflowDetailContent({
         </div>
       </div>
 
-      <WorkflowDataView nodes={nodes} edges={edges} />
+      <WorkflowDataView locale={locale} nodes={nodes} edges={edges} />
     </div>
   );
 }

@@ -67,15 +67,18 @@ export default async function PresetCreatePage({
           </div>
         </div>
         <Suspense fallback={<PresetCreateWorkflowListFallback />}>
-          <PresetCreateWorkflowList />
+          <PresetCreateWorkflowList locale={locale} />
         </Suspense>
       </div>
     </PageContainer>
   );
 }
 
-async function PresetCreateWorkflowList() {
-  const t = await getTranslations<AppMessageKeys>("Presets");
+async function PresetCreateWorkflowList({ locale }: { locale: string }) {
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
   const workflowList = await getOwnedWorkflows();
 
   if (workflowList.length === 0) {

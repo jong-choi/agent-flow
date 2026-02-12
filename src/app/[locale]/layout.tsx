@@ -104,7 +104,7 @@ export default async function AppLayout({
               <SidebarNav />
               <div className="flex w-full flex-col">
                 <div className="sticky top-0 z-40">
-                  <SiteHeader />
+                  <SiteHeader locale={locale} />
                 </div>
                 <main className="flex flex-1 flex-col bg-background">
                   <div className="flex h-full w-full">{children}</div>

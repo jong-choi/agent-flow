@@ -5,7 +5,7 @@ import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { Separator } from "@/components/ui/separator";
 import { HeaderAccountMenu } from "@/features/auth/components/header-account-menu/header-account-menu";
 
-export function SiteHeader() {
+export function SiteHeader({ locale }: { locale: string }) {
   return (
     <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b bg-background px-6">
       <div className="flex items-center gap-6">
@@ -24,7 +24,7 @@ export function SiteHeader() {
         </div>
         <div className="flex min-w-32 justify-end">
           <Suspense fallback={<HeaderAccountMenuFallback />}>
-            <HeaderAccountMenu />
+            <HeaderAccountMenu locale={locale} />
           </Suspense>
         </div>
       </div>

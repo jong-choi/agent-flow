@@ -5,8 +5,6 @@ import {
   type RefAttributes,
   Suspense,
 } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   Blocks,
   BotMessageSquare,
@@ -18,13 +16,14 @@ import {
   Workflow,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { BrutalCI } from "@/components/main/ui/brutal-logo";
 import { SidebarContainer } from "@/components/sidebar-container";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
+import { Link, usePathname } from "@/lib/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 type LucideIcon = ForwardRefExoticComponent<
@@ -129,6 +128,7 @@ export function SidebarNav() {
 function SidebarNavContent() {
   const session = useSession();
   const pathname = usePathname();
+  const locale = useLocale();
   const t = useTranslations<AppMessageKeys>("Sidebar");
   const navigation = createNavigation(t);
 
@@ -137,7 +137,10 @@ function SidebarNavContent() {
   }
 
   return (
-    <nav className="flex flex-1 flex-col items-center gap-2 space-y-1">
+    <nav
+      className="flex flex-1 flex-col items-center gap-2 space-y-1"
+      key={locale}
+    >
       {navigation.map((item, index) => {
         if (item.type === "Separator") {
           return <Separator key={"Separator" + index} className="my-2" />;
@@ -183,6 +186,7 @@ export function SecondarySidebar() {
 
 function SecondarySidebarContent() {
   const pathname = usePathname();
+  const locale = useLocale();
   const t = useTranslations<AppMessageKeys>("Sidebar");
   const navigation = createNavigation(t);
   const activeNavItem = navigation.find(
@@ -196,7 +200,7 @@ function SecondarySidebarContent() {
   const ActiveIcon = activeNavItem.Icon;
 
   return (
-    <SidebarContainer>
+    <SidebarContainer key={locale}>
       <div className="flex shrink-0 items-center gap-2 px-4 text-xs font-extrabold text-muted-foreground">
         <ActiveIcon className="size-4" strokeWidth={1.75} />
         {activeNavItem.name}

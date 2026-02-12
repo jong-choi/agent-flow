@@ -1,7 +1,5 @@
 import { ChevronRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
-import { type ChatPageWorkflow } from "@/features/chats/components/chat-page/chat-queries";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,11 +8,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { type ChatPageWorkflow } from "@/features/chats/components/chat-page/chat-queries";
+import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
 import { getOwnedWorkflowsForChat } from "@/features/chats/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-export async function ChatWorkflowListDialog() {
-  const t = await getTranslations<AppMessageKeys>("Chat");
+export async function ChatWorkflowListDialog({ locale }: { locale: string }) {
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Chat",
+  });
   const workflowList = await getOwnedWorkflowsForChat();
 
   return (
@@ -33,7 +36,11 @@ export async function ChatWorkflowListDialog() {
           <div className="grid grid-cols-3 gap-4">
             {workflowList.map((workflow: ChatPageWorkflow) => {
               return (
-                <ChatWorkflowCard key={workflow.id} workflow={workflow} />
+                <ChatWorkflowCard
+                  key={workflow.id}
+                  workflow={workflow}
+                  locale={locale}
+                />
               );
             })}
           </div>

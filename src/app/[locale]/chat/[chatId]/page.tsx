@@ -62,7 +62,7 @@ async function ChatRunContent({
 }: {
   paramsPromise: PageProps<"/[locale]/chat/[chatId]">["params"];
 }) {
-  const { chatId } = await paramsPromise;
+  const { chatId, locale } = await paramsPromise;
   const chat = await getChatById(chatId);
   const workflow = await getOwnedWorkflowForChatById(chat.workflowId);
   const estimatedCredits = await getOwnedWorkflowChatCreditEstimate(
@@ -82,6 +82,7 @@ async function ChatRunContent({
   return (
     <>
       <ChatHeader
+        locale={locale}
         chatId={chatId}
         chatTitle={chat.title}
         createdAt={chat.createdAt}

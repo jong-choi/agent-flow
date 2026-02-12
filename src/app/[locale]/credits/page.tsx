@@ -56,15 +56,18 @@ export default async function CreditsPage({
           <PageDescription>{t("page.descriptionLine2")}</PageDescription>
         </PageHeader>
         <Suspense fallback={<CreditsSummaryFallback />}>
-          <CreditsSummaryContent />
+          <CreditsSummaryContent locale={locale} />
         </Suspense>
       </PageStack>
     </PageContainer>
   );
 }
 
-async function CreditsSummaryContent() {
-  const t = await getTranslations<AppMessageKeys>("Credits");
+async function CreditsSummaryContent({ locale }: { locale: string }) {
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Credits",
+  });
   const [summary, attendanceStatus] = await Promise.all([
     getCreditSummary(),
     getDailyAttendanceStatus(),

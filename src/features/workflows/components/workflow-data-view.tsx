@@ -11,13 +11,18 @@ import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/c
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export async function WorkflowDataView({
+  locale,
   nodes,
   edges,
 }: {
+  locale: string;
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
 }) {
-  const t = await getTranslations<AppMessageKeys>("Workflows");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Workflows",
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -32,9 +37,7 @@ export async function WorkflowDataView({
       <Card>
         <CardHeader>
           <CardTitle>{t("dataView.nodeListTitle")}</CardTitle>
-          <CardDescription>
-            {t("dataView.nodeListDescription")}
-          </CardDescription>
+          <CardDescription>{t("dataView.nodeListDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           {nodes.length === 0 ? (

@@ -106,7 +106,10 @@ export default async function TemplateMarketPage({
           </CardContent>
         </Card>
         <Suspense fallback={<TemplateMarketContentFallback />}>
-          <TemplateMarketContent searchParamsPromise={searchParams} />
+          <TemplateMarketContent
+            locale={locale}
+            searchParamsPromise={searchParams}
+          />
         </Suspense>
       </div>
     </PageContainer>
@@ -114,11 +117,16 @@ export default async function TemplateMarketPage({
 }
 
 async function TemplateMarketContent({
+  locale,
   searchParamsPromise,
 }: {
+  locale: string;
   searchParamsPromise: Promise<PresetsPageSearchParams> | undefined;
 }) {
-  const t = await getTranslations<AppMessageKeys>("Presets");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
   const resolvedSearchParams = await searchParamsPromise;
   const selectedCategory = resolveParam(resolvedSearchParams?.category, "all");
   const selectedPrice = resolveParam(resolvedSearchParams?.price, "all");
@@ -200,7 +208,7 @@ async function TemplateMarketContent({
         </Card>
       ) : (
         <>
-          <PresetsList items={presets} />
+          <PresetsList locale={locale} items={presets} />
           <PresetsPagination
             basePath="/presets"
             currentPage={currentPage}

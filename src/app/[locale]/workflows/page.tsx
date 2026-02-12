@@ -50,7 +50,7 @@ export default async function WorkflowsPage({
           </Button>
         </div>
         <Suspense fallback={<WorkflowListViewFallback />}>
-          <WorkflowListView />
+          <WorkflowListView locale={locale} />
         </Suspense>
       </div>
     </PageContainer>

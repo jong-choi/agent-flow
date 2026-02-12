@@ -22,6 +22,7 @@ const selectClassName =
   "border-input h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50";
 
 type PresetInfoCardProps = {
+  locale: string;
   description: string;
   defaultValues?: {
     title?: string;
@@ -40,6 +41,7 @@ type PresetInfoCardProps = {
 };
 
 export async function PresetInfoCard({
+  locale,
   description,
   defaultValues,
   placeholders,
@@ -47,7 +49,10 @@ export async function PresetInfoCard({
   showTags = false,
   hiddenFields,
 }: PresetInfoCardProps) {
-  const t = await getTranslations<AppMessageKeys>("Presets");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
 
   return (
     <Card>
@@ -122,17 +127,22 @@ export async function PresetInfoCard({
 }
 
 type PresetChatExampleCardProps = {
+  locale: string;
   chats: ChatExample[];
   pinnedChat?: ChatExample | null;
   defaultSelectedId?: string | null;
 };
 
 export async function PresetChatExampleCard({
+  locale,
   chats,
   pinnedChat = null,
   defaultSelectedId = null,
 }: PresetChatExampleCardProps) {
-  const t = await getTranslations<AppMessageKeys>("Presets");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
 
   return (
     <Card>

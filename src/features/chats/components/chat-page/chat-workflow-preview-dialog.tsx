@@ -7,16 +7,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { getWorkflowWithGraphForChat } from "@/features/chats/server/queries";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
+import { getWorkflowWithGraphForChat } from "@/features/chats/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export async function ChatWorkflowPreviewDialog({
+  locale,
   workflowId,
 }: {
+  locale: string;
   workflowId: string;
 }) {
-  const t = await getTranslations<AppMessageKeys>("Chat");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Chat",
+  });
   const workflowData = await getWorkflowWithGraphForChat(workflowId);
 
   return (

@@ -11,11 +11,16 @@ import { DropdownLogoutForm } from "@/features/auth/components/dropdown-logout-f
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export async function HeaderAccountMenuContent({
+  locale,
   userName,
 }: {
+  locale: string;
   userName: string;
 }) {
-  const t = await getTranslations<AppMessageKeys>("Auth");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Auth",
+  });
 
   return (
     <DropdownMenuContent className="w-56" align="start">
@@ -30,7 +35,7 @@ export async function HeaderAccountMenuContent({
         </DropdownMenuItem>
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
-      <DropdownLogoutForm />
+      <DropdownLogoutForm locale={locale} />
     </DropdownMenuContent>
   );
 }
