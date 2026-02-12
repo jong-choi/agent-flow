@@ -11,8 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { resolvePresetCategoryKey } from "@/features/presets/constants/category-options";
 import { PresetPurchaseDialog } from "@/features/presets/components/preset-purchase-dialog";
+import { resolvePresetCategoryKey } from "@/features/presets/constants/category-options";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { formatYMD } from "@/lib/utils";
 
@@ -37,13 +37,16 @@ export type PresetListItem = {
 
 type PresetsListProps = {
   items: PresetListItem[];
+  locale: string;
   variant?: PresetsListVariant;
 };
 
 const formatDate = (value: Date | string | null | undefined) =>
   formatYMD(value);
 
-type PresetsTranslator = Awaited<ReturnType<typeof getTranslations<AppMessageKeys>>>;
+type PresetsTranslator = Awaited<
+  ReturnType<typeof getTranslations<AppMessageKeys>>
+>;
 
 const formatPrice = (t: PresetsTranslator, price: number) =>
   price === 0 ? t("common.free") : t("common.priceCredits", { count: price });
@@ -82,7 +85,9 @@ function PresetsCard({
           <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
             {resolveCategoryLabel(t, preset.category)}
           </span>
-          <span>{t("list.updatedAt", { date: formatDate(preset.updatedAt) })}</span>
+          <span>
+            {t("list.updatedAt", { date: formatDate(preset.updatedAt) })}
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <BoringCardAvatar
@@ -138,9 +143,13 @@ function PresetsCard({
 
 export async function PresetsList({
   items,
+  locale,
   variant = "market",
 }: PresetsListProps) {
-  const t = await getTranslations<AppMessageKeys>("Presets");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
 
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

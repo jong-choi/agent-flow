@@ -65,6 +65,7 @@ export default async function LoginPage({
         <CardContent className="grid gap-6">
           <Suspense fallback={<GoogleLoginFormFallback />}>
             <GoogleLoginForm
+              locale={locale}
               label={t("login.googleContinue")}
               className="mt-0"
               searchParams={searchParams}
@@ -73,7 +74,7 @@ export default async function LoginPage({
 
           {ENABLE_DEV_LOGIN && (
             <div className="rounded-lg bg-muted/30 p-1">
-              <DevLoginCardContent />
+              <DevLoginCardContent locale={locale} />
             </div>
           )}
         </CardContent>

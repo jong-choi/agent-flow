@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
 import { Clock, FileText } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import {
   Card,
   CardDescription,
@@ -22,11 +22,16 @@ type DocumentSummary = {
 export async function DocumentsGrid({
   documents,
   query,
+  locale,
 }: {
   documents: DocumentSummary[];
   query: string;
+  locale: string;
 }) {
-  const t = await getTranslations<AppMessageKeys>("Docs");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Docs",
+  });
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -82,7 +87,9 @@ function DocumentCard({
         <CardFooter className="mt-auto space-y-3">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <Clock className="size-3" />
-            <span>{t("grid.updatedAt", { date: formatYMD(doc.updatedAt) })}</span>
+            <span>
+              {t("grid.updatedAt", { date: formatYMD(doc.updatedAt) })}
+            </span>
           </div>
         </CardFooter>
       </Card>

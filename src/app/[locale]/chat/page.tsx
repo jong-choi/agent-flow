@@ -44,15 +44,18 @@ export default async function Page({ params }: PageProps<"/[locale]/chat">) {
       <div className="flex h-full flex-col items-center justify-center gap-16 pb-32">
         <PageHeading>{t("page.heading")}</PageHeading>
         <Suspense fallback={<ChatWorkflowSectionFallback />}>
-          <ChatWorkflowSection />
+          <ChatWorkflowSection locale={locale} />
         </Suspense>
       </div>
     </PageContainer>
   );
 }
 
-async function ChatWorkflowSection() {
-  const t = await getTranslations<AppMessageKeys>("Chat");
+async function ChatWorkflowSection({ locale }: { locale: string }) {
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Chat",
+  });
   const { data, hasMore } = await getRecentWorkflowsForChat();
 
   return (
@@ -61,12 +64,18 @@ async function ChatWorkflowSection() {
         <div className="flex w-3/5 min-w-[450px] flex-col gap-8">
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
             {data.map((workflow: ChatPageWorkflow) => {
-              return <ChatWorkflowCard key={workflow.id} workflow={workflow} />;
+              return (
+                <ChatWorkflowCard
+                  key={workflow.id}
+                  workflow={workflow}
+                  locale={locale}
+                />
+              );
             })}
           </div>
         </div>
       ) : null}
-      {hasMore ? <ChatWorkflowListDialog /> : null}
+      {hasMore ? <ChatWorkflowListDialog locale={locale} /> : null}
       {data.length === 0 ? (
         <>
           <div className="font-semibold text-muted-foreground">

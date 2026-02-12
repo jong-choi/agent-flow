@@ -4,6 +4,7 @@ import { ChatHeaderTitle } from "@/features/chats/components/chat-page/chat-head
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type ChatHeaderProps = {
+  locale: string;
   chatId: string;
   chatTitle: string | null;
   createdAt: Date | string;
@@ -12,12 +13,16 @@ type ChatHeaderProps = {
 };
 
 export async function ChatHeader({
+  locale,
   chatId,
   chatTitle,
   workflowTitle,
   workflowId,
 }: ChatHeaderProps) {
-  const t = await getTranslations<AppMessageKeys>("Chat");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Chat",
+  });
   const resolvedWorkflowTitle = workflowTitle?.trim() || t("header.noWorkflow");
 
   return (
@@ -25,6 +30,7 @@ export async function ChatHeader({
       <div className="flex justify-between">
         <ChatHeaderTitle chatId={chatId} chatTitle={chatTitle} />
         <ChatHeaderMenu
+          locale={locale}
           workflowId={workflowId}
           workflowTitle={resolvedWorkflowTitle}
         />

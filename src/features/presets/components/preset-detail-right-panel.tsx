@@ -24,13 +24,18 @@ const formatDate = (value: Date | string | null | undefined) =>
   formatYMD(value);
 
 type PresetDetailRightPanelProps = {
+  locale: string;
   presetId: string;
 };
 
 export async function PresetDetailRightPanel({
+  locale,
   presetId,
 }: PresetDetailRightPanelProps) {
-  const t = await getTranslations<AppMessageKeys>("Presets");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
   const viewerId = (await getUserId({ throwOnError: false })) || undefined;
   const presetDetail = await getPresetDetail(presetId);
 
@@ -49,7 +54,9 @@ export async function PresetDetailRightPanel({
       <Card>
         <CardHeader>
           <CardTitle>{t("rightPanel.pricePurchaseTitle")}</CardTitle>
-          <CardDescription>{t("rightPanel.pricePurchaseDescription")}</CardDescription>
+          <CardDescription>
+            {t("rightPanel.pricePurchaseDescription")}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1">

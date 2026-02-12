@@ -2,18 +2,19 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import {
-  getPresetChatExamplesForForm,
-  getWorkflowReferencedPresetPricingSummary,
-} from "@/features/presets/server/queries";
-import {
   PresetChatExampleCard,
   PresetInfoCard,
   PresetPricePublishCard,
 } from "@/features/presets/components/form/preset-form-sections";
 import { PresetCreateSubmitButton } from "@/features/presets/components/preset-create-submit-button";
+import {
+  getPresetChatExamplesForForm,
+  getWorkflowReferencedPresetPricingSummary,
+} from "@/features/presets/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type PresetCreateFormProps = {
+  locale: string;
   action: (formData: FormData) => void | Promise<void>;
   cancelHref?: string;
   submitLabel?: string;
@@ -22,13 +23,17 @@ type PresetCreateFormProps = {
 };
 
 export async function PresetCreateForm({
+  locale,
   action,
   cancelHref = "/presets",
   submitLabel,
   workflowId,
   chatId = null,
 }: PresetCreateFormProps) {
-  const t = await getTranslations<AppMessageKeys>("Presets");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
   const resolvedSubmitLabel = submitLabel ?? t("forms.createSubmit");
   const [{ chats, pinnedChat, defaultSelectedId }, pricingSummary] =
     await Promise.all([
@@ -39,6 +44,7 @@ export async function PresetCreateForm({
   return (
     <form action={action} className="space-y-6">
       <PresetInfoCard
+        locale={locale}
         description={t("forms.presetInfoDescriptionCreate")}
         placeholders={{
           title: t("forms.placeholderTitle"),
@@ -53,6 +59,7 @@ export async function PresetCreateForm({
       />
 
       <PresetChatExampleCard
+        locale={locale}
         chats={chats}
         pinnedChat={pinnedChat}
         defaultSelectedId={defaultSelectedId}

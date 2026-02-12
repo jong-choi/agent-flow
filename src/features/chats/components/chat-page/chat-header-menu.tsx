@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Ellipsis } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { ChatStartMenuItem } from "@/features/chats/components/chat-page/chat-start-menu-item";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,18 +9,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ChatStartMenuItem } from "@/features/chats/components/chat-page/chat-start-menu-item";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type ChatHeaderMenuProps = {
+  locale: string;
   workflowId?: string | null;
   workflowTitle: string;
 };
 
 export async function ChatHeaderMenu({
+  locale,
   workflowId,
   workflowTitle,
 }: ChatHeaderMenuProps) {
-  const t = await getTranslations<AppMessageKeys>("Chat");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Chat",
+  });
 
   return (
     <DropdownMenu>

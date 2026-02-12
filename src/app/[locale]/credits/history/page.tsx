@@ -60,7 +60,7 @@ export default async function CreditsHistoryPage({
           <PageDescription>{t("history.description")}</PageDescription>
         </PageHeader>
         <Suspense fallback={<CreditHistoryFallback />}>
-          <CreditHistory searchParams={searchParams} />
+          <CreditHistory params={params} searchParams={searchParams} />
         </Suspense>
       </PageStack>
     </PageContainer>
@@ -68,9 +68,14 @@ export default async function CreditsHistoryPage({
 }
 
 export async function CreditHistory({
+  params,
   searchParams,
-}: Pick<PageProps<"/[locale]/credits/history">, "searchParams">) {
-  const t = await getTranslations<AppMessageKeys>("Credits");
+}: PageProps<"/[locale]/credits/history">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Credits",
+  });
   const awaitedSearchParams = await searchParams;
 
   const type = awaitedSearchParams?.type;
@@ -115,13 +120,22 @@ export async function CreditHistory({
           })}
         </Badge>
       </div>
-      <List transactions={transactions} />
+      <List transactions={transactions} locale={locale} />
     </div>
   );
 }
 
-async function List({ transactions }: { transactions: TransactionResult[] }) {
-  const t = await getTranslations<AppMessageKeys>("Credits");
+async function List({
+  transactions,
+  locale,
+}: {
+  transactions: TransactionResult[];
+  locale: string;
+}) {
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Credits",
+  });
 
   return (
     <Card>

@@ -27,11 +27,16 @@ function buildHref(searchParams: SearchParams, nextSort: SortValue) {
 }
 
 export async function DocumentsSort({
+  locale,
   searchParams,
 }: {
+  locale: string;
   searchParams: SearchParams;
 }) {
-  const t = await getTranslations<AppMessageKeys>("Docs");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Docs",
+  });
   const currentSort =
     typeof searchParams.sort === "string"
       ? (searchParams.sort as SortValue)

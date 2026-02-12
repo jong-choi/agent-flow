@@ -90,9 +90,13 @@ async function PresetEditHeader({
 
   return (
     <div className="space-y-1">
-      <p className="text-sm text-muted-foreground">{t("editPage.sectionLabel")}</p>
+      <p className="text-sm text-muted-foreground">
+        {t("editPage.sectionLabel")}
+      </p>
       <h1 className="text-2xl font-semibold">{t("editPage.heading")}</h1>
-      <p className="text-sm text-muted-foreground">{t("editPage.description")}</p>
+      <p className="text-sm text-muted-foreground">
+        {t("editPage.description")}
+      </p>
     </div>
   );
 }
@@ -102,8 +106,11 @@ async function PresetEditContent({
 }: {
   paramsPromise: PageProps<"/[locale]/presets/[id]/edit">["params"];
 }) {
-  const t = await getTranslations<AppMessageKeys>("Presets");
-  const { id } = await paramsPromise;
+  const { id, locale } = await paramsPromise;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
   const preset = await getOwnedPresetForEdit(id);
 
   if (!preset) {
@@ -126,6 +133,7 @@ async function PresetEditContent({
       </div>
 
       <PresetEditForm
+        locale={locale}
         preset={preset}
         updateAction={updatePresetAction}
         deleteAction={deletePresetAction}

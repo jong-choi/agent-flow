@@ -1,11 +1,14 @@
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { devPasswordSignIn } from "@/features/auth/utils/auth-actions";
-import { getTranslations } from "next-intl/server";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-export async function DevLoginForm() {
-  const t = await getTranslations<AppMessageKeys>("Auth");
+export async function DevLoginForm({ locale }: { locale: string }) {
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Auth",
+  });
 
   return (
     <form

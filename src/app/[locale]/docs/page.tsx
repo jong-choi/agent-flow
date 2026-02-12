@@ -50,7 +50,10 @@ export default async function DocsPage(props: PageProps<"/[locale]/docs">) {
         </div>
         <Separator />
         <Suspense fallback={<DocsContentFallback />}>
-          <DocsContent searchParamsPromise={props.searchParams} />
+          <DocsContent
+            locale={locale}
+            searchParamsPromise={props.searchParams}
+          />
         </Suspense>
       </div>
     </PageContainer>
@@ -58,8 +61,10 @@ export default async function DocsPage(props: PageProps<"/[locale]/docs">) {
 }
 
 async function DocsContent({
+  locale,
   searchParamsPromise,
 }: {
+  locale: string;
   searchParamsPromise: PageProps<"/[locale]/docs">["searchParams"];
 }) {
   const resolvedSearchParams = await searchParamsPromise;
@@ -79,10 +84,10 @@ async function DocsContent({
   return (
     <>
       <div className="flex">
-        <DocumentsSort searchParams={resolvedSearchParams} />
+        <DocumentsSort locale={locale} searchParams={resolvedSearchParams} />
         <DocumentsSearch />
       </div>
-      <DocumentsGrid documents={documents} query={query} />
+      <DocumentsGrid locale={locale} documents={documents} query={query} />
     </>
   );
 }

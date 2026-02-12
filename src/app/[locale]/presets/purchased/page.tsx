@@ -100,7 +100,10 @@ export default async function PurchasedPresetsPage({
           </div>
         </div>
         <Suspense fallback={<PurchasedPresetsContentFallback />}>
-          <PurchasedPresetsContent searchParamsPromise={searchParams} />
+          <PurchasedPresetsContent
+            locale={locale}
+            searchParamsPromise={searchParams}
+          />
         </Suspense>
       </div>
     </PageContainer>
@@ -109,10 +112,15 @@ export default async function PurchasedPresetsPage({
 
 async function PurchasedPresetsContent({
   searchParamsPromise,
+  locale,
 }: {
   searchParamsPromise: Promise<PresetsLibrarySearchParams> | undefined;
+  locale: string;
 }) {
-  const t = await getTranslations<AppMessageKeys>("Presets");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
   const resolvedSearchParams = await searchParamsPromise;
   const selectedCategory = resolveParam(resolvedSearchParams?.category, "all");
   const selectedSort = resolveParam(resolvedSearchParams?.sort, "latest");
@@ -211,7 +219,11 @@ async function PurchasedPresetsContent({
           ) : (
             <ScrollArea className="h-[450px]">
               <div className="pb-14">
-                <PresetsList items={ownedPresets} variant="library" />
+                <PresetsList
+                  locale={locale}
+                  items={ownedPresets}
+                  variant="library"
+                />
               </div>
             </ScrollArea>
           )}
@@ -256,7 +268,11 @@ async function PurchasedPresetsContent({
         </Card>
       ) : (
         <>
-          <PresetsList items={purchasedPageResult.presets} variant="library" />
+          <PresetsList
+            locale={locale}
+            items={purchasedPageResult.presets}
+            variant="library"
+          />
           <PresetsPagination
             basePath="/presets/purchased"
             currentPage={currentPage}

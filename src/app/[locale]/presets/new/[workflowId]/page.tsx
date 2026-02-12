@@ -164,6 +164,7 @@ async function PresetCreateDetailContent({
       </Card>
 
       <PresetCreateForm
+        locale={locale}
         action={createPresetAction}
         workflowId={workflow.id}
         cancelHref="/presets/new"

@@ -10,8 +10,11 @@ import { HeaderCreditsButton } from "@/features/credits/components/header-credit
 import { auth } from "@/lib/auth";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-export async function HeaderAccountMenu() {
-  const t = await getTranslations<AppMessageKeys>("Auth");
+export async function HeaderAccountMenu({ locale }: { locale: string }) {
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Auth",
+  });
   const session = await auth();
 
   if (!session?.user || !session?.user.id) {
@@ -33,6 +36,7 @@ export async function HeaderAccountMenu() {
             avatarHash={session.user.avatarHash ?? "default"}
           />
           <HeaderAccountMenuContent
+            locale={locale}
             userName={session.user.displayName ?? t("header.defaultUser")}
           />
         </DropdownMenu>

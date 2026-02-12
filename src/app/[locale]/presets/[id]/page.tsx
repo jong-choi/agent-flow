@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { PresetChatExampleSection } from "@/app/[locale]/presets/[id]/_components/preset-chat-example-section";
 import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import { PageContainer } from "@/components/page-template";
@@ -17,8 +17,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserId } from "@/features/auth/server/queries";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
-import { resolvePresetCategoryKey } from "@/features/presets/constants/category-options";
 import { PresetDetailRightPanel } from "@/features/presets/components/preset-detail-right-panel";
+import { resolvePresetCategoryKey } from "@/features/presets/constants/category-options";
 import { getPresetDetail } from "@/features/presets/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale, resolveMetadataTitle } from "@/lib/metadata";
@@ -27,7 +27,8 @@ import { formatYMD } from "@/lib/utils";
 const formatPrice = (
   t: Awaited<ReturnType<typeof getTranslations<AppMessageKeys>>>,
   price: number,
-) => (price === 0 ? t("common.free") : t("common.priceCredits", { count: price }));
+) =>
+  price === 0 ? t("common.free") : t("common.priceCredits", { count: price });
 
 const formatDate = (value: Date | string | null | undefined) =>
   formatYMD(value);
@@ -90,9 +91,12 @@ async function PresetDetailContent({
 }: {
   paramsPromise: PageProps<"/[locale]/presets/[id]">["params"];
 }) {
-  const t = await getTranslations<AppMessageKeys>("Presets");
   const viewerId = (await getUserId({ throwOnError: false })) || undefined;
-  const { id } = await paramsPromise;
+  const { id, locale } = await paramsPromise;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
   const presetDetail = await getPresetDetail(id);
 
   if (!presetDetail) {
@@ -107,7 +111,7 @@ async function PresetDetailContent({
       <PageContainer
         RightPanel={
           <Suspense>
-            <PresetDetailRightPanel presetId={id} />
+            <PresetDetailRightPanel locale={locale} presetId={id} />
           </Suspense>
         }
       >
@@ -116,7 +120,9 @@ async function PresetDetailContent({
             <div className="space-y-3">
               {isOwner ? (
                 <Button variant="outline" asChild>
-                  <Link href="/presets/purchased">{t("detailPage.myPresets")}</Link>
+                  <Link href="/presets/purchased">
+                    {t("detailPage.myPresets")}
+                  </Link>
                 </Button>
               ) : (
                 <Button variant="outline" size="sm" asChild>
@@ -142,10 +148,14 @@ async function PresetDetailContent({
                   })}
                 </span>
                 <span>
-                  {t("detailPage.updatedAt", { date: formatDate(preset.updatedAt) })}
+                  {t("detailPage.updatedAt", {
+                    date: formatDate(preset.updatedAt),
+                  })}
                 </span>
                 {workflow?.title ? (
-                  <span>{t("detailPage.workflowLabel", { title: workflow.title })}</span>
+                  <span>
+                    {t("detailPage.workflowLabel", { title: workflow.title })}
+                  </span>
                 ) : null}
               </div>
             </div>
@@ -154,7 +164,9 @@ async function PresetDetailContent({
             <Card>
               <CardHeader>
                 <CardTitle>{t("detailPage.previewTitle")}</CardTitle>
-                <CardDescription>{t("detailPage.previewDescription")}</CardDescription>
+                <CardDescription>
+                  {t("detailPage.previewDescription")}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {nodes.length === 0 ? (
@@ -167,12 +179,14 @@ async function PresetDetailContent({
               </CardContent>
             </Card>
 
-            <PresetChatExampleSection chatId={preset.chatId} />
+            <PresetChatExampleSection locale={locale} chatId={preset.chatId} />
 
             <Card>
               <CardHeader>
                 <CardTitle>{t("detailPage.introTitle")}</CardTitle>
-                <CardDescription>{t("detailPage.introDescription")}</CardDescription>
+                <CardDescription>
+                  {t("detailPage.introDescription")}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="min-h-32 rounded-lg border bg-accent/50 p-4 text-sm leading-relaxed">
@@ -204,7 +218,9 @@ async function PresetDetailContent({
             <Card>
               <CardHeader>
                 <CardTitle>{t("detailPage.workflowConfigTitle")}</CardTitle>
-                <CardDescription>{t("detailPage.workflowConfigDescription")}</CardDescription>
+                <CardDescription>
+                  {t("detailPage.workflowConfigDescription")}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {nodes.length === 0 ? (
@@ -237,7 +253,9 @@ async function PresetDetailContent({
             <Card>
               <CardHeader>
                 <CardTitle>{t("detailPage.referencedTitle")}</CardTitle>
-                <CardDescription>{t("detailPage.referencedDescription")}</CardDescription>
+                <CardDescription>
+                  {t("detailPage.referencedDescription")}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {referencedPresets.length === 0 ? (

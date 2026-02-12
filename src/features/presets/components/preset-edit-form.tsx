@@ -22,17 +22,22 @@ import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { formatYMD } from "@/lib/utils";
 
 type PresetEditFormProps = {
+  locale: string;
   preset: PresetEditRes;
   updateAction: (formData: FormData) => void | Promise<void>;
   deleteAction: (formData: FormData) => void | Promise<void>;
 };
 
 export async function PresetEditForm({
+  locale,
   preset,
   updateAction,
   deleteAction,
 }: PresetEditFormProps) {
-  const t = await getTranslations<AppMessageKeys>("Presets");
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
   const [{ chats, pinnedChat, defaultSelectedId }, pricingSummary] =
     await Promise.all([
       getPresetChatExamplesForForm({
@@ -51,7 +56,9 @@ export async function PresetEditForm({
         <Card>
           <CardHeader>
             <CardTitle>{t("forms.workflowInfoTitle")}</CardTitle>
-            <CardDescription>{t("forms.workflowInfoDescription")}</CardDescription>
+            <CardDescription>
+              {t("forms.workflowInfoDescription")}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-1">
@@ -73,6 +80,7 @@ export async function PresetEditForm({
         </Card>
 
         <PresetInfoCard
+          locale={locale}
           description={t("forms.presetInfoDescriptionEdit")}
           defaultValues={{
             title: preset.title,
@@ -86,6 +94,7 @@ export async function PresetEditForm({
         />
 
         <PresetChatExampleCard
+          locale={locale}
           chats={chats}
           pinnedChat={pinnedChat}
           defaultSelectedId={defaultSelectedId}
@@ -115,9 +124,7 @@ export async function PresetEditForm({
             <CardTitle className="text-destructive">
               {t("forms.deleteTitle")}
             </CardTitle>
-            <CardDescription>
-              {t("forms.deleteDescription")}
-            </CardDescription>
+            <CardDescription>{t("forms.deleteDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="destructive" type="submit">

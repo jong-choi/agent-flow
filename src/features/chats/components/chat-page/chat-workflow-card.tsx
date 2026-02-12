@@ -8,7 +8,13 @@ import { type ChatPageWorkflow } from "@/features/chats/components/chat-page/cha
 import { ChatStartButton } from "@/features/chats/components/chat-page/chat-start-button";
 import { ChatWorkflowPreviewDialog } from "@/features/chats/components/chat-page/chat-workflow-preview-dialog";
 
-export function ChatWorkflowCard({ workflow }: { workflow: ChatPageWorkflow }) {
+export function ChatWorkflowCard({
+  workflow,
+  locale,
+}: {
+  workflow: ChatPageWorkflow;
+  locale: string;
+}) {
   return (
     <div
       className="flex flex-col gap-1 rounded-lg border border-border/60 bg-background p-4"
@@ -30,7 +36,7 @@ export function ChatWorkflowCard({ workflow }: { workflow: ChatPageWorkflow }) {
           <WorkflowAvatar workflowId={workflow.id} />
         </div>
         <div className="flex items-center justify-end gap-2">
-          <ChatWorkflowPreviewDialog workflowId={workflow.id} />
+          <ChatWorkflowPreviewDialog locale={locale} workflowId={workflow.id} />
           <ChatStartButton workflowId={workflow.id} />
         </div>
       </div>
