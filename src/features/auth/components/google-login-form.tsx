@@ -1,8 +1,5 @@
-import { getTranslations } from "next-intl/server";
-import { Skeleton } from "@/components/ui/skeleton";
 import { GoogleSignInButton } from "@/features/auth/components/ui/google";
 import { signInWithGoogleAction } from "@/features/auth/utils/auth-actions";
-import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
 type GoogleLoginFormProps = React.ComponentProps<"form"> & {
@@ -13,20 +10,14 @@ type GoogleLoginFormProps = React.ComponentProps<"form"> & {
 };
 
 export async function GoogleLoginForm({
-  locale,
   className,
-  label,
+  label = "Continue with Google",
   searchParams,
   ...formProps
 }: GoogleLoginFormProps) {
-  const t = await getTranslations<AppMessageKeys>({
-    locale,
-    namespace: "Auth",
-  });
   const resolvedSearchParams = searchParams ? await searchParams : null;
   const rawCallbackUrl = resolvedSearchParams?.callbackUrl;
   const callbackUrl = typeof rawCallbackUrl === "string" ? rawCallbackUrl : "";
-  const resolvedLabel = label ?? t("login.googleContinue");
 
   return (
     <form
@@ -36,17 +27,24 @@ export async function GoogleLoginForm({
     >
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
       <GoogleSignInButton type="submit" className="w-full">
-        {resolvedLabel}
+        {label}
       </GoogleSignInButton>
     </form>
   );
 }
 
-export function GoogleLoginFormFallback() {
+export function GoogleLoginFormFallback({
+  label = "Continue with Google",
+  className,
+}: {
+  label?: string;
+  className?: string;
+}) {
   return (
-    <div className="mt-0 space-y-2">
-      <Skeleton className="h-11 w-full rounded-md" />
-      <Skeleton className="mx-auto h-3 w-40" />
+    <div className={cn("mt-8", className)}>
+      <GoogleSignInButton type="submit" className="w-full">
+        {label}
+      </GoogleSignInButton>
     </div>
   );
 }
