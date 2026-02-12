@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
-import { TEST_PASSWORD, signIn, signOut } from "@/lib/auth";
+import { DEV_PASSWORD_PROVIDER_ID, signIn, signOut } from "@/lib/auth";
 
 export const signInWithGoogleAction = async (formData: FormData) => {
   const rawCallbackUrl = formData.get("callbackUrl");
@@ -26,7 +26,7 @@ export const devPasswordSignIn = async (formData: FormData) => {
   formData.append("redirectTo", "/");
 
   try {
-    await signIn(TEST_PASSWORD, formData);
+    await signIn(DEV_PASSWORD_PROVIDER_ID, formData);
   } catch (error) {
     if (error instanceof AuthError) {
       return redirect(`${DEV_SIGNIN_ERROR_URL}&code=${error.type}`);

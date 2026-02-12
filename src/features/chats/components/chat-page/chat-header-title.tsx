@@ -23,6 +23,7 @@ type ChatHeaderTitleProps = {
 export function ChatHeaderTitle({ chatId, chatTitle }: ChatHeaderTitleProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const t = useTranslations<AppMessageKeys>("Chat");
 
   const displayTitle = chatTitle?.trim() || t("title.newChat");
@@ -67,10 +68,21 @@ export function ChatHeaderTitle({ chatId, chatTitle }: ChatHeaderTitleProps) {
             >
               {t("title.rename")}
             </DropdownMenuItem>
-            <ChatSidebarDeleteDialog chatId={chatId} isActive />
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              {t("action.delete")}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )}
+      <ChatSidebarDeleteDialog
+        open={deleteDialogOpen}
+        setIsOpen={setDeleteDialogOpen}
+        chatId={chatId}
+        isActive
+      />
     </div>
   );
 }

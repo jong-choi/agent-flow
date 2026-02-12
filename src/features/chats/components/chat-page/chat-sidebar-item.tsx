@@ -27,7 +27,7 @@ export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
   const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
   const t = useTranslations<AppMessageKeys>("Chat");
   const displayTitle = chat.title?.trim() || t("title.newChat");
-
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   return (
     <div
       className={cn(
@@ -78,10 +78,21 @@ export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
             >
               {t("title.rename")}
             </DropdownMenuItem>
-            <ChatSidebarDeleteDialog chatId={chat.id} isActive={isActive} />
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              {t("action.delete")}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )}
+      <ChatSidebarDeleteDialog
+        chatId={chat.id}
+        isActive={isActive}
+        open={deleteDialogOpen}
+        setIsOpen={setDeleteDialogOpen}
+      />
     </div>
   );
 }

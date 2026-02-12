@@ -37,19 +37,20 @@ export async function loginWithDevPassword(page: Page) {
     return;
   }
 
-  const devLoginButton = page.getByRole("button", {
-    name: "Dev password로 로그인",
-    exact: true,
-  });
+  const passwordInput = page.locator('input[name="password"][type="password"]');
 
-  if (!(await devLoginButton.isVisible())) {
+  if (!(await passwordInput.isVisible())) {
     test.skip(true, "Dev login UI is disabled.");
     return;
   }
 
-  const passwordInput = page.getByPlaceholder("password");
-  await expect(passwordInput).toBeVisible();
   await passwordInput.fill(password);
+
+  const devLoginButton = page
+    .locator('form:has(input[name="password"][type="password"])')
+    .first()
+    .getByRole("button")
+    .first();
 
   await expect(devLoginButton).toBeEnabled();
   await devLoginButton.click({ noWaitAfter: true });

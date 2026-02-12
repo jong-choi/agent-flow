@@ -13,20 +13,22 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { softDeleteChat } from "@/features/chats/server/actions";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type ChatSidebarDeleteDialogProps = {
   chatId: string;
   isActive: boolean;
+  open: boolean;
+  setIsOpen: (value: boolean) => void;
 };
 
 export function ChatSidebarDeleteDialog({
   chatId,
   isActive,
+  open,
+  setIsOpen,
 }: ChatSidebarDeleteDialogProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -38,11 +40,12 @@ export function ChatSidebarDeleteDialog({
     setIsDeleting(true);
 
     try {
-      await softDeleteChat({ chatId });
+      await softDeleteChat({ chatId }).then(() => {
+        if (isActive) {
+          router.push("/chat");
+        }
+      });
       toast.success(t("toast.deleteSuccess"));
-      if (isActive) {
-        router.push("/chat");
-      }
     } catch {
       toast.error(t("toast.deleteFailed"));
     } finally {
@@ -51,12 +54,7 @@ export function ChatSidebarDeleteDialog({
   };
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <DropdownMenuItem variant="destructive">
-          {t("action.delete")}
-        </DropdownMenuItem>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={setIsOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t("dialog.chatDeleteTitle")}</AlertDialogTitle>
