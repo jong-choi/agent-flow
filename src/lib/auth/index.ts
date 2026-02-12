@@ -14,6 +14,7 @@ export const ENABLE_DEV_LOGIN =
   process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === "true";
 
 export const TEST_PASSWORD = process.env.TEST_PASSWORD!;
+export const DEV_PASSWORD_PROVIDER_ID = "password" as const;
 
 const providers: Provider[] = [
   Google({
@@ -29,7 +30,7 @@ const providers: Provider[] = [
 if (ENABLE_DEV_LOGIN) {
   providers.push(
     Credentials({
-      id: "password",
+      id: DEV_PASSWORD_PROVIDER_ID,
       name: "Password",
       credentials: {
         password: { label: "Password", type: "password" },

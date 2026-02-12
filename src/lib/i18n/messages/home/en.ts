@@ -1,32 +1,90 @@
 const message = {
+  metaDescription: "A visual platform for building and running AI agents with flowcharts.",
   hero: {
-    title: "Bring Your AI Visions\nto Life",
-    subtitle:
-      "Build your own AI agents through various models and a visual engine, and automate powerful workflows.",
-    cta: "Start Now",
+    ctaStart: "Get Started",
+    subtitleLine1: "Flowchart Agent",
+    subtitleLine2: "Build your own AI agent",
   },
-  features: {
-    canvas: {
-      title: "Visual Graph Engine",
-      desc: "Visualize complex AI logic with nodes and edges. Design sophisticated agents with simple drag-and-drop.",
+  canvas: {
+    descriptionLine1: "Drag and drop nodes, then connect them with edges.",
+    descriptionLine2: "Combine chat, search, and documents in one flow.",
+    cta: "Go to Canvas",
+    nodes: {
+      presets: "Presets",
+      llmCall: "LLM Call",
+      search: "Search",
+      document: "Document",
+      fanOut: "Fan-out",
+      output: "Output",
     },
-    chat: {
-      title: "Intelligent Chat Interface",
-      desc: "Infinite context chat with real-time search engine integration. Experience the most advanced way to communicate with Multi-modal AI.",
+  },
+  howItWorks: {
+    designDesc: "Design your agent logic on the canvas with nodes and edges.",
+    configureDesc: "Configure prompts, tools, and models for each node.",
+    chatDesc: "Test your workflow instantly in the chat interface.",
+    deployDesc: "Issue API keys and deploy your agent to external services.",
+  },
+  chat: {
+    descriptionLine1: "Run your designed workflow instantly through chat.",
+    descriptionLine2: "Supports multi-turn conversations with memory and context.",
+    demo: {
+      userLabel: "User",
+      agentLabel: "Agent",
+      userMessage1: "Search current slang trends and save them to a document.",
+      agentMessage: "Sure, I will draft it based on the search results.",
+      userMessage2: "Add a blog post optimized for SEO.",
     },
-    workflows: {
-      title: "Powerful Workflow Automation",
-      desc: "Let AI handle repetitive tasks. Open up endless possibilities with conditional logic and external API integrations.",
+  },
+  presets: {
+    descriptionLine1: "Discover community-made agent presets,",
+    descriptionLine2: "buy with credits, and use them instantly.",
+    cta: "Browse Presets",
+    free: "Free",
+    priceCredits: "{count} credits",
+    items: {
+      customerSupport: {
+        name: "Customer Support Chatbot",
+        tag: "Support",
+      },
+      seoBlog: {
+        name: "SEO Keyword Blog Writer",
+        tag: "Marketing",
+      },
+      projectManagement: {
+        name: "Project Management Chatbot",
+        tag: "Operations",
+      },
+      parallelCode: {
+        name: "Parallel Code Writer",
+        tag: "Development",
+      },
     },
-    presets: {
-      title: "Verified Preset Library",
-      desc: "Get started immediately with AI templates designed by experts. Load hundreds of sophisticated settings with a single click.",
+  },
+  credits: {
+    descriptionLine1: "Earn free credits with daily attendance check-ins.",
+    cta: "Check Attendance",
+    currentBalance: "Current Balance",
+    days: {
+      mon: "M",
+      tue: "T",
+      wed: "W",
+      thu: "T",
+      fri: "F",
+      sat: "S",
+      sun: "S",
     },
+  },
+  developerApi: {
+    descriptionLine1:
+      "Connect your existing SDK code through an OpenAI-compatible endpoint,",
+    descriptionLine2: "and invoke agent workflows right away.",
+    cta: "View API Docs",
+    examplePrompt: "Tell me how to raise a puppy.",
   },
   cta: {
-    getStarted: "Get Started",
-    learnMore: "Learn More",
-    login: "Login",
+    descriptionLine1: "Get started now and claim free credits.",
+    descriptionLine2: "Build AI agents without coding.",
+    button: "Get Started",
   },
 };
 

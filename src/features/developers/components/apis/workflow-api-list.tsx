@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Copy, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { BoringCardAvatar } from "@/components/boring-avatar";
@@ -25,6 +26,7 @@ import {
   issueWorkflowCanvasIdAction,
   softDeleteWorkflowCanvasIdAction,
 } from "@/features/developers/server/actions";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn, formatYMD } from "@/lib/utils";
 
 type WorkflowSummary = {
@@ -45,6 +47,7 @@ const SECRET_PLACEHOLDER = "af-**********************";
 const CANVAS_ID_PLACEHOLDER = "af-id-*******************";
 
 export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
+  const t = useTranslations<AppMessageKeys>("Developers");
   const descriptionId = useId();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<WorkflowSummary | null>(null);
@@ -78,7 +81,7 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
         setCanvasId(issued.canvasId);
       } catch (error) {
         console.error(error);
-        toast.error("워크플로우 ID 발급에 실패했습니다.");
+        toast.error(t("workflowApi.toasts.issueFailed"));
       }
     });
   };
@@ -92,10 +95,10 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
           rotate: true,
         });
         setCanvasId(issued.canvasId);
-        toast.success("새 X-CANVAS-ID가 발급되었습니다.");
+        toast.success(t("workflowApi.toasts.rotated"));
       } catch (error) {
         console.error(error);
-        toast.error("재발급에 실패했습니다.");
+        toast.error(t("workflowApi.toasts.rotateFailed"));
       }
     });
   };
@@ -106,10 +109,10 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
       try {
         await softDeleteWorkflowCanvasIdAction({ workflowId: selected.id });
         setCanvasId(null);
-        toast.success("비활성화되었습니다.");
+        toast.success(t("workflowApi.toasts.revoked"));
       } catch (error) {
         console.error(error);
-        toast.error("비활성화에 실패했습니다.");
+        toast.error(t("workflowApi.toasts.revokeFailed"));
       }
     });
   };
@@ -123,13 +126,14 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
     : "/api/v1/openai";
   const openAiChatEndpoint = `${openAiBaseUrl}/chat/completions`;
   const openAiResponsesEndpoint = `${openAiBaseUrl}/responses`;
+  const samplePrompt = t("workflowApi.samples.prompt");
 
   const agentFlowCurlSnippet = `curl -X POST "${agentFlowEndpoint}" \\
   -H "Content-Type: application/json" \\
   -H "X-CANVAS-SECRET: ${SECRET_PLACEHOLDER}" \\
   -H "X-CANVAS-ID: ${canvasIdValue}" \\
   -d '{
-    "message": "강아지 키우는 법을 검색해줘"
+    "message": "${samplePrompt}"
   }'`;
 
   const agentFlowJsSnippet = `await fetch("${agentFlowEndpoint}", {
@@ -140,7 +144,7 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
     "X-CANVAS-ID": "${canvasIdValue}"
   },
   body: JSON.stringify({
-    message: "강아지 키우는 법을 검색해줘"
+    message: "${samplePrompt}"
   })
 });`;
 
@@ -150,7 +154,7 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
   -d '{
     "model": "${canvasIdValue}",
     "messages": [
-      { "role": "user", "content": "강아지 키우는 법을 검색해줘" }
+      { "role": "user", "content": "${samplePrompt}" }
     ]
   }'`;
 
@@ -163,7 +167,7 @@ const client = new OpenAI({
 
 const result = await client.chat.completions.create({
   model: "${canvasIdValue}",
-  messages: [{ role: "user", content: "강아지 키우는 법을 검색해줘" }]
+  messages: [{ role: "user", content: "${samplePrompt}" }]
 });`;
 
   const openAiResponsesCurlSnippet = `curl -X POST "${openAiResponsesEndpoint}" \\
@@ -171,7 +175,7 @@ const result = await client.chat.completions.create({
   -H "Authorization: Bearer ${SECRET_PLACEHOLDER}" \\
   -d '{
     "model": "${canvasIdValue}",
-    "input": "강아지 키우는 법을 검색해줘"
+    "input": "${samplePrompt}"
   }'`;
 
   const openAiResponsesSdkSnippet = `import OpenAI from "openai";
@@ -183,7 +187,7 @@ const client = new OpenAI({
 
 const result = await client.responses.create({
   model: "${canvasIdValue}",
-  input: "강아지 키우는 법을 검색해줘"
+  input: "${samplePrompt}"
 });`;
 
   const snippetMeta: Record<
@@ -196,21 +200,21 @@ const result = await client.responses.create({
     }
   > = {
     agentflow: {
-      description: "AgentFlow API 가이드",
+      description: t("workflowApi.snippets.agentflow.description"),
       curl: agentFlowCurlSnippet,
-      scriptLabel: "JavaScript (fetch)",
+      scriptLabel: t("workflowApi.snippets.agentflow.scriptLabel"),
       script: agentFlowJsSnippet,
     },
     "openai-chat": {
-      description: "OpenAI Chat Completions 호환 호출",
+      description: t("workflowApi.snippets.openAiChat.description"),
       curl: openAiChatCurlSnippet,
-      scriptLabel: "JavaScript (OpenAI SDK)",
+      scriptLabel: t("workflowApi.snippets.openAiChat.scriptLabel"),
       script: openAiChatSdkSnippet,
     },
     "openai-responses": {
-      description: "OpenAI Responses 호환 호출",
+      description: t("workflowApi.snippets.openAiResponses.description"),
       curl: openAiResponsesCurlSnippet,
-      scriptLabel: "JavaScript (OpenAI SDK)",
+      scriptLabel: t("workflowApi.snippets.openAiResponses.scriptLabel"),
       script: openAiResponsesSdkSnippet,
     },
   };
@@ -222,9 +226,9 @@ const result = await client.responses.create({
       {workflows.length === 0 ? (
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>워크플로우가 없습니다</CardTitle>
+            <CardTitle>{t("workflowApi.empty.title")}</CardTitle>
             <CardDescription>
-              먼저 캔버스에서 워크플로우를 만들어 주세요.
+              {t("workflowApi.empty.description")}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -243,11 +247,13 @@ const result = await client.responses.create({
                     {workflow.title}
                   </div>
                   <div className="shrink-0 text-xs text-muted-foreground">
-                    업데이트 {formatYMD(workflow.updatedAt)}
+                    {t("workflowApi.updatedAt", {
+                      date: formatYMD(workflow.updatedAt),
+                    })}
                   </div>
                 </div>
                 <div className="h-6 truncate text-sm text-foreground/80">
-                  {workflow.description ?? "설명이 없습니다."}
+                  {workflow.description ?? t("common.noDescription")}
                 </div>
                 <div className="mt-2 flex items-end justify-between">
                   <div className="mb-1">
@@ -259,7 +265,7 @@ const result = await client.responses.create({
                     />
                   </div>
                   <div className="text-xs font-medium text-primary">
-                    API 코드 보기
+                    {t("workflowApi.viewCode")}
                   </div>
                 </div>
               </div>
@@ -281,17 +287,20 @@ const result = await client.responses.create({
       >
         <DialogContent className="sm:max-w-2xl" ariaDescribedby={descriptionId}>
           <DialogHeader>
-            <DialogTitle>{selected?.title ?? "워크플로우 API"}</DialogTitle>
+            <DialogTitle>{selected?.title ?? t("meta.workflowApiTitle")}</DialogTitle>
             <DialogDescription id={descriptionId}>
-              <code>X-CANVAS-ID</code>는 워크플로우별로 발급됩니다. OpenAI 호환
-              라우트에서는 이 값을 <code>model</code>로 사용합니다.
+              {t.rich("workflowApi.dialog.description", {
+                code: (chunks) => <code>{chunks}</code>,
+              })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-sm font-semibold">X-CANVAS-ID</div>
+                <div className="text-sm font-semibold">
+                  {t("workflowApi.dialog.canvasIdLabel")}
+                </div>
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
@@ -305,7 +314,7 @@ const result = await client.responses.create({
                     ) : (
                       <RotateCcw className="size-4" />
                     )}
-                    재발급
+                    {t("workflowApi.dialog.rotate")}
                   </Button>
                   <Button
                     type="button"
@@ -315,7 +324,7 @@ const result = await client.responses.create({
                     disabled={!selected || isPending || !canvasId}
                   >
                     <Trash2 className="size-4" />
-                    비활성화
+                    {t("workflowApi.dialog.revoke")}
                   </Button>
                 </div>
               </div>
@@ -334,17 +343,17 @@ const result = await client.responses.create({
                   <SnippetTabButton
                     active={snippetTab === "agentflow"}
                     onClick={() => setSnippetTab("agentflow")}
-                    label="AgentFlow API 가이드"
+                    label={t("workflowApi.tabs.agentflow")}
                   />
                   <SnippetTabButton
                     active={snippetTab === "openai-chat"}
                     onClick={() => setSnippetTab("openai-chat")}
-                    label="OpenAI Chat Completions"
+                    label={t("workflowApi.tabs.openAiChat")}
                   />
                   <SnippetTabButton
                     active={snippetTab === "openai-responses"}
                     onClick={() => setSnippetTab("openai-responses")}
-                    label="OpenAI Responses"
+                    label={t("workflowApi.tabs.openAiResponses")}
                   />
                 </div>
               </div>
@@ -353,7 +362,7 @@ const result = await client.responses.create({
               </p>
               <ScrollArea className="h-[500px] min-h-0 overflow-auto">
                 <div className="space-y-2">
-                  <div className="text-sm font-semibold">cURL</div>
+                  <div className="text-sm font-semibold">{t("workflowApi.curl")}</div>
                   <CodeBlock
                     code={activeSnippet.curl}
                     onCopy={() =>
@@ -378,7 +387,9 @@ const result = await client.responses.create({
 
           <DialogFooter>
             <p className="text-xs text-muted-foreground">
-              서비스 키는 <code>/developers</code>에서 발급 후 보관해 주세요.
+              {t.rich("workflowApi.dialog.footer", {
+                code: (chunks) => <code>{chunks}</code>,
+              })}
             </p>
           </DialogFooter>
         </DialogContent>
@@ -423,6 +434,8 @@ function CodeBlock({
   copyDisabled?: boolean;
   muted?: boolean;
 }) {
+  const t = useTranslations<AppMessageKeys>("Developers");
+
   return (
     <div
       className={cn(
@@ -438,10 +451,10 @@ function CodeBlock({
         variant="ghost"
         size="icon-sm"
         className="absolute top-2 right-2 h-7 w-7 text-muted-foreground"
-        aria-label="copy"
+        aria-label={t("common.copy")}
         onClick={() => {
           onCopy();
-          toast.success("복사되었습니다.");
+          toast.success(t("common.toasts.copied"));
         }}
         disabled={copyDisabled}
       >

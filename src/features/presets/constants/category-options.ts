@@ -1,15 +1,36 @@
 const categories = [
-  { label: "영업", value: "영업" },
-  { label: "고객지원", value: "고객지원" },
-  { label: "마케팅", value: "마케팅" },
-  { label: "데이터", value: "데이터" },
-  { label: "운영", value: "운영" },
-  { label: "개발", value: "개발" },
-];
+  { key: "sales", value: "영업" },
+  { key: "customerSupport", value: "고객지원" },
+  { key: "marketing", value: "마케팅" },
+  { key: "data", value: "데이터" },
+  { key: "operations", value: "운영" },
+  { key: "development", value: "개발" },
+] as const;
 
-export const categoryOptions = [
-  { label: "선택 안함", value: "" },
-  ...categories,
-];
+export const categoryOptions = [{ key: "none", value: "" }, ...categories] as const;
 
-export const categoryFilters = [{ label: "전체", value: "all" }, ...categories];
+export const categoryFilters = [{ key: "all", value: "all" }, ...categories] as const;
+
+export type PresetCategoryValue = (typeof categories)[number]["value"];
+export type PresetCategoryTranslationKey = (typeof categories)[number]["key"];
+
+export function resolvePresetCategoryKey(
+  value: string | null | undefined,
+): PresetCategoryTranslationKey | null {
+  switch (value) {
+    case "영업":
+      return "sales";
+    case "고객지원":
+      return "customerSupport";
+    case "마케팅":
+      return "marketing";
+    case "데이터":
+      return "data";
+    case "운영":
+      return "operations";
+    case "개발":
+      return "development";
+    default:
+      return null;
+  }
+}

@@ -1,6 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { getTranslations } from "next-intl/server";
 import { GoogleSignInButton } from "@/features/auth/components/ui/google";
 import { signInWithGoogleAction } from "@/features/auth/utils/auth-actions";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
 type GoogleLoginFormProps = React.ComponentProps<"form"> & {
@@ -11,13 +13,15 @@ type GoogleLoginFormProps = React.ComponentProps<"form"> & {
 
 export async function GoogleLoginForm({
   className,
-  label = "Google 계정으로 계속",
+  label,
   searchParams,
   ...formProps
 }: GoogleLoginFormProps) {
+  const t = await getTranslations<AppMessageKeys>("Auth");
   const resolvedSearchParams = searchParams ? await searchParams : null;
   const rawCallbackUrl = resolvedSearchParams?.callbackUrl;
   const callbackUrl = typeof rawCallbackUrl === "string" ? rawCallbackUrl : "";
+  const resolvedLabel = label ?? t("login.googleContinue");
 
   return (
     <form
@@ -27,7 +31,7 @@ export async function GoogleLoginForm({
     >
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
       <GoogleSignInButton type="submit" className="w-full">
-        {label}
+        {resolvedLabel}
       </GoogleSignInButton>
     </form>
   );

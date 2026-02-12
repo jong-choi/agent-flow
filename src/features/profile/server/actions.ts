@@ -8,6 +8,12 @@ import { auth } from "@/lib/auth";
 import { profileTags } from "@/features/profile/server/cache/tags";
 import { isDisplayNameTaken } from "@/features/profile/server/queries";
 
+export type UpdateUserErrorCode =
+  | "display_name_required"
+  | "display_name_taken"
+  | "avatar_invalid"
+  | "update_failed";
+
 export const checkDisplayNameTakenAction = async (
   displayName: string,
   excludeUserId?: string,
@@ -23,11 +29,11 @@ export const checkDisplayNameTakenAction = async (
 export const updateUserAction = async (formData: FormData) => {
   const rawDisplayName = formData.get("displayName");
   if (typeof rawDisplayName !== "string") {
-    return { ok: false, error: "닉네임을 입력해주세요." };
+    return { ok: false as const, code: "display_name_required" as const };
   }
   const displayName = rawDisplayName.trim();
   if (!displayName) {
-    return { ok: false, error: "닉네임을 입력해주세요." };
+    return { ok: false as const, code: "display_name_required" as const };
   }
 
   const session = await auth();
@@ -37,16 +43,16 @@ export const updateUserAction = async (formData: FormData) => {
   }
 
   if (await isDisplayNameTaken(displayName, userId)) {
-    return { ok: false, error: "이미 사용 중인 닉네임입니다." };
+    return { ok: false as const, code: "display_name_taken" as const };
   }
 
   const rawAvatarHash = formData.get("avatarHash");
   if (typeof rawAvatarHash !== "string") {
-    return { ok: false, error: "아바타 설정에 실패했습니다." };
+    return { ok: false as const, code: "avatar_invalid" as const };
   }
   const avatarHash = rawAvatarHash.trim();
   if (!avatarHash) {
-    return { ok: false, error: "아바타 설정에 실패했습니다." };
+    return { ok: false as const, code: "avatar_invalid" as const };
   }
 
   const [updated] = await db
@@ -59,10 +65,10 @@ export const updateUserAction = async (formData: FormData) => {
     });
 
   if (!updated) {
-    return { ok: false, error: "프로필 변경에 실패했습니다." };
+    return { ok: false as const, code: "update_failed" as const };
   }
 
   updateTag(profileTags.byUser(userId));
 
-  return { ok: true, data: updated };
+  return { ok: true as const, data: updated };
 };

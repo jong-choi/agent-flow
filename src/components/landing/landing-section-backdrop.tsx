@@ -59,6 +59,8 @@ type DotWavingBackdropOptions = BackdropViewportOptions & {
 type GridWavingBackdropOptions = BackdropViewportOptions & {
   /** 렌더링할 배경 스타일 타입 */
   variant: "grid-waving";
+  /** 섹션 톤과 맞추는 색상 프리셋 */
+  tone?: "default" | "inverse";
   /** 세로 점 개수(행) */
   rows?: number;
   /** 가로 점 개수(열) */
@@ -331,6 +333,8 @@ export function LandingSectionBackdrop({
   if (variant === "grid-waving") {
     const viewBoxWidth = options.viewBoxWidth ?? defaultViewBoxWidth;
     const viewBoxHeight = options.viewBoxHeight ?? defaultViewBoxHeight;
+    const toneClass =
+      options.tone === "inverse" ? "text-brutal-background" : "text-foreground";
     const gridRows = options.rows ?? 15;
     const gridCols = options.cols ?? 30;
     const dotRadius = options.dotRadius ?? 0.5;
@@ -371,7 +375,7 @@ export function LandingSectionBackdrop({
       <div className={styles.sectionBackdrop} aria-hidden>
         <svg
           viewBox={toViewBox(viewBoxWidth, viewBoxHeight)}
-          className={`${styles.layer} ${styles.gridWaveSurface} text-foreground`}
+          className={`${styles.layer} ${styles.gridWaveSurface} ${toneClass}`}
         >
           <g className={styles.gridWaveWeave}>
             {dots.map((dot) => (
@@ -399,10 +403,12 @@ export function LandingSectionBackdrop({
     const nodeWidth = options.nodeWidth ?? 224;
     const nodeHeight = options.nodeHeight ?? 108;
     const baseNodes = [
-      { id: "trigger", x: 110, y: 194, accent: "#6366f1" },
-      { id: "search", x: 560, y: 118, accent: "#06b6d4" },
-      { id: "reason", x: 1010, y: 246, accent: "#8b5cf6" },
-      { id: "action", x: 1460, y: 166, accent: "#10b981" },
+      { id: "trigger", x: 84, y: 298, accent: "#8b95a7" },
+      { id: "search", x: 430, y: 76, accent: "#7f9ea6" },
+      { id: "parallel-a", x: 822, y: 44, accent: "#9a88a8" },
+      { id: "parallel-b", x: 822, y: 356, accent: "#7f92a3" },
+      { id: "action", x: 1238, y: 176, accent: "#a68f72" },
+      { id: "output", x: 1492, y: 304, accent: "#8e9f86" },
     ];
     const copies = [0, segmentWidth];
 
@@ -411,10 +417,58 @@ export function LandingSectionBackdrop({
         ...node,
         key: `${copyIndex}-${node.id}`,
         x: node.x + offset,
-        delay: -(nodeIndex * 0.35 + copyIndex * 0.9),
+        delay: -(nodeIndex * 0.3 + copyIndex * 0.95),
       })),
     );
-    const chainNodes = [...nodes].sort((a, b) => a.x - b.x);
+    const nodeMap = new Map(nodes.map((node) => [node.key, node]));
+    const linkSpecs = copies.flatMap((_, copyIndex) => {
+      const links: Array<{
+        from: string;
+        to: string;
+        tone: "primary" | "secondary";
+      }> = [
+        {
+          from: `${copyIndex}-trigger`,
+          to: `${copyIndex}-search`,
+          tone: "primary",
+        },
+        {
+          from: `${copyIndex}-search`,
+          to: `${copyIndex}-parallel-a`,
+          tone: "primary",
+        },
+        {
+          from: `${copyIndex}-search`,
+          to: `${copyIndex}-parallel-b`,
+          tone: "secondary",
+        },
+        {
+          from: `${copyIndex}-parallel-a`,
+          to: `${copyIndex}-action`,
+          tone: "primary",
+        },
+        {
+          from: `${copyIndex}-parallel-b`,
+          to: `${copyIndex}-action`,
+          tone: "secondary",
+        },
+        {
+          from: `${copyIndex}-action`,
+          to: `${copyIndex}-output`,
+          tone: "primary",
+        },
+      ];
+
+      if (copyIndex < copies.length - 1) {
+        links.push({
+          from: `${copyIndex}-output`,
+          to: `${copyIndex + 1}-trigger`,
+          tone: "secondary",
+        });
+      }
+
+      return links;
+    });
 
     return (
       <div className={styles.sectionBackdrop} aria-hidden>
@@ -428,36 +482,33 @@ export function LandingSectionBackdrop({
               type="translate"
               from="0 0"
               to={`-${segmentWidth} 0`}
-              dur="36s"
+              dur="20s"
               repeatCount="indefinite"
             />
 
             <g className={styles.nodeLinks}>
-              {chainNodes.slice(0, -1).map((node, index) => {
-                const next = chainNodes[index + 1];
-                const sx = node.x + nodeWidth + 8;
-                const sy = node.y + nodeHeight * 0.52;
-                const tx = next.x - 8;
-                const ty = next.y + nodeHeight * 0.52;
-                return (
-                  <path
-                    key={`edge-${node.key}-${next.key}`}
-                    d={`M ${sx} ${sy} C ${sx + 90} ${sy}, ${tx - 90} ${ty}, ${tx} ${ty}`}
-                    className={styles.nodeEdge}
-                  />
-                );
-              })}
+              {linkSpecs.map((link) => {
+                const fromNode = nodeMap.get(link.from);
+                const toNode = nodeMap.get(link.to);
+                if (!fromNode || !toNode) {
+                  return null;
+                }
 
-              {copies.map((offset) => {
-                const sx = 560 + offset + nodeWidth + 8;
-                const sy = 118 + nodeHeight * 0.52;
-                const tx = 1460 + offset - 8;
-                const ty = 166 + nodeHeight * 0.52;
+                const sx = fromNode.x + nodeWidth + 8;
+                const sy = fromNode.y + nodeHeight * 0.52;
+                const tx = toNode.x - 8;
+                const ty = toNode.y + nodeHeight * 0.52;
+                const curve = Math.max(92, Math.abs(tx - sx) * 0.32);
+
                 return (
                   <path
-                    key={`branch-${offset}`}
-                    d={`M ${sx} ${sy} C ${sx + 130} ${sy + 28}, ${tx - 130} ${ty - 28}, ${tx} ${ty}`}
-                    className={styles.nodeEdgeSecondary}
+                    key={`edge-${link.from}-${link.to}`}
+                    d={`M ${sx} ${sy} C ${sx + curve} ${sy}, ${tx - curve} ${ty}, ${tx} ${ty}`}
+                    className={
+                      link.tone === "secondary"
+                        ? styles.nodeEdgeSecondary
+                        : styles.nodeEdge
+                    }
                   />
                 );
               })}

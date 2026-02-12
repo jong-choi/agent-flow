@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -14,32 +15,37 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { deleteDocumentAction } from "@/features/documents/server/actions";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type DocumentDeleteDialogProps = {
   docId: string;
 };
 
 export function DocumentDeleteDialog({ docId }: DocumentDeleteDialogProps) {
+  const t = useTranslations<AppMessageKeys>("Docs");
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size="sm" type="button">
           <Trash2 className="size-4" />
-          삭제하기
+          {t("deleteDialog.openButton")}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>문서를 삭제하시겠어요?</AlertDialogTitle>
+          <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            삭제하면 되돌릴 수 없습니다.
+            {t("deleteDialog.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>취소</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <form action={deleteDocumentAction}>
             <input type="hidden" name="docId" value={docId} />
-            <AlertDialogAction type="submit">삭제</AlertDialogAction>
+            <AlertDialogAction type="submit">
+              {t("deleteDialog.confirm")}
+            </AlertDialogAction>
           </form>
         </AlertDialogFooter>
       </AlertDialogContent>

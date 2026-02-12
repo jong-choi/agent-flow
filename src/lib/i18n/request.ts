@@ -15,18 +15,52 @@ const requestConfig = async ({
     ? requested
     : routing.defaultLocale;
 
-  const [Home, ErrorBoundary, NotFound] = await Promise.all([
+  const [
+    Home,
+    Sidebar,
+    Nodes,
+    Workflows,
+    Presets,
+    Developers,
+    Docs,
+    ErrorBoundary,
+    NotFound,
+    Chat,
+    Credits,
+    Auth,
+    Profile,
+  ] = await Promise.all([
     getMessage["Home"][locale](),
+    getMessage["Sidebar"][locale](),
+    getMessage["Nodes"][locale](),
+    getMessage["Workflows"][locale](),
+    getMessage["Presets"][locale](),
+    getMessage["Developers"][locale](),
+    getMessage["Docs"][locale](),
     getMessage["ErrorBoundary"][locale](),
     getMessage["NotFound"][locale](),
+    getMessage["Chat"][locale](),
+    getMessage["Credits"][locale](),
+    getMessage["Auth"][locale](),
+    getMessage["Profile"][locale](),
   ]);
 
   return {
     locale,
     messages: {
       Home,
+      Sidebar,
+      Nodes,
+      Workflows,
+      Presets,
+      Developers,
+      Docs,
       ErrorBoundary,
       NotFound,
+      Chat,
+      Credits,
+      Auth,
+      Profile,
     },
   };
 };

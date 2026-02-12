@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { type PresetEditRes } from "@/app/[locale]/presets/[id]/edit/page";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,7 @@ import {
   getPresetChatExamplesForForm,
   getWorkflowReferencedPresetPricingSummary,
 } from "@/features/presets/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { formatYMD } from "@/lib/utils";
 
 type PresetEditFormProps = {
@@ -30,6 +32,7 @@ export async function PresetEditForm({
   updateAction,
   deleteAction,
 }: PresetEditFormProps) {
+  const t = await getTranslations<AppMessageKeys>("Presets");
   const [{ chats, pinnedChat, defaultSelectedId }, pricingSummary] =
     await Promise.all([
       getPresetChatExamplesForForm({
@@ -47,28 +50,30 @@ export async function PresetEditForm({
       <form action={updateAction} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>워크플로우 정보</CardTitle>
-            <CardDescription>프리셋이 연결된 워크플로우</CardDescription>
+            <CardTitle>{t("forms.workflowInfoTitle")}</CardTitle>
+            <CardDescription>{t("forms.workflowInfoDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-1">
               <p className="text-sm font-medium">
-                {preset.workflowTitle ?? "워크플로우"}
+                {preset.workflowTitle ?? t("forms.workflowFallback")}
               </p>
               <p className="text-xs text-muted-foreground">
-                최근 업데이트 {formatYMD(preset.workflowUpdatedAt)}
+                {t("forms.workflowUpdatedAt", {
+                  date: formatYMD(preset.workflowUpdatedAt),
+                })}
               </p>
             </div>
             <Button variant="outline" size="sm" asChild>
               <Link href={`/workflows/${preset.workflowId}`}>
-                워크플로우 보기
+                {t("forms.viewWorkflow")}
               </Link>
             </Button>
           </CardContent>
         </Card>
 
         <PresetInfoCard
-          description="마켓에 보여질 정보를 수정합니다."
+          description={t("forms.presetInfoDescriptionEdit")}
           defaultValues={{
             title: preset.title,
             summary: preset.summary,
@@ -87,18 +92,18 @@ export async function PresetEditForm({
         />
 
         <PresetPricePublishCard
-          description="현재 프리셋 가격과 공개 여부를 조정합니다. 참조된 프리셋 가격이 합산되어 결제 금액이 결정됩니다."
+          description={t("forms.pricePublishDescriptionEdit")}
           priceDefault={preset.price}
-          publishLabel="마켓에 공개"
-          publishHint="공개하면 마켓에서 누구나 확인할 수 있습니다."
+          publishLabel={t("forms.publishLabelEdit")}
+          publishHint={t("forms.publishHintEdit")}
           isPublishedDefault={preset.isPublished}
           referencedPresetPrice={pricingSummary.referencedPresetPrice}
         />
 
         <div className="flex flex-wrap gap-2">
-          <Button type="submit">수정 저장</Button>
+          <Button type="submit">{t("forms.saveEdit")}</Button>
           <Button variant="outline" asChild>
-            <Link href={`/presets/${preset.id}`}>취소</Link>
+            <Link href={`/presets/${preset.id}`}>{t("forms.cancel")}</Link>
           </Button>
         </div>
       </form>
@@ -107,14 +112,16 @@ export async function PresetEditForm({
         <input type="hidden" name="presetId" value={preset.id} />
         <Card className="border-destructive/40 bg-destructive/5">
           <CardHeader>
-            <CardTitle className="text-destructive">프리셋 삭제</CardTitle>
+            <CardTitle className="text-destructive">
+              {t("forms.deleteTitle")}
+            </CardTitle>
             <CardDescription>
-              삭제하면 복구할 수 없습니다. 신중하게 진행하세요.
+              {t("forms.deleteDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="destructive" type="submit">
-              프리셋 삭제
+              {t("forms.deleteButton")}
             </Button>
           </CardContent>
         </Card>

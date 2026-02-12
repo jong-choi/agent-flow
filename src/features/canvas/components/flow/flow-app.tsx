@@ -3,6 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 import {
   Background,
   type ColorMode,
@@ -38,6 +39,7 @@ import {
   defaultWorkflowState,
 } from "@/features/canvas/store/slices/workflow-slice";
 import { useDebounce } from "@/hooks/use-debounce";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 const ReactFlow = dynamic<ReactFlowProps<FlowCanvasNode, Edge>>(
   () => import("@xyflow/react").then((m) => m.ReactFlow),
@@ -55,6 +57,7 @@ export function FlowApp({
   initialEdges = INITIAL_EDGES,
   workflow,
 }: FlowAppProps) {
+  const t = useTranslations<AppMessageKeys>("Workflows");
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const checkValidGraph = useCheckValidGraph();
@@ -102,9 +105,9 @@ export function FlowApp({
     <div className="relative h-full w-full" data-testid="flow-canvas">
       <div className="absolute top-4 left-4 z-10 flex flex-col items-start gap-3 rounded-lg bg-muted/50 p-4 backdrop-blur-sm">
         <PageHeader className="flex min-w-sm flex-col gap-1">
-          <PageContentTitle>{title || "새 워크플로우"}</PageContentTitle>
+          <PageContentTitle>{title || t("canvas.header.newWorkflow")}</PageContentTitle>
           <PageDescription>
-            {description || "설명이 기재되지 않았습니다"}
+            {description || t("canvas.header.noDescription")}
           </PageDescription>
         </PageHeader>
         <div className="flex items-center gap-2">

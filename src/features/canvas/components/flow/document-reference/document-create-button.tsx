@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { createDocumentAction } from "@/features/documents/server/actions";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type DocumentCreateButtonProps = {
   onClose: () => void;
@@ -15,6 +17,7 @@ export function DocumentCreateButton({
   onClose,
   onCreated,
 }: DocumentCreateButtonProps) {
+  const t = useTranslations<AppMessageKeys>("Workflows");
   const isCreatingDocument = useCanvasStore((s) => s.isCreatingDocument);
   const setIsCreatingDocument = useCanvasStore((s) => s.setIsCreatingDocument);
   const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
@@ -31,13 +34,13 @@ export function DocumentCreateButton({
       try {
         const createdId = await createDocumentAction();
         if (!createdId) {
-          throw new Error("문서 생성에 실패하였습니다.");
+          throw new Error(t("canvas.document.create.failedToast"));
         }
 
         onCreated(createdId);
-        toast.success("문서가 연결되었습니다.");
+        toast.success(t("canvas.document.create.successToast"));
       } catch {
-        toast.error("문서 생성에 실패하였습니다.");
+        toast.error(t("canvas.document.create.failedToast"));
       } finally {
         setIsCreatingDocument(false);
       }
@@ -48,6 +51,7 @@ export function DocumentCreateButton({
     onCreated,
     setIsCreatingDocument,
     setSelectedNodeId,
+    t,
   ]);
 
   return (
@@ -59,7 +63,7 @@ export function DocumentCreateButton({
       onClick={handleCreateAndLink}
       disabled={isCreatingDocument}
     >
-      새 문서로 연결
+      {t("canvas.document.create.button")}
     </Button>
   );
 }

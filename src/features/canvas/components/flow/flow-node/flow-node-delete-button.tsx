@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,8 +15,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function FlowNodeDeleteButton({ id }: { id: string }) {
+  const t = useTranslations<AppMessageKeys>("Workflows");
   const { deleteElements } = useCanvasReactFlow();
   const selectedNodeId = useCanvasStore((s) => s.selectedNodeId);
   const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
@@ -35,21 +38,23 @@ export function FlowNodeDeleteButton({ id }: { id: string }) {
           type="button"
           variant="ghost"
           className="absolute top-1 right-1 size-6 p-0 text-muted-foreground"
-          aria-label="delete node"
+          aria-label={t("canvas.node.delete.ariaLabel")}
         >
           <X />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>노드를 삭제하시겠습니까?</AlertDialogTitle>
+          <AlertDialogTitle>{t("canvas.node.delete.title")}</AlertDialogTitle>
           <AlertDialogDescription className="hidden">
-            삭제하려면 “삭제”를 선택해 주세요.
+            {t("canvas.node.delete.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>취소</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDeleteNode}>삭제</AlertDialogAction>
+          <AlertDialogCancel>{t("canvas.node.delete.cancel")}</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDeleteNode}>
+            {t("canvas.node.delete.confirm")}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

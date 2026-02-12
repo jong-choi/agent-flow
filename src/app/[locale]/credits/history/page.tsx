@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { format } from "date-fns";
+import { getTranslations } from "next-intl/server";
 import {
   PageContainer,
   PageDescription,
@@ -17,6 +18,7 @@ import {
   type TransactionResult,
   getCreditHistory,
 } from "@/features/credits/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -24,15 +26,26 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/credits/history">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Credits",
+  });
 
   return {
-    title: locale === "ko" ? "크레딧 내역" : "Credit History",
+    title: t("meta.historyTitle"),
   };
 }
 
-export default async function CreditsHistoryPage(
-  props: PageProps<"/[locale]/credits/history">,
-) {
+export default async function CreditsHistoryPage({
+  params,
+  searchParams,
+}: PageProps<"/[locale]/credits/history">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Credits",
+  });
+
   return (
     <PageContainer
       RightPanel={
@@ -43,11 +56,11 @@ export default async function CreditsHistoryPage(
     >
       <PageStack>
         <PageHeader>
-          <PageHeading>크레딧 내역</PageHeading>
-          <PageDescription>최대 조회 가능 기간은 6개월입니다.</PageDescription>
+          <PageHeading>{t("history.heading")}</PageHeading>
+          <PageDescription>{t("history.description")}</PageDescription>
         </PageHeader>
         <Suspense fallback={<CreditHistoryFallback />}>
-          <CreditHistory {...props} />
+          <CreditHistory searchParams={searchParams} />
         </Suspense>
       </PageStack>
     </PageContainer>
@@ -56,7 +69,8 @@ export default async function CreditsHistoryPage(
 
 export async function CreditHistory({
   searchParams,
-}: PageProps<"/[locale]/credits/history">) {
+}: Pick<PageProps<"/[locale]/credits/history">, "searchParams">) {
+  const t = await getTranslations<AppMessageKeys>("Credits");
   const awaitedSearchParams = await searchParams;
 
   const type = awaitedSearchParams?.type;
@@ -68,27 +82,37 @@ export async function CreditHistory({
     "yy.MM.dd",
   )}`;
 
-  const TYPE_OPTIONS = [
-    { label: "전체", value: "all" },
-    { label: "획득", value: "earn" },
-    { label: "사용", value: "spend" },
+  const typeOptions = [
+    { label: t("history.typeAll"), value: "all" },
+    { label: t("history.typeEarn"), value: "earn" },
+    { label: t("history.typeSpend"), value: "spend" },
   ] as const;
 
   const typeLabel =
-    TYPE_OPTIONS.find((option) => option.value === type)?.label ?? "전체";
+    typeOptions.find((option) => option.value === type)?.label ??
+    t("history.typeAll");
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="outline">유형: {typeLabel}</Badge>
-        <Badge variant="outline">기간: {rangeLabel}</Badge>
-        <Badge variant="secondary">총 {transactions.length}건</Badge>
+        <Badge variant="outline">
+          {t("history.badges.type", { value: typeLabel })}
+        </Badge>
+        <Badge variant="outline">
+          {t("history.badges.period", { value: rangeLabel })}
+        </Badge>
         <Badge variant="secondary">
-          누계{" "}
-          {transactions
-            .map((transaction) => transaction.amount)
-            .reduce((a, b) => a + b, 0)}
-          크레딧
+          {t("history.badges.totalCount", {
+            count: transactions.length.toLocaleString(),
+          })}
+        </Badge>
+        <Badge variant="secondary">
+          {t("history.badges.totalAmount", {
+            amount: transactions
+              .map((transaction) => transaction.amount)
+              .reduce((a, b) => a + b, 0)
+              .toLocaleString(),
+          })}
         </Badge>
       </div>
       <List transactions={transactions} />
@@ -96,18 +120,27 @@ export async function CreditHistory({
   );
 }
 
-function List({ transactions }: { transactions: TransactionResult[] }) {
+async function List({ transactions }: { transactions: TransactionResult[] }) {
+  const t = await getTranslations<AppMessageKeys>("Credits");
+
   return (
     <Card>
       <CardContent>
         {transactions.length === 0 ? (
           <div className="py-12 text-center text-muted-foreground">
-            해당하는 내역이 없습니다.
+            {t("history.empty")}
           </div>
         ) : (
           <div className="space-y-3">
             {transactions.map((transaction) => (
-              <TransactionItem key={transaction.id} transaction={transaction} />
+              <TransactionItem
+                key={transaction.id}
+                transaction={transaction}
+                typeLabels={{
+                  earn: t("transaction.earn"),
+                  spend: t("transaction.spend"),
+                }}
+              />
             ))}
           </div>
         )}

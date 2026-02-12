@@ -17,7 +17,7 @@ export function DraggableItemView({ item }: { item: SidebarNodeData }) {
     <div className="group flex w-full cursor-grab items-center rounded-lg border border-transparent p-2 transition-all hover:bg-accent hover:text-accent-foreground">
       <div
         className={cn(
-          "mr-3 flex size-8 items-center justify-center rounded-md text-white shadow-sm",
+          "mr-3 flex size-8 shrink-0 items-center justify-center rounded-md text-white shadow-sm",
           item.backgroundColor,
         )}
       >

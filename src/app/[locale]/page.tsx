@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { LandingSectionBackdrop } from "@/components/landing/landing-section-backdrop";
 import { BrutalBadge } from "@/components/main/ui/brutal-badge";
 import { BrutalButton } from "@/components/main/ui/brutal-button";
 import { BrutalCard } from "@/components/main/ui/brutal-card";
 import { BrutalHeading } from "@/components/main/ui/brutal-heading";
 import { BrutalHeadingAccent } from "@/components/main/ui/brutal-heading-accent";
 import { BrutalSection } from "@/components/main/ui/brutal-section";
-import { BrutalTag } from "@/components/main/ui/brutal-tag";
 import {
   BrutalExpandLine,
   BrutalGrid,
   BrutalRadialGlow,
 } from "@/components/main/ui/brutal-utils";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -19,51 +21,141 @@ export async function generateMetadata({
 }: PageProps<"/[locale]">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Home",
+  });
 
   return {
     title: "AgentFlow",
-    description:
-      locale === "ko"
-        ? "플로우차트 기반으로 AI 에이전트를 만들고 실행하는 플랫폼"
-        : "A visual platform for building and running AI agents with flowcharts.",
+    description: t("metaDescription"),
   };
 }
 
-export default function BrutalLandingPage() {
+export default async function BrutalLandingPage({
+  params,
+}: PageProps<"/[locale]">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Home",
+  });
+  const canvasNodes = [
+    t("canvas.nodes.presets"),
+    t("canvas.nodes.llmCall"),
+    t("canvas.nodes.search"),
+    t("canvas.nodes.document"),
+    t("canvas.nodes.fanOut"),
+    t("canvas.nodes.output"),
+  ];
+  const howItWorksSteps = [
+    {
+      step: "01",
+      title: "Design",
+      desc: t("howItWorks.designDesc"),
+      variant: "default" as const,
+    },
+    {
+      step: "02",
+      title: "Configure",
+      desc: t("howItWorks.configureDesc"),
+      variant: "filled" as const,
+    },
+    {
+      step: "03",
+      title: "Chat",
+      desc: t("howItWorks.chatDesc"),
+      variant: "default" as const,
+    },
+    {
+      step: "04",
+      title: "Deploy",
+      desc: t("howItWorks.deployDesc"),
+      variant: "inverse" as const,
+    },
+  ];
+  const presetCards = [
+    {
+      name: t("presets.items.customerSupport.name"),
+      tag: t("presets.items.customerSupport.tag"),
+      price: 1,
+    },
+    {
+      name: t("presets.items.seoBlog.name"),
+      tag: t("presets.items.seoBlog.tag"),
+      price: 5,
+    },
+    {
+      name: t("presets.items.projectManagement.name"),
+      tag: t("presets.items.projectManagement.tag"),
+      price: 0,
+    },
+    {
+      name: t("presets.items.parallelCode.name"),
+      tag: t("presets.items.parallelCode.tag"),
+      price: 3,
+    },
+  ];
+  const weekdays = [
+    t("credits.days.mon"),
+    t("credits.days.tue"),
+    t("credits.days.wed"),
+    t("credits.days.thu"),
+    t("credits.days.fri"),
+    t("credits.days.sat"),
+    t("credits.days.sun"),
+  ];
+  const apiExampleCode = `import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "af-**********************",
+  baseURL: "https://agentflow.jongchoi.com/api/v1/openai",
+});
+
+const result = await client.chat.completions.create({
+  model: "af-id-*******************",
+  messages: [{ role: "user", content: "${t("developerApi.examplePrompt")}" }],
+});
+
+console.log(result.choices[0].message.content);`;
+
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-brutal-background font-sans text-brutal-foreground transition-colors duration-300">
       {/* 히어로 섹션 */}
-      <BrutalSection container="hero" id="hero">
-        <div className="mb-12 border-l-[32px] border-brutal-foreground bg-brutal-muted/30 p-12">
-          <div className="grid gap-10 sm:grid-cols-1 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div className="col-span-1">
-              <BrutalHeading variant="label" as="p" className="mb-2">
-                Let
-              </BrutalHeading>
-              <BrutalHeading variant="label" as="p" className="mb-2">
-                your
-              </BrutalHeading>
-              <BrutalHeading variant="hero" as="h1">
-                AGENT
-                <br />
-                <span className="mt-4 inline-block bg-brutal-foreground px-4 pr-6 text-brutal-background">
-                  FLOW
-                </span>
-              </BrutalHeading>
+      <BrutalSection container="hero" className="overflow-hidden" id="hero">
+        <div className="relative z-10">
+          <LandingSectionBackdrop options={{ variant: "infinite-nodes" }} />
+          <div className="z-10 mb-12 border-l-[32px] border-brutal-foreground bg-brutal-muted/30 p-12 backdrop-blur-xs">
+            <div className="grid gap-10 sm:grid-cols-1 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div className="col-span-1">
+                <BrutalHeading variant="label" as="p" className="mb-2">
+                  Let
+                </BrutalHeading>
+                <BrutalHeading variant="label" as="p" className="mb-2">
+                  your
+                </BrutalHeading>
+                <BrutalHeading variant="hero" as="h1">
+                  AGENT
+                  <br />
+                  <span className="mt-4 inline-block bg-brutal-foreground px-4 pr-6 text-brutal-background">
+                    FLOW
+                  </span>
+                </BrutalHeading>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-12">
-          <BrutalButton size="lg" asChild>
-            <Link href="/workflows/canvas">시작하기</Link>
-          </BrutalButton>
-          <p className="max-w-sm text-2xl leading-[1.1] font-black uppercase">
-            플로우차트 에이전트
-            <br />
-            <span className="text-brutal-muted-foreground">
-              나만의 인공지능 에이전트 만들기
-            </span>
-          </p>
+          <div className="flex flex-wrap items-center gap-12">
+            <BrutalButton size="lg" asChild>
+              <Link href="/workflows/canvas">{t("hero.ctaStart")}</Link>
+            </BrutalButton>
+            <p className="max-w-sm text-2xl leading-[1.1] font-black uppercase">
+              {t("hero.subtitleLine1")}
+              <br />
+              <span className="text-brutal-muted-foreground">
+                {t("hero.subtitleLine2")}
+              </span>
+            </p>
+          </div>
         </div>
       </BrutalSection>
 
@@ -88,15 +180,15 @@ export default function BrutalLandingPage() {
               </BrutalHeadingAccent>
             </BrutalHeading>
             <p className="mb-8 max-w-md leading-relaxed font-bold uppercase opacity-70">
-              드래그 앤 드롭으로 노드를 배치하고, 엣지로 연결하세요. <br />
-              채팅, 검색, 문서를 다양하게 연결할 수 있습니다.
+              {t("canvas.descriptionLine1")} <br />
+              {t("canvas.descriptionLine2")}
             </p>
             <BrutalButton
               variant="outline"
               className="border-brutal-background text-brutal-background hover:bg-brutal-background hover:text-brutal-foreground"
               asChild
             >
-              <Link href="/workflows/canvas">캔버스로 이동하기 →</Link>
+              <Link href="/workflows/canvas">{t("canvas.cta")} →</Link>
             </BrutalButton>
           </div>
 
@@ -106,14 +198,7 @@ export default function BrutalLandingPage() {
             className="border-brutal-background/40 bg-transparent text-brutal-background"
           >
             <div className="grid grid-cols-3 gap-4">
-              {[
-                "Presets",
-                "LLM Call",
-                "Search",
-                "Document",
-                "Fan-out",
-                "Output",
-              ].map((node, i) => (
+              {canvasNodes.map((node, i) => (
                 <div
                   key={node}
                   className={`border-2 p-4 text-center text-xs font-black uppercase italic ${
@@ -140,32 +225,7 @@ export default function BrutalLandingPage() {
         id="how-it-works"
       >
         <BrutalGrid>
-          {[
-            {
-              step: "01",
-              title: "Design",
-              desc: "캔버스에서 노드와 엣지로 에이전트 로직을 설계합니다.",
-              variant: "default" as const,
-            },
-            {
-              step: "02",
-              title: "Configure",
-              desc: "각 노드의 프롬프트, 도구, 모델을 세부 설정합니다.",
-              variant: "filled" as const,
-            },
-            {
-              step: "03",
-              title: "Chat",
-              desc: "채팅 인터페이스에서 워크플로우를 테스트합니다.",
-              variant: "default" as const,
-            },
-            {
-              step: "04",
-              title: "Deploy",
-              desc: "API 키를 발급하고 외부 서비스에 에이전트를 배포합니다.",
-              variant: "inverse" as const,
-            },
-          ].map((s) => {
+          {howItWorksSteps.map((s) => {
             const v =
               s.variant === "filled"
                 ? "md:mt-8"
@@ -210,27 +270,27 @@ export default function BrutalLandingPage() {
               className="ml-8 max-w-md p-5 font-bold text-brutal-foreground uppercase"
             >
               <span className="mb-2 block text-sm tracking-widest text-brutal-muted-foreground uppercase">
-                사용자
+                {t("chat.demo.userLabel")}
               </span>
-              요즘 유행어에 대해 검색하고 문서에 저장해줘
+              {t("chat.demo.userMessage1")}
             </BrutalCard>
             <BrutalCard
               variant="inverse"
               className="mr-8 max-w-md p-5 font-bold uppercase"
             >
               <span className="mb-2 block text-sm tracking-widest opacity-60">
-                에이전트
+                {t("chat.demo.agentLabel")}
               </span>
-              검색 결과를 바탕으로 작성해드리겠습니다
+              {t("chat.demo.agentMessage")}
             </BrutalCard>
             <BrutalCard
               variant="default"
               className="ml-4 max-w-md p-5 font-bold text-brutal-foreground uppercase"
             >
               <span className="mb-2 block text-sm tracking-widest text-brutal-muted-foreground uppercase">
-                사용자
+                {t("chat.demo.userLabel")}
               </span>
-              SEO에 최적화된 방식으로 블로그 게시물을 추가해줘
+              {t("chat.demo.userMessage2")}
             </BrutalCard>
           </div>
 
@@ -244,14 +304,35 @@ export default function BrutalLandingPage() {
               <BrutalHeadingAccent variant="inverse">CHAT</BrutalHeadingAccent>
             </BrutalHeading>
             <p className="mb-6 max-w-md leading-relaxed font-bold uppercase opacity-70">
-              설계한 워크플로우를 즉시 채팅 인터페이스로 실행하세요. <br />
-              메모리와 컨텍스트를 유지하며 멀티턴 대화를 지원합니다.
+              {t("chat.descriptionLine1")} <br />
+              {t("chat.descriptionLine2")}
             </p>
-            <div className="flex gap-4">
-              <BrutalTag variant="outline">Memory</BrutalTag>
-              <BrutalTag variant="outline">Search</BrutalTag>
-              <BrutalTag variant="outline">Tool_Call</BrutalTag>
-            </div>
+          </div>
+        </div>
+        {/* Marquee */}
+        <div className="relative z-10 mt-20 -mb-10 overflow-hidden border-y border-brutal-background/20 py-4">
+          <div className="animate-ticker inline-flex w-max whitespace-nowrap will-change-transform">
+            {Array(2)
+              .fill([
+                "GEMMA-3-1B",
+                "GEMMA-3N-E4B",
+                "GEMMA-3-4B",
+                "GEMMA-3-27B",
+                "GPT-OSS-20B",
+                "GPT-OSS-120B",
+                "LLAMA-3.1-8B",
+                "LLAMA-4-SCOUT",
+                "LLAMA-4-MAVERICK",
+              ])
+              .flat()
+              .map((tech, i) => (
+                <span
+                  key={`${tech}-${i}`}
+                  className="px-4 text-sm font-black tracking-widest uppercase italic opacity-30 transition-opacity hover:text-brutal-background hover:opacity-100"
+                >
+                  {tech}
+                </span>
+              ))}
           </div>
         </div>
       </BrutalSection>
@@ -267,29 +348,16 @@ export default function BrutalLandingPage() {
               <BrutalHeadingAccent>MARKET</BrutalHeadingAccent>
             </BrutalHeading>
             <p className="mb-8 max-w-md leading-relaxed font-bold uppercase opacity-50">
-              커뮤니티가 만든 에이전트 프리셋을 탐색하고, <br />
-              크레딧으로 구매하여 바로 사용하세요.
+              {t("presets.descriptionLine1")} <br />
+              {t("presets.descriptionLine2")}
             </p>
             <BrutalButton variant="outline" asChild>
-              <Link href="/presets">프리셋 보러가기 →</Link>
+              <Link href="/presets">{t("presets.cta")} →</Link>
             </BrutalButton>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {[
-              {
-                name: "고객 상담용 챗봇",
-                tag: "고객지원",
-                price: 1,
-              },
-              {
-                name: "SEO 키워드 맞춤 블로그 게시물",
-                tag: "마케팅",
-                price: 5,
-              },
-              { name: "프로젝트 관리 챗봇", tag: "운영", price: 0 },
-              { name: "병렬 코드 작성", tag: "개발", price: 3 },
-            ].map((preset) => (
+            {presetCards.map((preset) => (
               <BrutalCard
                 key={preset.name}
                 variant="default"
@@ -301,7 +369,9 @@ export default function BrutalLandingPage() {
                     {preset.tag}
                   </span>
                   <span className="text-lg font-black text-brutal-foreground">
-                    {preset.price ? `${preset.price} 크레딧` : "무료"}
+                    {preset.price
+                      ? t("presets.priceCredits", { count: preset.price })
+                      : t("presets.free")}
                   </span>
                 </div>
                 <h5 className="text-md leading-tight font-black uppercase">
@@ -334,15 +404,14 @@ export default function BrutalLandingPage() {
               </BrutalHeadingAccent>
             </BrutalHeading>
             <p className="max-w-md leading-relaxed font-bold uppercase opacity-70">
-              매일 출석 체크로 무료 크레딧을 획득하세요. <br />
-              연속 출석 보너스로 더 많은 크레딧을 받을 수 있습니다.
+              {t("credits.descriptionLine1")} <br />
             </p>
             <BrutalButton
               variant="outline"
               className="mt-8 border-brutal-background text-brutal-background hover:bg-brutal-background hover:text-brutal-foreground"
               asChild
             >
-              <Link href="/credits/attendance">출석체크하기 →</Link>
+              <Link href="/credits/attendance">{t("credits.cta")} →</Link>
             </BrutalButton>
           </div>
 
@@ -354,23 +423,15 @@ export default function BrutalLandingPage() {
             <div className="mb-8 flex items-end justify-between">
               <div>
                 <div className="mb-1 text-sm font-black tracking-wide text-brutal-muted-foreground uppercase italic">
-                  Current Balance
+                  {t("credits.currentBalance")}
                 </div>
                 <div className="text-4xl leading-none font-black text-brutal-primary italic">
                   1,240C
                 </div>
               </div>
-              <div className="text-right">
-                <div className="mb-1 text-sm font-black tracking-wide text-brutal-muted-foreground uppercase italic">
-                  Streak
-                </div>
-                <div className="text-2xl font-black text-brutal-foreground italic">
-                  7 DAYS
-                </div>
-              </div>
             </div>
             <div className="grid grid-cols-7 gap-2">
-              {["M", "T", "W", "T", "F", "S", "S"].map((day, i) => (
+              {weekdays.map((day, i) => (
                 <div
                   key={`${day}-${i}`}
                   className={`border-2 py-3 text-center text-xs font-black uppercase italic ${
@@ -408,12 +469,12 @@ export default function BrutalLandingPage() {
               <BrutalHeadingAccent>API</BrutalHeadingAccent>
             </BrutalHeading>
             <p className="mb-8 max-w-md leading-relaxed font-bold uppercase opacity-50">
-              OpenAI 호환 엔드포인트를 통해 기존 SDK 코드를 그대로 연결하고,
+              {t("developerApi.descriptionLine1")}
               <br />
-              에이전트 워크플로우를 즉시 호출할 수 있습니다.
+              {t("developerApi.descriptionLine2")}
             </p>
             <BrutalButton variant="outline" asChild>
-              <Link href="/developers">API 문서 보기 →</Link>
+              <Link href="/developers">{t("developerApi.cta")} →</Link>
             </BrutalButton>
           </div>
 
@@ -425,56 +486,23 @@ export default function BrutalLandingPage() {
             <div className="mb-4 text-sm font-black tracking-widest text-brutal-muted-foreground uppercase italic">
               API_CALL_EXAMPLE
             </div>
-            <pre className="overflow-x-auto opacity-70">
-              {`import OpenAI from "openai";
-
-const client = new OpenAI({
-  apiKey: "af-**********************",
-  baseURL: "https://agentflow.jongchoi.com/api/v1/openai",
-});
-
-const result = await client.chat.completions.create({
-  model: "af-id-*******************",
-  messages: [{ role: "user", content: "강아지 키우는 법을 알려줘" }],
-});
-
-console.log(result.choices[0].message.content);`}
-            </pre>
+            <pre className="overflow-x-auto opacity-70">{apiExampleCode}</pre>
           </BrutalCard>
         </div>
       </BrutalSection>
 
       {/* CTA */}
       <BrutalSection variant="inverse" className="overflow-hidden py-32">
+        <LandingSectionBackdrop
+          options={{
+            variant: "grid-waving",
+            tone: "inverse",
+            dotRadius: 0.8,
+            spreadXBase: 42,
+            spreadXDepthBoost: 24,
+          }}
+        />
         <BrutalRadialGlow />
-
-        {/* Marquee */}
-        <div className="relative z-10 mb-20 overflow-hidden border-y border-brutal-background/20 py-4">
-          <div className="animate-ticker inline-flex w-max whitespace-nowrap will-change-transform">
-            {Array(2)
-              .fill([
-                "GEMMA-3-1B",
-                "GEMMA-3N-E4B",
-                "GEMMA-3-4B",
-                "GEMMA-3-27B",
-                "GPT-OSS-20B",
-                "GPT-OSS-120B",
-                "LLAMA-3.1-8B",
-                "LLAMA-4-SCOUT",
-                "LLAMA-4-MAVERICK",
-              ])
-              .flat()
-              .map((tech, i) => (
-                <span
-                  key={`${tech}-${i}`}
-                  className="px-4 text-sm font-black tracking-widest uppercase italic opacity-30 transition-opacity hover:text-brutal-background hover:opacity-100"
-                >
-                  {tech}
-                </span>
-              ))}
-          </div>
-        </div>
-
         <div className="relative z-10 mx-auto max-w-7xl px-12 text-center">
           <BrutalHeading variant="h2" className="mb-8 md:text-8xl">
             START
@@ -484,8 +512,8 @@ console.log(result.choices[0].message.content);`}
             </span>
           </BrutalHeading>
           <p className="mx-auto mb-12 max-w-lg font-bold uppercase opacity-40">
-            지금 시작하고 무료 크레딧을 받으세요.
-            <br /> 코딩없이 AI 에이전트를 만드세요.
+            {t("cta.descriptionLine1")}
+            <br /> {t("cta.descriptionLine2")}
           </p>
           <BrutalButton
             variant="default"
@@ -493,7 +521,7 @@ console.log(result.choices[0].message.content);`}
             className="bg-brutal-background text-brutal-foreground hover:bg-brutal-muted hover:text-brutal-foreground"
             asChild
           >
-            <Link href="/workflows/canvas">시작하기</Link>
+            <Link href="/workflows/canvas">{t("cta.button")}</Link>
           </BrutalButton>
         </div>
       </BrutalSection>

@@ -7,24 +7,31 @@ test.describe("Auth: /login", () => {
       waitUntil: "domcontentloaded",
     });
 
-    const googleButton = page.getByRole("button", {
-      name: "Google 계정으로 계속하기",
-      exact: true,
-    });
+    await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
+
+    const googleLoginForm = page
+      .locator("form")
+      .filter({ has: page.locator('input[name="callbackUrl"]') })
+      .first();
+    const googleButton = googleLoginForm.getByRole("button").first();
     await expect(googleButton).toBeVisible();
     await expect(googleButton).toBeEnabled();
 
-    const devLoginButton = page.getByRole("button", {
-      name: "Dev password로 로그인",
-      exact: true,
-    });
+    const devPasswordInput = page.locator('input[name="password"][type="password"]');
 
-    if (await devLoginButton.count()) {
-      const devPasswordInput = page.getByPlaceholder("password");
+    if (await devPasswordInput.count()) {
       await expect(devPasswordInput).toBeVisible();
+
+      const devLoginButton = page
+        .locator('form:has(input[name="password"][type="password"])')
+        .first()
+        .getByRole("button")
+        .first();
+
       await expect(devLoginButton).toBeVisible();
+      await expect(devLoginButton).toBeEnabled();
     } else {
-      await expect(devLoginButton).toHaveCount(0);
+      await expect(devPasswordInput).toHaveCount(0);
     }
   });
 

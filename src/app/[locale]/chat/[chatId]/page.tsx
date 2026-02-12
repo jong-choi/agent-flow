@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { PageContainer } from "@/components/page-template";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatHeader } from "@/features/chats/components/chat-page/chat-header";
@@ -13,29 +14,27 @@ import {
 } from "@/features/chats/server/queries";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
 import { getOwnedWorkflowChatCreditEstimate } from "@/features/workflows/server/queries";
-import { resolveMetadataLocale, resolveMetadataTitle } from "@/lib/metadata";
-
-const chatFallbackTitles = {
-  ko: "채팅",
-  en: "Chat",
-} as const;
+import { type AppMessageKeys } from "@/lib/i18n/messages";
+import { resolveMetadataLocale } from "@/lib/metadata";
 
 export async function generateMetadata({
   params,
 }: PageProps<"/[locale]/chat/[chatId]">): Promise<Metadata> {
   const { locale: requestedLocale, chatId } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
-  const fallbackTitle = chatFallbackTitles[locale];
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Chat",
+  });
+
+  const fallbackTitle = t("meta.chatFallbackTitle");
 
   try {
     const chat = await getChatById(chatId);
+    const chatTitle = chat.title?.trim();
 
     return {
-      title: resolveMetadataTitle({
-        title: chat.title,
-        locale,
-        localizedFallbacks: chatFallbackTitles,
-      }),
+      title: chatTitle || fallbackTitle,
     };
   } catch {
     return { title: fallbackTitle };

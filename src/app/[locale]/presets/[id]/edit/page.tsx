@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +12,7 @@ import {
   updatePresetAction,
 } from "@/features/presets/server/actions";
 import { getOwnedPresetForEdit } from "@/features/presets/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import {
   resolveMetadataLocale,
   resolveMetadataTitle,
@@ -27,8 +29,12 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/presets/[id]/edit">): Promise<Metadata> {
   const { locale: requestedLocale, id } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
   const fallbackTitle = withMetadataSuffix(
-    presetFallbackTitles[locale],
+    t("meta.detailFallbackTitle"),
     "EDIT",
   );
 
@@ -54,19 +60,15 @@ export type PresetEditRes = NonNullable<
   Awaited<ReturnType<typeof getOwnedPresetForEdit>>
 >;
 
-export default function PresetEditPage({
+export default async function PresetEditPage({
   params,
 }: PageProps<"/[locale]/presets/[id]/edit">) {
   return (
     <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">내 프리셋</p>
-          <h1 className="text-2xl font-semibold">프리셋 수정</h1>
-          <p className="text-sm text-muted-foreground">
-            프리셋 정보를 수정하거나 삭제할 수 있습니다.
-          </p>
-        </div>
+        <Suspense fallback={<PresetEditHeaderFallback />}>
+          <PresetEditHeader paramsPromise={params} />
+        </Suspense>
         <Suspense fallback={<PresetEditContentFallback />}>
           <PresetEditContent paramsPromise={params} />
         </Suspense>
@@ -75,11 +77,32 @@ export default function PresetEditPage({
   );
 }
 
+async function PresetEditHeader({
+  paramsPromise,
+}: {
+  paramsPromise: PageProps<"/[locale]/presets/[id]/edit">["params"];
+}) {
+  const { locale } = await paramsPromise;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
+
+  return (
+    <div className="space-y-1">
+      <p className="text-sm text-muted-foreground">{t("editPage.sectionLabel")}</p>
+      <h1 className="text-2xl font-semibold">{t("editPage.heading")}</h1>
+      <p className="text-sm text-muted-foreground">{t("editPage.description")}</p>
+    </div>
+  );
+}
+
 async function PresetEditContent({
   paramsPromise,
 }: {
   paramsPromise: PageProps<"/[locale]/presets/[id]/edit">["params"];
 }) {
+  const t = await getTranslations<AppMessageKeys>("Presets");
   const { id } = await paramsPromise;
   const preset = await getOwnedPresetForEdit(id);
 
@@ -92,10 +115,12 @@ async function PresetEditContent({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" asChild>
-            <Link href={`/presets/${preset.id}`}>상세 페이지</Link>
+            <Link href={`/presets/${preset.id}`}>
+              {t("editPage.detailButton")}
+            </Link>
           </Button>
           <Button asChild>
-            <Link href="/presets">프리셋 마켓</Link>
+            <Link href="/presets">{t("editPage.marketButton")}</Link>
           </Button>
         </div>
       </div>
@@ -125,6 +150,16 @@ function PresetEditContentFallback() {
         <Skeleton className="h-60 w-full rounded-lg" />
         <Skeleton className="h-32 w-full rounded-lg" />
       </div>
+    </div>
+  );
+}
+
+function PresetEditHeaderFallback() {
+  return (
+    <div className="space-y-2">
+      <Skeleton className="h-4 w-24" />
+      <Skeleton className="h-8 w-56" />
+      <Skeleton className="h-4 w-72" />
     </div>
   );
 }

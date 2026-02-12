@@ -1,5 +1,7 @@
+import { getTranslations } from "next-intl/server";
 import { ChatHeaderMenu } from "@/features/chats/components/chat-page/chat-header-menu";
 import { ChatHeaderTitle } from "@/features/chats/components/chat-page/chat-header-title";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type ChatHeaderProps = {
   chatId: string;
@@ -9,13 +11,14 @@ type ChatHeaderProps = {
   workflowId?: string | null;
 };
 
-export function ChatHeader({
+export async function ChatHeader({
   chatId,
   chatTitle,
   workflowTitle,
   workflowId,
 }: ChatHeaderProps) {
-  const resolvedWorkflowTitle = workflowTitle?.trim() || "워크플로우 없음";
+  const t = await getTranslations<AppMessageKeys>("Chat");
+  const resolvedWorkflowTitle = workflowTitle?.trim() || t("header.noWorkflow");
 
   return (
     <header className="sticky top-0 z-20 w-full bg-background/80 px-6 py-2 backdrop-blur">

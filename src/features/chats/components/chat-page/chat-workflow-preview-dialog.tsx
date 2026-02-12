@@ -1,4 +1,5 @@
 import { View } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,12 +9,14 @@ import {
 } from "@/components/ui/dialog";
 import { getWorkflowWithGraphForChat } from "@/features/chats/server/queries";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export async function ChatWorkflowPreviewDialog({
   workflowId,
 }: {
   workflowId: string;
 }) {
+  const t = await getTranslations<AppMessageKeys>("Chat");
   const workflowData = await getWorkflowWithGraphForChat(workflowId);
 
   return (
@@ -22,7 +25,7 @@ export async function ChatWorkflowPreviewDialog({
         <Button
           type="button"
           variant="ghost"
-          title="그래프 보기"
+          title={t("action.viewGraph")}
           className="text-muted-foreground"
           size="sm"
         >
@@ -34,7 +37,7 @@ export async function ChatWorkflowPreviewDialog({
         ariaDescribedby="workflow preview dialog"
       >
         <DialogTitle>
-          {workflowData?.workflow.title ?? "제목이 없습니다."}
+          {workflowData?.workflow.title ?? t("dialog.untitledWorkflow")}
         </DialogTitle>
         <CanvasPreview
           nodes={workflowData?.nodes ?? []}

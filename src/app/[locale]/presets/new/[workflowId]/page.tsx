@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PresetCreateForm } from "@/features/presets/components/preset-create-form";
 import { createPresetAction } from "@/features/presets/server/actions";
 import { getOwnedWorkflowById } from "@/features/workflows/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import {
   resolveMetadataLocale,
   resolveMetadataTitle,
@@ -32,10 +34,11 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/presets/new/[workflowId]">): Promise<Metadata> {
   const { locale: requestedLocale, workflowId } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
-  const fallbackTitle = withMetadataSuffix(
-    presetCreateFallbackTitles[locale],
-    "PRESET",
-  );
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
+  const fallbackTitle = withMetadataSuffix(t("meta.createTitle"), "PRESET");
 
   try {
     const workflow = await getOwnedWorkflowById(workflowId);
@@ -61,23 +64,9 @@ export default function PresetCreateDetailPage({
   return (
     <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">내 프리셋 · 2/2</p>
-            <h1 className="text-2xl font-semibold">프리셋 정보 입력</h1>
-            <p className="text-sm text-muted-foreground">
-              선택한 워크플로우를 프리셋으로 저장합니다.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" asChild>
-              <Link href="/presets">프리셋 마켓</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/presets/purchased">내 프리셋</Link>
-            </Button>
-          </div>
-        </div>
+        <Suspense fallback={<PresetCreateDetailHeaderFallback />}>
+          <PresetCreateDetailHeader paramsPromise={params} />
+        </Suspense>
         <Suspense fallback={<PresetCreateDetailFallback />}>
           <PresetCreateDetailContent paramsPromise={params} />
         </Suspense>
@@ -86,12 +75,52 @@ export default function PresetCreateDetailPage({
   );
 }
 
+async function PresetCreateDetailHeader({
+  paramsPromise,
+}: {
+  paramsPromise: PageProps<"/[locale]/presets/new/[workflowId]">["params"];
+}) {
+  const { locale } = await paramsPromise;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
+
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="space-y-1">
+        <p className="text-sm text-muted-foreground">
+          {t("newDetailPage.stepLabel")}
+        </p>
+        <h1 className="text-2xl font-semibold">{t("newDetailPage.heading")}</h1>
+        <p className="text-sm text-muted-foreground">
+          {t("newDetailPage.description")}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" asChild>
+          <Link href="/presets">{t("newDetailPage.marketButton")}</Link>
+        </Button>
+        <Button asChild>
+          <Link href="/presets/purchased">
+            {t("newDetailPage.myPresetsButton")}
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 async function PresetCreateDetailContent({
   paramsPromise,
 }: {
   paramsPromise: PageProps<"/[locale]/presets/new/[workflowId]">["params"];
 }) {
-  const { workflowId } = await paramsPromise;
+  const { workflowId, locale } = await paramsPromise;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
   const workflow = await getOwnedWorkflowById(workflowId);
 
   if (!workflow) {
@@ -102,27 +131,33 @@ async function PresetCreateDetailContent({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>선택한 워크플로우</CardTitle>
+          <CardTitle>{t("newDetailPage.selectedWorkflowTitle")}</CardTitle>
           <CardDescription>
-            다른 워크플로우로 변경하려면 돌아가기를 눌러주세요.
+            {t("newDetailPage.selectedWorkflowDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1">
             <p className="text-sm font-medium">{workflow.title}</p>
             <p className="text-xs text-muted-foreground">
-              {workflow.description ?? "설명이 없습니다."}
+              {workflow.description ?? t("common.noDescription")}
             </p>
             <p className="text-xs text-muted-foreground">
-              최근 업데이트 {formatYMD(workflow.updatedAt)}
+              {t("newDetailPage.updatedAt", {
+                date: formatYMD(workflow.updatedAt),
+              })}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" asChild>
-              <Link href="/presets/new">워크플로우 변경</Link>
+              <Link href="/presets/new">
+                {t("newDetailPage.changeWorkflow")}
+              </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/workflows/${workflow.id}`}>워크플로우 보기</Link>
+              <Link href={`/workflows/${workflow.id}`}>
+                {t("newDetailPage.viewWorkflow")}
+              </Link>
             </Button>
           </div>
         </CardContent>
@@ -174,5 +209,21 @@ function PresetCreateDetailFallback() {
         </CardContent>
       </Card>
     </>
+  );
+}
+
+function PresetCreateDetailHeaderFallback() {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-8 w-56" />
+        <Skeleton className="h-4 w-72" />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Skeleton className="h-9 w-28" />
+        <Skeleton className="h-9 w-32" />
+      </div>
+    </div>
   );
 }

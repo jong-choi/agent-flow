@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import { flushSync } from "react-dom";
 import {
   DndContext,
@@ -31,6 +31,35 @@ export function CanvasContext({ children }: React.PropsWithChildren) {
   const addNode = useAddNode();
   const { screenToFlowPosition } = useCanvasReactFlow();
 
+  const buildNodeDataOnDrop = useCallback(
+    (item: SidebarNodeData, nodeId: string): SidebarNodeData => {
+      const nextContent = item.content
+        ? {
+            ...item.content,
+            options: item.content.options?.map((option) => ({ ...option })),
+          }
+        : null;
+
+      const nextInformation = item.information
+        ? {
+            ...item.information,
+            guides: [...item.information.guides],
+          }
+        : null;
+
+      const nextItem: SidebarNodeData = {
+        ...item,
+        id: nodeId,
+        content: nextContent,
+        handle: item.handle ? { ...item.handle } : null,
+        information: nextInformation,
+      };
+
+      return nextItem;
+    },
+    [],
+  );
+
   const handleDragStart = (event: DragStartEvent) => {
     const data = event.active.data.current;
 
@@ -51,13 +80,12 @@ export function CanvasContext({ children }: React.PropsWithChildren) {
         y: rect.top + rect.height / 2,
       });
 
-      const nodeData = data as SidebarNodeData;
       const nodeId = crypto.randomUUID();
-      nodeData.id = nodeId;
+      const nodeData = buildNodeDataOnDrop(data as SidebarNodeData, nodeId);
 
       // addNode를 setSelectedNodeId보다 먼저 실행
       flushSync(() => {
-        addNode(data as SidebarNodeData, position);
+        addNode(nodeData, position);
       });
       setSelectedNodeId(nodeId);
     }

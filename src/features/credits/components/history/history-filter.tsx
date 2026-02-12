@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   addDays,
   differenceInCalendarDays,
@@ -21,28 +22,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-const TYPE_OPTIONS = [
-  { label: "전체", value: "all" },
-  { label: "획득", value: "earn" },
-  { label: "사용", value: "spend" },
-] as const;
+type TypeFilter = "all" | "earn" | "spend";
 
-type TypeFilter = (typeof TYPE_OPTIONS)[number]["value"];
-
-const QUICK_RANGES = [
-  { label: "최근 1개월", months: 1 },
-  { label: "최근 3개월", months: 3 },
-  { label: "최근 6개월", months: 6 },
-];
+const QUICK_RANGE_MONTHS = [1, 3, 6] as const;
 
 const formatDateInput = (value: Date) => format(value, "yyyy-MM-dd");
 
 export function CreditHistoryFilter() {
+  const t = useTranslations<AppMessageKeys>("Credits");
   const searchParams = useSearchParams();
   const type = searchParams.get("type") || "all";
   const from = searchParams.get("from") || "";
   const to = searchParams.get("to") || "";
+
+  const typeOptions = [
+    { label: t("history.typeAll"), value: "all" },
+    { label: t("history.typeEarn"), value: "earn" },
+    { label: t("history.typeSpend"), value: "spend" },
+  ] as const;
 
   const [selectedType, setSelectedType] = useState<TypeFilter>(
     type as TypeFilter,
@@ -51,18 +50,24 @@ export function CreditHistoryFilter() {
   const [toInput, setToInput] = useState<string>(to as string);
 
   const todayInput = formatDateInput(new Date());
-
   const today = new Date();
 
-  const quickRanges = QUICK_RANGES.map((range) => {
+  const quickRanges = QUICK_RANGE_MONTHS.map((months) => {
     const quickTo = today;
-    const quickFrom = subMonths(quickTo, range.months);
+    const quickFrom = subMonths(quickTo, months);
     const quickFromInput = formatDateInput(quickFrom);
     const quickToInput = formatDateInput(quickTo);
 
+    const label =
+      months === 1
+        ? t("history.filter.recent1Month")
+        : months === 3
+          ? t("history.filter.recent3Months")
+          : t("history.filter.recent6Months");
+
     return {
-      label: range.label,
-      months: range.months,
+      label,
+      months,
       from: quickFromInput,
       to: quickToInput,
       isActive: fromInput === quickFromInput && toInput === quickToInput,
@@ -99,10 +104,8 @@ export function CreditHistoryFilter() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">필터</CardTitle>
-        <CardDescription>
-          유형과 기간을 선택하고 적용을 눌러 주세요.
-        </CardDescription>
+        <CardTitle className="text-lg">{t("history.filter.title")}</CardTitle>
+        <CardDescription>{t("history.filter.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -125,7 +128,7 @@ export function CreditHistoryFilter() {
               htmlFor="credit-type"
               className="text-xs font-medium text-muted-foreground"
             >
-              유형
+              {t("history.filter.typeLabel")}
             </label>
             <select
               id="credit-type"
@@ -137,7 +140,7 @@ export function CreditHistoryFilter() {
               }}
               className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             >
-              {TYPE_OPTIONS.map((option) => (
+              {typeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -150,7 +153,7 @@ export function CreditHistoryFilter() {
               htmlFor="credit-from"
               className="text-xs font-medium text-muted-foreground"
             >
-              시작일
+              {t("history.filter.fromLabel")}
             </label>
             <Input
               id="credit-from"
@@ -172,7 +175,7 @@ export function CreditHistoryFilter() {
               htmlFor="credit-to"
               className="text-xs font-medium text-muted-foreground"
             >
-              종료일
+              {t("history.filter.toLabel")}
             </label>
             <Input
               id="credit-to"
@@ -190,9 +193,9 @@ export function CreditHistoryFilter() {
           </div>
 
           <div className="flex items-end gap-2">
-            <Button type="submit">적용</Button>
+            <Button type="submit">{t("history.filter.apply")}</Button>
             <Button variant="outline" asChild>
-              <Link href="/credits/history">초기화</Link>
+              <Link href="/credits/history">{t("history.filter.reset")}</Link>
             </Button>
           </div>
         </form>

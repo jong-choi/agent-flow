@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { getTranslations } from "next-intl/server";
 import {
   Card,
   CardContent,
@@ -15,6 +16,7 @@ import {
 } from "@/features/presets/components/preset-chat-example-options";
 import { PresetTagInput } from "@/features/presets/components/preset-tag-input";
 import { categoryOptions } from "@/features/presets/constants/category-options";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 const selectClassName =
   "border-input h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50";
@@ -37,7 +39,7 @@ type PresetInfoCardProps = {
   hiddenFields?: ReactNode;
 };
 
-export function PresetInfoCard({
+export async function PresetInfoCard({
   description,
   defaultValues,
   placeholders,
@@ -45,17 +47,19 @@ export function PresetInfoCard({
   showTags = false,
   hiddenFields,
 }: PresetInfoCardProps) {
+  const t = await getTranslations<AppMessageKeys>("Presets");
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>프리셋 정보</CardTitle>
+        <CardTitle>{t("forms.presetInfoTitle")}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {hiddenFields}
         <div className="grid gap-2">
           <label htmlFor="title" className="text-sm font-medium">
-            프리셋 이름
+            {t("forms.nameLabel")}
           </label>
           <Input
             id="title"
@@ -67,7 +71,7 @@ export function PresetInfoCard({
         </div>
         <div className="grid gap-2">
           <label htmlFor="summary" className="text-sm font-medium">
-            요약
+            {t("forms.summaryLabel")}
           </label>
           <Textarea
             id="summary"
@@ -78,13 +82,13 @@ export function PresetInfoCard({
           />
           {showSummaryHint && (
             <p className="text-xs text-muted-foreground">
-              마켓 리스트 카드에 표시됩니다.
+              {t("forms.summaryHint")}
             </p>
           )}
         </div>
         <div className="grid gap-2">
           <label htmlFor="description" className="text-sm font-medium">
-            상세 설명
+            {t("forms.descriptionLabel")}
           </label>
 
           <PresetDescriptionEditor
@@ -96,7 +100,7 @@ export function PresetInfoCard({
         </div>
         <div className="grid gap-2">
           <label htmlFor="category" className="text-sm font-medium">
-            카테고리
+            {t("forms.categoryLabel")}
           </label>
           <select
             id="category"
@@ -105,8 +109,8 @@ export function PresetInfoCard({
             className={selectClassName}
           >
             {categoryOptions.map((option) => (
-              <option key={option.label} value={option.value}>
-                {option.label}
+              <option key={option.value || option.key} value={option.value}>
+                {t(`categories.${option.key}`)}
               </option>
             ))}
           </select>
@@ -123,19 +127,18 @@ type PresetChatExampleCardProps = {
   defaultSelectedId?: string | null;
 };
 
-export function PresetChatExampleCard({
+export async function PresetChatExampleCard({
   chats,
   pinnedChat = null,
   defaultSelectedId = null,
 }: PresetChatExampleCardProps) {
+  const t = await getTranslations<AppMessageKeys>("Presets");
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>채팅 예시</CardTitle>
-        <CardDescription>
-          마켓에 노출될 채팅 예시를 선택합니다. 선택된 채팅은 최대 4개의
-          메시지를 노출합니다.
-        </CardDescription>
+        <CardTitle>{t("chatExampleCard.title")}</CardTitle>
+        <CardDescription>{t("chatExampleCard.description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <PresetChatExampleOptions

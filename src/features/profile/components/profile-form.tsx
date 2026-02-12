@@ -4,12 +4,17 @@ import { useState, useTransition } from "react";
 import { RefreshCcw } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { BoringUserAvatar } from "@/components/boring-avatar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { ProfileNameInput } from "@/features/profile/components/profile-name-input";
-import { updateUserAction } from "@/features/profile/server/actions";
+import {
+  type UpdateUserErrorCode,
+  updateUserAction,
+} from "@/features/profile/server/actions";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type ProfileFormProps = {
   initialDisplayName: string | null;
@@ -27,6 +32,7 @@ export function ProfileForm({
   email,
   checkDisplayNameTakenAction,
 }: ProfileFormProps) {
+  const t = useTranslations<AppMessageKeys>("Profile");
   const { data: session, update } = useSession();
 
   const [avatarHash, setAvatarHash] = useState(initialAvatarHash ?? "default");
@@ -41,6 +47,23 @@ export function ProfileForm({
   const hasChanged = avatarHash !== initialAvatarHash || nameMessage;
   const canSubmit = hasChanged && validName && !checking && !isPending;
 
+  const getErrorMessage = (code?: UpdateUserErrorCode) => {
+    if (!code) return t("toast.updateFailed");
+
+    switch (code) {
+      case "display_name_required":
+        return t("errors.displayNameRequired");
+      case "display_name_taken":
+        return t("errors.displayNameTaken");
+      case "avatar_invalid":
+        return t("errors.avatarInvalid");
+      case "update_failed":
+        return t("errors.updateFailed");
+      default:
+        return t("toast.updateFailed");
+    }
+  };
+
   const handleAvatarClick = () => {
     setClicked(true);
     setAvatarHash(nanoid(8));
@@ -54,7 +77,7 @@ export function ProfileForm({
         const result = await updateUserAction(formData);
 
         if (!result?.ok) {
-          toast.error(result.error || "닉네임 변경 중 오류가 발생했습니다.");
+          toast.error(getErrorMessage(result.code));
           return;
         }
 
@@ -67,11 +90,11 @@ export function ProfileForm({
             avatarHash: nextAvatarHash || null,
           },
         });
-        toast.success("닉네임이 변경되었습니다.");
+        toast.success(t("toast.updateSuccess"));
         setNameMessage("");
       } catch (error) {
         console.error(error);
-        toast.error("닉네임 변경 중 오류가 발생했습니다.");
+        toast.error(t("toast.updateFailed"));
       }
     };
 
@@ -93,7 +116,7 @@ export function ProfileForm({
           </div>
           {!clicked && (
             <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/35 text-xs font-medium text-white opacity-0 backdrop-blur-xs transition-opacity group-hover:opacity-100 dark:bg-white/25 dark:text-black">
-              새 아바타
+              {t("form.newAvatar")}
             </div>
           )}
           <div className="absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-black/45 text-white shadow-sm backdrop-blur-sm dark:bg-white/70 dark:text-black">
@@ -101,16 +124,16 @@ export function ProfileForm({
           </div>
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-semibold">{email ?? "이메일 정보 없음"}</p>
+          <p className="text-sm font-semibold">{email ?? t("form.noEmail")}</p>
           <p className="text-xs text-muted-foreground">
-            아바타를 클릭하여 새로운 아바타를 만들 수 있습니다
+            {t("form.avatarHelp")}
           </p>
         </div>
       </div>
       <input type="hidden" name="avatarHash" value={avatarHash} />
       <div className="grid gap-2">
         <label htmlFor="displayName" className="text-sm font-medium">
-          닉네임
+          {t("form.displayNameLabel")}
         </label>
         <ProfileNameInput
           session={session}
@@ -123,7 +146,7 @@ export function ProfileForm({
       </div>
       <div className="flex items-center gap-4">
         <Button type="submit" disabled={!canSubmit}>
-          {isPending ? "저장 중..." : "변경 저장"}
+          {isPending ? t("form.saving") : t("form.save")}
         </Button>
         <div className="text-sm text-muted-foreground">
           {checking ? <Spinner /> : nameMessage}

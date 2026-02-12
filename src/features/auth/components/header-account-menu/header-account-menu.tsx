@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,14 +8,16 @@ import { HeaderAccountMenuContent } from "@/features/auth/components/header-acco
 import { HeaderAccountMenuTrigger } from "@/features/auth/components/header-account-menu/header-account-menu-trigger";
 import { HeaderCreditsButton } from "@/features/credits/components/header-credits-button";
 import { auth } from "@/lib/auth";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export async function HeaderAccountMenu() {
+  const t = await getTranslations<AppMessageKeys>("Auth");
   const session = await auth();
 
   if (!session?.user || !session?.user.id) {
     return (
       <Button asChild>
-        <Link href="/login">로그인</Link>
+        <Link href="/login">{t("header.login")}</Link>
       </Button>
     );
   }
@@ -30,7 +33,7 @@ export async function HeaderAccountMenu() {
             avatarHash={session.user.avatarHash ?? "default"}
           />
           <HeaderAccountMenuContent
-            userName={session.user.displayName ?? "사용자"}
+            userName={session.user.displayName ?? t("header.defaultUser")}
           />
         </DropdownMenu>
       </div>

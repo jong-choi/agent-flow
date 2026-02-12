@@ -12,14 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { type TransactionResult } from "@/features/credits/server/queries";
 import { formatYMD } from "@/lib/utils";
 
-const TRANSACTION_TYPE_META = {
+const TRANSACTION_TYPE_STYLE_META = {
   earn: {
-    label: "획득",
     badgeClass: "border border-chart-2/30 bg-chart-2/10 text-chart-2",
     amountClass: "text-chart-2",
   },
   spend: {
-    label: "사용",
     badgeClass: "border border-chart-1/30 bg-chart-1/10 text-chart-1",
     amountClass: "text-chart-1",
   },
@@ -27,10 +25,16 @@ const TRANSACTION_TYPE_META = {
 
 export function TransactionItem({
   transaction,
+  typeLabels,
 }: {
   transaction: TransactionResult;
+  typeLabels: {
+    earn: string;
+    spend: string;
+  };
 }) {
-  const typeMeta = TRANSACTION_TYPE_META[transaction.type];
+  const typeMeta = TRANSACTION_TYPE_STYLE_META[transaction.type];
+  const typeLabel = typeLabels[transaction.type];
 
   return (
     <ListCard key={transaction.id}>
@@ -41,7 +45,7 @@ export function TransactionItem({
               variant="outline"
               className={`${typeMeta.badgeClass} text-xs`}
             >
-              {typeMeta.label}
+              {typeLabel}
             </Badge>
 
             <ListCardTitle>{transaction.title}</ListCardTitle>

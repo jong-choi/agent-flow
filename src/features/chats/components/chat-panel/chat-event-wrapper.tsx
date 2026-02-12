@@ -2,10 +2,12 @@
 
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
 import { ChatStoreProvider } from "@/features/chats/store/chat-store";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type ChatEventWrapperMode = "temporary" | "persistent";
 
@@ -23,6 +25,7 @@ export function ChatEventWrapper({
   estimatedCredits?: number | null;
   mode?: ChatEventWrapperMode;
 }>) {
+  const t = useTranslations<AppMessageKeys>("Chat");
   const threadSearchParam = useSearchParams().get("thread_id");
 
   let threadId = initialThreadId ?? threadSearchParam;
@@ -51,9 +54,9 @@ export function ChatEventWrapper({
         }
 
         if (response.status === 400) {
-          toast.error("채팅 시작 중 오류 : 그래프를 찾을 수 없습니다.");
+          toast.error(t("toast.startGraphNotFound"));
         } else if (response.status === 404) {
-          toast.error("채팅 시작 중 오류 : 세션을 찾을 수 없습니다.");
+          toast.error(t("toast.startSessionNotFound"));
         }
         if (threadSearchParam) {
           setSearchParams({ thread_id: null });
@@ -71,7 +74,7 @@ export function ChatEventWrapper({
     return () => {
       controller.abort();
     };
-  }, [mode, setSearchParams, threadId, threadSearchParam]);
+  }, [mode, setSearchParams, t, threadId, threadSearchParam]);
 
   if (mode === "temporary" && !threadId) {
     return null;

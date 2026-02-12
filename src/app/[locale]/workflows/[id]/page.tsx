@@ -3,6 +3,7 @@ import { type Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Calendar, ChevronLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import "@xyflow/react/dist/style.css";
 import {
   PageContainer,
@@ -17,30 +18,27 @@ import {
   getWorkflowWithGraph,
 } from "@/features/workflows/server/queries";
 import { auth } from "@/lib/auth";
-import { resolveMetadataLocale, resolveMetadataTitle } from "@/lib/metadata";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
+import { resolveMetadataLocale } from "@/lib/metadata";
 import { formatYMD } from "@/lib/utils";
-
-const workflowFallbackTitles = {
-  ko: "워크플로우",
-  en: "Workflow",
-} as const;
 
 export async function generateMetadata({
   params,
 }: PageProps<"/[locale]/workflows/[id]">): Promise<Metadata> {
   const { locale: requestedLocale, id } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
-  const fallbackTitle = workflowFallbackTitles[locale];
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Workflows",
+  });
+  const fallbackTitle = t("meta.workflowFallbackTitle");
 
   try {
     const title = await getWorkflowTitleWithAuth(id);
+    const normalizedTitle = title?.trim() || fallbackTitle;
 
     return {
-      title: resolveMetadataTitle({
-        title,
-        locale,
-        localizedFallbacks: workflowFallbackTitles,
-      }),
+      title: normalizedTitle,
     };
   } catch {
     return { title: fallbackTitle };
@@ -64,7 +62,11 @@ async function WorkflowDetailContent({
 }: {
   paramsPromise: PageProps<"/[locale]/workflows/[id]">["params"];
 }) {
-  const { id } = await paramsPromise;
+  const { id, locale } = await paramsPromise;
+  const t = await getTranslations<AppMessageKeys>({
+    locale: locale,
+    namespace: "Workflows",
+  });
   const workflowData = await getWorkflowWithGraph(id);
   const session = await auth();
   const userId = session?.user?.id;
@@ -82,24 +84,28 @@ async function WorkflowDetailContent({
           <Button variant="outline" size="sm" asChild>
             <Link href="/workflows">
               <ChevronLeft />
-              목록으로
+              {t("detailPage.backToList")}
             </Link>
           </Button>
           <div className="w-full space-y-1 pt-4 pl-4">
             <PageContentTitle>{workflow.title}</PageContentTitle>
             <PageDescription>
-              {workflow.description ?? "설명이 없습니다."}
+              {workflow.description ?? t("detailPage.noDescription")}
             </PageDescription>
             <div className="flex w-full items-center gap-1 pt-4 text-xs text-muted-foreground">
               <Calendar className="size-3.5" />
-              <div>최근 업데이트 {formatYMD(workflow.updatedAt)}</div>
+              <div>
+                {t("detailPage.updatedAt", {
+                  date: formatYMD(workflow.updatedAt),
+                })}
+              </div>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button asChild>
             <Link href={`/workflows/canvas/${workflow.id}`}>
-              캔버스에서 열기
+              {t("detailPage.openInCanvas")}
             </Link>
           </Button>
         </div>

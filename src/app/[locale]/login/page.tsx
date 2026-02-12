@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { BrutalCI } from "@/components/main/ui/brutal-logo";
 import {
   Card,
@@ -14,6 +15,7 @@ import {
   GoogleLoginFormFallback,
 } from "@/features/auth/components/google-login-form";
 import { ENABLE_DEV_LOGIN } from "@/lib/auth";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -21,15 +23,26 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/login">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Auth",
+  });
 
   return {
-    title: locale === "ko" ? "로그인" : "Login",
+    title: t("meta.loginTitle"),
   };
 }
 
 export default async function LoginPage({
+  params,
   searchParams,
 }: PageProps<"/[locale]/login">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Auth",
+  });
+
   return (
     <div className="relative flex min-h-[calc(80vh-3.5rem)] w-full items-center justify-center overflow-hidden bg-gradient-to-b from-muted to-background p-4">
       {/* Login Card */}
@@ -46,13 +59,13 @@ export default async function LoginPage({
             </div>
           </CardTitle>
           <CardDescription className="text-muted-foreground/80">
-            로그인하고 자신만의 AI 에이전트를 만드세요
+            {t("login.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
           <Suspense fallback={<GoogleLoginFormFallback />}>
             <GoogleLoginForm
-              label="Google 계정으로 계속하기"
+              label={t("login.googleContinue")}
               className="mt-0"
               searchParams={searchParams}
             />

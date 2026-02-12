@@ -1,16 +1,19 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Landing: /", () => {
-  test("랜딩 섹션과 로그인 CTA가 렌더링된다", async ({ page }) => {
+  test("랜딩 히어로와 시작 CTA가 렌더링된다", async ({ page }) => {
     await page.goto("/");
 
-    const brandLabel = page.getByText("AGENTFLOW").first();
-    await expect(brandLabel).toBeVisible();
+    const homeLink = page.locator("header a[href='/']").first();
+    await expect(homeLink).toBeVisible();
 
-    const loginCta = page.getByRole("link", { name: "로그인" });
-    await expect(loginCta).toBeVisible();
-    await loginCta.click();
+    const heroSection = page.locator("#hero");
+    await expect(heroSection).toBeVisible();
 
-    await expect(page).toHaveURL("/login");
+    const startCta = heroSection.locator("a[href='/workflows/canvas']").first();
+    await expect(startCta).toBeVisible();
+    await startCta.click();
+
+    await expect(page).toHaveURL(/\/(login|workflows\/canvas)(\?.*)?$/);
   });
 });

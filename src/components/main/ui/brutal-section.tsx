@@ -32,7 +32,10 @@ function BrutalSection({
   ...props
 }: SectionProps) {
   return (
-    <section className={cn(sectionVariants({ variant, container, className }))} {...props} />
+    <section
+      className={cn(sectionVariants({ variant, container, className }))}
+      {...props}
+    />
   );
 }
 

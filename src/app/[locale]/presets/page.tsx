@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { PresetsFilter } from "@/app/[locale]/presets/_components/presets-filter";
 import { PresetsList } from "@/app/[locale]/presets/_components/presets-list";
 import { PresetsPagination } from "@/app/[locale]/presets/_components/presets-pagination";
@@ -22,6 +23,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
 import { getPresets } from "@/features/presets/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 const PAGE_SIZE = 50;
@@ -31,9 +33,13 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/presets">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
 
   return {
-    title: locale === "ko" ? "프리셋 마켓" : "Preset Market",
+    title: t("meta.marketTitle"),
   };
 }
 
@@ -54,9 +60,16 @@ function resolvePage(value: string | string[] | undefined) {
   return Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
 }
 
-export default function TemplateMarketPage({
+export default async function TemplateMarketPage({
+  params,
   searchParams,
 }: PageProps<"/[locale]/presets">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
+
   return (
     <PageContainer
       RightPanel={
@@ -68,27 +81,27 @@ export default function TemplateMarketPage({
       <div className="flex min-h-0 flex-1 flex-col gap-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <PageHeader>
-            <PageHeading>프리셋 마켓</PageHeading>
-            <PageDescription>
-              커뮤니티에서 만든 워크플로우를 구매하세요
-            </PageDescription>
+            <PageHeading>{t("marketPage.heading")}</PageHeading>
+            <PageDescription>{t("marketPage.description")}</PageDescription>
           </PageHeader>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" asChild>
-              <Link href="/presets/new">프리셋 만들기</Link>
+              <Link href="/presets/new">{t("marketPage.createPreset")}</Link>
             </Button>
           </div>
         </div>
         <Card className="py-4">
           <CardContent className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
-              <p className="text-sm font-medium">내 프리셋</p>
+              <p className="text-sm font-medium">{t("marketPage.myPresets")}</p>
               <p className="text-sm text-muted-foreground">
-                구매하거나 만든 프리셋은 캔버스에서 바로 불러올 수 있습니다.
+                {t("marketPage.myPresetsDescription")}
               </p>
             </div>
             <Button variant="secondary" size="sm" asChild>
-              <Link href="/presets/purchased">내 프리셋 보기</Link>
+              <Link href="/presets/purchased">
+                {t("marketPage.viewMyPresets")}
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -105,6 +118,7 @@ async function TemplateMarketContent({
 }: {
   searchParamsPromise: Promise<PresetsPageSearchParams> | undefined;
 }) {
+  const t = await getTranslations<AppMessageKeys>("Presets");
   const resolvedSearchParams = await searchParamsPromise;
   const selectedCategory = resolveParam(resolvedSearchParams?.category, "all");
   const selectedPrice = resolveParam(resolvedSearchParams?.price, "all");
@@ -164,19 +178,23 @@ async function TemplateMarketContent({
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">{totalCount}개 프리셋</p>
+        <p className="text-sm text-muted-foreground">
+          {t("marketContent.totalCount", { count: totalCount })}
+        </p>
       </div>
       {totalCount === 0 ? (
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>공개된 프리셋이 없습니다</CardTitle>
+            <CardTitle>{t("marketContent.emptyTitle")}</CardTitle>
             <CardDescription>
-              아직 공개된 프리셋이 없어요. 곧 새로운 프리셋이 추가됩니다.
+              {t("marketContent.emptyDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="secondary" asChild>
-              <Link href="/workflows/canvas">첫 프리셋 만들기</Link>
+              <Link href="/workflows/canvas">
+                {t("marketContent.createFirstPreset")}
+              </Link>
             </Button>
           </CardContent>
         </Card>

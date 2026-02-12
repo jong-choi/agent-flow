@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,8 +21,12 @@ import { useAppendPresetGraphToCanvas } from "@/features/canvas/hooks/use-append
 import { usePresetLibraryForCanvasQuery } from "@/features/canvas/hooks/use-preset-library-for-canvas-query";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { filterPresetLibrary } from "@/features/canvas/utils/preset-library";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
+import { type Locale } from "@/lib/i18n/routing";
 
 export function FlowLoadPresetButton() {
+  const locale = useLocale() as Locale;
+  const t = useTranslations<AppMessageKeys>("Workflows");
   const workflowId = useCanvasStore((s) => s.workflow.id);
 
   const [open, setOpen] = useState(false);
@@ -48,15 +53,16 @@ export function FlowLoadPresetButton() {
   const emptyMessage = useMemo(() => {
     if (isLoading) return null;
     if (errorMessage) return errorMessage;
-    if (presets.length === 0) return "보유한 프리셋이 없습니다.";
+    if (presets.length === 0) return t("canvas.loadPreset.empty.noOwned");
     if (filteredPresets.length === 0) {
       if (workflowId && hasCycleBlockedPresets) {
-        return "이 워크플로우로 만든 프리셋은 불러올 수 없습니다.";
+        return t("canvas.loadPreset.empty.cycleBlocked");
       }
-      return "조건에 맞는 프리셋이 없습니다.";
+      return t("canvas.loadPreset.empty.noMatch");
     }
     return null;
   }, [
+    t,
     errorMessage,
     filteredPresets.length,
     hasCycleBlockedPresets,
@@ -75,32 +81,34 @@ export function FlowLoadPresetButton() {
 
       try {
         setActivePresetId(presetId);
-        const graph = await getPresetGraphForCanvasAction(presetId);
+        const graph = await getPresetGraphForCanvasAction(presetId, locale);
 
         if (graph.nodes.length === 0) {
-          throw new Error("프리셋에 추가할 노드가 없습니다.");
+          throw new Error(t("canvas.loadPreset.errors.noNodes"));
         }
 
         appendPresetGraphToCanvas(graph);
         setOpen(false);
-        toast.success("프리셋을 캔버스에 추가했어요.");
+        toast.success(t("canvas.loadPreset.toast.appended"));
       } catch (error) {
-        console.error("프리셋 불러오기 오류:", error);
+        console.error("Error while loading preset:", error);
         const message =
-          error instanceof Error ? error.message : "프리셋 불러오기 실패";
+          error instanceof Error
+            ? error.message
+            : t("canvas.loadPreset.errors.loadFailed");
         toast.error(message);
       } finally {
         setActivePresetId(null);
       }
     },
-    [activePresetId, appendPresetGraphToCanvas],
+    [activePresetId, appendPresetGraphToCanvas, locale, t],
   );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline">
-          프리셋 불러오기
+          {t("canvas.actions.loadPreset")}
         </Button>
       </DialogTrigger>
       <DialogContent
@@ -108,16 +116,16 @@ export function FlowLoadPresetButton() {
         className="sm:max-w-lg"
       >
         <DialogHeader>
-          <DialogTitle>프리셋 불러오기</DialogTitle>
+          <DialogTitle>{t("canvas.loadPreset.dialog.title")}</DialogTitle>
           <DialogDescription>
-            구매했거나 만든 프리셋을 현재 캔버스에 추가할 수 있어요.
+            {t("canvas.loadPreset.dialog.description")}
           </DialogDescription>
         </DialogHeader>
 
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="프리셋 검색 (제목)"
+          placeholder={t("canvas.loadPreset.dialog.searchPlaceholder")}
           autoComplete="off"
         />
 

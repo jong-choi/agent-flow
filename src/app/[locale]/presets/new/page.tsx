@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,8 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getOwnedWorkflows } from "@/features/workflows/server/queries";
 import { WorkflowListCard } from "@/features/workflows/components/workflow-list-card";
+import { getOwnedWorkflows } from "@/features/workflows/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale, withMetadataSuffix } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -20,31 +22,47 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/presets/new">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
-  const title = locale === "ko" ? "프리셋 만들기" : "Create Preset";
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
+  const title = t("meta.createTitle");
 
   return {
     title: withMetadataSuffix(title, "NEW"),
   };
 }
 
-export default function PresetCreatePage() {
+export default async function PresetCreatePage({
+  params,
+}: PageProps<"/[locale]/presets/new">) {
+  const { locale } = await params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Presets",
+  });
+
   return (
     <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">내 프리셋 · 1/2</p>
-            <h1 className="text-2xl font-semibold">워크플로우 선택</h1>
             <p className="text-sm text-muted-foreground">
-              프리셋으로 저장할 워크플로우를 선택하세요.
+              {t("newPage.stepLabel")}
+            </p>
+            <h1 className="text-2xl font-semibold">{t("newPage.heading")}</h1>
+            <p className="text-sm text-muted-foreground">
+              {t("newPage.description")}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" asChild>
-              <Link href="/presets">프리셋 마켓</Link>
+              <Link href="/presets">{t("newPage.marketButton")}</Link>
             </Button>
             <Button asChild>
-              <Link href="/presets/purchased">내 프리셋</Link>
+              <Link href="/presets/purchased">
+                {t("newPage.myPresetsButton")}
+              </Link>
             </Button>
           </div>
         </div>
@@ -57,20 +75,21 @@ export default function PresetCreatePage() {
 }
 
 async function PresetCreateWorkflowList() {
+  const t = await getTranslations<AppMessageKeys>("Presets");
   const workflowList = await getOwnedWorkflows();
 
   if (workflowList.length === 0) {
     return (
       <Card className="border-dashed">
         <CardHeader>
-          <CardTitle>워크플로우가 없습니다</CardTitle>
+          <CardTitle>{t("newPage.emptyWorkflowTitle")}</CardTitle>
           <CardDescription>
-            캔버스에서 워크플로우를 만든 뒤 프리셋을 생성해 주세요.
+            {t("newPage.emptyWorkflowDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button variant="secondary" asChild>
-            <Link href="/workflows/canvas">워크플로우 만들기</Link>
+            <Link href="/workflows/canvas">{t("newPage.createWorkflow")}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -87,7 +106,7 @@ async function PresetCreateWorkflowList() {
           title={workflow.title}
           description={workflow.description}
           updatedAt={workflow.updatedAt}
-          actionLabel="선택하기"
+          actionLabel={t("newPage.selectWorkflow")}
         />
       ))}
     </div>

@@ -3,6 +3,7 @@
 import { type ReactNode, useCallback, useMemo } from "react";
 import { X } from "lucide-react";
 import { type Control, useForm } from "react-hook-form";
+import { useLocale, useTranslations } from "next-intl";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUpdateNodeInternals } from "@xyflow/react";
@@ -41,23 +42,36 @@ import {
   handleCountRefine,
   pruneEdgesForHandleCount,
 } from "@/features/canvas/utils/canvas-node-panel";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-const formSchema = z.object({
-  label: z.string().min(1, "이름을 입력해주세요"),
-  description: z.string(),
-  contentValue: z.string(),
-  contentReferenceId: z.string().optional(),
-  targetCount: z
-    .string()
-    .refine(handleCountRefine, "0 이상, 5이하의 정수를 입력해주세요"),
-  sourceCount: z
-    .string()
-    .refine(handleCountRefine, "0 이상, 5이하의 정수를 입력해주세요"),
-});
+type FormValues = {
+  label: string;
+  description: string;
+  contentValue: string;
+  contentReferenceId?: string;
+  targetCount: string;
+  sourceCount: string;
+};
 
-type FormValues = z.infer<typeof formSchema>;
+type WorkflowsTranslator = ReturnType<typeof useTranslations>;
+
+const createFormSchema = (t: WorkflowsTranslator) =>
+  z.object({
+    label: z.string().min(1, t("canvas.nodePanel.validation.nameRequired")),
+    description: z.string(),
+    contentValue: z.string(),
+    contentReferenceId: z.string().optional(),
+    targetCount: z
+      .string()
+      .refine(handleCountRefine, t("canvas.nodePanel.validation.handleRange")),
+    sourceCount: z
+      .string()
+      .refine(handleCountRefine, t("canvas.nodePanel.validation.handleRange")),
+  });
 
 export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
+  const locale = useLocale();
+  const t = useTranslations<AppMessageKeys>("Workflows");
   const { updateNodeData, getEdges, setEdges } = useCanvasReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
@@ -75,9 +89,15 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
 
   const contentLabel = useMemo(() => {
     if (!data.content) return null;
-    if (node.type === "documentNode") return "동작";
-    return data.content.type === "select" ? "선택 값" : "대화 값";
-  }, [data.content, node.type]);
+    if (node.type === "documentNode") {
+      return t("canvas.nodePanel.labels.action");
+    }
+    return data.content.type === "select"
+      ? t("canvas.nodePanel.labels.selectValue")
+      : t("canvas.nodePanel.labels.dialogValue");
+  }, [data.content, node.type, t]);
+
+  const formSchema = useMemo(() => createFormSchema(t), [t]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -207,10 +227,10 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
                 render={({ field }) => (
                   <FormItem className="gap-1">
                     <FormLabel className="text-[12px] font-bold text-muted-foreground">
-                      이름
+                      {t("canvas.nodePanel.labels.name")}
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Node Name" {...field} />
+                      <Input placeholder={t("canvas.nodePanel.placeholders.name")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -223,11 +243,11 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
                 render={({ field }) => (
                   <FormItem className="gap-1">
                     <FormLabel className="text-[12px] font-bold text-muted-foreground">
-                      설명
+                      {t("canvas.nodePanel.labels.description")}
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Description..."
+                        placeholder={t("canvas.nodePanel.placeholders.description")}
                         className="h-[100px] resize-none overflow-y-auto"
                         {...field}
                       />
@@ -242,6 +262,9 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
                   control={form.control}
                   content={data.content}
                   label={contentLabel ?? ""}
+                  creditsLabel={t("canvas.nodePanel.labels.credits")}
+                  isDocumentNode={node.type === "documentNode"}
+                  isKoreanLocale={locale === "ko"}
                 />
               ) : null}
 
@@ -252,7 +275,7 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
                   render={({ field }) => (
                     <FormItem className="gap-1">
                       <FormLabel className="text-[12px] font-bold text-muted-foreground">
-                        문서 연결
+                        {t("canvas.nodePanel.labels.documentReference")}
                       </FormLabel>
                       <FormControl>
                         <DocumentReferenceDialog
@@ -270,19 +293,19 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
               {data.handle && (targetCountEditable || sourceCountEditable) ? (
                 <FormItem className="gap-1">
                   <FormLabel className="text-[12px] font-bold text-muted-foreground">
-                    핸들
+                    {t("canvas.nodePanel.labels.handles")}
                   </FormLabel>
                   <div className="grid gap-4 pt-2">
                     <HandleCountFormField
                       control={form.control}
                       name="targetCount"
-                      label="Target Inputs"
+                      label={t("canvas.nodePanel.labels.targetInputs")}
                       disabled={!targetCountEditable}
                     />
                     <HandleCountFormField
                       control={form.control}
                       name="sourceCount"
-                      label="Source Outputs"
+                      label={t("canvas.nodePanel.labels.sourceOutputs")}
                       disabled={!sourceCountEditable}
                     />
                   </div>
@@ -291,7 +314,7 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
               <Separator />
               <div>
                 <Button type="submit" className="w-full">
-                  저장하기
+                  {t("canvas.nodePanel.save")}
                 </Button>
               </div>
             </form>
@@ -348,10 +371,16 @@ function ContentContentFormField({
   control,
   content,
   label,
+  creditsLabel,
+  isDocumentNode,
+  isKoreanLocale,
 }: {
   control: Control<FormValues>;
   content: NonNullable<FlowNodeData["content"]>;
   label: string;
+  creditsLabel: string;
+  isDocumentNode: boolean;
+  isKoreanLocale: boolean;
 }) {
   return (
     <FormField
@@ -374,13 +403,18 @@ function ContentContentFormField({
                   <SelectGroup>
                     <SelectLabel>{content.label}</SelectLabel>
                     {content.options?.map((option) => {
+                      const optionLabel =
+                        isDocumentNode && !isKoreanLocale
+                          ? option.id
+                          : option.value;
+
                       return (
                         <SelectItem value={option.value} key={option.id}>
                           <div className="flex w-full items-center justify-between gap-2">
-                            <span className="truncate">{option.value}</span>
+                            <span className="truncate">{optionLabel}</span>
                             {typeof option.price === "number" ? (
                               <span className="text-xs text-muted-foreground">
-                                {option.price} Credits
+                                {option.price} {creditsLabel}
                               </span>
                             ) : null}
                           </div>

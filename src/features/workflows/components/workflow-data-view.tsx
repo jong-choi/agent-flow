@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import {
   Card,
   CardContent,
@@ -7,19 +8,22 @@ import {
 } from "@/components/ui/card";
 import { type WorkflowEdge, type WorkflowNode } from "@/db/schema/workflows";
 import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-export function WorkflowDataView({
+export async function WorkflowDataView({
   nodes,
   edges,
 }: {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
 }) {
+  const t = await getTranslations<AppMessageKeys>("Workflows");
+
   return (
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>그래프 프리뷰</CardTitle>
+          <CardTitle>{t("dataView.graphPreviewTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <CanvasPreview nodes={nodes} edges={edges} />
@@ -27,15 +31,15 @@ export function WorkflowDataView({
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>노드 목록</CardTitle>
+          <CardTitle>{t("dataView.nodeListTitle")}</CardTitle>
           <CardDescription>
-            워크플로우에 포함된 노드를 확인합니다.
+            {t("dataView.nodeListDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {nodes.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              노드가 아직 없습니다.
+              {t("dataView.noNodes")}
             </p>
           ) : (
             <div className="scrollbar-slim max-h-80 space-y-3 overflow-auto pr-2">
@@ -47,7 +51,7 @@ export function WorkflowDataView({
                   <div className="min-w-0 space-y-1">
                     <p className="text-sm font-medium">{node.label}</p>
                     <p className="text-xs text-muted-foreground">
-                      {node.description ?? "설명이 없습니다."}
+                      {node.description ?? t("dataView.noNodeDescription")}
                     </p>
                   </div>
                   <span className="shrink-0 text-xs text-muted-foreground">
@@ -62,17 +66,21 @@ export function WorkflowDataView({
 
       <Card>
         <CardHeader>
-          <CardTitle>워크플로우 요약</CardTitle>
-          <CardDescription>그래프 통계와 기록</CardDescription>
+          <CardTitle>{t("dataView.summaryTitle")}</CardTitle>
+          <CardDescription>{t("dataView.summaryDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">노드</span>
+              <span className="text-muted-foreground">
+                {t("dataView.nodeLabel")}
+              </span>
               <span className="font-medium">{nodes.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">엣지</span>
+              <span className="text-muted-foreground">
+                {t("dataView.edgeLabel")}
+              </span>
               <span className="font-medium">{edges.length}</span>
             </div>
           </div>

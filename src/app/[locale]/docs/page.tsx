@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import {
   PageContainer,
   PageDescription,
@@ -12,6 +13,7 @@ import { DocumentsGrid } from "@/features/documents/components/list/documents-gr
 import { DocumentsSearch } from "@/features/documents/components/list/documents-search";
 import { DocumentsSort } from "@/features/documents/components/list/documents-sort";
 import { getDocumentsByOwner } from "@/features/documents/server/queries";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -19,22 +21,30 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/docs">): Promise<Metadata> {
   const { locale: requestedLocale } = await params;
   const locale = resolveMetadataLocale(requestedLocale);
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Docs",
+  });
 
   return {
-    title: locale === "ko" ? "문서" : "Documents",
+    title: t("meta.documentsTitle"),
   };
 }
 
-export default function DocsPage(props: PageProps<"/[locale]/docs">) {
+export default async function DocsPage(props: PageProps<"/[locale]/docs">) {
+  const { locale } = await props.params;
+  const t = await getTranslations<AppMessageKeys>({
+    locale,
+    namespace: "Docs",
+  });
+
   return (
     <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 pb-16">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <PageHeader>
-            <PageHeading>문서 관리</PageHeading>
-            <PageDescription>
-              문서는 캔버스에서 불러와 활용할 수 있습니다.
-            </PageDescription>
+            <PageHeading>{t("listPage.heading")}</PageHeading>
+            <PageDescription>{t("listPage.description")}</PageDescription>
           </PageHeader>
           <CreateDocumentButton />
         </div>

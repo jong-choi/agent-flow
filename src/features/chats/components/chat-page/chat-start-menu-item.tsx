@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
 import { createChatFromWorkflow } from "@/features/chats/server/actions";
+import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function ChatStartMenuItem({
   workflowId,
@@ -13,6 +15,7 @@ export function ChatStartMenuItem({
 }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const t = useTranslations<AppMessageKeys>("Chat");
 
   const handleNewChat = async () => {
     if (!workflowId || loading) return;
@@ -21,15 +24,11 @@ export function ChatStartMenuItem({
       setLoading(true);
       const { chatId } = await createChatFromWorkflow({ workflowId });
       if (!chatId) {
-        throw new Error("chat 생성에 실패하였습니다.");
+        throw new Error(t("toast.createFailed"));
       }
       router.push(`/chat/${chatId}`);
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        console.error(error);
-      }
+    } catch {
+      toast.error(t("toast.createFailed"));
     } finally {
       setLoading(false);
     }
@@ -40,7 +39,8 @@ export function ChatStartMenuItem({
       disabled={loading || !workflowId}
       onSelect={handleNewChat}
     >
-      {loading && <Spinner className="size-3.5" />}새 채팅
+      {loading && <Spinner className="size-3.5" />}
+      {t("action.newChat")}
     </DropdownMenuItem>
   );
 }
