@@ -149,8 +149,8 @@ const message = {
         description: "Description",
         documentReference: "Document Link",
         handles: "Handles",
-        targetInputs: "Target Inputs",
-        sourceOutputs: "Source Outputs",
+        targetInputs: "Max Input Count",
+        sourceOutputs: "Max Output Count",
         credits: "Credits",
       },
       placeholders: {

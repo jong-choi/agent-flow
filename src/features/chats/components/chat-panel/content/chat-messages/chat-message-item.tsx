@@ -36,12 +36,12 @@ export function ChatMessageItem({ message }: { message: ClientChatMessage }) {
         </div>
         <div
           className={cn(
-            "mt-1 flex items-center gap-1",
+            "mt-4 flex items-center gap-1",
             message.role === "user" ? "justify-end" : "justify-start",
             !message.createdAt && "hidden",
           )}
         >
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {!!message.createdAt && formatTimeToday(message.createdAt)}
           </span>
           <Button

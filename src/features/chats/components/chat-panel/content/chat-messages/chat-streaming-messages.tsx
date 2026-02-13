@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { ChatStreamingItem } from "@/features/chats/components/chat-panel/content/chat-messages/chat-streaming-item";
 import { useChatStore } from "@/features/chats/store/chat-store";
@@ -55,16 +55,18 @@ export function ChatStreamingMessages() {
 
   return (
     <div
+      ref={contentRef}
       style={{
         minHeight: `${lastMessageHeight}px`, // 이 값이 "최대값"으로만 커짐
         paddingBottom: "2rem",
       }}
     >
-      <div ref={contentRef}>
-        {streamingChunkKeys.map((key) => (
-          <ChatStreamingItem key={key} nodeId={key} />
-        ))}
-      </div>
+      {streamingChunkKeys.map((key) => (
+        <Fragment key={key}>
+          <ChatStreamingItem nodeId={key} />
+          <div className="h-4" />
+        </Fragment>
+      ))}
     </div>
   );
 }

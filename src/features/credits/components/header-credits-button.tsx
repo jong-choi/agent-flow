@@ -12,9 +12,9 @@ export async function HeaderCreditsButton() {
   return (
     <Button
       asChild
-      variant="ghost"
+      variant="outline"
       size="sm"
-      className="h-7 min-w-18 text-xs"
+      className="h-7 min-w-18 text-xs shadow-none"
       title={t("header.currentCreditsTitle")}
     >
       <Link

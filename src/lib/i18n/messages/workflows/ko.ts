@@ -148,8 +148,8 @@ const message = {
         description: "설명",
         documentReference: "문서 연결",
         handles: "핸들",
-        targetInputs: "타깃 입력",
-        sourceOutputs: "소스 출력",
+        targetInputs: "최대 입력 갯수",
+        sourceOutputs: "최대 출력 갯수",
         credits: "크레딧",
       },
       placeholders: {

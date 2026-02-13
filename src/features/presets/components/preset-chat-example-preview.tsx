@@ -34,14 +34,14 @@ export function PresetChatExamplePreview({
                   message.role === "assistant" && "bg-background",
                 )}
               >
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase">
+                <p className="text-sm font-semibold text-muted-foreground uppercase">
                   {message.role === "user"
                     ? t("chatExamplePreview.userRole")
                     : message.role === "assistant"
                       ? t("chatExamplePreview.assistantRole")
                       : message.role}
                 </p>
-                <ContentMarkdown className="text-sm leading-relaxed">
+                <ContentMarkdown className="px-4 py-2 !text-sm !leading-relaxed">
                   {message.content}
                 </ContentMarkdown>
               </div>
