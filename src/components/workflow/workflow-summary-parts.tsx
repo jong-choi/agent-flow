@@ -41,7 +41,7 @@ export const WorkflowTitleText = ({
 export const WorkflowDescriptionText = ({
   description,
   className,
-  fallbackText = "설명이 없습니다.",
+  fallbackText = "",
 }: WorkflowDescriptionTextProps) => (
   <div className={cn("line-clamp-2 text-sm text-foreground/80", className)}>
     {description ?? fallbackText}

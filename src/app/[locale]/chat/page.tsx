@@ -68,14 +68,13 @@ async function ChatWorkflowSection({ locale }: { locale: string }) {
                 <ChatWorkflowCard
                   key={workflow.id}
                   workflow={workflow}
-                  locale={locale}
                 />
               );
             })}
           </div>
         </div>
       ) : null}
-      {hasMore ? <ChatWorkflowListDialog locale={locale} /> : null}
+      {hasMore ? <ChatWorkflowListDialog /> : null}
       {data.length === 0 ? (
         <>
           <div className="font-semibold text-muted-foreground">

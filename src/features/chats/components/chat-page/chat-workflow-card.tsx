@@ -10,10 +10,8 @@ import { ChatWorkflowPreviewDialog } from "@/features/chats/components/chat-page
 
 export function ChatWorkflowCard({
   workflow,
-  locale,
 }: {
   workflow: ChatPageWorkflow;
-  locale: string;
 }) {
   return (
     <div
@@ -36,7 +34,7 @@ export function ChatWorkflowCard({
           <WorkflowAvatar workflowId={workflow.id} />
         </div>
         <div className="flex items-center justify-end gap-2">
-          <ChatWorkflowPreviewDialog locale={locale} workflowId={workflow.id} />
+          <ChatWorkflowPreviewDialog workflowId={workflow.id} />
           <ChatStartButton workflowId={workflow.id} />
         </div>
       </div>

@@ -3,6 +3,12 @@ import { cacheTag } from "next/cache";
 import { and, desc, eq, sql } from "drizzle-orm";
 import "server-only";
 import { db } from "@/db/client";
+import {
+  buildCursorOrderBy,
+  buildCursorWhere,
+  type CursorOptions,
+  toCursorTimestamp,
+} from "@/db/query/cursor";
 import { aiModels } from "@/db/schema/ai-models";
 import { workflowEdges, workflowNodes, workflows } from "@/db/schema/workflows";
 import { getUserId } from "@/features/auth/server/queries";
@@ -118,6 +124,109 @@ const getOwnedWorkflowsCached = cache(async (ownerId: string) => {
     .from(workflows)
     .where(eq(workflows.ownerId, ownerId))
     .orderBy(desc(workflows.updatedAt));
+});
+
+export type OwnedWorkflowPage = {
+  items: {
+    id: string;
+    title: string;
+    description: string | null;
+    updatedAt: Date;
+  }[];
+  pageInfo: {
+    hasNext: boolean;
+    nextCursor: string | null;
+  };
+};
+
+export const getOwnedWorkflowsPage = async (
+  options?: CursorOptions,
+): Promise<OwnedWorkflowPage> => {
+  const ownerId = await getUserId();
+  const cursor = options?.cursor?.trim() ?? "";
+  const limitValue = typeof options?.limit === "number" ? options.limit : 20;
+  const limit = Math.max(1, Math.min(100, Math.trunc(limitValue)));
+
+  return getOwnedWorkflowsPageCached(ownerId, cursor, limit);
+};
+
+const getOwnedWorkflowsPageCached = cache(async (
+  ownerId: string,
+  cursor: string,
+  limit: number,
+): Promise<OwnedWorkflowPage> => {
+  "use cache";
+  cacheTag(workflowTags.allByUser(ownerId));
+  cacheTag(workflowTags.listByUser(ownerId));
+
+  const whereClause = eq(workflows.ownerId, ownerId);
+
+  let cursorAnchor: { id: string; updatedAt: string } | null = null;
+  if (cursor) {
+    const [row] = await db
+      .select({
+        id: workflows.id,
+        updatedAt: toCursorTimestamp(workflows.updatedAt),
+      })
+      .from(workflows)
+      .where(and(whereClause, eq(workflows.id, cursor)))
+      .limit(1);
+    cursorAnchor = row ?? null;
+  }
+
+  const orderBy = buildCursorOrderBy(
+    [
+      { value: workflows.updatedAt, direction: "desc" },
+      { value: workflows.id, direction: "desc" },
+    ],
+    "next",
+  );
+
+  let listWhere = whereClause;
+  if (cursorAnchor) {
+    const cursorWhere = buildCursorWhere(
+      [
+        {
+          value: workflows.updatedAt,
+          cursor: cursorAnchor.updatedAt,
+          direction: "desc",
+        },
+        {
+          value: workflows.id,
+          cursor: cursorAnchor.id,
+          direction: "desc",
+        },
+      ],
+      "next",
+    );
+    if (cursorWhere) {
+      listWhere = and(whereClause, cursorWhere);
+    }
+  }
+
+  const rows = await db
+    .select({
+      id: workflows.id,
+      title: workflows.title,
+      description: workflows.description,
+      updatedAt: workflows.updatedAt,
+    })
+    .from(workflows)
+    .where(listWhere)
+    .orderBy(...orderBy)
+    .limit(limit + 1);
+
+  const hasNext = rows.length > limit;
+  const items = rows.slice(0, limit);
+  const nextCursor = hasNext ? items[items.length - 1]?.id ?? null : null;
+
+  return {
+    items,
+    pageInfo: {
+      hasNext,
+      nextCursor,
+    },
+  };
 });
 
 export const getOwnedWorkflowById = async (workflowId: string) => {

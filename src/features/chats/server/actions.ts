@@ -9,6 +9,7 @@ import { getUserId } from "@/features/auth/server/queries";
 import { chatTags } from "@/features/chats/server/cache/tags";
 import {
   getChatById,
+  getOwnedWorkflowsForChatPage,
   getChatsByUserPage,
   getWorkflowWithGraphForChat,
 } from "@/features/chats/server/queries";
@@ -157,3 +158,13 @@ export const softDeleteChat = async ({ chatId }: { chatId: string }) => {
 
 export const getChatsByUserPageAction = async (options?: CursorOptions) =>
   getChatsByUserPage(options);
+
+export const getOwnedWorkflowsForChatPageAction = async (
+  options?: CursorOptions,
+) => getOwnedWorkflowsForChatPage(options);
+
+export const getWorkflowWithGraphForChatAction = async ({
+  workflowId,
+}: {
+  workflowId: string;
+}) => getWorkflowWithGraphForChat(workflowId);

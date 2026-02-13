@@ -15,6 +15,7 @@ import { getUserId } from "@/features/auth/server/queries";
 import { chatTags } from "@/features/chats/server/cache/tags";
 import {
   getOwnedWorkflowById,
+  getOwnedWorkflowsPage,
   getOwnedWorkflows,
   getRecentWorkflows,
   getWorkflowWithGraph,
@@ -55,6 +56,9 @@ export const getRecentWorkflowsForChat = async (
 ) => getRecentWorkflows(params);
 
 export const getOwnedWorkflowsForChat = async () => getOwnedWorkflows();
+
+export const getOwnedWorkflowsForChatPage = async (options?: CursorOptions) =>
+  getOwnedWorkflowsPage(options);
 
 export const getOwnedWorkflowForChatById = async (workflowId: string) =>
   getOwnedWorkflowById(workflowId);
