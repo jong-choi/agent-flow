@@ -139,6 +139,7 @@ const message = {
       picker: {
         searchPlaceholder: "Search by document title",
         loading: "Loading...",
+        loadMore: "Load more",
         noDocuments: "No documents found.",
         noSearchResults: "No search results.",
         emptyContent: "No content.",

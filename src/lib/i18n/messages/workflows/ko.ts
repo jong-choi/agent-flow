@@ -136,6 +136,7 @@ const message = {
       picker: {
         searchPlaceholder: "문서 제목으로 검색",
         loading: "불러오는 중...",
+        loadMore: "더 보기",
         noDocuments: "문서가 없습니다.",
         noSearchResults: "검색 결과가 없습니다.",
         emptyContent: "내용이 없습니다.",

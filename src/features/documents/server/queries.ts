@@ -237,6 +237,14 @@ export type DocumentSearchResult = {
   content: string;
 };
 
+export type RecentDocumentsForPickerPage = {
+  items: DocumentSearchResult[];
+  pageInfo: {
+    hasNext: boolean;
+    nextCursor: string | null;
+  };
+};
+
 export const searchDocumentsByTitle = cache(async (
   query: string,
   limit = 6,
@@ -295,6 +303,103 @@ const getRecentDocumentsForPickerCached = cache(async (
     .where(and(eq(documents.ownerId, userId), isNull(documents.deletedAt)))
     .orderBy(desc(documents.updatedAt))
     .limit(safeLimit);
+});
+
+export const getRecentDocumentsForPickerPage = async (
+  options?: CursorOptions,
+): Promise<RecentDocumentsForPickerPage> => {
+  const userId = await getUserId();
+  const cursor = options?.cursor?.trim() ?? "";
+  const limitValue = typeof options?.limit === "number" ? options.limit : 20;
+  const limit = Math.max(1, Math.min(100, Math.trunc(limitValue)));
+
+  return getRecentDocumentsForPickerPageCached(userId, cursor, limit);
+};
+
+const getRecentDocumentsForPickerPageCached = cache(async (
+  userId: string,
+  cursor: string,
+  limit: number,
+): Promise<RecentDocumentsForPickerPage> => {
+  "use cache";
+  cacheTag(documentTags.allByUser(userId));
+  cacheTag(documentTags.pickerByUser(userId));
+
+  const whereClause = and(eq(documents.ownerId, userId), isNull(documents.deletedAt));
+  if (!whereClause) {
+    return {
+      items: [],
+      pageInfo: {
+        hasNext: false,
+        nextCursor: null,
+      },
+    };
+  }
+
+  let cursorAnchor: { id: string; updatedAt: string } | null = null;
+  if (cursor) {
+    const [anchor] = await db
+      .select({
+        id: documents.id,
+        updatedAt: toCursorTimestamp(documents.updatedAt),
+      })
+      .from(documents)
+      .where(and(whereClause, eq(documents.id, cursor)))
+      .limit(1);
+    cursorAnchor = anchor ?? null;
+  }
+
+  const orderBy = buildCursorOrderBy(
+    [
+      { value: documents.updatedAt, direction: "desc" },
+      { value: documents.id, direction: "desc" },
+    ],
+    "next",
+  );
+
+  let listWhere = whereClause;
+  if (cursorAnchor) {
+    const cursorWhere = buildCursorWhere(
+      [
+        {
+          value: documents.updatedAt,
+          cursor: cursorAnchor.updatedAt,
+          direction: "desc",
+        },
+        { value: documents.id, cursor: cursorAnchor.id, direction: "desc" },
+      ],
+      "next",
+    );
+    if (cursorWhere) {
+      const mergedWhere = and(whereClause, cursorWhere);
+      if (mergedWhere) {
+        listWhere = mergedWhere;
+      }
+    }
+  }
+
+  const rows = await db
+    .select({
+      id: documents.id,
+      title: documents.title,
+      content: documents.content,
+    })
+    .from(documents)
+    .where(listWhere)
+    .orderBy(...orderBy)
+    .limit(limit + 1);
+
+  const hasNext = rows.length > limit;
+  const items = rows.slice(0, limit);
+  const nextCursor = hasNext ? items[items.length - 1]?.id ?? null : null;
+
+  return {
+    items,
+    pageInfo: {
+      hasNext,
+      nextCursor,
+    },
+  };
 });
 
 export const getDocumentTitleById = async ({

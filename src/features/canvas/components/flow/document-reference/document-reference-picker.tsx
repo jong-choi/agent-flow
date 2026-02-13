@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { searchDocumentsByTitleAction } from "@/features/documents/server/actions";
@@ -32,10 +33,16 @@ const buildPreview = (content: string, emptyContentLabel: string) => {
 export function DocumentReferencePicker({
   initialDocuments,
   isInitialLoading,
+  isLoadingMore,
+  hasMoreInitial,
+  onLoadMoreInitial,
   onSelect,
 }: {
   initialDocuments: DocumentReferenceSuggestion[];
   isInitialLoading: boolean;
+  isLoadingMore: boolean;
+  hasMoreInitial: boolean;
+  onLoadMoreInitial: () => void;
   onSelect: (docId: string) => void;
 }) {
   const t = useTranslations<AppMessageKeys>("Workflows");
@@ -70,6 +77,7 @@ export function DocumentReferencePicker({
   }, [initialDocuments, searchResults, showingInitial]);
 
   const isLoading = showingInitial ? isInitialLoading : isSearching;
+  const shouldShowLoadMore = showingInitial && hasMoreInitial && !isLoading;
 
   return (
     <div className="flex flex-col gap-3">
@@ -96,36 +104,56 @@ export function DocumentReferencePicker({
       </div>
 
       <div className="h-72 overflow-y-auto rounded-md border">
-        {isLoading ? (
-          <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
-            <Spinner className="size-3" />
-            {t("canvas.document.picker.loading")}
-          </div>
-        ) : null}
+        <div className="flex min-h-full flex-col">
+          {isLoading ? (
+            <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
+              <Spinner className="size-3" />
+              {t("canvas.document.picker.loading")}
+            </div>
+          ) : null}
 
-        {!isLoading && visibleDocuments.length === 0 ? (
-          <div className="px-4 py-3 text-sm text-muted-foreground">
-            {showingInitial
-              ? t("canvas.document.picker.noDocuments")
-              : t("canvas.document.picker.noSearchResults")}
-          </div>
-        ) : null}
+          {!isLoading && visibleDocuments.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-muted-foreground">
+              {showingInitial
+                ? t("canvas.document.picker.noDocuments")
+                : t("canvas.document.picker.noSearchResults")}
+            </div>
+          ) : null}
 
-        {visibleDocuments.map((doc) => (
-          <button
-            key={doc.id}
-            type="button"
-            className="flex w-full grow-0 flex-col gap-1 border-b px-4 py-3 text-left text-sm transition hover:bg-accent"
-            onClick={() => {
-              onSelect(doc.id);
-            }}
-          >
-            <span className="w-full truncate font-medium">{doc.title}</span>
-            <span className="w-full text-xs">
-              {buildPreview(doc.content, t("canvas.document.picker.emptyContent"))}
-            </span>
-          </button>
-        ))}
+          {visibleDocuments.map((doc) => (
+            <button
+              key={doc.id}
+              type="button"
+              className="flex w-full grow-0 flex-col gap-1 border-b px-4 py-3 text-left text-sm transition hover:bg-accent"
+              onClick={() => {
+                onSelect(doc.id);
+              }}
+            >
+              <span className="w-full truncate font-medium">{doc.title}</span>
+              <span className="w-full text-xs">
+                {buildPreview(
+                  doc.content,
+                  t("canvas.document.picker.emptyContent"),
+                )}
+              </span>
+            </button>
+          ))}
+
+          {shouldShowLoadMore ? (
+            <div className="mt-auto flex justify-center py-3">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onLoadMoreInitial}
+                disabled={isLoadingMore}
+              >
+                {isLoadingMore ? <Spinner className="mr-2 size-4" /> : null}
+                {t("canvas.document.picker.loadMore")}
+              </Button>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
