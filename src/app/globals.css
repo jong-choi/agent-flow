@@ -14,7 +14,7 @@
 
   /* 코드블록 */
   pre {
-    @apply bg-[#1e1e1e] break-all whitespace-pre-wrap;
+    @apply bg-[#1e1e1e] break-all whitespace-pre-wrap text-white;
   }
 
   /* 테이블 */

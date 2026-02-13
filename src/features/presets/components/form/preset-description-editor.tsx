@@ -34,7 +34,7 @@ export function PresetDescriptionEditor({
     <MDEditor
       data-color-mode={colorMode}
       value={value}
-      onChange={(nextValue) => setValue(nextValue ?? "")}
+      onChange={(nextValue) => setValue(nextValue?.slice(0, 3000) ?? "")}
       previewOptions={{ rehypePlugins: [[rehypeSanitize]] }}
       textareaProps={{ id, name, placeholder }}
       className="min-h-[600px]"

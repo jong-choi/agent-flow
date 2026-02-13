@@ -17,6 +17,7 @@ export const clientStreamEventSchema = z
     type: z.enum(nodeTypes),
     event: z.custom<EventName>(isEventName, "Invalid event name"),
     message: z.string().optional(),
+    error: z.string().optional(),
     langgraph_node: z.string().optional(),
     chunk: z
       .object({

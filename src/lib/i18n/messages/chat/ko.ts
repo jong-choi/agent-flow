@@ -65,6 +65,7 @@ const message = {
     startGraphNotFound: "채팅 시작 중 오류: 그래프를 찾을 수 없습니다.",
     startSessionNotFound: "채팅 시작 중 오류: 세션을 찾을 수 없습니다.",
     responseUnavailable: "응답을 받을 수 없습니다.",
+    streamFailed: "채팅 중 에러가 발생하였습니다.",
   },
   errors: {
     missingChatId: "chatId가 없습니다.",

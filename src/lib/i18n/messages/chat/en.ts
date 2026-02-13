@@ -65,6 +65,7 @@ const message = {
     startGraphNotFound: "Chat start failed: Graph not found.",
     startSessionNotFound: "Chat start failed: Session not found.",
     responseUnavailable: "Unable to receive a response.",
+    streamFailed: "An error occurred during chat.",
   },
   errors: {
     missingChatId: "chatId is missing.",

@@ -168,6 +168,7 @@ export async function GET(
           emitEvent({
             type: "endNode",
             event: "on_chain_end",
+            error: "stream_error",
           });
           controller.close();
           return Response.json(

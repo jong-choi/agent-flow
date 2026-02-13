@@ -17,15 +17,19 @@ export function ContentMarkdown({ className, children }: ContentMarkdownProps) {
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeHighlight]}
         components={{
-          a: ({ href, ...props }) => {
-            // 링크 새창으로 열기
+          img: () => null, // 마크다운 이미지 삽입 불가
+          a: ({ href, children, ...props }) => {
+            const safe = safeHref(href);
+            if (!safe) return <span {...props}>{children}</span>;
             return (
               <a
-                href={href}
+                href={safe}
                 target="_blank"
                 rel="noopener noreferrer"
                 {...props}
-              />
+              >
+                {children}
+              </a>
             );
           },
         }}
@@ -35,3 +39,31 @@ export function ContentMarkdown({ className, children }: ContentMarkdownProps) {
     </article>
   );
 }
+
+const safeHref = (href?: string): string | undefined => {
+  if (!href) return undefined;
+
+  const trimmed = href.trim();
+
+  if (
+    trimmed.startsWith("/") ||
+    trimmed.startsWith(".") ||
+    trimmed.startsWith("#") ||
+    trimmed.startsWith("//")
+  ) {
+    return undefined;
+  }
+
+  try {
+    const u = new URL(trimmed);
+    const protocol = u.protocol.toLowerCase();
+
+    if (protocol === "http:" || protocol === "https:") {
+      return u.toString();
+    }
+
+    return undefined;
+  } catch {
+    return undefined;
+  }
+};
