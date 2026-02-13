@@ -5,7 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { PageContainer, PageHeading } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { type ChatPageWorkflow } from "@/features/chats/components/chat-page/chat-queries";
+import { type ChatPageWorkflow } from "@/features/chats/types/chat-page-list";
 import { ChatSidebar } from "@/features/chats/components/chat-page/chat-sidebar";
 import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
 import { ChatWorkflowListDialog } from "@/features/chats/components/chat-page/chat-workflow-list-dialog";
