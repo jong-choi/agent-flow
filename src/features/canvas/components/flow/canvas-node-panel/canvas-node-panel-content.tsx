@@ -43,6 +43,7 @@ import {
   pruneEdgesForHandleCount,
 } from "@/features/canvas/utils/canvas-node-panel";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
+import { sanitizeString } from "@/lib/utils";
 
 type FormValues = {
   label: string;
@@ -114,6 +115,15 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
 
   const handleSubmit = useCallback(
     (values: FormValues) => {
+      const sanitizedLabel = sanitizeString(values.label);
+      if (!sanitizedLabel) {
+        form.setError("label", {
+          type: "custom",
+          message: t("canvas.nodePanel.validation.nameRequired"),
+        });
+        return;
+      }
+
       const nextContentValue =
         values.contentValue === "" ? null : values.contentValue;
       const nextContent = data.content ? { ...data.content } : null;
@@ -165,7 +175,7 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
       }
 
       updateNodeData(node.id, {
-        label: values.label,
+        label: sanitizedLabel,
         description: values.description,
         content: nextContent,
         handle: nextHandle,
@@ -189,6 +199,8 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
       sourceCountEditable,
       targetCount,
       targetCountEditable,
+      t,
+      form,
       updateNodeData,
       updateNodeInternals,
     ],

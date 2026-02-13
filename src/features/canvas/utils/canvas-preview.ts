@@ -5,6 +5,7 @@ import {
   ZOOM_MIN,
   ZOOM_STEP,
 } from "@/features/canvas/constants/canvas-preview";
+import { sanitizeString } from "@/lib/utils";
 
 const resolveNodeKey = (node: WorkflowNode) => node.nodeId ?? node.id;
 const NODE_TYPE_LABEL_STYLE =
@@ -23,7 +24,8 @@ export const escapeMermaidLabel = (value: string) =>
 
 const buildNodeLabel = (node: WorkflowNode, fallbackLabel: string) => {
   const nodeType = escapeMermaidLabel(formatNodeTypeLabel(node.type));
-  const mainLabel = escapeMermaidLabel(node.label || fallbackLabel);
+  const sanitizedMainLabel = sanitizeString(node.label || fallbackLabel);
+  const mainLabel = escapeMermaidLabel(sanitizedMainLabel || fallbackLabel);
   return `<span style='${NODE_TYPE_LABEL_STYLE}'>${nodeType}</span><span style='${NODE_MAIN_LABEL_STYLE}'>${mainLabel}</span>`;
 };
 
