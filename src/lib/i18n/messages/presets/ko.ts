@@ -21,6 +21,7 @@ const message = {
     data: "데이터",
     operations: "운영",
     development: "개발",
+    entertainment: "엔터테인먼트",
   },
   filters: {
     title: "필터",
@@ -112,7 +113,7 @@ const message = {
   },
   chatExampleSection: {
     title: "채팅 예시",
-    description: "마켓에 노출된 채팅 예시입니다.",
+    description: "실제로 실행한 채팅 예시입니다.",
     noLinkedChat: "연결된 채팅이 없습니다.",
   },
   chatExampleCard: {

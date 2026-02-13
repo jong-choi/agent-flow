@@ -110,6 +110,7 @@ export function FlowSaveButton() {
         });
 
         if (!response.ok) {
+          router.refresh();
           const payload = await response.json().catch(() => null);
           const message =
             typeof payload?.error === "string"

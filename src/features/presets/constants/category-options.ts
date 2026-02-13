@@ -5,11 +5,18 @@ const categories = [
   { key: "data", value: "데이터" },
   { key: "operations", value: "운영" },
   { key: "development", value: "개발" },
+  { key: "entertainment", value: "예능" },
 ] as const;
 
-export const categoryOptions = [{ key: "none", value: "" }, ...categories] as const;
+export const categoryOptions = [
+  { key: "none", value: "" },
+  ...categories,
+] as const;
 
-export const categoryFilters = [{ key: "all", value: "all" }, ...categories] as const;
+export const categoryFilters = [
+  { key: "all", value: "all" },
+  ...categories,
+] as const;
 
 export type PresetCategoryValue = (typeof categories)[number]["value"];
 export type PresetCategoryTranslationKey = (typeof categories)[number]["key"];
@@ -30,6 +37,8 @@ export function resolvePresetCategoryKey(
       return "operations";
     case "개발":
       return "development";
+    case "예능":
+      return "entertainment";
     default:
       return null;
   }

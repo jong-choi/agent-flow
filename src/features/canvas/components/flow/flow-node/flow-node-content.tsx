@@ -1,5 +1,5 @@
-import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -134,6 +134,7 @@ export function FlowNodeContent({
                 <div className="grid flex-1 gap-2">
                   <Textarea
                     name="textValue"
+                    className="h-[400px]"
                     defaultValue={content.value || undefined}
                   />
                 </div>

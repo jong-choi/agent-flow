@@ -21,6 +21,7 @@ const message = {
     data: "Data",
     operations: "Operations",
     development: "Development",
+    entertainment: "Entertainment",
   },
   filters: {
     title: "Filter",
@@ -113,7 +114,7 @@ const message = {
   },
   chatExampleSection: {
     title: "Chat Example",
-    description: "A chat example shown in the market.",
+    description: "A chat example that has actually run.",
     noLinkedChat: "No linked chat.",
   },
   chatExampleCard: {

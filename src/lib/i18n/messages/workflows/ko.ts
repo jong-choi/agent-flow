@@ -143,7 +143,7 @@ const message = {
         promptEdit: "프롬프트 수정",
         promptDialogTitle: "프롬프트 입력",
         selectValue: "선택 값",
-        dialogValue: "대화 값",
+        dialogValue: "프롬프트",
         name: "이름",
         description: "설명",
         documentReference: "문서 연결",

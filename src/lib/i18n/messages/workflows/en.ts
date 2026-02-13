@@ -144,7 +144,7 @@ const message = {
         promptEdit: "Edit Prompt",
         promptDialogTitle: "Prompt Input",
         selectValue: "Selected Value",
-        dialogValue: "Dialog Value",
+        dialogValue: "Prompt",
         name: "Name",
         description: "Description",
         documentReference: "Document Link",
