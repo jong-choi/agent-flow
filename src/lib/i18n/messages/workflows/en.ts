@@ -42,6 +42,15 @@ const message = {
       loadPreset: "Load Preset",
       save: "Save",
     },
+    validation: {
+      startNodeCountInvalid: "Exactly one start node is required.",
+      endNodeCountInvalid: "Exactly one end node is required.",
+      disconnectedNodeExists: "There are unconnected nodes.",
+      nodeTypeMissing: "A node type is missing.",
+      chatNodeValueMissing: "Please select a model for the chat node.",
+      documentNodeReferenceMissing:
+        "The document node must have a linked document.",
+    },
     start: {
       errors: {
         createFailed: "Unable to start chat.",
@@ -59,7 +68,8 @@ const message = {
         titleEdit: "Update Workflow",
         description: "Enter a name and description, then save.",
         descriptionCreate: "Enter a name and description, then save.",
-        descriptionEdit: "Review the current name and description, then update.",
+        descriptionEdit:
+          "Review the current name and description, then update.",
         nameLabel: "Name",
         namePlaceholder: "Workflow name",
         descriptionLabel: "Description",

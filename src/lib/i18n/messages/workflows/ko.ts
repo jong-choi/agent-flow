@@ -42,6 +42,14 @@ const message = {
       loadPreset: "프리셋 불러오기",
       save: "저장",
     },
+    validation: {
+      startNodeCountInvalid: "시작 노드는 정확히 1개여야 합니다.",
+      endNodeCountInvalid: "종료 노드는 정확히 1개여야 합니다.",
+      disconnectedNodeExists: "연결되지 않은 노드가 있습니다.",
+      nodeTypeMissing: "노드 타입이 지정되지 않았습니다.",
+      chatNodeValueMissing: "채팅 노드의 모델 선택이 필요합니다.",
+      documentNodeReferenceMissing: "문서 노드의 문서 연결이 필요합니다.",
+    },
     start: {
       errors: {
         createFailed: "채팅을 생성하지 못했습니다.",
