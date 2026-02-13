@@ -41,5 +41,5 @@ export function formatTimeToday(value: ConfigType, fallback = "-") {
 }
 
 export function sanitizeString(v: string) {
-  return v.replace(/[^\p{L}\p{N} :()\[\]{}_^_\-]+/gu, "").trim();
+  return v.replace(/[^\p{L}\p{N} :()\[\]{}_^_\-]+/gu, "?").trim();
 }

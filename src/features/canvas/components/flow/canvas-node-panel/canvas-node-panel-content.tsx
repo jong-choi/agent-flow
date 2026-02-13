@@ -116,14 +116,6 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
   const handleSubmit = useCallback(
     (values: FormValues) => {
       const sanitizedLabel = sanitizeString(values.label);
-      if (!sanitizedLabel) {
-        form.setError("label", {
-          type: "custom",
-          message: t("canvas.nodePanel.validation.nameRequired"),
-        });
-        return;
-      }
-
       const nextContentValue =
         values.contentValue === "" ? null : values.contentValue;
       const nextContent = data.content ? { ...data.content } : null;
@@ -199,8 +191,6 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
       sourceCountEditable,
       targetCount,
       targetCountEditable,
-      t,
-      form,
       updateNodeData,
       updateNodeInternals,
     ],
