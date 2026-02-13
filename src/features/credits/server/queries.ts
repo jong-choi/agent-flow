@@ -16,6 +16,12 @@ import "server-only";
 import { cache } from "react";
 import { db } from "@/db/client";
 import {
+  buildCursorOrderBy,
+  buildCursorWhere,
+  type CursorOptions,
+  toCursorTimestamp,
+} from "@/db/query/cursor";
+import {
   creditAccounts,
   creditDailyEvents,
   type creditTransactionCategories,
@@ -59,6 +65,14 @@ export type CreditHistoryFilters = {
 export type CreditHistoryResult = {
   transactions: Array<TransactionResult>;
   range: { from: Date; to: Date };
+  totalCount: number;
+  totalAmount: number;
+  pageInfo: {
+    hasPrev: boolean;
+    hasNext: boolean;
+    prevCursor: string | null;
+    nextCursor: string | null;
+  };
 };
 
 export type WeeklyAttendanceItem = {
@@ -219,14 +233,22 @@ const getCreditSummaryCached = cache(async (
 
 export const getCreditHistory = async (
   filters?: CreditHistoryFilters,
+  options?: CursorOptions,
 ): Promise<CreditHistoryResult> => {
   const userId = await getUserId();
 
   const now = new Date();
   const to = resolveSafeDate(filters?.to, now);
   const from = resolveSafeDate(filters?.from, subMonths(to, 6));
-  const limitValue = typeof filters?.limit === "number" ? filters.limit : 500;
-  const limit = Math.max(1, Math.trunc(limitValue));
+  const cursor = options?.cursor?.trim() ?? "";
+  const dir = options?.dir === "prev" ? "prev" : "next";
+  const limitValue =
+    typeof options?.limit === "number"
+      ? options.limit
+      : typeof filters?.limit === "number"
+        ? filters.limit
+        : 30;
+  const limit = Math.max(1, Math.min(100, Math.trunc(limitValue)));
 
   const type =
     filters?.type === "earn" || filters?.type === "spend"
@@ -238,6 +260,8 @@ export const getCreditHistory = async (
     from.toISOString(),
     to.toISOString(),
     type,
+    cursor,
+    dir,
     limit,
   );
 };
@@ -247,6 +271,8 @@ const getCreditHistoryCached = cache(async (
   fromIso: string,
   toIso: string,
   type: "all" | CreditTransactionType,
+  cursor: string,
+  dir: "next" | "prev",
   limit: number,
 ): Promise<CreditHistoryResult> => {
   "use cache";
@@ -266,24 +292,114 @@ const getCreditHistoryCached = cache(async (
     clauses.push(eq(creditTransactions.type, type));
   }
 
-  const rows = await db
-    .select({
-      id: creditTransactions.id,
-      type: creditTransactions.type,
-      category: creditTransactions.category,
-      title: creditTransactions.title,
-      description: creditTransactions.description,
-      amount: creditTransactions.amount,
-      occurredAt: creditTransactions.occurredAt,
-    })
-    .from(creditTransactions)
-    .where(and(...clauses))
-    .orderBy(desc(creditTransactions.occurredAt))
-    .limit(limit);
+  const whereClause = and(...clauses);
+  if (!whereClause) {
+    return {
+      range: { from, to },
+      totalCount: 0,
+      totalAmount: 0,
+      pageInfo: {
+        hasPrev: false,
+        hasNext: false,
+        prevCursor: null,
+        nextCursor: null,
+      },
+      transactions: [],
+    };
+  }
+
+  let cursorAnchor: { id: string; occurredAt: string } | null = null;
+  if (cursor) {
+    const [anchor] = await db
+      .select({
+        id: creditTransactions.id,
+        occurredAt: toCursorTimestamp(creditTransactions.occurredAt),
+      })
+      .from(creditTransactions)
+      .where(and(whereClause, eq(creditTransactions.id, cursor)))
+      .limit(1);
+    cursorAnchor = anchor ?? null;
+  }
+
+  const appliedDir = cursorAnchor && dir === "prev" ? "prev" : "next";
+  const orderBy = buildCursorOrderBy(
+    [
+      { value: creditTransactions.occurredAt, direction: "desc" },
+      { value: creditTransactions.id, direction: "desc" },
+    ],
+    appliedDir,
+  );
+
+  let listWhere = whereClause;
+  if (cursorAnchor) {
+    const cursorWhere = buildCursorWhere(
+      [
+        {
+          value: creditTransactions.occurredAt,
+          cursor: cursorAnchor.occurredAt,
+          direction: "desc",
+        },
+        { value: creditTransactions.id, cursor: cursorAnchor.id, direction: "desc" },
+      ],
+      appliedDir,
+    );
+
+    if (cursorWhere) {
+      const mergedWhere = and(whereClause, cursorWhere);
+      if (mergedWhere) {
+        listWhere = mergedWhere;
+      }
+    }
+  }
+
+  const [rows, [summary]] = await Promise.all([
+    db
+      .select({
+        id: creditTransactions.id,
+        type: creditTransactions.type,
+        category: creditTransactions.category,
+        title: creditTransactions.title,
+        description: creditTransactions.description,
+        amount: creditTransactions.amount,
+        occurredAt: creditTransactions.occurredAt,
+      })
+      .from(creditTransactions)
+      .where(listWhere)
+      .orderBy(...orderBy)
+      .limit(limit + 1),
+    db
+      .select({
+        totalCount: sql<number>`count(*)`.mapWith(Number),
+        totalAmount: sql<number>`coalesce(sum(${creditTransactions.amount}), 0)`.mapWith(
+          Number,
+        ),
+      })
+      .from(creditTransactions)
+      .where(whereClause),
+  ]);
+
+  const hasMore = rows.length > limit;
+  const slicedRows = rows.slice(0, limit);
+  const normalizedRows =
+    appliedDir === "prev" ? [...slicedRows].reverse() : slicedRows;
+  const hasPrev = appliedDir === "prev" ? hasMore : Boolean(cursorAnchor);
+  const hasNext = appliedDir === "prev" ? Boolean(cursorAnchor) : hasMore;
+  const prevCursor = hasPrev ? normalizedRows[0]?.id ?? null : null;
+  const nextCursor = hasNext
+    ? normalizedRows[normalizedRows.length - 1]?.id ?? null
+    : null;
 
   return {
     range: { from, to },
-    transactions: rows.map((row) => ({
+    totalCount: summary?.totalCount ?? 0,
+    totalAmount: summary?.totalAmount ?? 0,
+    pageInfo: {
+      hasPrev,
+      hasNext,
+      prevCursor,
+      nextCursor,
+    },
+    transactions: normalizedRows.map((row) => ({
       ...row,
       occurredAt: row.occurredAt.toISOString(),
     })),

@@ -3,9 +3,11 @@
 import { updateTag } from "next/cache";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
+import { type CursorOptions } from "@/db/query/cursor";
 import { userSecrets, workflowApiIds, workflows } from "@/db/schema";
 import { getUserId } from "@/features/auth/server/queries";
 import { developerTags } from "@/features/developers/server/cache/tags";
+import { getUserSecretsPage } from "@/features/developers/server/queries";
 import {
   buildUserSecret,
   buildWorkflowCanvasId,
@@ -58,6 +60,9 @@ export const createUserSecretAction = async () => {
 
   throw new Error("시크릿 키 발급에 실패했습니다.");
 };
+
+export const getUserSecretsPageAction = async (options?: CursorOptions) =>
+  getUserSecretsPage(options);
 
 export const softDeleteUserSecretAction = async ({
   secretId,

@@ -42,6 +42,7 @@ const message = {
     issuedAt: "발급 {date}",
     lastUsedAt: "최근 사용 {date}",
     delete: "삭제",
+    loadMore: "더 보기",
     toasts: {
       createFailed: "시크릿 키 발급에 실패했습니다.",
     },

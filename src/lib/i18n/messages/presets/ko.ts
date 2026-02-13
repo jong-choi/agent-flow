@@ -31,15 +31,16 @@ const message = {
     marketSearchPlaceholder: "워크플로우, 기능, 키워드로 검색",
     purchasedSearchPlaceholder: "프리셋 이름이나 키워드로 검색",
     categoryLabel: "카테고리",
+    ownershipLabel: "구분",
     priceLabel: "가격",
     sortLabel: "정렬",
     apply: "적용",
     reset: "초기화",
     priceOptions: {
-      all: "전체",
       free: "무료",
-      oneToTwo: "1~2 크레딧",
-      threeToFive: "3~5 크레딧",
+      oneToFive: "1~5 크레딧",
+      fiveToTen: "5~10 크레딧",
+      overTen: "10 크레딧 초과",
     },
     marketSortOptions: {
       popular: "인기순",
@@ -51,6 +52,11 @@ const message = {
       latest: "최신순",
       purchase: "구매일순",
       name: "이름순",
+    },
+    purchasedOwnershipOptions: {
+      all: "전체",
+      purchased: "구매한",
+      owned: "제작한",
     },
   },
   marketPage: {
@@ -238,29 +244,18 @@ const message = {
   },
   purchasedPage: {
     heading: "내 프리셋",
-    description: "생성하였거나 구매한 프리셋 목록입니다.",
+    description: "소유한 프리셋 목록입니다.",
     createPreset: "내 프리셋 만들기",
     openCanvas: "캔버스 열기",
   },
-  librarySummary: {
-    title: "내 프리셋 라이브러리",
-    stats: "전체 {total}개 · 만든 {created}개 · 구매 {purchased}개",
-    marketButton: "프리셋 마켓",
-  },
-  ownedSection: {
-    title: "내가 만든 프리셋",
-    emptyTitle: "아직 만든 프리셋이 없습니다",
-    emptyDescription: "캔버스에서 새 프리셋을 만들고 저장해 보세요.",
-    createFromWorkflows: "프리셋 만들기",
-  },
   purchasedSection: {
-    totalCount: "구매한 프리셋 {count}개",
-    emptyTitle: "구매한 프리셋이 없습니다",
+    totalCount: "프리셋 {count}개",
+    emptyTitle: "프리셋이 없습니다",
     emptyDescription: "프리셋 마켓에서 새로운 프리셋을 둘러보세요.",
     viewMarket: "프리셋 마켓 보기",
     filteredEmptyTitle: "필터 결과가 없습니다",
     filteredEmptyDescription:
-      "선택한 조건에 맞는 구매 프리셋이 없습니다. 필터를 변경해 주세요.",
+      "선택한 조건에 맞는 프리셋이 없습니다. 필터를 변경해 주세요.",
     resetFilter: "필터 초기화",
   },
 };

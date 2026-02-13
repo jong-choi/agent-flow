@@ -100,6 +100,8 @@ export function DocumentsSearch() {
     }
 
     params.delete("page");
+    params.delete("cursor");
+    params.delete("dir");
     const queryString = params.toString();
     router.push(queryString ? `/docs?${queryString}` : "/docs");
     setIsSuggestOpen(false);

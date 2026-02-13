@@ -74,7 +74,7 @@ const message = {
         namePlaceholder: "Workflow name",
         descriptionLabel: "Description",
         descriptionPlaceholder: "Workflow description",
-        descriptionLimit: "You can enter up to 140 characters.",
+        descriptionLimit: "You can enter up to {max} characters.",
         close: "Close",
         submit: "Save",
         submitCreate: "Save",
@@ -94,6 +94,7 @@ const message = {
         description:
           "You can add purchased or created presets to the current canvas.",
         searchPlaceholder: "Search presets (title)",
+        loadMore: "Load more",
       },
       empty: {
         noOwned: "You do not have any presets.",
@@ -138,6 +139,7 @@ const message = {
       picker: {
         searchPlaceholder: "Search by document title",
         loading: "Loading...",
+        loadMore: "Load more",
         noDocuments: "No documents found.",
         noSearchResults: "No search results.",
         emptyContent: "No content.",

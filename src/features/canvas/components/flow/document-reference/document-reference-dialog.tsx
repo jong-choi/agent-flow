@@ -2,8 +2,12 @@
 
 import { useCallback, useState } from "react";
 import { Link2Off } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,16 +18,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  getDocumentTitleByIdAction,
-  getRecentDocumentsForPickerAction,
-} from "@/features/documents/server/actions";
 import { DocumentCreateButton } from "@/features/canvas/components/flow/document-reference/document-create-button";
 import { DocumentReferencePicker } from "@/features/canvas/components/flow/document-reference/document-reference-picker";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+import {
+  getDocumentTitleByIdAction,
+  getRecentDocumentsForPickerPageAction,
+} from "@/features/documents/server/actions";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-const MAX_SUGGESTIONS = 6;
+const DOCUMENT_PICKER_PAGE_SIZE = 20;
 
 export function DocumentReferenceDialog({
   referenceId,
@@ -44,13 +48,27 @@ export function DocumentReferenceDialog({
 
   const resolvedReferenceId = referenceId?.trim() ? referenceId.trim() : null;
 
-  const { data: initialDocuments = [], isLoading: isLoadingInitial } = useQuery(
-    {
-      queryKey: ["documents", "recent", "picker", MAX_SUGGESTIONS],
-      queryFn: () =>
-        getRecentDocumentsForPickerAction({ limit: MAX_SUGGESTIONS }),
-    },
-  );
+  const {
+    data: initialPages,
+    isLoading: isLoadingInitial,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["documents", "recent", "picker"],
+    queryFn: ({ pageParam }) =>
+      getRecentDocumentsForPickerPageAction({
+        cursor:
+          typeof pageParam === "string" && pageParam ? pageParam : undefined,
+        limit: DOCUMENT_PICKER_PAGE_SIZE,
+      }),
+    initialPageParam: "",
+    getNextPageParam: (lastPage) => lastPage.pageInfo.nextCursor ?? undefined,
+    enabled: open,
+  });
+
+  const initialDocuments =
+    initialPages?.pages.flatMap((page) => page.items) ?? [];
 
   const { data: connectedTitle, isFetching: isFetchingTitle } = useQuery({
     queryKey: ["documents", "title", resolvedReferenceId],
@@ -114,13 +132,18 @@ export function DocumentReferenceDialog({
         ariaDescribedby="document reference picker"
       >
         <DialogHeader>
-          <DialogTitle>{t("canvas.document.reference.dialogTitle")}</DialogTitle>
+          <DialogTitle>
+            {t("canvas.document.reference.dialogTitle")}
+          </DialogTitle>
         </DialogHeader>
 
         {open ? (
           <DocumentReferencePicker
             initialDocuments={initialDocuments}
             isInitialLoading={isLoadingInitial}
+            isLoadingMore={isFetchingNextPage}
+            hasMoreInitial={hasNextPage}
+            onLoadMoreInitial={() => void fetchNextPage()}
             onSelect={(docId) => {
               onChange(docId);
               setOpen(false);

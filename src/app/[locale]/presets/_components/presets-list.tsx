@@ -94,9 +94,9 @@ function PresetsCard({
             seed={preset.id}
             size={40}
             square={false}
-            className="size-10"
+            className="size-10 shrink-0"
           />
-          <div className="min-w-0 space-y-1">
+          <div className="min-h-18 min-w-0 space-y-1">
             <CardTitle className="text-lg">{preset.title}</CardTitle>
             <CardDescription className="line-clamp-2">
               {preset.summary ?? t("common.noDescription")}

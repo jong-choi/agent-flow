@@ -7,7 +7,10 @@ import {
   PageHeader,
   PageHeading,
 } from "@/components/page-template";
+import { PagerButton } from "@/components/pager-button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { buildQueryString } from "@/features/chats/utils/query-string";
 import { CreateDocumentButton } from "@/features/documents/components/list/create-document-button";
 import { DocumentsGrid } from "@/features/documents/components/list/documents-grid";
 import { DocumentsSearch } from "@/features/documents/components/list/documents-search";
@@ -15,6 +18,8 @@ import { DocumentsSort } from "@/features/documents/components/list/documents-so
 import { getDocumentsByOwner } from "@/features/documents/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
+
+const PAGE_SIZE = 20;
 
 export async function generateMetadata({
   params,
@@ -68,27 +73,74 @@ async function DocsContent({
   searchParamsPromise: PageProps<"/[locale]/docs">["searchParams"];
 }) {
   const resolvedSearchParams = await searchParamsPromise;
-  const { q, sort: rawSort, page: rawPage } = resolvedSearchParams;
+  const { q, sort: rawSort } = resolvedSearchParams;
   const query = typeof q === "string" ? q : "";
   const sort = isSort(rawSort) ? rawSort : "recent";
-  const page = toPageNumber(rawPage);
+  const rawCursor = Array.isArray(resolvedSearchParams?.cursor)
+    ? resolvedSearchParams.cursor[0]
+    : resolvedSearchParams?.cursor;
+  const cursor = rawCursor?.trim() || undefined;
+  const rawDir = Array.isArray(resolvedSearchParams?.dir)
+    ? resolvedSearchParams.dir[0]
+    : resolvedSearchParams?.dir;
+  const dir = rawDir === "prev" ? "prev" : "next";
 
-  const { documents } = await getDocumentsByOwner(
+  const { documents, pageInfo } = await getDocumentsByOwner(
     {
       query,
       sort,
     },
-    { page, pageSize: 100 },
+    { cursor, dir, limit: PAGE_SIZE },
   );
 
+  const baseParams = { q: query, sort };
+  const paginationDefaults = { sort: "recent" };
+  const prevHref =
+    pageInfo.hasPrev && pageInfo.prevCursor
+      ? `/docs${buildQueryString(
+          baseParams,
+          { cursor: pageInfo.prevCursor, dir: "prev" },
+          paginationDefaults,
+        )}`
+      : "";
+  const nextHref =
+    pageInfo.hasNext && pageInfo.nextCursor
+      ? `/docs${buildQueryString(
+          baseParams,
+          { cursor: pageInfo.nextCursor, dir: "next" },
+          paginationDefaults,
+        )}`
+      : "";
+  const hasPager = pageInfo.hasPrev || pageInfo.hasNext;
+
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex">
         <DocumentsSort locale={locale} searchParams={resolvedSearchParams} />
         <DocumentsSearch />
       </div>
-      <DocumentsGrid locale={locale} documents={documents} query={query} />
-    </>
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="pb-3">
+          <DocumentsGrid locale={locale} documents={documents} query={query} />
+        </div>
+      </ScrollArea>
+      {hasPager ? (
+        <div className="shrink-0 border-t border-border/60 pt-4">
+          <div className="flex items-center justify-center gap-2">
+            <PagerButton
+              direction="prev"
+              href={prevHref || undefined}
+              disabled={!prevHref}
+            />
+            <PagerButton
+              direction="next"
+              href={nextHref || undefined}
+              disabled={!nextHref}
+            />
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -108,10 +160,4 @@ function isSort(value: unknown): value is Sort {
     typeof value === "string" &&
     (sortValues as readonly string[]).includes(value)
   );
-}
-
-function toPageNumber(raw: unknown, fallback = 1): number {
-  if (typeof raw !== "string") return fallback;
-  const n = Number(raw);
-  return Number.isFinite(n) && Number.isInteger(n) && n >= 1 ? n : fallback;
 }

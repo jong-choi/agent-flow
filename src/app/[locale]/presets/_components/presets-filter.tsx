@@ -16,11 +16,11 @@ import { Input } from "@/components/ui/input";
 import { categoryFilters } from "@/features/presets/constants/category-options";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-const PRICE_FILTERS = [
-  { key: "all", value: "all" },
+const MARKET_PRICE_FILTERS = [
   { key: "free", value: "free" },
-  { key: "oneToTwo", value: "1-2" },
-  { key: "threeToFive", value: "3-5" },
+  { key: "oneToFive", value: "oneToFive" },
+  { key: "fiveToTen", value: "fiveToTen" },
+  { key: "overTen", value: "overTen" },
 ] as const;
 
 const MARKET_SORT_OPTIONS = [
@@ -35,12 +35,19 @@ const PURCHASED_SORT_OPTIONS = [
   { key: "purchase", value: "purchase" },
   { key: "name", value: "name" },
 ] as const;
+const PURCHASED_OWNERSHIP_OPTIONS = [
+  { key: "all", value: "all" },
+  { key: "purchased", value: "purchased" },
+  { key: "owned", value: "owned" },
+] as const;
 
 type PresetsFilterVariant = "market" | "purchased";
-type PriceFilter = (typeof PRICE_FILTERS)[number]["value"];
+type MarketPriceFilter = (typeof MARKET_PRICE_FILTERS)[number]["value"];
 type MarketSortOption = (typeof MARKET_SORT_OPTIONS)[number]["value"];
 type PurchasedSortOption = (typeof PURCHASED_SORT_OPTIONS)[number]["value"];
 type CategoryFilter = (typeof categoryFilters)[number]["value"];
+type PurchasedOwnershipOption =
+  (typeof PURCHASED_OWNERSHIP_OPTIONS)[number]["value"];
 
 const resolveOption = (
   value: string,
@@ -48,19 +55,79 @@ const resolveOption = (
   fallback: string,
 ) => (options.some((option) => option.value === value) ? value : fallback);
 
+const parsePriceParam = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+
+  return Math.max(0, Math.floor(parsed));
+};
+
+const resolveMarketPriceFilter = (
+  priceMinInput: string,
+  priceMaxInput: string,
+): MarketPriceFilter | null => {
+  const priceMin = parsePriceParam(priceMinInput);
+  const priceMax = parsePriceParam(priceMaxInput);
+
+  if (priceMin === 0 && priceMax === 0) {
+    return "free";
+  }
+
+  if (priceMin === 1 && priceMax === 5) {
+    return "oneToFive";
+  }
+
+  if (priceMin === 5 && priceMax === 10) {
+    return "fiveToTen";
+  }
+
+  if (priceMin != null && priceMin > 10 && priceMax == null) {
+    return "overTen";
+  }
+
+  return null;
+};
+
+const resolveMarketPriceRange = (selectedPriceFilter: MarketPriceFilter | null) => {
+  if (selectedPriceFilter === "free") {
+    return { priceMin: "0", priceMax: "0" };
+  }
+
+  if (selectedPriceFilter === "oneToFive") {
+    return { priceMin: "1", priceMax: "5" };
+  }
+
+  if (selectedPriceFilter === "fiveToTen") {
+    return { priceMin: "5", priceMax: "10" };
+  }
+
+  if (selectedPriceFilter === "overTen") {
+    return { priceMin: "11", priceMax: null };
+  }
+
+  return {
+    priceMin: null,
+    priceMax: null,
+  };
+};
+
 const FILTER_CONFIGS = {
   market: {
     descriptionKey: "filters.marketDescription",
     searchPlaceholderKey: "filters.marketSearchPlaceholder",
     categoryLabelKey: "filters.categoryLabel",
-    priceLabelKey: "filters.priceLabel",
     sortLabelKey: "filters.sortLabel",
-    priceOptions: PRICE_FILTERS,
     sortOptions: MARKET_SORT_OPTIONS,
     sortOptionGroup: "marketSortOptions",
     defaults: {
       category: "all",
-      price: "all",
       sort: "popular",
     },
   },
@@ -68,14 +135,11 @@ const FILTER_CONFIGS = {
     descriptionKey: "filters.purchasedDescription",
     searchPlaceholderKey: "filters.purchasedSearchPlaceholder",
     categoryLabelKey: "filters.categoryLabel",
-    priceLabelKey: null,
     sortLabelKey: "filters.sortLabel",
-    priceOptions: null,
     sortOptions: PURCHASED_SORT_OPTIONS,
     sortOptionGroup: "purchasedSortOptions",
     defaults: {
       category: "all",
-      price: "",
       sort: "latest",
     },
   },
@@ -87,6 +151,8 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
   const router = useRouter();
   const pathname = usePathname();
   const config = FILTER_CONFIGS[variant];
+  const initialPriceMin = searchParams.get("priceMin") ?? "";
+  const initialPriceMax = searchParams.get("priceMax") ?? "";
 
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(
@@ -96,17 +162,10 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
       config.defaults.category,
     ) as CategoryFilter,
   );
-  const [selectedPrice, setSelectedPrice] = useState<PriceFilter>(() => {
-    if (!config.priceOptions) {
-      return "all";
-    }
-
-    return resolveOption(
-      searchParams.get("price") ?? config.defaults.price,
-      config.priceOptions,
-      config.defaults.price,
-    ) as PriceFilter;
-  });
+  const [selectedPriceFilter, setSelectedPriceFilter] =
+    useState<MarketPriceFilter | null>(() =>
+      resolveMarketPriceFilter(initialPriceMin, initialPriceMax),
+    );
   const [selectedSort, setSelectedSort] = useState<
     MarketSortOption | PurchasedSortOption
   >(
@@ -116,6 +175,17 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
       config.defaults.sort,
     ) as MarketSortOption | PurchasedSortOption,
   );
+  const [selectedOwnership, setSelectedOwnership] =
+    useState<PurchasedOwnershipOption>(
+      resolveOption(
+        searchParams.get("ownership") ?? "all",
+        PURCHASED_OWNERSHIP_OPTIONS,
+        "all",
+      ) as PurchasedOwnershipOption,
+    );
+
+  const handleMarketPriceSelect = (nextFilter: MarketPriceFilter) =>
+    setSelectedPriceFilter((prev) => (prev === nextFilter ? null : nextFilter));
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -129,11 +199,21 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
     if (selectedCategory !== config.defaults.category) {
       params.set("category", selectedCategory);
     }
-    if (selectedPrice !== config.defaults.price && config.priceOptions) {
-      params.set("price", selectedPrice);
+    if (variant === "market") {
+      const { priceMin, priceMax } = resolveMarketPriceRange(selectedPriceFilter);
+
+      if (priceMin != null) {
+        params.set("priceMin", priceMin);
+      }
+      if (priceMax != null) {
+        params.set("priceMax", priceMax);
+      }
     }
     if (selectedSort !== config.defaults.sort) {
       params.set("sort", selectedSort);
+    }
+    if (variant === "purchased" && selectedOwnership !== "all") {
+      params.set("ownership", selectedOwnership);
     }
 
     const queryString = params.toString();
@@ -163,6 +243,30 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
             />
           </div>
 
+          {variant === "purchased" ? (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">
+                {t("filters.ownershipLabel")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {PURCHASED_OWNERSHIP_OPTIONS.map((option) => (
+                  <Button
+                    key={option.value}
+                    type="button"
+                    variant={
+                      option.value === selectedOwnership ? "secondary" : "outline"
+                    }
+                    size="sm"
+                    aria-pressed={option.value === selectedOwnership}
+                    onClick={() => setSelectedOwnership(option.value)}
+                  >
+                    {t(`filters.purchasedOwnershipOptions.${option.key}`)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div className="space-y-2">
             <p className="text-xs font-medium text-muted-foreground">
               {t(config.categoryLabelKey)}
@@ -186,23 +290,25 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
             </div>
           </div>
 
-          {config.priceOptions ? (
+          {variant === "market" ? (
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">
-                {config.priceLabelKey ? t(config.priceLabelKey) : null}
+                {t("filters.priceLabel")}
               </p>
               <div className="flex flex-wrap gap-2">
-                {config.priceOptions.map((filter) => (
+                {MARKET_PRICE_FILTERS.map((filter) => (
                   <Button
                     key={filter.value}
                     type="button"
                     variant={
-                      filter.value === selectedPrice ? "secondary" : "outline"
+                      filter.value === selectedPriceFilter
+                        ? "secondary"
+                        : "outline"
                     }
                     size="sm"
                     className="rounded-full"
-                    aria-pressed={filter.value === selectedPrice}
-                    onClick={() => setSelectedPrice(filter.value)}
+                    aria-pressed={filter.value === selectedPriceFilter}
+                    onClick={() => handleMarketPriceSelect(filter.value)}
                   >
                     {t(`filters.priceOptions.${filter.key}`)}
                   </Button>

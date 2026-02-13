@@ -30,6 +30,7 @@ export async function generateMetadata({
 
 export default async function WorkflowsPage({
   params,
+  searchParams,
 }: PageProps<"/[locale]/workflows">) {
   const { locale } = await params;
   const t = await getTranslations<AppMessageKeys>({
@@ -50,7 +51,7 @@ export default async function WorkflowsPage({
           </Button>
         </div>
         <Suspense fallback={<WorkflowListViewFallback />}>
-          <WorkflowListView locale={locale} />
+          <WorkflowListView locale={locale} searchParams={searchParams} />
         </Suspense>
       </div>
     </PageContainer>

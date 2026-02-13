@@ -23,6 +23,9 @@ function buildHref(searchParams: SearchParams, nextSort: SortValue) {
   }
 
   params.set("sort", nextSort);
+  params.delete("page");
+  params.delete("cursor");
+  params.delete("dir");
   return `?${params.toString()}`;
 }
 

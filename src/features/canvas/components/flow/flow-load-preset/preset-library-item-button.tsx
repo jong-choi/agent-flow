@@ -6,7 +6,7 @@ import type { getPresetLibraryForCanvasAction } from "@/features/presets/server/
 
 type PresetLibraryItem = Awaited<
   ReturnType<typeof getPresetLibraryForCanvasAction>
->[number];
+>["items"][number];
 
 export function PresetLibraryItemButton({
   preset,

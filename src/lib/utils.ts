@@ -2,6 +2,10 @@ import { type ClassValue, clsx } from "clsx";
 import dayjs, { type ConfigType } from "dayjs";
 import { twMerge } from "tailwind-merge";
 
+export const SHORT_TEXT_MAX_LENGTH = 140;
+export const SHORT_TEXT_MAX_LENGTH_WITH_IME_BUFFER =
+  SHORT_TEXT_MAX_LENGTH + 5;
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

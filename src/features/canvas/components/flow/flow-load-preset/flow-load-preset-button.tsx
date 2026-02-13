@@ -33,8 +33,17 @@ export function FlowLoadPresetButton() {
   const [query, setQuery] = useState("");
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
 
-  const { presets, errorMessage, isLoading } =
-    usePresetLibraryForCanvasQuery(open);
+  const {
+    presets,
+    errorMessage,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = usePresetLibraryForCanvasQuery({
+    enabled: open,
+    query,
+  });
 
   const filteredPresets = useMemo(
     () =>
@@ -53,7 +62,11 @@ export function FlowLoadPresetButton() {
   const emptyMessage = useMemo(() => {
     if (isLoading) return null;
     if (errorMessage) return errorMessage;
-    if (presets.length === 0) return t("canvas.loadPreset.empty.noOwned");
+    if (presets.length === 0) {
+      return query.trim()
+        ? t("canvas.loadPreset.empty.noMatch")
+        : t("canvas.loadPreset.empty.noOwned");
+    }
     if (filteredPresets.length === 0) {
       if (workflowId && hasCycleBlockedPresets) {
         return t("canvas.loadPreset.empty.cycleBlocked");
@@ -68,6 +81,7 @@ export function FlowLoadPresetButton() {
     hasCycleBlockedPresets,
     isLoading,
     presets.length,
+    query,
     workflowId,
   ]);
 
@@ -130,26 +144,44 @@ export function FlowLoadPresetButton() {
         />
 
         <ScrollArea className="h-80 overflow-auto rounded-md border">
-          <div className="flex flex-col">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-10">
-                <Spinner className="size-4" />
+          <div className="flex min-h-full flex-col py-1">
+            <div className="flex flex-col">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Spinner className="size-4" />
+                </div>
+              ) : emptyMessage ? (
+                <div className="px-4 py-6 text-sm text-muted-foreground">
+                  {emptyMessage}
+                </div>
+              ) : (
+                filteredPresets.map((preset) => (
+                  <PresetLibraryItemButton
+                    key={preset.id}
+                    preset={preset}
+                    disabled={Boolean(activePresetId)}
+                    isPending={activePresetId === preset.id}
+                    onSelect={() => void handleSelectPreset(preset.id)}
+                  />
+                ))
+              )}
+            </div>
+            {!emptyMessage && hasNextPage ? (
+              <div className="mt-auto flex justify-center pt-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void fetchNextPage()}
+                  disabled={isFetchingNextPage || Boolean(activePresetId)}
+                >
+                  {isFetchingNextPage ? (
+                    <Spinner className="mr-2 size-4" />
+                  ) : null}
+                  {t("canvas.loadPreset.dialog.loadMore")}
+                </Button>
               </div>
-            ) : emptyMessage ? (
-              <div className="px-4 py-6 text-sm text-muted-foreground">
-                {emptyMessage}
-              </div>
-            ) : (
-              filteredPresets.map((preset) => (
-                <PresetLibraryItemButton
-                  key={preset.id}
-                  preset={preset}
-                  disabled={Boolean(activePresetId)}
-                  isPending={activePresetId === preset.id}
-                  onSelect={() => void handleSelectPreset(preset.id)}
-                />
-              ))
-            )}
+            ) : null}
           </div>
         </ScrollArea>
       </DialogContent>

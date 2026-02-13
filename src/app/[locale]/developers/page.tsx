@@ -20,7 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiGuideMarkdown } from "@/features/developers/components/api-guide-markdown";
 import { SecretKeysManager } from "@/features/developers/components/secret-keys-manager";
-import { getUserSecrets } from "@/features/developers/server/queries";
+import { getUserSecretsPage } from "@/features/developers/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
@@ -112,8 +112,8 @@ export default async function DevelopersPage({
 }
 
 async function SecretKeysManagerServer() {
-  const secrets = await getUserSecrets();
-  return <SecretKeysManager initialSecrets={secrets} />;
+  const initialPage = await getUserSecretsPage({ limit: 20 });
+  return <SecretKeysManager initialPage={initialPage} />;
 }
 
 function SecretKeysManagerFallback() {

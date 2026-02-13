@@ -9,6 +9,7 @@ import { getUserId } from "@/features/auth/server/queries";
 import { documentTags } from "@/features/documents/server/cache/tags";
 import {
   getDocumentTitleById,
+  getRecentDocumentsForPickerPage,
   getRecentDocumentsForPicker,
   searchDocumentsByTitle,
 } from "@/features/documents/server/queries";
@@ -254,6 +255,16 @@ export const getRecentDocumentsForPickerAction = async ({
   limit?: number;
 }) => {
   return getRecentDocumentsForPicker(limit);
+};
+
+export const getRecentDocumentsForPickerPageAction = async ({
+  cursor,
+  limit = 20,
+}: {
+  cursor?: string;
+  limit?: number;
+}) => {
+  return getRecentDocumentsForPickerPage({ cursor, limit });
 };
 
 export const getDocumentTitleByIdAction = async ({

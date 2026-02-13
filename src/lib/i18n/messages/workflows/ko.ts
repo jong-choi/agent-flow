@@ -72,7 +72,7 @@ const message = {
         namePlaceholder: "워크플로우 이름",
         descriptionLabel: "설명",
         descriptionPlaceholder: "워크플로우 설명",
-        descriptionLimit: "최대 140자까지 입력할 수 있어요.",
+        descriptionLimit: "최대 {max}자까지 입력할 수 있어요.",
         close: "닫기",
         submit: "저장",
         submitCreate: "저장",
@@ -91,6 +91,7 @@ const message = {
         title: "프리셋 불러오기",
         description: "구매했거나 만든 프리셋을 현재 캔버스에 추가할 수 있어요.",
         searchPlaceholder: "프리셋 검색 (제목)",
+        loadMore: "더 보기",
       },
       empty: {
         noOwned: "보유한 프리셋이 없습니다.",
@@ -135,6 +136,7 @@ const message = {
       picker: {
         searchPlaceholder: "문서 제목으로 검색",
         loading: "불러오는 중...",
+        loadMore: "더 보기",
         noDocuments: "문서가 없습니다.",
         noSearchResults: "검색 결과가 없습니다.",
         emptyContent: "내용이 없습니다.",
