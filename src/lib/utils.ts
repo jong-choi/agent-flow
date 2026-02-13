@@ -39,3 +39,7 @@ export function formatTimeToday(value: ConfigType, fallback = "-") {
   const isToday = day.isSame(dayjs(), "day");
   return isToday ? formatHMS(value, fallback) : formatYMDT(value, fallback);
 }
+
+export function sanitizeString(v: string) {
+  return v.replace(/[^\p{L}\p{N} :()\[\]{}_^_\-]+/gu, "").trim();
+}
