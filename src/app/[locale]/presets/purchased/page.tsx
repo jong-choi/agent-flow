@@ -1,11 +1,10 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { PresetsFilter } from "@/app/[locale]/presets/_components/presets-filter";
 import { PresetsList } from "@/app/[locale]/presets/_components/presets-list";
-import { PresetsPagination } from "@/app/[locale]/presets/_components/presets-pagination";
+import { PagerButton } from "@/components/pager-button";
 import {
   PageContainer,
   PageDescription,
@@ -23,15 +22,11 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
-import {
-  getOwnedPresets,
-  getPurchasedPresets,
-  getPurchasedPresetsSummary,
-} from "@/features/presets/server/queries";
+import { getPurchasedPresets } from "@/features/presets/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 12;
 
 export async function generateMetadata({
   params,
@@ -48,20 +43,8 @@ export async function generateMetadata({
   };
 }
 
-type PresetsLibrarySearchParams = {
-  q?: string | string[];
-  category?: string | string[];
-  sort?: string | string[];
-  page?: string | string[];
-};
-
 function resolveParam(value: string | string[] | undefined, fallback: string) {
   return (Array.isArray(value) ? value[0] : value) ?? fallback;
-}
-
-function resolvePage(value: string | string[] | undefined) {
-  const parsed = Number.parseInt(resolveParam(value, "1"), 10);
-  return Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
 }
 
 export default async function PurchasedPresetsPage({
@@ -100,10 +83,7 @@ export default async function PurchasedPresetsPage({
           </div>
         </div>
         <Suspense fallback={<PurchasedPresetsContentFallback />}>
-          <PurchasedPresetsContent
-            locale={locale}
-            searchParamsPromise={searchParams}
-          />
+          <PurchasedPresetsContent locale={locale} searchParams={searchParams} />
         </Suspense>
       </div>
     </PageContainer>
@@ -111,124 +91,87 @@ export default async function PurchasedPresetsPage({
 }
 
 async function PurchasedPresetsContent({
-  searchParamsPromise,
+  searchParams,
   locale,
 }: {
-  searchParamsPromise: Promise<PresetsLibrarySearchParams> | undefined;
+  searchParams?: PageProps<"/[locale]/presets/purchased">["searchParams"];
   locale: string;
 }) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const t = await getTranslations<AppMessageKeys>({
     locale,
     namespace: "Presets",
   });
-  const resolvedSearchParams = await searchParamsPromise;
   const selectedCategory = resolveParam(resolvedSearchParams?.category, "all");
   const selectedSort = resolveParam(resolvedSearchParams?.sort, "latest");
+  const rawOwnership = resolveParam(resolvedSearchParams?.ownership, "all");
+  const selectedOwnership =
+    rawOwnership === "purchased" || rawOwnership === "owned"
+      ? rawOwnership
+      : "all";
   const query = resolveParam(resolvedSearchParams?.q, "");
-  const currentPage = resolvePage(resolvedSearchParams?.page);
+  const rawCursor = Array.isArray(resolvedSearchParams?.cursor)
+    ? resolvedSearchParams?.cursor[0]
+    : resolvedSearchParams?.cursor;
+  const cursor = rawCursor?.trim() || undefined;
+  const rawDir = Array.isArray(resolvedSearchParams?.dir)
+    ? resolvedSearchParams?.dir[0]
+    : resolvedSearchParams?.dir;
+  const dir = rawDir === "prev" ? "prev" : "next";
 
-  const [ownedPresets, purchasedSummary, purchasedPageResult] =
-    await Promise.all([
-      getOwnedPresets(),
-      getPurchasedPresetsSummary(),
-      getPurchasedPresets({
-        query,
-        category: selectedCategory === "all" ? null : selectedCategory,
-        sort:
-          selectedSort === "name" ||
-          selectedSort === "purchase" ||
-          selectedSort === "latest"
-            ? selectedSort
-            : "latest",
-        page: currentPage,
-        pageSize: PAGE_SIZE,
-      }),
-    ]);
-
-  const totalPresetsCount = ownedPresets.length + purchasedSummary.totalCount;
-  const createdCount = ownedPresets.length;
-  const purchasedCount = purchasedSummary.totalCount;
+  const purchasedPageResult = await getPurchasedPresets(
+    {
+      query,
+      category: selectedCategory === "all" ? null : selectedCategory,
+      sort:
+        selectedSort === "name" ||
+        selectedSort === "purchase" ||
+        selectedSort === "latest"
+          ? selectedSort
+          : "latest",
+      ownership: selectedOwnership,
+    },
+    { cursor, dir, limit: PAGE_SIZE },
+  );
 
   const baseParams = {
     q: query,
     category: selectedCategory,
     sort: selectedSort,
+    ownership: selectedOwnership,
   };
   const paginationDefaults = {
     category: "all",
     sort: "latest",
+    ownership: "all",
   };
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(purchasedPageResult.totalCount / PAGE_SIZE),
-  );
-
-  if (currentPage > totalPages) {
-    redirect(
-      `/presets/purchased${buildQueryString(
-        baseParams,
-        { page: String(totalPages) },
-        paginationDefaults,
-      )}`,
-    );
-  }
-  const hasPurchasedPresets = purchasedSummary.totalCount > 0;
+  const prevHref =
+    purchasedPageResult.pageInfo.hasPrev && purchasedPageResult.pageInfo.prevCursor
+      ? `/presets/purchased${buildQueryString(
+          baseParams,
+          { cursor: purchasedPageResult.pageInfo.prevCursor, dir: "prev" },
+          paginationDefaults,
+        )}`
+      : "";
+  const nextHref =
+    purchasedPageResult.pageInfo.hasNext && purchasedPageResult.pageInfo.nextCursor
+      ? `/presets/purchased${buildQueryString(
+          baseParams,
+          { cursor: purchasedPageResult.pageInfo.nextCursor, dir: "next" },
+          paginationDefaults,
+        )}`
+      : "";
+  const hasPager =
+    purchasedPageResult.pageInfo.hasPrev || purchasedPageResult.pageInfo.hasNext;
+  const hasFilter =
+    query.trim() !== "" ||
+    selectedCategory !== "all" ||
+    selectedSort !== "latest" ||
+    selectedOwnership !== "all";
+  const hasPresets = purchasedPageResult.totalCount > 0;
 
   return (
     <>
-      <Card className="py-4">
-        <CardContent className="flex flex-wrap items-center justify-between gap-3">
-          <div className="space-y-1">
-            <p className="text-sm font-medium">{t("librarySummary.title")}</p>
-            <p className="text-sm text-muted-foreground">
-              {t("librarySummary.stats", {
-                total: totalPresetsCount,
-                created: createdCount,
-                purchased: purchasedCount,
-              })}
-            </p>
-          </div>
-          <Button variant="secondary" size="sm" asChild>
-            <Link href="/presets">{t("librarySummary.marketButton")}</Link>
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t("ownedSection.title")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {ownedPresets.length === 0 ? (
-            <Card className="border-dashed">
-              <CardHeader>
-                <CardTitle>{t("ownedSection.emptyTitle")}</CardTitle>
-                <CardDescription>
-                  {t("ownedSection.emptyDescription")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="secondary" asChild>
-                  <Link href="/presets/new">
-                    {t("ownedSection.createFromWorkflows")}
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <ScrollArea className="h-[450px]">
-              <div className="pb-14">
-                <PresetsList
-                  locale={locale}
-                  items={ownedPresets}
-                  variant="library"
-                />
-              </div>
-            </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           {t("purchasedSection.totalCount", {
@@ -236,7 +179,7 @@ async function PurchasedPresetsContent({
           })}
         </p>
       </div>
-      {!hasPurchasedPresets ? (
+      {!hasPresets && !hasFilter ? (
         <Card className="border-dashed">
           <CardHeader>
             <CardTitle>{t("purchasedSection.emptyTitle")}</CardTitle>
@@ -250,7 +193,7 @@ async function PurchasedPresetsContent({
             </Button>
           </CardContent>
         </Card>
-      ) : purchasedPageResult.totalCount === 0 ? (
+      ) : !hasPresets ? (
         <Card className="border-dashed">
           <CardHeader>
             <CardTitle>{t("purchasedSection.filteredEmptyTitle")}</CardTitle>
@@ -267,20 +210,33 @@ async function PurchasedPresetsContent({
           </CardContent>
         </Card>
       ) : (
-        <>
-          <PresetsList
-            locale={locale}
-            items={purchasedPageResult.presets}
-            variant="library"
-          />
-          <PresetsPagination
-            basePath="/presets/purchased"
-            currentPage={currentPage}
-            totalPages={totalPages}
-            params={baseParams}
-            defaults={paginationDefaults}
-          />
-        </>
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="pb-3">
+              <PresetsList
+                locale={locale}
+                items={purchasedPageResult.presets}
+                variant="library"
+              />
+            </div>
+          </ScrollArea>
+          {hasPager ? (
+            <div className="shrink-0 border-t border-border/60 pt-4">
+              <div className="flex items-center justify-center gap-2">
+                <PagerButton
+                  direction="prev"
+                  href={prevHref || undefined}
+                  disabled={!prevHref}
+                />
+                <PagerButton
+                  direction="next"
+                  href={nextHref || undefined}
+                  disabled={!nextHref}
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
       )}
     </>
   );
@@ -288,50 +244,23 @@ async function PurchasedPresetsContent({
 
 function PurchasedPresetsContentFallback() {
   return (
-    <div className="space-y-6">
-      <Card className="py-4">
-        <CardContent className="space-y-2">
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-4 w-56" />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="space-y-2">
-          <Skeleton className="h-5 w-32" />
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <Card key={index}>
-                <CardHeader className="space-y-2">
-                  <Skeleton className="h-5 w-3/5" />
-                  <Skeleton className="h-4 w-full" />
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Skeleton className="h-4 w-2/3" />
-                  <Skeleton className="h-9 w-20" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      <div className="space-y-3">
-        <Skeleton className="h-4 w-36" />
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Card key={index}>
-              <CardHeader className="space-y-2">
-                <Skeleton className="h-5 w-3/5" />
-                <Skeleton className="h-4 w-full" />
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-9 w-20" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-4 w-28" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Card key={index}>
+            <CardHeader className="space-y-2">
+              <Skeleton className="h-5 w-3/5" />
+              <Skeleton className="h-4 w-full" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-9 w-24" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );

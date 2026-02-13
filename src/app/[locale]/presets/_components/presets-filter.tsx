@@ -35,12 +35,19 @@ const PURCHASED_SORT_OPTIONS = [
   { key: "purchase", value: "purchase" },
   { key: "name", value: "name" },
 ] as const;
+const PURCHASED_OWNERSHIP_OPTIONS = [
+  { key: "all", value: "all" },
+  { key: "purchased", value: "purchased" },
+  { key: "owned", value: "owned" },
+] as const;
 
 type PresetsFilterVariant = "market" | "purchased";
 type MarketPriceFilter = (typeof MARKET_PRICE_FILTERS)[number]["value"];
 type MarketSortOption = (typeof MARKET_SORT_OPTIONS)[number]["value"];
 type PurchasedSortOption = (typeof PURCHASED_SORT_OPTIONS)[number]["value"];
 type CategoryFilter = (typeof categoryFilters)[number]["value"];
+type PurchasedOwnershipOption =
+  (typeof PURCHASED_OWNERSHIP_OPTIONS)[number]["value"];
 
 const resolveOption = (
   value: string,
@@ -168,6 +175,14 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
       config.defaults.sort,
     ) as MarketSortOption | PurchasedSortOption,
   );
+  const [selectedOwnership, setSelectedOwnership] =
+    useState<PurchasedOwnershipOption>(
+      resolveOption(
+        searchParams.get("ownership") ?? "all",
+        PURCHASED_OWNERSHIP_OPTIONS,
+        "all",
+      ) as PurchasedOwnershipOption,
+    );
 
   const handleMarketPriceSelect = (nextFilter: MarketPriceFilter) =>
     setSelectedPriceFilter((prev) => (prev === nextFilter ? null : nextFilter));
@@ -197,6 +212,9 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
     if (selectedSort !== config.defaults.sort) {
       params.set("sort", selectedSort);
     }
+    if (variant === "purchased" && selectedOwnership !== "all") {
+      params.set("ownership", selectedOwnership);
+    }
 
     const queryString = params.toString();
     router.push(queryString ? `${pathname}?${queryString}` : pathname);
@@ -224,6 +242,30 @@ export function PresetsFilter({ variant }: { variant: PresetsFilterVariant }) {
               placeholder={t(config.searchPlaceholderKey)}
             />
           </div>
+
+          {variant === "purchased" ? (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">
+                {t("filters.ownershipLabel")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {PURCHASED_OWNERSHIP_OPTIONS.map((option) => (
+                  <Button
+                    key={option.value}
+                    type="button"
+                    variant={
+                      option.value === selectedOwnership ? "secondary" : "outline"
+                    }
+                    size="sm"
+                    aria-pressed={option.value === selectedOwnership}
+                    onClick={() => setSelectedOwnership(option.value)}
+                  >
+                    {t(`filters.purchasedOwnershipOptions.${option.key}`)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="space-y-2">
             <p className="text-xs font-medium text-muted-foreground">

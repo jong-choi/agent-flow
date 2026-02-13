@@ -31,6 +31,7 @@ const message = {
     marketSearchPlaceholder: "Search by workflow, feature, or keyword",
     purchasedSearchPlaceholder: "Search by preset name or keyword",
     categoryLabel: "Category",
+    ownershipLabel: "Ownership",
     priceLabel: "Price",
     sortLabel: "Sort",
     apply: "Apply",
@@ -51,6 +52,11 @@ const message = {
       latest: "Latest",
       purchase: "Purchase Date",
       name: "Name",
+    },
+    purchasedOwnershipOptions: {
+      all: "All",
+      purchased: "Purchased",
+      owned: "Created by me",
     },
   },
   marketPage: {
@@ -246,25 +252,14 @@ const message = {
     createPreset: "Create My Preset",
     openCanvas: "Open Canvas",
   },
-  librarySummary: {
-    title: "My Preset Library",
-    stats: "Total {total} · Created {created} · Purchased {purchased}",
-    marketButton: "Preset Market",
-  },
-  ownedSection: {
-    title: "My Created Presets",
-    emptyTitle: "No presets created yet",
-    emptyDescription: "Create and save a new preset from the canvas.",
-    createFromWorkflows: "Create a preset",
-  },
   purchasedSection: {
-    totalCount: "Purchased presets {count}",
-    emptyTitle: "No purchased presets",
+    totalCount: "Presets {count}",
+    emptyTitle: "No presets",
     emptyDescription: "Browse new presets in the preset market.",
     viewMarket: "View Preset Market",
     filteredEmptyTitle: "No filter results",
     filteredEmptyDescription:
-      "No purchased presets match your selected filters. Try changing filters.",
+      "No presets match your selected filters. Try changing filters.",
     resetFilter: "Reset Filters",
   },
 };
