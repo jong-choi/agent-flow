@@ -119,7 +119,10 @@ const getUserSecretsPageCached = cache(async (
       "next",
     );
     if (cursorWhere) {
-      listWhere = and(whereClause, cursorWhere);
+      const mergedWhere = and(whereClause, cursorWhere);
+      if (mergedWhere) {
+        listWhere = mergedWhere;
+      }
     }
   }
 

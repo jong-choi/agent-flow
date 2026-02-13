@@ -134,7 +134,9 @@ export type OwnedWorkflowPage = {
     updatedAt: Date;
   }[];
   pageInfo: {
+    hasPrev: boolean;
     hasNext: boolean;
+    prevCursor: string | null;
     nextCursor: string | null;
   };
 };
@@ -144,15 +146,17 @@ export const getOwnedWorkflowsPage = async (
 ): Promise<OwnedWorkflowPage> => {
   const ownerId = await getUserId();
   const cursor = options?.cursor?.trim() ?? "";
+  const dir = options?.dir === "prev" ? "prev" : "next";
   const limitValue = typeof options?.limit === "number" ? options.limit : 20;
   const limit = Math.max(1, Math.min(100, Math.trunc(limitValue)));
 
-  return getOwnedWorkflowsPageCached(ownerId, cursor, limit);
+  return getOwnedWorkflowsPageCached(ownerId, cursor, dir, limit);
 };
 
 const getOwnedWorkflowsPageCached = cache(async (
   ownerId: string,
   cursor: string,
+  dir: "next" | "prev",
   limit: number,
 ): Promise<OwnedWorkflowPage> => {
   "use cache";
@@ -174,12 +178,13 @@ const getOwnedWorkflowsPageCached = cache(async (
     cursorAnchor = row ?? null;
   }
 
+  const appliedDir = cursorAnchor && dir === "prev" ? "prev" : "next";
   const orderBy = buildCursorOrderBy(
     [
       { value: workflows.updatedAt, direction: "desc" },
       { value: workflows.id, direction: "desc" },
     ],
-    "next",
+    appliedDir,
   );
 
   let listWhere = whereClause;
@@ -197,10 +202,13 @@ const getOwnedWorkflowsPageCached = cache(async (
           direction: "desc",
         },
       ],
-      "next",
+      appliedDir,
     );
     if (cursorWhere) {
-      listWhere = and(whereClause, cursorWhere);
+      const mergedWhere = and(whereClause, cursorWhere);
+      if (mergedWhere) {
+        listWhere = mergedWhere;
+      }
     }
   }
 
@@ -216,14 +224,20 @@ const getOwnedWorkflowsPageCached = cache(async (
     .orderBy(...orderBy)
     .limit(limit + 1);
 
-  const hasNext = rows.length > limit;
-  const items = rows.slice(0, limit);
+  const hasMore = rows.length > limit;
+  const slicedRows = rows.slice(0, limit);
+  const items = appliedDir === "prev" ? [...slicedRows].reverse() : slicedRows;
+  const hasPrev = appliedDir === "prev" ? hasMore : Boolean(cursorAnchor);
+  const hasNext = appliedDir === "prev" ? Boolean(cursorAnchor) : hasMore;
+  const prevCursor = hasPrev ? items[0]?.id ?? null : null;
   const nextCursor = hasNext ? items[items.length - 1]?.id ?? null : null;
 
   return {
     items,
     pageInfo: {
+      hasPrev,
       hasNext,
+      prevCursor,
       nextCursor,
     },
   };
