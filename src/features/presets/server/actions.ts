@@ -44,6 +44,7 @@ import {
 import { presetTags as presetCacheTags } from "@/features/presets/server/cache/tags";
 import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
 import { routing, type Locale } from "@/lib/i18n/routing";
+import { SHORT_TEXT_MAX_LENGTH_WITH_IME_BUFFER } from "@/lib/utils";
 
 const workflowReferencedPresetPricing = db
   .select({
@@ -97,6 +98,9 @@ type PaginationOptions = {
 
 const getUniqueNormalizedValues = (values: string[]) =>
   Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+
+const clampPresetSummary = (summary: string | null) =>
+  summary ? summary.slice(0, SHORT_TEXT_MAX_LENGTH_WITH_IME_BUFFER) : null;
 
 const getUniquePresetIds = (presetIds: string[]) =>
   getUniqueNormalizedValues(presetIds);
@@ -1271,6 +1275,8 @@ export const createPreset = async ({
     return null;
   }
 
+  const normalizedSummary = clampPresetSummary(summary);
+
   let selectedChatId = chatId ?? null;
   if (selectedChatId) {
     const [chat] = await db
@@ -1299,7 +1305,7 @@ export const createPreset = async ({
       chatId: selectedChatId,
       title,
       description,
-      summary,
+      summary: normalizedSummary,
       category,
       price,
       isPublished,
@@ -1376,6 +1382,8 @@ export const updatePreset = async ({
     return null;
   }
 
+  const normalizedSummary = clampPresetSummary(summary);
+
   const [affectedBuyerIds, affectedWorkflowIds] = await Promise.all([
     getBuyerIdsByPresetIds([presetId]),
     getReferencingWorkflowIdsByPresetIds([presetId]),
@@ -1407,7 +1415,7 @@ export const updatePreset = async ({
       chatId: selectedChatId,
       title,
       description,
-      summary,
+      summary: normalizedSummary,
       category,
       price,
       isPublished,

@@ -46,7 +46,8 @@ export async function generateMetadata({
 type PresetsPageSearchParams = {
   q?: string | string[];
   category?: string | string[];
-  price?: string | string[];
+  priceMin?: string | string[];
+  priceMax?: string | string[];
   sort?: string | string[];
   page?: string | string[];
 };
@@ -58,6 +59,47 @@ function resolveParam(value: string | string[] | undefined, fallback: string) {
 function resolvePage(value: string | string[] | undefined) {
   const parsed = Number.parseInt(resolveParam(value, "1"), 10);
   return Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
+}
+
+function resolvePriceParam(value: string | string[] | undefined) {
+  const raw = resolveParam(value, "").trim();
+  if (!raw) {
+    return null;
+  }
+
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+
+  return Math.max(0, Math.floor(parsed));
+}
+
+function resolvePriceRange({
+  priceMin,
+  priceMax,
+}: {
+  priceMin: string | string[] | undefined;
+  priceMax: string | string[] | undefined;
+}) {
+  const resolvedMin = resolvePriceParam(priceMin);
+  const resolvedMax = resolvePriceParam(priceMax);
+
+  if (
+    resolvedMin != null &&
+    resolvedMax != null &&
+    resolvedMin > resolvedMax
+  ) {
+    return {
+      priceMin: resolvedMax,
+      priceMax: resolvedMin,
+    };
+  }
+
+  return {
+    priceMin: resolvedMin,
+    priceMax: resolvedMax,
+  };
 }
 
 export default async function TemplateMarketPage({
@@ -129,29 +171,23 @@ async function TemplateMarketContent({
   });
   const resolvedSearchParams = await searchParamsPromise;
   const selectedCategory = resolveParam(resolvedSearchParams?.category, "all");
-  const selectedPrice = resolveParam(resolvedSearchParams?.price, "all");
   const selectedSort = resolveParam(resolvedSearchParams?.sort, "popular");
   const query = resolveParam(resolvedSearchParams?.q, "");
   const currentPage = resolvePage(resolvedSearchParams?.page);
-
-  const priceRange =
-    selectedPrice === "free"
-      ? { min: 0, max: 0 }
-      : selectedPrice === "1-2"
-        ? { min: 1, max: 2 }
-        : selectedPrice === "3-5"
-          ? { min: 3, max: 5 }
-          : null;
+  const { priceMin, priceMax } = resolvePriceRange({
+    priceMin: resolvedSearchParams?.priceMin,
+    priceMax: resolvedSearchParams?.priceMax,
+  });
 
   const baseParams = {
     q: query,
     category: selectedCategory,
-    price: selectedPrice,
+    priceMin: priceMin != null ? String(priceMin) : "",
+    priceMax: priceMax != null ? String(priceMax) : "",
     sort: selectedSort,
   };
   const paginationDefaults = {
     category: "all",
-    price: "all",
     sort: "popular",
   };
 
@@ -159,8 +195,8 @@ async function TemplateMarketContent({
     {
       query,
       category: selectedCategory === "all" ? null : selectedCategory,
-      priceMin: priceRange?.min,
-      priceMax: priceRange?.max,
+      priceMin: priceMin ?? undefined,
+      priceMax: priceMax ?? undefined,
       sort:
         selectedSort === "latest" ||
         selectedSort === "rating" ||

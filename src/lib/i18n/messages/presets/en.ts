@@ -36,10 +36,10 @@ const message = {
     apply: "Apply",
     reset: "Reset",
     priceOptions: {
-      all: "All",
       free: "Free",
-      oneToTwo: "1-2 credits",
-      threeToFive: "3-5 credits",
+      oneToFive: "1-5 credits",
+      fiveToTen: "5-10 credits",
+      overTen: "Over 10 credits",
     },
     marketSortOptions: {
       popular: "Most Popular",

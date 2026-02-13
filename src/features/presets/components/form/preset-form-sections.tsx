@@ -16,6 +16,7 @@ import { PresetChatExampleOptions } from "@/features/presets/components/preset-c
 import { PresetTagInput } from "@/features/presets/components/preset-tag-input";
 import { categoryOptions } from "@/features/presets/constants/category-options";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
+import { SHORT_TEXT_MAX_LENGTH } from "@/lib/utils";
 
 const selectClassName =
   "border-input h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50";
@@ -83,6 +84,7 @@ export async function PresetInfoCard({
             rows={3}
             placeholder={placeholders?.summary}
             defaultValue={defaultValues?.summary ?? ""}
+            maxLength={SHORT_TEXT_MAX_LENGTH}
           />
           {showSummaryHint && (
             <p className="text-xs text-muted-foreground">

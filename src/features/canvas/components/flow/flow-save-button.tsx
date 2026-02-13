@@ -24,6 +24,7 @@ import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flo
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { extractPresetIdsFromNodes } from "@/features/canvas/utils/preset-import";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
+import { SHORT_TEXT_MAX_LENGTH } from "@/lib/utils";
 
 export function FlowSaveButton() {
   const t = useTranslations<AppMessageKeys>("Workflows");
@@ -213,15 +214,19 @@ export function FlowSaveButton() {
               onChange={(event) => {
                 setIsDirty(true);
                 setDescription(
-                  event.target.value.replace(/[\r\n]+/g, "").slice(0, 140),
+                  event.target.value
+                    .replace(/[\r\n]+/g, "")
+                    .slice(0, SHORT_TEXT_MAX_LENGTH),
                 );
               }}
               placeholder={t("canvas.save.dialog.descriptionPlaceholder")}
               className="h-30 overflow-y-auto"
-              maxLength={140}
+              maxLength={SHORT_TEXT_MAX_LENGTH}
             />
             <p className="text-xs text-muted-foreground">
-              {t("canvas.save.dialog.descriptionLimit")}
+              {t("canvas.save.dialog.descriptionLimit", {
+                max: SHORT_TEXT_MAX_LENGTH,
+              })}
             </p>
           </div>
           <DialogFooter>

@@ -74,7 +74,7 @@ const message = {
         namePlaceholder: "Workflow name",
         descriptionLabel: "Description",
         descriptionPlaceholder: "Workflow description",
-        descriptionLimit: "You can enter up to 140 characters.",
+        descriptionLimit: "You can enter up to {max} characters.",
         close: "Close",
         submit: "Save",
         submitCreate: "Save",

@@ -36,10 +36,10 @@ const message = {
     apply: "적용",
     reset: "초기화",
     priceOptions: {
-      all: "전체",
       free: "무료",
-      oneToTwo: "1~2 크레딧",
-      threeToFive: "3~5 크레딧",
+      oneToFive: "1~5 크레딧",
+      fiveToTen: "5~10 크레딧",
+      overTen: "10 크레딧 초과",
     },
     marketSortOptions: {
       popular: "인기순",

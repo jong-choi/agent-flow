@@ -72,7 +72,7 @@ const message = {
         namePlaceholder: "워크플로우 이름",
         descriptionLabel: "설명",
         descriptionPlaceholder: "워크플로우 설명",
-        descriptionLimit: "최대 140자까지 입력할 수 있어요.",
+        descriptionLimit: "최대 {max}자까지 입력할 수 있어요.",
         close: "닫기",
         submit: "저장",
         submitCreate: "저장",
