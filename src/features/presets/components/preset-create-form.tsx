@@ -1,16 +1,15 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import {
   PresetChatExampleCard,
+  PresetChatExampleCardSkeleton,
   PresetInfoCard,
   PresetPricePublishCard,
 } from "@/features/presets/components/form/preset-form-sections";
 import { PresetCreateSubmitButton } from "@/features/presets/components/preset-create-submit-button";
-import {
-  getPresetChatExamplesForForm,
-  getWorkflowReferencedPresetPricingSummary,
-} from "@/features/presets/server/queries";
+import { getWorkflowReferencedPresetPricingSummary } from "@/features/presets/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type PresetCreateFormProps = {
@@ -35,11 +34,9 @@ export async function PresetCreateForm({
     namespace: "Presets",
   });
   const resolvedSubmitLabel = submitLabel ?? t("forms.createSubmit");
-  const [{ chats, pinnedChat, defaultSelectedId }, pricingSummary] =
-    await Promise.all([
-      getPresetChatExamplesForForm({ workflowId, chatId }),
-      getWorkflowReferencedPresetPricingSummary({ workflowId }),
-    ]);
+  const pricingSummary = await getWorkflowReferencedPresetPricingSummary({
+    workflowId,
+  });
 
   return (
     <form action={action} className="space-y-6">
@@ -58,12 +55,13 @@ export async function PresetCreateForm({
         }
       />
 
-      <PresetChatExampleCard
-        locale={locale}
-        chats={chats}
-        pinnedChat={pinnedChat}
-        defaultSelectedId={defaultSelectedId}
-      />
+      <Suspense fallback={<PresetChatExampleCardSkeleton />}>
+        <PresetChatExampleCard
+          locale={locale}
+          workflowId={workflowId}
+          defaultSelectedId={chatId}
+        />
+      </Suspense>
 
       <PresetPricePublishCard
         description={t("forms.pricePublishDescriptionCreate")}

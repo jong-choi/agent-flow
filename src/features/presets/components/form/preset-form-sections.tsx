@@ -8,12 +8,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { getChatsByWorkflowId } from "@/features/chats/server/queries";
 import { PresetDescriptionEditor } from "@/features/presets/components/form/preset-description-editor";
-import {
-  type ChatExample,
-  PresetChatExampleOptions,
-} from "@/features/presets/components/preset-chat-example-options";
+import { PresetChatExampleOptions } from "@/features/presets/components/preset-chat-example-options";
 import { PresetTagInput } from "@/features/presets/components/preset-tag-input";
 import { categoryOptions } from "@/features/presets/constants/category-options";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
@@ -128,21 +127,20 @@ export async function PresetInfoCard({
 
 type PresetChatExampleCardProps = {
   locale: string;
-  chats: ChatExample[];
-  pinnedChat?: ChatExample | null;
+  workflowId: string;
   defaultSelectedId?: string | null;
 };
 
 export async function PresetChatExampleCard({
   locale,
-  chats,
-  pinnedChat = null,
+  workflowId,
   defaultSelectedId = null,
 }: PresetChatExampleCardProps) {
   const t = await getTranslations<AppMessageKeys>({
     locale,
     namespace: "Presets",
   });
+  const chats = await getChatsByWorkflowId({ workflowId });
 
   return (
     <Card>
@@ -153,9 +151,23 @@ export async function PresetChatExampleCard({
       <CardContent>
         <PresetChatExampleOptions
           chats={chats}
-          pinnedChat={pinnedChat}
           defaultSelectedId={defaultSelectedId}
         />
+      </CardContent>
+    </Card>
+  );
+}
+
+export function PresetChatExampleCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-4 w-80" />
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
       </CardContent>
     </Card>
   );
