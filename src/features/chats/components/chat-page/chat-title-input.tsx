@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { updateChatTitle } from "@/features/chats/server/actions";
+import { useUpdateChatTitleMutation } from "@/features/chats/lib/query/mutations";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +31,8 @@ export function ChatTitleInput({
   const skipCommitRef = useRef(false);
   const resolvedPlaceholder = placeholder ?? t("title.placeholder");
 
+  const updateChatTitleMutation = useUpdateChatTitleMutation();
+
   const commitRename = async () => {
     onClose();
     onBlur?.(value);
@@ -44,7 +46,7 @@ export function ChatTitleInput({
     }
 
     try {
-      await updateChatTitle({ chatId, title: nextTitle });
+      await updateChatTitleMutation.mutateAsync({ chatId, title: nextTitle });
       toast.success(t("toast.renameSuccess"));
     } catch {
       onBlur?.(null);

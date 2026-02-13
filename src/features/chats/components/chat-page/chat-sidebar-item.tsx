@@ -11,9 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { type ChatListItem } from "@/features/chats/components/chat-page/chat-queries";
 import { ChatSidebarDeleteDialog } from "@/features/chats/components/chat-page/chat-sidebar-delete-dialog";
 import { ChatTitleInput } from "@/features/chats/components/chat-page/chat-title-input";
+import { type ChatListItem } from "@/features/chats/types/chat-page-list";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn, formatYMD } from "@/lib/utils";
 
@@ -23,11 +23,12 @@ type ChatSidebarItemProps = {
 };
 
 export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
+  const t = useTranslations<AppMessageKeys>("Chat");
   const [isEditing, setIsEditing] = useState(false);
   const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
-  const t = useTranslations<AppMessageKeys>("Chat");
   const displayTitle = chat.title?.trim() || t("title.newChat");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   return (
     <div
       className={cn(

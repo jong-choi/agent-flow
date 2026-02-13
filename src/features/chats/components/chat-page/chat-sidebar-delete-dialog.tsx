@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -14,7 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { softDeleteChat } from "@/features/chats/server/actions";
+import { useDeleteChatMutation } from "@/features/chats/lib/query/mutations";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type ChatSidebarDeleteDialogProps = {
@@ -30,26 +29,21 @@ export function ChatSidebarDeleteDialog({
   open,
   setIsOpen,
 }: ChatSidebarDeleteDialogProps) {
-  const router = useRouter();
-  const [isDeleting, setIsDeleting] = useState(false);
   const t = useTranslations<AppMessageKeys>("Chat");
+  const router = useRouter();
+  const deleteChatMutation = useDeleteChatMutation();
 
   const handleDelete = async () => {
-    if (isDeleting) return;
-
-    setIsDeleting(true);
+    if (deleteChatMutation.isPending) return;
 
     try {
-      await softDeleteChat({ chatId }).then(() => {
-        if (isActive) {
-          router.push("/chat");
-        }
-      });
+      await deleteChatMutation.mutateAsync({ chatId });
+      if (isActive) {
+        router.push("/chat");
+      }
       toast.success(t("toast.deleteSuccess"));
     } catch {
       toast.error(t("toast.deleteFailed"));
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -63,14 +57,14 @@ export function ChatSidebarDeleteDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>
+          <AlertDialogCancel disabled={deleteChatMutation.isPending}>
             {t("action.cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
               void handleDelete();
             }}
-            disabled={isDeleting}
+            disabled={deleteChatMutation.isPending}
             className="bg-destructive text-white hover:bg-destructive/90"
           >
             {t("action.delete")}
