@@ -107,72 +107,89 @@ const getUniqueUserIds = (userIds: string[]) =>
 const getUniqueWorkflowIds = (workflowIds: string[]) =>
   getUniqueNormalizedValues(workflowIds);
 
-const updatePresetMarketTag = () => {
-  updateTag(presetCacheTags.market());
+type PresetTagTargets = {
+  market?: boolean;
+  presetIds?: string[];
+  ownedUserIds?: string[];
+  purchasedUserIds?: string[];
+  canvasLibraryUserIds?: string[];
+  workflowIds?: string[];
 };
 
-const revalidatePresetMarketTag = () => {
-  revalidateTag(presetCacheTags.market(), "max");
+const updatePresetTags = ({
+  market,
+  presetIds,
+  ownedUserIds,
+  purchasedUserIds,
+  canvasLibraryUserIds,
+  workflowIds,
+}: PresetTagTargets) => {
+  if (market) {
+    updateTag(presetCacheTags.market());
+  }
+  if (presetIds?.length) {
+    getUniquePresetIds(presetIds).forEach((presetId) => {
+      updateTag(presetCacheTags.detailByPreset(presetId));
+    });
+  }
+  if (ownedUserIds?.length) {
+    getUniqueUserIds(ownedUserIds).forEach((userId) => {
+      updateTag(presetCacheTags.ownedByUser(userId));
+    });
+  }
+  if (purchasedUserIds?.length) {
+    getUniqueUserIds(purchasedUserIds).forEach((userId) => {
+      updateTag(presetCacheTags.purchasedByUser(userId));
+    });
+  }
+  if (canvasLibraryUserIds?.length) {
+    getUniqueUserIds(canvasLibraryUserIds).forEach((userId) => {
+      updateTag(presetCacheTags.canvasLibraryByUser(userId));
+    });
+  }
+  if (workflowIds?.length) {
+    getUniqueWorkflowIds(workflowIds).forEach((workflowId) => {
+      updateTag(presetCacheTags.pricingByWorkflow(workflowId));
+    });
+  }
 };
 
-const updatePresetDetailTags = (presetIds: string[]) => {
-  getUniquePresetIds(presetIds).forEach((presetId) => {
-    updateTag(presetCacheTags.detailByPreset(presetId));
-  });
-};
-
-const revalidatePresetDetailTags = (presetIds: string[]) => {
-  getUniquePresetIds(presetIds).forEach((presetId) => {
-    revalidateTag(presetCacheTags.detailByPreset(presetId), "max");
-  });
-};
-
-const updateOwnedPresetTags = (userIds: string[]) => {
-  getUniqueUserIds(userIds).forEach((userId) => {
-    updateTag(presetCacheTags.ownedByUser(userId));
-  });
-};
-
-const revalidateOwnedPresetTags = (userIds: string[]) => {
-  getUniqueUserIds(userIds).forEach((userId) => {
-    revalidateTag(presetCacheTags.ownedByUser(userId), "max");
-  });
-};
-
-const updatePurchasedPresetTags = (userIds: string[]) => {
-  getUniqueUserIds(userIds).forEach((userId) => {
-    updateTag(presetCacheTags.purchasedByUser(userId));
-  });
-};
-
-const revalidatePurchasedPresetTags = (userIds: string[]) => {
-  getUniqueUserIds(userIds).forEach((userId) => {
-    revalidateTag(presetCacheTags.purchasedByUser(userId), "max");
-  });
-};
-
-const updateCanvasLibraryPresetTags = (userIds: string[]) => {
-  getUniqueUserIds(userIds).forEach((userId) => {
-    updateTag(presetCacheTags.canvasLibraryByUser(userId));
-  });
-};
-
-const revalidateCanvasLibraryPresetTags = (userIds: string[]) => {
-  getUniqueUserIds(userIds).forEach((userId) => {
-    revalidateTag(presetCacheTags.canvasLibraryByUser(userId), "max");
-  });
-};
-
-const updateWorkflowPricingTags = (workflowIds: string[]) => {
-  getUniqueWorkflowIds(workflowIds).forEach((workflowId) => {
-    updateTag(presetCacheTags.pricingByWorkflow(workflowId));
-  });
-};
-
-const revalidateWorkflowPricingTags = (workflowIds: string[]) => {
-  getUniqueWorkflowIds(workflowIds).forEach((workflowId) => {
-    revalidateTag(presetCacheTags.pricingByWorkflow(workflowId), "max");
-  });
+const revalidatePresetTags = ({
+  market,
+  presetIds,
+  ownedUserIds,
+  purchasedUserIds,
+  canvasLibraryUserIds,
+  workflowIds,
+}: PresetTagTargets) => {
+  if (market) {
+    revalidateTag(presetCacheTags.market(), "max");
+  }
+  if (presetIds?.length) {
+    getUniquePresetIds(presetIds).forEach((presetId) => {
+      revalidateTag(presetCacheTags.detailByPreset(presetId), "max");
+    });
+  }
+  if (ownedUserIds?.length) {
+    getUniqueUserIds(ownedUserIds).forEach((userId) => {
+      revalidateTag(presetCacheTags.ownedByUser(userId), "max");
+    });
+  }
+  if (purchasedUserIds?.length) {
+    getUniqueUserIds(purchasedUserIds).forEach((userId) => {
+      revalidateTag(presetCacheTags.purchasedByUser(userId), "max");
+    });
+  }
+  if (canvasLibraryUserIds?.length) {
+    getUniqueUserIds(canvasLibraryUserIds).forEach((userId) => {
+      revalidateTag(presetCacheTags.canvasLibraryByUser(userId), "max");
+    });
+  }
+  if (workflowIds?.length) {
+    getUniqueWorkflowIds(workflowIds).forEach((workflowId) => {
+      revalidateTag(presetCacheTags.pricingByWorkflow(workflowId), "max");
+    });
+  }
 };
 
 const getBuyerIdsByPresetIds = async (presetIds: string[]) => {
@@ -817,14 +834,14 @@ export const purchasePresetAction = async (
 
     if (result.status === "success" || result.status === "already_purchased") {
       const affectedPresetIds = [presetId, ...referencedPresetIdsSnapshot];
-      updatePresetMarketTag();
-      revalidatePresetMarketTag();
-      updatePurchasedPresetTags([buyerId]);
-      revalidatePurchasedPresetTags([buyerId]);
-      updateCanvasLibraryPresetTags([buyerId]);
-      revalidateCanvasLibraryPresetTags([buyerId]);
-      updatePresetDetailTags(affectedPresetIds);
-      revalidatePresetDetailTags(affectedPresetIds);
+      const tagTargets: PresetTagTargets = {
+        market: true,
+        purchasedUserIds: [buyerId],
+        canvasLibraryUserIds: [buyerId],
+        presetIds: affectedPresetIds,
+      };
+      updatePresetTags(tagTargets);
+      revalidatePresetTags(tagTargets);
     }
 
     if (result.status === "success" && result.totalPrice > 0) {
@@ -1312,20 +1329,14 @@ export const createPreset = async ({
     }
   }
 
-  updateOwnedPresetTags([ownerId]);
-  revalidateOwnedPresetTags([ownerId]);
-  updateCanvasLibraryPresetTags([ownerId]);
-  revalidateCanvasLibraryPresetTags([ownerId]);
-
-  if (isPublished) {
-    updatePresetMarketTag();
-    revalidatePresetMarketTag();
-  }
-
-  if (preset) {
-    updatePresetDetailTags([preset.id]);
-    revalidatePresetDetailTags([preset.id]);
-  }
+  const tagTargets: PresetTagTargets = {
+    ownedUserIds: [ownerId],
+    canvasLibraryUserIds: [ownerId],
+    market: isPublished,
+    presetIds: preset ? [preset.id] : [],
+  };
+  updatePresetTags(tagTargets);
+  revalidatePresetTags(tagTargets);
 
   return preset ?? null;
 };
@@ -1409,18 +1420,16 @@ export const updatePreset = async ({
     return null;
   }
 
-  updateOwnedPresetTags([ownerId]);
-  revalidateOwnedPresetTags([ownerId]);
-  updatePurchasedPresetTags(affectedBuyerIds);
-  revalidatePurchasedPresetTags(affectedBuyerIds);
-  updateCanvasLibraryPresetTags([ownerId, ...affectedBuyerIds]);
-  revalidateCanvasLibraryPresetTags([ownerId, ...affectedBuyerIds]);
-  updatePresetMarketTag();
-  revalidatePresetMarketTag();
-  updatePresetDetailTags([presetId]);
-  revalidatePresetDetailTags([presetId]);
-  updateWorkflowPricingTags(affectedWorkflowIds);
-  revalidateWorkflowPricingTags(affectedWorkflowIds);
+  const tagTargets: PresetTagTargets = {
+    ownedUserIds: [ownerId],
+    purchasedUserIds: affectedBuyerIds,
+    canvasLibraryUserIds: [ownerId, ...affectedBuyerIds],
+    market: true,
+    presetIds: [presetId],
+    workflowIds: affectedWorkflowIds,
+  };
+  updatePresetTags(tagTargets);
+  revalidatePresetTags(tagTargets);
 
   return preset ?? null;
 };
@@ -1446,18 +1455,16 @@ export const deletePreset = async ({ presetId }: { presetId: string }) => {
     return null;
   }
 
-  updateOwnedPresetTags([ownerId]);
-  revalidateOwnedPresetTags([ownerId]);
-  updatePurchasedPresetTags(affectedBuyerIds);
-  revalidatePurchasedPresetTags(affectedBuyerIds);
-  updateCanvasLibraryPresetTags([ownerId, ...affectedBuyerIds]);
-  revalidateCanvasLibraryPresetTags([ownerId, ...affectedBuyerIds]);
-  updatePresetMarketTag();
-  revalidatePresetMarketTag();
-  updatePresetDetailTags([presetId]);
-  revalidatePresetDetailTags([presetId]);
-  updateWorkflowPricingTags(affectedWorkflowIds);
-  revalidateWorkflowPricingTags(affectedWorkflowIds);
+  const tagTargets: PresetTagTargets = {
+    ownedUserIds: [ownerId],
+    purchasedUserIds: affectedBuyerIds,
+    canvasLibraryUserIds: [ownerId, ...affectedBuyerIds],
+    market: true,
+    presetIds: [presetId],
+    workflowIds: affectedWorkflowIds,
+  };
+  updatePresetTags(tagTargets);
+  revalidatePresetTags(tagTargets);
 
   return preset ?? null;
 };

@@ -65,7 +65,7 @@ export async function PresetDetailRightPanel({
                 ? t("common.free")
                 : t("common.priceCredits", { count: preset.totalPrice })}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {t("rightPanel.purchaseMeta", {
                 count: preset.purchaseCount,
                 date: formatDate(preset.updatedAt),

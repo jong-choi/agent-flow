@@ -15,8 +15,8 @@ export function PresetChatExamplePreview({
   const t = useTranslations<AppMessageKeys>("Presets");
 
   return (
-    <div className="h-[320px] rounded-lg border bg-muted/20">
-      <ScrollArea className="h-full p-4">
+    <div className="h-[600px] rounded-lg border bg-muted/20">
+      <ScrollArea className="h-full p-8">
         <div className="space-y-3">
           {messages.map((message) => (
             <div
@@ -34,14 +34,14 @@ export function PresetChatExamplePreview({
                   message.role === "assistant" && "bg-background",
                 )}
               >
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase">
+                <p className="text-sm font-semibold text-muted-foreground uppercase">
                   {message.role === "user"
                     ? t("chatExamplePreview.userRole")
                     : message.role === "assistant"
                       ? t("chatExamplePreview.assistantRole")
                       : message.role}
                 </p>
-                <ContentMarkdown className="text-sm leading-relaxed">
+                <ContentMarkdown className="px-4 py-2 !text-sm !leading-relaxed">
                   {message.content}
                 </ContentMarkdown>
               </div>

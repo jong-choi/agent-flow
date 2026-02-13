@@ -1,6 +1,6 @@
 # OpenAI 호환 API 가이드
 
-우리 워크플로우를 OpenAI 인터페이스로 호출할 수 있도록 아래 엔드포인트를 제공합니다.
+워크플로우를 OpenAI 인터페이스로 호출할 수 있도록 아래 엔드포인트를 제공합니다.
 
 - `POST /api/v1/openai/chat/completions`
 - `POST /api/v1/openai/responses`

@@ -42,6 +42,14 @@ const message = {
       loadPreset: "프리셋 불러오기",
       save: "저장",
     },
+    validation: {
+      startNodeCountInvalid: "시작 노드는 정확히 1개여야 합니다.",
+      endNodeCountInvalid: "종료 노드는 정확히 1개여야 합니다.",
+      disconnectedNodeExists: "연결되지 않은 노드가 있습니다.",
+      nodeTypeMissing: "노드 타입이 지정되지 않았습니다.",
+      chatNodeValueMissing: "채팅 노드의 모델 선택이 필요합니다.",
+      documentNodeReferenceMissing: "문서 노드의 문서 연결이 필요합니다.",
+    },
     start: {
       errors: {
         createFailed: "채팅을 생성하지 못했습니다.",
@@ -55,7 +63,11 @@ const message = {
       },
       dialog: {
         title: "워크플로우 저장",
+        titleCreate: "워크플로우 저장",
+        titleEdit: "워크플로우 수정 저장",
         description: "이름과 설명을 입력한 뒤 저장하세요.",
+        descriptionCreate: "이름과 설명을 입력한 뒤 저장하세요.",
+        descriptionEdit: "현재 워크플로우 정보를 확인하고 수정 저장하세요.",
         nameLabel: "이름",
         namePlaceholder: "워크플로우 이름",
         descriptionLabel: "설명",
@@ -63,6 +75,8 @@ const message = {
         descriptionLimit: "최대 140자까지 입력할 수 있어요.",
         close: "닫기",
         submit: "저장",
+        submitCreate: "저장",
+        submitEdit: "수정",
       },
       toast: {
         success: "저장되었습니다.",
@@ -137,13 +151,13 @@ const message = {
         promptEdit: "프롬프트 수정",
         promptDialogTitle: "프롬프트 입력",
         selectValue: "선택 값",
-        dialogValue: "대화 값",
+        dialogValue: "프롬프트",
         name: "이름",
         description: "설명",
         documentReference: "문서 연결",
         handles: "핸들",
-        targetInputs: "타깃 입력",
-        sourceOutputs: "소스 출력",
+        targetInputs: "최대 입력 갯수",
+        sourceOutputs: "최대 출력 갯수",
         credits: "크레딧",
       },
       placeholders: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -32,13 +32,39 @@ export function FlowSaveButton() {
   const workflow = useCanvasStore((s) => s.workflow);
 
   const isValidGraph = useCanvasStore((s) => s.isValidGraph);
+  const isEditMode = Boolean(workflow.id);
 
-  const [title, setTitle] = useState(workflow.title);
-  const [description, setDescription] = useState(workflow.description || "");
-
+  const [title, setTitle] = useState(workflow.title ?? "");
+  const [description, setDescription] = useState(workflow.description ?? "");
   const setWorkflow = useCanvasStore((s) => s.setWorkflow);
   const [open, setOpen] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const hydrateFormFromWorkflow = useCallback(() => {
+    setTitle(workflow.title ?? "");
+    setDescription(workflow.description ?? "");
+  }, [workflow.description, workflow.title]);
+
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) {
+        hydrateFormFromWorkflow();
+      }
+
+      setIsDirty(false);
+      setOpen(nextOpen);
+    },
+    [hydrateFormFromWorkflow],
+  );
+
+  useEffect(() => {
+    if (!open || isDirty) {
+      return;
+    }
+
+    hydrateFormFromWorkflow();
+  }, [hydrateFormFromWorkflow, isDirty, open]);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -84,6 +110,7 @@ export function FlowSaveButton() {
         });
 
         if (!response.ok) {
+          router.refresh();
           const payload = await response.json().catch(() => null);
           const message =
             typeof payload?.error === "string"
@@ -136,7 +163,7 @@ export function FlowSaveButton() {
   );
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline" disabled={!isValidGraph}>
           {t("canvas.actions.save")}
@@ -144,12 +171,18 @@ export function FlowSaveButton() {
       </DialogTrigger>
       <DialogContent
         className="sm:max-w-lg"
-        ariaDescribedby="workflow save dialog"
+        ariaDescribedby="workflow-save-dialog-description"
       >
         <DialogHeader>
-          <DialogTitle>{t("canvas.save.dialog.title")}</DialogTitle>
-          <DialogDescription>
-            {t("canvas.save.dialog.description")}
+          <DialogTitle>
+            {isEditMode
+              ? t("canvas.save.dialog.titleEdit")
+              : t("canvas.save.dialog.titleCreate")}
+          </DialogTitle>
+          <DialogDescription id="workflow-save-dialog-description">
+            {isEditMode
+              ? t("canvas.save.dialog.descriptionEdit")
+              : t("canvas.save.dialog.descriptionCreate")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -161,7 +194,10 @@ export function FlowSaveButton() {
               id="workflow-dialog-title"
               name="title"
               value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) => {
+                setIsDirty(true);
+                setTitle(event.target.value);
+              }}
               placeholder={t("canvas.save.dialog.namePlaceholder")}
               autoComplete="off"
             />
@@ -174,11 +210,12 @@ export function FlowSaveButton() {
               id="workflow-dialog-description"
               name="description"
               value={description}
-              onChange={(event) =>
+              onChange={(event) => {
+                setIsDirty(true);
                 setDescription(
                   event.target.value.replace(/[\r\n]+/g, "").slice(0, 140),
-                )
-              }
+                );
+              }}
               placeholder={t("canvas.save.dialog.descriptionPlaceholder")}
               className="h-30 overflow-y-auto"
               maxLength={140}
@@ -203,7 +240,13 @@ export function FlowSaveButton() {
               disabled={isSaving || !title.trim() || !isValidGraph}
               className="w-16"
             >
-              {isSaving ? <Spinner className="size-4" /> : t("canvas.save.dialog.submit")}
+              {isSaving ? (
+                <Spinner className="size-4" />
+              ) : isEditMode ? (
+                t("canvas.save.dialog.submitEdit")
+              ) : (
+                t("canvas.save.dialog.submitCreate")
+              )}
             </Button>
           </DialogFooter>
         </form>

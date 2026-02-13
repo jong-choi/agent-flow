@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { type WorkflowEdge, type WorkflowNode } from "@/db/schema/workflows";
-import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
+import { CanvasPreview } from "@/features/canvas/components/cavas-preview/canvas-preview";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export async function WorkflowDataView({

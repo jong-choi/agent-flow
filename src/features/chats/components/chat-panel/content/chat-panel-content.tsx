@@ -10,7 +10,7 @@ import { ChatPanelInputForm } from "@/features/chats/components/chat-panel/conte
 import { useChatStore } from "@/features/chats/store/chat-store";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-const SCROLL_OFFSET = 100;
+const SCROLL_OFFSET = 120;
 export const BOTTOM_PADDING = 30;
 
 const NEAR_BOTTOM = 80; // 바닥 근처 판정 px

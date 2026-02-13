@@ -162,8 +162,8 @@ function GuideCollapsible({
     >
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/40 [&[data-state=open]>svg]:rotate-180">
         <div className="space-y-0.5">
-          <p className="text-sm font-semibold text-foreground">{title}</p>
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="text-base font-semibold text-foreground">{title}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
         <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform" />
       </CollapsibleTrigger>

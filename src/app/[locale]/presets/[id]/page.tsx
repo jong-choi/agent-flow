@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserId } from "@/features/auth/server/queries";
-import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
+import { CanvasPreview } from "@/features/canvas/components/cavas-preview/canvas-preview";
 import { PresetDetailRightPanel } from "@/features/presets/components/preset-detail-right-panel";
 import { resolvePresetCategoryKey } from "@/features/presets/constants/category-options";
 import { getPresetDetail } from "@/features/presets/server/queries";
@@ -137,11 +137,11 @@ async function PresetDetailContent({
                   })}
                 </p>
                 <h1 className="text-2xl font-semibold">{preset.title}</h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   {preset.summary ?? t("common.noDescription")}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                 <span>
                   {t("detailPage.purchaseCount", {
                     count: preset.purchaseCount ?? 0,
@@ -189,25 +189,25 @@ async function PresetDetailContent({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="min-h-32 rounded-lg border bg-accent/50 p-4 text-sm leading-relaxed">
-                  <ContentMarkdown>
+                <div className="min-h-[600px] rounded-lg border p-4">
+                  <ContentMarkdown className="px-4 py-2 !text-sm !leading-relaxed">
                     {preset.description ?? t("common.noDescription")}
                   </ContentMarkdown>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-lg border bg-background/70 p-3">
-                    <p className="text-sm font-medium">
+                    <p className="text-base font-medium">
                       {t("detailPage.infoCategoryLabel")}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {resolveCategoryLabel(t, preset.category)}
                     </p>
                   </div>
                   <div className="rounded-lg border bg-background/70 p-3">
-                    <p className="text-sm font-medium">
+                    <p className="text-base font-medium">
                       {t("detailPage.infoUpdatedAtLabel")}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {formatDate(preset.updatedAt)}
                     </p>
                   </div>

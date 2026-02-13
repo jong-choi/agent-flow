@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CanvasPreview } from "@/features/canvas/components/flow/cavas-preview/canvas-preview";
+import { CanvasPreview } from "@/features/canvas/components/cavas-preview/canvas-preview";
 import { getWorkflowWithGraphForChat } from "@/features/chats/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 

@@ -210,8 +210,8 @@ async function PurchasedPresetsContent({
               </CardHeader>
               <CardContent>
                 <Button variant="secondary" asChild>
-                  <Link href="/workflows/canvas">
-                    {t("ownedSection.createFromCanvas")}
+                  <Link href="/presets/new">
+                    {t("ownedSection.createFromWorkflows")}
                   </Link>
                 </Button>
               </CardContent>

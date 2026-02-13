@@ -21,6 +21,7 @@ const message = {
     data: "데이터",
     operations: "운영",
     development: "개발",
+    entertainment: "엔터테인먼트",
   },
   filters: {
     title: "필터",
@@ -112,7 +113,7 @@ const message = {
   },
   chatExampleSection: {
     title: "채팅 예시",
-    description: "마켓에 노출된 채팅 예시입니다.",
+    description: "실제로 실행한 채팅 예시입니다.",
     noLinkedChat: "연결된 채팅이 없습니다.",
   },
   chatExampleCard: {
@@ -160,6 +161,16 @@ const message = {
     deleteTitle: "프리셋 삭제",
     deleteDescription: "삭제하면 복구할 수 없습니다. 신중하게 진행하세요.",
     deleteButton: "프리셋 삭제",
+  },
+  tagInput: {
+    label: "태그",
+    placeholder: "태그 검색 또는 입력",
+    defaultDescription: "검색해서 추가하거나 Enter로 직접 입력하세요.",
+    selectedCount: "{count}개 선택됨",
+    loading: "검색 중...",
+    addOption: "추가: {tag}",
+    noResults: "검색 결과가 없습니다.",
+    removeTagSrOnly: "태그 삭제",
   },
   pricePublishCard: {
     title: "가격 및 공개 설정",
@@ -240,7 +251,7 @@ const message = {
     title: "내가 만든 프리셋",
     emptyTitle: "아직 만든 프리셋이 없습니다",
     emptyDescription: "캔버스에서 새 프리셋을 만들고 저장해 보세요.",
-    createFromCanvas: "캔버스에서 만들기",
+    createFromWorkflows: "프리셋 만들기",
   },
   purchasedSection: {
     totalCount: "구매한 프리셋 {count}개",

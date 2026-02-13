@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { Link2Off } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +36,7 @@ export function DocumentReferenceDialog({
 }) {
   const t = useTranslations<AppMessageKeys>("Workflows");
   const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
   const isCreatingDocument = useCanvasStore((s) => s.isCreatingDocument);
   const handleOpenChange = useCallback((nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -68,8 +69,15 @@ export function DocumentReferenceDialog({
   const handleCreated = useCallback(
     (docId: string) => {
       onChange(docId);
+
+      void queryClient.invalidateQueries({
+        queryKey: ["documents", "recent", "picker"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["documents", "title"],
+      });
     },
-    [onChange],
+    [onChange, queryClient],
   );
 
   return (

@@ -32,5 +32,5 @@ export async function ApiGuideMarkdown({
   const content =
     (await read(safeLocale)) || (await read(routing.defaultLocale));
 
-  return <ContentMarkdown className="px-0 py-0">{content}</ContentMarkdown>;
+  return <ContentMarkdown className="px-8 py-4">{content}</ContentMarkdown>;
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { type PresetEditRes } from "@/app/[locale]/presets/[id]/edit/page";
@@ -11,13 +12,11 @@ import {
 } from "@/components/ui/card";
 import {
   PresetChatExampleCard,
+  PresetChatExampleCardSkeleton,
   PresetInfoCard,
   PresetPricePublishCard,
 } from "@/features/presets/components/form/preset-form-sections";
-import {
-  getPresetChatExamplesForForm,
-  getWorkflowReferencedPresetPricingSummary,
-} from "@/features/presets/server/queries";
+import { getWorkflowReferencedPresetPricingSummary } from "@/features/presets/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { formatYMD } from "@/lib/utils";
 
@@ -38,17 +37,10 @@ export async function PresetEditForm({
     locale,
     namespace: "Presets",
   });
-  const [{ chats, pinnedChat, defaultSelectedId }, pricingSummary] =
-    await Promise.all([
-      getPresetChatExamplesForForm({
-        workflowId: preset.workflowId,
-        chatId: preset.chatId,
-      }),
-      getWorkflowReferencedPresetPricingSummary({
-        workflowId: preset.workflowId,
-        excludePresetId: preset.id,
-      }),
-    ]);
+  const pricingSummary = await getWorkflowReferencedPresetPricingSummary({
+    workflowId: preset.workflowId,
+    excludePresetId: preset.id,
+  });
 
   return (
     <div className="space-y-6">
@@ -93,12 +85,13 @@ export async function PresetEditForm({
           }
         />
 
-        <PresetChatExampleCard
-          locale={locale}
-          chats={chats}
-          pinnedChat={pinnedChat}
-          defaultSelectedId={defaultSelectedId}
-        />
+        <Suspense fallback={<PresetChatExampleCardSkeleton />}>
+          <PresetChatExampleCard
+            locale={locale}
+            workflowId={preset.workflowId}
+            defaultSelectedId={preset.chatId}
+          />
+        </Suspense>
 
         <PresetPricePublishCard
           description={t("forms.pricePublishDescriptionEdit")}

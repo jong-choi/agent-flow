@@ -2,8 +2,8 @@
 
 import { type ReactNode, useCallback, useMemo } from "react";
 import { X } from "lucide-react";
-import { type Control, useForm } from "react-hook-form";
 import { useLocale, useTranslations } from "next-intl";
+import { type Control, useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUpdateNodeInternals } from "@xyflow/react";
@@ -230,7 +230,10 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
                       {t("canvas.nodePanel.labels.name")}
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder={t("canvas.nodePanel.placeholders.name")} {...field} />
+                      <Input
+                        placeholder={t("canvas.nodePanel.placeholders.name")}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -247,7 +250,9 @@ export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder={t("canvas.nodePanel.placeholders.description")}
+                        placeholder={t(
+                          "canvas.nodePanel.placeholders.description",
+                        )}
                         className="h-[100px] resize-none overflow-y-auto"
                         {...field}
                       />
@@ -431,7 +436,7 @@ function ContentContentFormField({
               <div>
                 <Textarea
                   placeholder={content.dialogDescription ?? undefined}
-                  className="h-[100px] resize-none overflow-y-auto"
+                  className="h-[300px] resize-none overflow-y-auto"
                   {...field}
                 />
                 <FormDescription className="mt-2 text-xs">

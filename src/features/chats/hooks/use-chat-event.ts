@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { clientStreamEventSchema } from "@/app/api/chat/_types/chat-events";
 import { type NodeType } from "@/features/canvas/constants/node-types";
 import { updateChatTitleIfMissing } from "@/features/chats/server/actions";
@@ -22,6 +23,7 @@ const shouldTrackRunningNodeType = (type: NodeType) => {
 export function useChatEvent() {
   const t = useTranslations<AppMessageKeys>("Chat");
   const eventSourceRef = useRef<EventSource | null>(null);
+  const streamErrorShownRef = useRef(false);
   const searchParams = useSearchParams();
   const searchThreadId = searchParams.get("thread_id");
   const mode = useChatStore((s) => s.mode);
@@ -78,9 +80,17 @@ export function useChatEvent() {
     endpointBase: string;
     targetId: string;
   }) => {
+    streamErrorShownRef.current = false;
     closeEventSource();
     eventSourceRef.current = new EventSource(`${endpointBase}/${targetId}`);
     const eventSource = eventSourceRef.current;
+    const notifyStreamError = () => {
+      if (streamErrorShownRef.current) {
+        return;
+      }
+      streamErrorShownRef.current = true;
+      toast.error(t("toast.streamFailed"));
+    };
 
     eventSource.onmessage = (event) => {
       try {
@@ -132,6 +142,9 @@ export function useChatEvent() {
         }
 
         if (data.type === "endNode" && data.event === "on_chain_end") {
+          if (data.error) {
+            notifyStreamError();
+          }
           updateCreditTagsAction().catch(() => null);
           flushStreamingToMessages();
           setIsStreaming(false);

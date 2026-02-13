@@ -3,6 +3,7 @@ import { type Edge, type Node } from "@xyflow/react";
 import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
 import {
   checkValidGraph,
+  checkValidGraphDetailed,
   checkValidNode,
 } from "@/features/canvas/hooks/use-check-valid-graph";
 
@@ -330,6 +331,98 @@ describe("checkValidGraph 함수에 대한 유닛 테스트", () => {
   });
 });
 
+describe("checkValidGraphDetailed 함수에 대한 유닛 테스트", () => {
+  it("시작 노드가 없으면 startNodeCountInvalid를 반환한다.", () => {
+    const nodes: Node[] = [
+      {
+        id: "1",
+        type: "flowNode",
+        position: { x: 0, y: 0 },
+        data: { label: "채팅" },
+      },
+      {
+        id: "2",
+        type: "endNode",
+        position: { x: 0, y: 100 },
+        data: { label: "종료" },
+      },
+    ];
+    const edges: Edge[] = [{ id: "e1", source: "1", target: "2" }];
+
+    const result = checkValidGraphDetailed(nodes, edges);
+
+    expect(result).toEqual({
+      isValid: false,
+      message: "startNodeCountInvalid",
+    });
+  });
+
+  it("종료 노드가 없으면 endNodeCountInvalid를 반환한다.", () => {
+    const nodes: Node[] = [
+      {
+        id: "1",
+        type: "startNode",
+        position: { x: 0, y: 0 },
+        data: { label: "시작" },
+      },
+      {
+        id: "2",
+        type: "flowNode",
+        position: { x: 0, y: 100 },
+        data: { label: "채팅" },
+      },
+    ];
+    const edges: Edge[] = [{ id: "e1", source: "1", target: "2" }];
+
+    const result = checkValidGraphDetailed(nodes, edges);
+
+    expect(result).toEqual({
+      isValid: false,
+      message: "endNodeCountInvalid",
+    });
+  });
+
+  it("연결이 끊긴 노드가 있으면 disconnectedNodeExists를 반환한다.", () => {
+    const nodes: Node[] = [
+      {
+        id: "1",
+        type: "startNode",
+        position: { x: 0, y: 0 },
+        data: { label: "시작" },
+      },
+      {
+        id: "2",
+        type: "flowNode",
+        position: { x: 0, y: 100 },
+        data: { label: "채팅" },
+      },
+      {
+        id: "3",
+        type: "flowNode",
+        position: { x: 0, y: 200 },
+        data: { label: "검색" },
+      },
+      {
+        id: "4",
+        type: "endNode",
+        position: { x: 0, y: 300 },
+        data: { label: "종료" },
+      },
+    ];
+    const edges: Edge[] = [
+      { id: "e1", source: "1", target: "2" },
+      { id: "e2", source: "2", target: "4" },
+    ];
+
+    const result = checkValidGraphDetailed(nodes, edges);
+
+    expect(result).toEqual({
+      isValid: false,
+      message: "disconnectedNodeExists",
+    });
+  });
+});
+
 describe("checkValidNode 함수에 대한 유닛 테스트", () => {
   it("node.type이 없는 경우 isValid는 false이다.", () => {
     const node = {
@@ -338,8 +431,11 @@ describe("checkValidNode 함수에 대한 유닛 테스트", () => {
       data: { label: "시작" },
     } as FlowCanvasNode;
 
-    const { isValid } = checkValidNode(node);
-    expect(isValid).toEqual(false);
+    const result = checkValidNode(node);
+    expect(result).toEqual({
+      isValid: false,
+      message: "nodeTypeMissing",
+    });
   });
 
   it("node.type이 chatNode이고 data.content.value가 없는 경우 isValid는 false이다.", () => {
@@ -350,8 +446,11 @@ describe("checkValidNode 함수에 대한 유닛 테스트", () => {
       data: { label: "채팅", content: { id: "hi" } },
     } as FlowCanvasNode;
 
-    const { isValid } = checkValidNode(node);
-    expect(isValid).toEqual(false);
+    const result = checkValidNode(node);
+    expect(result).toEqual({
+      isValid: false,
+      message: "chatNodeValueMissing",
+    });
   });
 
   it("node.type이 chatNode이고 data.content.value가 isValid는 true이다.", () => {
@@ -364,5 +463,20 @@ describe("checkValidNode 함수에 대한 유닛 테스트", () => {
 
     const { isValid } = checkValidNode(node);
     expect(isValid).toEqual(true);
+  });
+
+  it("node.type이 documentNode이고 referenceId가 없는 경우 isValid는 false이다.", () => {
+    const node = {
+      id: "1",
+      type: "documentNode",
+      position: { x: 0, y: 0 },
+      data: { label: "문서", content: { id: "doc-1" } },
+    } as FlowCanvasNode;
+
+    const result = checkValidNode(node);
+    expect(result).toEqual({
+      isValid: false,
+      message: "documentNodeReferenceMissing",
+    });
   });
 });

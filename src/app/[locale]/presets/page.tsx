@@ -200,7 +200,7 @@ async function TemplateMarketContent({
           </CardHeader>
           <CardContent>
             <Button variant="secondary" asChild>
-              <Link href="/workflows/canvas">
+              <Link href="/presets/new">
                 {t("marketContent.createFirstPreset")}
               </Link>
             </Button>

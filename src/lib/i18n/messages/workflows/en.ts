@@ -42,6 +42,15 @@ const message = {
       loadPreset: "Load Preset",
       save: "Save",
     },
+    validation: {
+      startNodeCountInvalid: "Exactly one start node is required.",
+      endNodeCountInvalid: "Exactly one end node is required.",
+      disconnectedNodeExists: "There are unconnected nodes.",
+      nodeTypeMissing: "A node type is missing.",
+      chatNodeValueMissing: "Please select a model for the chat node.",
+      documentNodeReferenceMissing:
+        "The document node must have a linked document.",
+    },
     start: {
       errors: {
         createFailed: "Unable to start chat.",
@@ -55,7 +64,12 @@ const message = {
       },
       dialog: {
         title: "Save Workflow",
+        titleCreate: "Save Workflow",
+        titleEdit: "Update Workflow",
         description: "Enter a name and description, then save.",
+        descriptionCreate: "Enter a name and description, then save.",
+        descriptionEdit:
+          "Review the current name and description, then update.",
         nameLabel: "Name",
         namePlaceholder: "Workflow name",
         descriptionLabel: "Description",
@@ -63,6 +77,8 @@ const message = {
         descriptionLimit: "You can enter up to 140 characters.",
         close: "Close",
         submit: "Save",
+        submitCreate: "Save",
+        submitEdit: "Update",
       },
       toast: {
         success: "Saved.",
@@ -138,13 +154,13 @@ const message = {
         promptEdit: "Edit Prompt",
         promptDialogTitle: "Prompt Input",
         selectValue: "Selected Value",
-        dialogValue: "Dialog Value",
+        dialogValue: "Prompt",
         name: "Name",
         description: "Description",
         documentReference: "Document Link",
         handles: "Handles",
-        targetInputs: "Target Inputs",
-        sourceOutputs: "Source Outputs",
+        targetInputs: "Max Input Count",
+        sourceOutputs: "Max Output Count",
         credits: "Credits",
       },
       placeholders: {

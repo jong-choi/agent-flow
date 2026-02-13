@@ -2,8 +2,8 @@
 
 import { Suspense, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
 import {
   Background,
   type ColorMode,
@@ -63,6 +63,8 @@ export function FlowApp({
   const checkValidGraph = useCheckValidGraph();
   const setLoading = useCanvasStore((s) => s.setIsStartLoading);
   const setWorkflow = useCanvasStore((s) => s.setWorkflow);
+  const isValidGraph = useCanvasStore((s) => s.isValidGraph);
+  const isValidGraphMessage = useCanvasStore((s) => s.isValidGraphMessage);
   const title = useCanvasStore((s) => s.workflow.title.trim());
   const description = useCanvasStore((s) => s.workflow.description?.trim());
 
@@ -103,20 +105,29 @@ export function FlowApp({
 
   return (
     <div className="relative h-full w-full" data-testid="flow-canvas">
-      <div className="absolute top-4 left-4 z-10 flex flex-col items-start gap-3 rounded-lg bg-muted/50 p-4 backdrop-blur-sm">
-        <PageHeader className="flex min-w-sm flex-col gap-1">
-          <PageContentTitle>{title || t("canvas.header.newWorkflow")}</PageContentTitle>
-          <PageDescription>
-            {description || t("canvas.header.noDescription")}
-          </PageDescription>
-        </PageHeader>
-        <div className="flex items-center gap-2">
-          <Suspense>
-            <FlowStartButton />
-          </Suspense>
-          <FlowLoadPresetButton />
-          <FlowSaveButton />
+      <div className="absolute top-4 left-4 z-10 flex flex-col items-start gap-2">
+        <div className="flex flex-col items-start gap-3 rounded-lg bg-muted/50 p-4 backdrop-blur-sm">
+          <PageHeader className="flex min-w-sm flex-col gap-1">
+            <PageContentTitle>
+              {title || t("canvas.header.newWorkflow")}
+            </PageContentTitle>
+            <PageDescription>
+              {description || t("canvas.header.noDescription")}
+            </PageDescription>
+          </PageHeader>
+          <div className="flex items-center gap-2">
+            <Suspense>
+              <FlowStartButton />
+            </Suspense>
+            <FlowLoadPresetButton />
+            <FlowSaveButton />
+          </div>
         </div>
+        {!isValidGraph && isValidGraphMessage ? (
+          <p className="px-1 text-xs text-muted-foreground">
+            {t(`canvas.validation.${isValidGraphMessage}`)}
+          </p>
+        ) : null}
       </div>
       <ReactFlow
         snapToGrid

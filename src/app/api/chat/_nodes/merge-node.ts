@@ -37,13 +37,7 @@ export const mergeNode = async (
   let result = "";
   const inputsEntries = Object.entries(inputs);
   inputsEntries.sort().forEach((entry) => {
-    const output = entry[1];
-
-    if (!output) {
-      throw new Error(
-        "병합 노드의 이전 노드 결과값이 null입니다. 이전 노드가 아직 실행중일 수 있습니다.",
-      );
-    }
+    const output = entry[1] ?? "";
 
     if (result) {
       result = result.concat("\n\n", output);

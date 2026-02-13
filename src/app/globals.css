@@ -1,6 +1,51 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@plugin "tailwindcss-github-markdown";
+
+/* 깃헙 마크다운 스타일에서 블록 확장 막기 위한 break-all 적용 */
+.prose {
+  @apply bg-transparent font-sans text-base leading-loose antialiased;
+
+  /* 긴 URL/토큰 */
+  :where(a, code, kbd, samp, td, th) {
+    @apply break-all;
+  }
+
+  /* 코드블록 */
+  pre {
+    @apply bg-[#1e1e1e] break-all whitespace-pre-wrap text-white;
+  }
+
+  /* 테이블 */
+  table {
+    @apply block w-full overflow-x-auto;
+  }
+
+  /* 일반 텍스트는 anywhere로 끊기 */
+  :where(p, li, blockquote, dd, dt) {
+    overflow-wrap: anywhere;
+  }
+
+  h1 {
+    @apply mt-6 mb-3 text-2xl leading-tight font-semibold;
+  }
+
+  h2 {
+    @apply mt-5 mb-2.5 text-xl leading-tight font-semibold;
+  }
+
+  h3 {
+    @apply mt-4 mb-2 text-lg leading-snug font-semibold;
+  }
+
+  h4,
+  h5,
+  h6 {
+    @apply mt-3.5 mb-1.5 text-base leading-snug font-semibold;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

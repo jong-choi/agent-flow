@@ -1,47 +1,64 @@
 import { useCallback } from "react";
 import { type Edge, type Node } from "@xyflow/react";
 import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
+import { type GraphValidationMessageCode } from "@/features/canvas/constants/graph-validation-message";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+
+type ValidationResult =
+  | { isValid: true }
+  | { isValid: false; message: GraphValidationMessageCode };
 
 export function useCheckValidGraph() {
   const { getEdges, getNodes } = useCanvasReactFlow();
   const setIsValidGraph = useCanvasStore((s) => s.setIsValidGraph);
+  const setIsValidGraphMessage = useCanvasStore(
+    (s) => s.setIsValidGraphMessage,
+  );
 
   const checkIsValidGraph = useCallback(
     ({ nodes, edges }: { nodes?: FlowCanvasNode[]; edges?: Edge[] }) => {
-      const isValidGraph = checkValidGraph(
-        nodes ?? getNodes(),
-        edges ?? getEdges(),
-      );
+      const nextNodes = nodes ?? getNodes();
+      const nextEdges = edges ?? getEdges();
+      const graphResult = checkValidGraphDetailed(nextNodes, nextEdges);
 
-      const isValidNodes = (nodes ?? getNodes()).every((node) => {
-        return checkValidNode(node).isValid;
-      });
+      if (!graphResult.isValid) {
+        setIsValidGraph(false);
+        setIsValidGraphMessage(graphResult.message);
+        return;
+      }
 
-      setIsValidGraph(isValidGraph && isValidNodes);
+      for (const node of nextNodes) {
+        const nodeResult = checkValidNode(node);
+        if (!nodeResult.isValid) {
+          setIsValidGraph(false);
+          setIsValidGraphMessage(nodeResult.message);
+          return;
+        }
+      }
+
+      setIsValidGraph(true);
+      setIsValidGraphMessage(null);
     },
-    [getEdges, getNodes, setIsValidGraph],
+    [getEdges, getNodes, setIsValidGraph, setIsValidGraphMessage],
   );
 
   return checkIsValidGraph;
 }
 
-export const checkValidNode = (
-  node: FlowCanvasNode,
-): { isValid: true } | { isValid: false; message: string } => {
+export const checkValidNode = (node: FlowCanvasNode): ValidationResult => {
   if (!node.type) {
-    return { isValid: false, message: "node.type이 지정되지 않았습니다." };
+    return { isValid: false, message: "nodeTypeMissing" };
   }
   if (node.type === "chatNode" && !node.data.content?.value) {
-    return { isValid: false, message: "chatNode의 value가 없습니다." };
+    return { isValid: false, message: "chatNodeValueMissing" };
   }
   if (node.type === "documentNode") {
     const referenceId = node.data.content?.referenceId;
     if (typeof referenceId !== "string" || referenceId.trim().length === 0) {
       return {
         isValid: false,
-        message: "documentNode의 referenceId가 없습니다.",
+        message: "documentNodeReferenceMissing",
       };
     }
   }
@@ -49,11 +66,22 @@ export const checkValidNode = (
 };
 
 export const checkValidGraph = (nodes: Node[], edges: Edge[]): boolean => {
+  return checkValidGraphDetailed(nodes, edges).isValid;
+};
+
+export const checkValidGraphDetailed = (
+  nodes: Node[],
+  edges: Edge[],
+): ValidationResult => {
   const startNodes = nodes.filter((node) => node.type === "startNode");
   const endNodes = nodes.filter((node) => node.type === "endNode");
 
-  if (startNodes.length !== 1 || endNodes.length !== 1) {
-    return false;
+  if (startNodes.length !== 1) {
+    return { isValid: false, message: "startNodeCountInvalid" };
+  }
+
+  if (endNodes.length !== 1) {
+    return { isValid: false, message: "endNodeCountInvalid" };
   }
 
   const startNode = startNodes[0];
@@ -97,9 +125,9 @@ export const checkValidGraph = (nodes: Node[], edges: Edge[]): boolean => {
 
   for (const node of nodes) {
     if (!reachableFromStart.has(node.id) || !reachableToEnd.has(node.id)) {
-      return false;
+      return { isValid: false, message: "disconnectedNodeExists" };
     }
   }
 
-  return true;
+  return { isValid: true };
 };

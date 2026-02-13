@@ -63,7 +63,14 @@ export default async function LoginPage({
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
-          <Suspense fallback={<GoogleLoginFormFallback />}>
+          <Suspense
+            fallback={
+              <GoogleLoginFormFallback
+                className="mt-0"
+                label={t("login.googleContinue")}
+              />
+            }
+          >
             <GoogleLoginForm
               locale={locale}
               label={t("login.googleContinue")}

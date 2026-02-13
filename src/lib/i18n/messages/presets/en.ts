@@ -21,6 +21,7 @@ const message = {
     data: "Data",
     operations: "Operations",
     development: "Development",
+    entertainment: "Entertainment",
   },
   filters: {
     title: "Filter",
@@ -113,7 +114,7 @@ const message = {
   },
   chatExampleSection: {
     title: "Chat Example",
-    description: "A chat example shown in the market.",
+    description: "A chat example that has actually run.",
     noLinkedChat: "No linked chat.",
   },
   chatExampleCard: {
@@ -154,14 +155,26 @@ const message = {
     publishLabelEdit: "Publish to market",
     publishHintEdit: "Published presets are visible to everyone in the market.",
     publishLabelCreate: "Publish immediately after creation",
-    publishHintCreate: "Published presets are visible to everyone in the market.",
+    publishHintCreate:
+      "Published presets are visible to everyone in the market.",
     saveEdit: "Save Changes",
     createSubmit: "Create Preset",
     createSubmitPending: "Creating...",
     cancel: "Cancel",
     deleteTitle: "Delete Preset",
-    deleteDescription: "This action cannot be undone. Please proceed carefully.",
+    deleteDescription:
+      "This action cannot be undone. Please proceed carefully.",
     deleteButton: "Delete Preset",
+  },
+  tagInput: {
+    label: "Tags",
+    placeholder: "Search or enter tags",
+    defaultDescription: "Search to add tags or press Enter to add directly.",
+    selectedCount: "{count} selected",
+    loading: "Searching...",
+    addOption: "Add: {tag}",
+    noResults: "No matching tags found.",
+    removeTagSrOnly: "Remove tag",
   },
   pricePublishCard: {
     title: "Price & Visibility",
@@ -242,7 +255,7 @@ const message = {
     title: "My Created Presets",
     emptyTitle: "No presets created yet",
     emptyDescription: "Create and save a new preset from the canvas.",
-    createFromCanvas: "Create on Canvas",
+    createFromWorkflows: "Create a preset",
   },
   purchasedSection: {
     totalCount: "Purchased presets {count}",
