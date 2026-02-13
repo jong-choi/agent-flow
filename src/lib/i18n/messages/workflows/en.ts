@@ -94,6 +94,7 @@ const message = {
         description:
           "You can add purchased or created presets to the current canvas.",
         searchPlaceholder: "Search presets (title)",
+        loadMore: "Load more",
       },
       empty: {
         noOwned: "You do not have any presets.",

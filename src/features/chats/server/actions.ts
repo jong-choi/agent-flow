@@ -3,11 +3,13 @@
 import { updateTag } from "next/cache";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
+import { type CursorOptions } from "@/db/query/cursor";
 import { chatMessages, chats } from "@/db/schema";
 import { getUserId } from "@/features/auth/server/queries";
 import { chatTags } from "@/features/chats/server/cache/tags";
 import {
   getChatById,
+  getChatsByUserPage,
   getWorkflowWithGraphForChat,
 } from "@/features/chats/server/queries";
 
@@ -152,3 +154,6 @@ export const softDeleteChat = async ({ chatId }: { chatId: string }) => {
 
   return deleted;
 };
+
+export const getChatsByUserPageAction = async (options?: CursorOptions) =>
+  getChatsByUserPage(options);

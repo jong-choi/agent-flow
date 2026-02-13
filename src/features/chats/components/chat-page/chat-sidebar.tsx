@@ -1,14 +1,9 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import { BotMessageSquare, SquarePen } from "lucide-react";
-import { getTranslations } from "next-intl/server";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChatSidebarItem } from "@/features/chats/components/chat-page/chat-sidebar-item";
-import { getChatsByUser } from "@/features/chats/server/queries";
-import { type AppMessageKeys } from "@/lib/i18n/messages";
+import { ChatSidebarClient } from "@/features/chats/components/chat-page/chat-sidebar-client";
+import { getChatsByUserPage } from "@/features/chats/server/queries";
 
 export function ChatSidebar({
   params,
@@ -33,62 +28,15 @@ async function ChatSidebarContent({
   isCreating?: boolean;
 }) {
   const resolevedParams = await params;
-  const locale = resolevedParams.locale;
   const chatId = resolevedParams.chatId;
-
-  const t = await getTranslations<AppMessageKeys>({
-    locale,
-    namespace: "Chat",
-  });
-  const chats = await getChatsByUser();
+  const initialPage = await getChatsByUserPage({ limit: 30 });
 
   return (
-    <>
-      <div className="h-7 px-4">
-        {isCreating ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="w-full justify-start"
-            disabled
-          >
-            <BotMessageSquare className="size-4" strokeWidth={1.75} />
-            {t("sidebar.currentChat")}
-          </Button>
-        ) : (
-          <Button
-            asChild
-            size="sm"
-            variant="ghost"
-            className="w-full justify-start"
-          >
-            <Link href="/chat">
-              <SquarePen className="size-4" strokeWidth={1.75} />
-              {t("sidebar.newChat")}
-            </Link>
-          </Button>
-        )}
-      </div>
-      <div className="px-4">
-        <Separator />
-      </div>
-      <ScrollArea className="min-h-0 flex-1 px-4">
-        <nav className="flex flex-col gap-1">
-          {chats.length === 0 && (
-            <div className="rounded-md px-3 py-2 text-sm text-muted-foreground">
-              {t("sidebar.empty")}
-            </div>
-          )}
-          {chats.map((chat) => (
-            <ChatSidebarItem
-              key={chat.id}
-              chat={chat}
-              isActive={Boolean(chatId && chatId === chat.id)}
-            />
-          ))}
-        </nav>
-      </ScrollArea>
-    </>
+    <ChatSidebarClient
+      chatId={chatId}
+      isCreating={isCreating}
+      initialPage={initialPage}
+    />
   );
 }
 

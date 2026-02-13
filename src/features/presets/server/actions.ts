@@ -23,6 +23,7 @@ import {
   buildCursorOrderBy,
   buildCursorWhere,
   type CursorOptions,
+  toCursorTimestamp,
 } from "@/db/query/cursor";
 import { users } from "@/db/schema/auth";
 import { chats } from "@/db/schema/chat";
@@ -437,7 +438,7 @@ const getPresetsCached = async ({
     const [row] = await db
       .select({
         id: presets.id,
-        updatedAt: sql<string>`to_char(${presets.updatedAt}, 'YYYY-MM-DD HH24:MI:SS.US')`,
+        updatedAt: toCursorTimestamp(presets.updatedAt),
         purchaseCount,
         totalPrice,
       })
@@ -981,7 +982,88 @@ export const purchasePresetAction = async (
   }
 };
 
-const getPresetLibraryForCanvasBase = async (userId: string) => {
+const getPresetLibraryForCanvasBase = async ({
+  userId,
+  query,
+  cursor,
+  limit,
+}: {
+  userId: string;
+  query: string;
+  cursor: string;
+  limit: number;
+}) => {
+  const ownershipClause = or(
+    eq(presets.ownerId, userId),
+    isNotNull(presetPurchases.presetId),
+  );
+  if (!ownershipClause) {
+    return {
+      items: [],
+      pageInfo: {
+        hasNext: false,
+        nextCursor: null,
+      },
+    };
+  }
+
+  const searchClause = query ? ilike(presets.title, `%${query}%`) : undefined;
+  const baseWhere = searchClause
+    ? and(ownershipClause, searchClause)
+    : ownershipClause;
+
+  let cursorAnchor: { id: string; updatedAt: string } | null = null;
+  if (cursor) {
+    const [row] = await db
+      .select({
+        id: presets.id,
+        updatedAt: toCursorTimestamp(presets.updatedAt),
+      })
+      .from(presets)
+      .leftJoin(
+        presetPurchases,
+        and(
+          eq(presetPurchases.presetId, presets.id),
+          eq(presetPurchases.buyerId, userId),
+        ),
+      )
+      .where(and(baseWhere, eq(presets.id, cursor)))
+      .limit(1);
+
+    cursorAnchor = row ?? null;
+  }
+
+  const orderBy = buildCursorOrderBy(
+    [
+      { value: presets.updatedAt, direction: "desc" },
+      { value: presets.id, direction: "desc" },
+    ],
+    "next",
+  );
+
+  let listWhere = baseWhere;
+  if (cursorAnchor) {
+    const cursorWhere = buildCursorWhere(
+      [
+        {
+          value: presets.updatedAt,
+          cursor: cursorAnchor.updatedAt,
+          direction: "desc",
+        },
+        {
+          value: presets.id,
+          cursor: cursorAnchor.id,
+          direction: "desc",
+        },
+      ],
+      "next",
+    );
+
+    if (cursorWhere) {
+      listWhere = and(baseWhere, cursorWhere);
+    }
+  }
+
   const rows = await db
     .select({
       id: presets.id,
@@ -1004,10 +1086,13 @@ const getPresetLibraryForCanvasBase = async (userId: string) => {
         eq(presetPurchases.buyerId, userId),
       ),
     )
-    .where(or(eq(presets.ownerId, userId), isNotNull(presetPurchases.presetId)))
-    .orderBy(desc(presets.updatedAt));
+    .where(listWhere)
+    .orderBy(...orderBy)
+    .limit(limit + 1);
 
-  return rows.map((row) => ({
+  const hasNext = rows.length > limit;
+  const sliced = rows.slice(0, limit);
+  const items = sliced.map((row) => ({
     id: row.id,
     workflowId: row.workflowId,
     title: row.title,
@@ -1019,18 +1104,46 @@ const getPresetLibraryForCanvasBase = async (userId: string) => {
     purchasedAt: row.purchasedAt ? row.purchasedAt.toISOString() : null,
     updatedAt: row.updatedAt.toISOString(),
   }));
+
+  const nextCursor = hasNext ? items[items.length - 1]?.id ?? null : null;
+
+  return {
+    items,
+    pageInfo: {
+      hasNext,
+      nextCursor,
+    },
+  };
 };
 
-export const getPresetLibraryForCanvasAction = async () => {
+export const getPresetLibraryForCanvasAction = async (
+  options?: CursorOptions & { query?: string },
+) => {
   const userId = await getUserId();
-  return getPresetLibraryForCanvasCached(userId);
+  const cursor = options?.cursor?.trim() ?? "";
+  const query = options?.query?.trim() ?? "";
+  const limitValue =
+    typeof options?.limit === "number" ? options.limit : 20;
+  const limit = Math.max(1, Math.min(100, Math.trunc(limitValue)));
+
+  return getPresetLibraryForCanvasCached({ userId, query, cursor, limit });
 };
 
-const getPresetLibraryForCanvasCached = async (userId: string) => {
+const getPresetLibraryForCanvasCached = async ({
+  userId,
+  query,
+  cursor,
+  limit,
+}: {
+  userId: string;
+  query: string;
+  cursor: string;
+  limit: number;
+}) => {
   "use cache";
   cacheTag(presetCacheTags.canvasLibraryByUser(userId));
 
-  return getPresetLibraryForCanvasBase(userId);
+  return getPresetLibraryForCanvasBase({ userId, query, cursor, limit });
 };
 
 export const getPresetGraphForCanvasAction = async (
@@ -1213,8 +1326,8 @@ const getPurchasedPresetsBase = async ({
       .select({
         id: presets.id,
         title: presets.title,
-        updatedAt: sql<string>`to_char(${presets.updatedAt}, 'YYYY-MM-DD HH24:MI:SS.US')`,
-        purchasedAt: sql<string>`to_char(${libraryPurchasedAt}, 'YYYY-MM-DD HH24:MI:SS.US')`,
+        updatedAt: toCursorTimestamp(presets.updatedAt),
+        purchasedAt: toCursorTimestamp(libraryPurchasedAt),
       })
       .from(presets)
       .leftJoin(

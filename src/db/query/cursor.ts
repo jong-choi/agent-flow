@@ -26,6 +26,16 @@ type CursorWhereField = CursorSortField & {
   cursor: CursorValue;
 };
 
+/**
+ * timestamp 커서 비교용 문자열 표현으로 변환한다.
+ *
+ * 이유:
+ * - JS Date를 그대로 바인딩하면 드라이버/타임존 처리 차이로 비교 쿼리가 실패할 수 있다.
+ * - anchor 조회 시 동일 포맷 문자열로 고정해서 where cursor 비교값으로 사용한다.
+ */
+export const toCursorTimestamp = (value: AnyColumn | SQL) =>
+  sql<string>`to_char(${value}, 'YYYY-MM-DD HH24:MI:SS.US')`;
+
 const reverseDirection = (
   direction: CursorSortDirection,
 ): CursorSortDirection => (direction === "asc" ? "desc" : "asc");

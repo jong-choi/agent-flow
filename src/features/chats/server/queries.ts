@@ -3,6 +3,12 @@ import { cacheTag } from "next/cache";
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import "server-only";
 import { db } from "@/db/client";
+import {
+  buildCursorOrderBy,
+  buildCursorWhere,
+  type CursorOptions,
+  toCursorTimestamp,
+} from "@/db/query/cursor";
 import { chatMessages, chats } from "@/db/schema";
 import { aiModels } from "@/db/schema/ai-models";
 import { getUserId } from "@/features/auth/server/queries";
@@ -128,6 +134,105 @@ const getChatsByUserCached = cache(async (userId: string) => {
     .from(chats)
     .where(and(eq(chats.userId, userId), isNull(chats.deletedAt)))
     .orderBy(desc(chats.updatedAt));
+});
+
+export type UserChatPage = {
+  items: {
+    id: string;
+    workflowId: string;
+    title: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }[];
+  pageInfo: {
+    hasNext: boolean;
+    nextCursor: string | null;
+  };
+};
+
+export const getChatsByUserPage = async (
+  options?: CursorOptions,
+): Promise<UserChatPage> => {
+  const userId = await getUserId();
+  const cursor = options?.cursor?.trim() ?? "";
+  const limitValue = typeof options?.limit === "number" ? options.limit : 30;
+  const limit = Math.max(1, Math.min(100, Math.trunc(limitValue)));
+
+  return getChatsByUserPageCached(userId, cursor, limit);
+};
+
+const getChatsByUserPageCached = cache(async (
+  userId: string,
+  cursor: string,
+  limit: number,
+): Promise<UserChatPage> => {
+  "use cache";
+  cacheTag(chatTags.listByUser(userId));
+
+  const whereClause = and(eq(chats.userId, userId), isNull(chats.deletedAt));
+  if (!whereClause) {
+    return { items: [], pageInfo: { hasNext: false, nextCursor: null } };
+  }
+
+  let cursorAnchor: { id: string; updatedAt: string } | null = null;
+  if (cursor) {
+    const [row] = await db
+      .select({
+        id: chats.id,
+        updatedAt: toCursorTimestamp(chats.updatedAt),
+      })
+      .from(chats)
+      .where(and(whereClause, eq(chats.id, cursor)))
+      .limit(1);
+    cursorAnchor = row ?? null;
+  }
+
+  const orderBy = buildCursorOrderBy(
+    [
+      { value: chats.updatedAt, direction: "desc" },
+      { value: chats.id, direction: "desc" },
+    ],
+    "next",
+  );
+
+  let listWhere = whereClause;
+  if (cursorAnchor) {
+    const cursorWhere = buildCursorWhere(
+      [
+        { value: chats.updatedAt, cursor: cursorAnchor.updatedAt, direction: "desc" },
+        { value: chats.id, cursor: cursorAnchor.id, direction: "desc" },
+      ],
+      "next",
+    );
+    if (cursorWhere) {
+      listWhere = and(whereClause, cursorWhere);
+    }
+  }
+
+  const rows = await db
+    .select({
+      id: chats.id,
+      workflowId: chats.workflowId,
+      title: chats.title,
+      createdAt: chats.createdAt,
+      updatedAt: chats.updatedAt,
+    })
+    .from(chats)
+    .where(listWhere)
+    .orderBy(...orderBy)
+    .limit(limit + 1);
+
+  const hasNext = rows.length > limit;
+  const items = rows.slice(0, limit);
+  const nextCursor = hasNext ? items[items.length - 1]?.id ?? null : null;
+
+  return {
+    items,
+    pageInfo: {
+      hasNext,
+      nextCursor,
+    },
+  };
 });
 
 export const getPublicChatMessagesByChatId = async ({

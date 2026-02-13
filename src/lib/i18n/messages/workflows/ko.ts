@@ -91,6 +91,7 @@ const message = {
         title: "프리셋 불러오기",
         description: "구매했거나 만든 프리셋을 현재 캔버스에 추가할 수 있어요.",
         searchPlaceholder: "프리셋 검색 (제목)",
+        loadMore: "더 보기",
       },
       empty: {
         noOwned: "보유한 프리셋이 없습니다.",

@@ -42,6 +42,7 @@ const message = {
     issuedAt: "Issued {date}",
     lastUsedAt: "Last used {date}",
     delete: "Delete",
+    loadMore: "Load more",
     toasts: {
       createFailed: "Failed to issue secret key.",
     },
