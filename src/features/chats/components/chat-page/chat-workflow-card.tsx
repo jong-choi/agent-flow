@@ -4,15 +4,11 @@ import {
   WorkflowTitleText,
   WorkflowUpdatedAtText,
 } from "@/components/workflow/workflow-summary-parts";
-import { type ChatPageWorkflow } from "@/features/chats/components/chat-page/chat-queries";
 import { ChatStartButton } from "@/features/chats/components/chat-page/chat-start-button";
 import { ChatWorkflowPreviewDialog } from "@/features/chats/components/chat-page/chat-workflow-preview-dialog";
+import { type ChatPageWorkflow } from "@/features/chats/types/chat-page-list";
 
-export function ChatWorkflowCard({
-  workflow,
-}: {
-  workflow: ChatPageWorkflow;
-}) {
+export function ChatWorkflowCard({ workflow }: { workflow: ChatPageWorkflow }) {
   return (
     <div
       className="flex flex-col gap-1 rounded-lg border border-border/60 bg-background p-4"

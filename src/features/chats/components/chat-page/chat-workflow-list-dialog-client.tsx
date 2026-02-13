@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
-import { type ChatPageWorkflow } from "@/features/chats/components/chat-page/chat-queries";
 import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
 import { getOwnedWorkflowsForChatPageAction } from "@/features/chats/server/actions";
+import { type ChatPageWorkflow } from "@/features/chats/types/chat-page-list";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 const CHAT_WORKFLOW_DIALOG_PAGE_SIZE = 20;
