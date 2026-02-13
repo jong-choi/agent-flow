@@ -1,17 +1,16 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { PresetsFilter } from "@/app/[locale]/presets/_components/presets-filter";
 import { PresetsList } from "@/app/[locale]/presets/_components/presets-list";
-import { PresetsPagination } from "@/app/[locale]/presets/_components/presets-pagination";
 import {
   PageContainer,
   PageDescription,
   PageHeader,
   PageHeading,
 } from "@/components/page-template";
+import { PagerButton } from "@/components/pager-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,13 +19,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
 import { getPresets } from "@/features/presets/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 12;
 
 export async function generateMetadata({
   params,
@@ -43,22 +43,8 @@ export async function generateMetadata({
   };
 }
 
-type PresetsPageSearchParams = {
-  q?: string | string[];
-  category?: string | string[];
-  priceMin?: string | string[];
-  priceMax?: string | string[];
-  sort?: string | string[];
-  page?: string | string[];
-};
-
 function resolveParam(value: string | string[] | undefined, fallback: string) {
   return (Array.isArray(value) ? value[0] : value) ?? fallback;
-}
-
-function resolvePage(value: string | string[] | undefined) {
-  const parsed = Number.parseInt(resolveParam(value, "1"), 10);
-  return Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
 }
 
 function resolvePriceParam(value: string | string[] | undefined) {
@@ -85,11 +71,7 @@ function resolvePriceRange({
   const resolvedMin = resolvePriceParam(priceMin);
   const resolvedMax = resolvePriceParam(priceMax);
 
-  if (
-    resolvedMin != null &&
-    resolvedMax != null &&
-    resolvedMin > resolvedMax
-  ) {
+  if (resolvedMin != null && resolvedMax != null && resolvedMin > resolvedMax) {
     return {
       priceMin: resolvedMax,
       priceMax: resolvedMin,
@@ -107,6 +89,7 @@ export default async function TemplateMarketPage({
   searchParams,
 }: PageProps<"/[locale]/presets">) {
   const { locale } = await params;
+
   const t = await getTranslations<AppMessageKeys>({
     locale,
     namespace: "Presets",
@@ -148,10 +131,7 @@ export default async function TemplateMarketPage({
           </CardContent>
         </Card>
         <Suspense fallback={<TemplateMarketContentFallback />}>
-          <TemplateMarketContent
-            locale={locale}
-            searchParamsPromise={searchParams}
-          />
+          <TemplateMarketContent locale={locale} searchParams={searchParams} />
         </Suspense>
       </div>
     </PageContainer>
@@ -160,20 +140,27 @@ export default async function TemplateMarketPage({
 
 async function TemplateMarketContent({
   locale,
-  searchParamsPromise,
+  searchParams,
 }: {
   locale: string;
-  searchParamsPromise: Promise<PresetsPageSearchParams> | undefined;
+  searchParams?: PageProps<"/[locale]/presets">["searchParams"];
 }) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const t = await getTranslations<AppMessageKeys>({
     locale,
     namespace: "Presets",
   });
-  const resolvedSearchParams = await searchParamsPromise;
   const selectedCategory = resolveParam(resolvedSearchParams?.category, "all");
   const selectedSort = resolveParam(resolvedSearchParams?.sort, "popular");
   const query = resolveParam(resolvedSearchParams?.q, "");
-  const currentPage = resolvePage(resolvedSearchParams?.page);
+  const rawCursor = Array.isArray(resolvedSearchParams?.cursor)
+    ? resolvedSearchParams?.cursor[0]
+    : resolvedSearchParams?.cursor;
+  const cursor = rawCursor?.trim() || undefined;
+  const rawDir = Array.isArray(resolvedSearchParams?.dir)
+    ? resolvedSearchParams?.dir[0]
+    : resolvedSearchParams?.dir;
+  const dir = rawDir === "prev" ? "prev" : "next";
   const { priceMin, priceMax } = resolvePriceRange({
     priceMin: resolvedSearchParams?.priceMin,
     priceMax: resolvedSearchParams?.priceMax,
@@ -191,7 +178,7 @@ async function TemplateMarketContent({
     sort: "popular",
   };
 
-  const { presets, totalCount } = await getPresets(
+  const { presets, totalCount, pageInfo } = await getPresets(
     {
       query,
       category: selectedCategory === "all" ? null : selectedCategory,
@@ -204,20 +191,26 @@ async function TemplateMarketContent({
           ? selectedSort
           : "popular",
     },
-    { page: currentPage, pageSize: PAGE_SIZE },
+    { cursor, dir, limit: PAGE_SIZE },
   );
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-
-  if (currentPage > totalPages) {
-    redirect(
-      `/presets${buildQueryString(
-        baseParams,
-        { page: String(totalPages) },
-        paginationDefaults,
-      )}`,
-    );
-  }
+  const prevHref =
+    pageInfo.hasPrev && pageInfo.prevCursor
+      ? `/presets${buildQueryString(
+          baseParams,
+          { cursor: pageInfo.prevCursor, dir: "prev" },
+          paginationDefaults,
+        )}`
+      : "";
+  const nextHref =
+    pageInfo.hasNext && pageInfo.nextCursor
+      ? `/presets${buildQueryString(
+          baseParams,
+          { cursor: pageInfo.nextCursor, dir: "next" },
+          paginationDefaults,
+        )}`
+      : "";
+  const hasPager = pageInfo.hasPrev || pageInfo.hasNext;
 
   return (
     <>
@@ -243,16 +236,29 @@ async function TemplateMarketContent({
           </CardContent>
         </Card>
       ) : (
-        <>
-          <PresetsList locale={locale} items={presets} />
-          <PresetsPagination
-            basePath="/presets"
-            currentPage={currentPage}
-            totalPages={totalPages}
-            params={baseParams}
-            defaults={paginationDefaults}
-          />
-        </>
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="pb-3">
+              <PresetsList locale={locale} items={presets} />
+            </div>
+          </ScrollArea>
+          {hasPager ? (
+            <div className="shrink-0 border-t border-border/60 pt-4">
+              <div className="flex items-center justify-center gap-2">
+                <PagerButton
+                  direction="prev"
+                  href={prevHref || undefined}
+                  disabled={!prevHref}
+                />
+                <PagerButton
+                  direction="next"
+                  href={nextHref || undefined}
+                  disabled={!nextHref}
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
       )}
     </>
   );

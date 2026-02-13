@@ -19,6 +19,11 @@ import {
 } from "drizzle-orm";
 import { normalizeOptionalText } from "@/app/[locale]/presets/_utils/form-utils";
 import { db } from "@/db/client";
+import {
+  buildCursorOrderBy,
+  buildCursorWhere,
+  type CursorOptions,
+} from "@/db/query/cursor";
 import { users } from "@/db/schema/auth";
 import { chats } from "@/db/schema/chat";
 import { creditAccounts, creditTransactions } from "@/db/schema/credit";
@@ -94,6 +99,29 @@ type PresetLibraryFilters = {
 type PaginationOptions = {
   page?: number;
   pageSize?: number;
+};
+
+type PresetSortMode = "popular" | "price-asc" | "latest";
+type PresetSortFieldKey = "purchaseCount" | "totalPrice" | "updatedAt" | "id";
+
+const PRESET_SORT_SCHEMA: Record<
+  PresetSortMode,
+  Array<{ key: PresetSortFieldKey; direction: "asc" | "desc" }>
+> = {
+  popular: [
+    { key: "purchaseCount", direction: "desc" },
+    { key: "updatedAt", direction: "desc" },
+    { key: "id", direction: "desc" },
+  ],
+  "price-asc": [
+    { key: "totalPrice", direction: "asc" },
+    { key: "updatedAt", direction: "desc" },
+    { key: "id", direction: "desc" },
+  ],
+  latest: [
+    { key: "updatedAt", direction: "desc" },
+    { key: "id", direction: "desc" },
+  ],
 };
 
 const getUniqueNormalizedValues = (values: string[]) =>
@@ -282,10 +310,14 @@ const attachPresetTags = async <T extends { id: string }>(
  */
 export const getPresets = async (
   filters?: PresetListFilters,
-  pagination?: PaginationOptions,
+  cursorOptions?: CursorOptions,
 ) => {
   const viewerId = await getUserId({ throwOnError: false });
-  const { page, pageSize } = resolvePagination(pagination);
+  const cursor = cursorOptions?.cursor?.trim() ?? "";
+  const dir = cursorOptions?.dir === "prev" ? "prev" : "next";
+  const limitValue =
+    typeof cursorOptions?.limit === "number" ? cursorOptions.limit : 12;
+  const limit = Math.max(1, Math.min(100, Math.trunc(limitValue)));
 
   return getPresetsCached({
     viewerId: viewerId ?? null,
@@ -300,8 +332,9 @@ export const getPresets = async (
       filters?.sort === "price-asc"
         ? filters.sort
         : "latest",
-    page,
-    pageSize,
+    cursor,
+    dir,
+    limit,
   });
 };
 
@@ -312,8 +345,9 @@ const getPresetsCached = async ({
   priceMin,
   priceMax,
   sort,
-  page,
-  pageSize,
+  cursor,
+  dir,
+  limit,
 }: {
   viewerId: string | null;
   query: string;
@@ -321,8 +355,9 @@ const getPresetsCached = async ({
   priceMin: number | null;
   priceMax: number | null;
   sort: "popular" | "latest" | "rating" | "price-asc";
-  page: number;
-  pageSize: number;
+  cursor: string;
+  dir: "next" | "prev";
+  limit: number;
 }) => {
   "use cache";
   cacheTag(presetCacheTags.market());
@@ -374,15 +409,72 @@ const getPresetsCached = async ({
   }
 
   const whereClause = clauses.length === 1 ? clauses[0] : and(...clauses);
-  const orderBy =
+  const sortMode: PresetSortMode =
     sort === "popular" || sort === "rating"
-      ? [desc(purchaseCount), desc(presets.updatedAt)]
+      ? "popular"
       : sort === "price-asc"
-        ? [asc(totalPrice), desc(presets.updatedAt)]
-        : [desc(presets.updatedAt)];
-  const offset = (page - 1) * pageSize;
+        ? "price-asc"
+        : "latest";
 
-  const [presetsList, [countRow]] = await Promise.all([
+  let cursorAnchor: {
+    id: string;
+    updatedAt: string;
+    purchaseCount: number;
+    totalPrice: number;
+  } | null = null;
+
+  if (cursor) {
+    const [row] = await db
+      .select({
+        id: presets.id,
+        updatedAt: sql<string>`to_char(${presets.updatedAt}, 'YYYY-MM-DD HH24:MI:SS.US')`,
+        purchaseCount,
+        totalPrice,
+      })
+      .from(presets)
+      .leftJoin(
+        workflowReferencedPresetPricing,
+        eq(workflowReferencedPresetPricing.workflowId, presets.workflowId),
+      )
+      .where(and(whereClause, eq(presets.id, cursor)))
+      .limit(1);
+
+    cursorAnchor = row ?? null;
+  }
+
+  const appliedDir = cursorAnchor && dir === "prev" ? "prev" : "next";
+  const fieldValues = {
+    purchaseCount,
+    totalPrice,
+    updatedAt: presets.updatedAt,
+    id: presets.id,
+  };
+
+  const sortFields = PRESET_SORT_SCHEMA[sortMode].map((field) => ({
+    ...field,
+    value: fieldValues[field.key],
+  }));
+
+  const orderBy = buildCursorOrderBy(
+    sortFields.map(({ value, direction }) => ({ value, direction })),
+    appliedDir,
+  );
+
+  let listWhere = whereClause;
+  if (cursorAnchor) {
+    const whereFields = sortFields.map(({ key, value, direction }) => ({
+      value,
+      direction,
+      cursor: cursorAnchor[key],
+    }));
+
+    const cursorWhere = buildCursorWhere(whereFields, appliedDir);
+    if (cursorWhere) {
+      listWhere = and(whereClause, cursorWhere);
+    }
+  }
+
+  const [rows, [countRow]] = await Promise.all([
     db
       .select({
         id: presets.id,
@@ -409,10 +501,9 @@ const getPresetsCached = async ({
         workflowReferencedPresetPricing,
         eq(workflowReferencedPresetPricing.workflowId, presets.workflowId),
       )
-      .where(whereClause)
+      .where(listWhere)
       .orderBy(...orderBy)
-      .limit(pageSize)
-      .offset(offset),
+      .limit(limit + 1),
     db
       .select({
         count: sql<number>`count(*)`.mapWith(Number),
@@ -425,9 +516,25 @@ const getPresetsCached = async ({
       .where(whereClause),
   ]);
 
+  const hasMore = rows.length > limit;
+  const sliced = rows.slice(0, limit);
+  const presetsList = appliedDir === "prev" ? sliced.reverse() : sliced;
+
+  const hasPrev = appliedDir === "next" ? Boolean(cursorAnchor) : hasMore;
+  const hasNext = appliedDir === "next" ? hasMore : Boolean(cursorAnchor);
+
+  const firstId = presetsList[0]?.id ?? cursorAnchor?.id ?? null;
+  const lastId = presetsList[presetsList.length - 1]?.id ?? cursorAnchor?.id ?? null;
+
   return {
     presets: presetsList,
     totalCount: countRow?.count ?? 0,
+    pageInfo: {
+      hasPrev,
+      hasNext,
+      prevCursor: hasPrev ? firstId : null,
+      nextCursor: hasNext ? lastId : null,
+    },
   };
 };
 
