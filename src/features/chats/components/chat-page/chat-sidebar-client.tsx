@@ -8,16 +8,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { ChatSidebarItem } from "@/features/chats/components/chat-page/chat-sidebar-item";
-import {
-  type ChatSidebarPage,
-  useChatSidebarInfiniteQuery,
-} from "@/features/chats/lib/query/queries";
+import { useChatSidebarInfiniteQuery } from "@/features/chats/lib/query/queries";
+import { type UserChatPage } from "@/features/chats/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type ChatSidebarClientProps = {
   chatId?: string;
   isCreating?: boolean;
-  initialPage: ChatSidebarPage;
+  initialPage: UserChatPage;
 };
 
 export function ChatSidebarClient({

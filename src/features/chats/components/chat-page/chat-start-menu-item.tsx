@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
-import { createChatFromWorkflow } from "@/features/chats/server/actions";
+import { useCreateChatMutation } from "@/features/chats/lib/query/mutations";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function ChatStartMenuItem({
@@ -14,6 +14,7 @@ export function ChatStartMenuItem({
   workflowId?: string | null;
 }) {
   const [loading, setLoading] = useState(false);
+  const createChatMutation = useCreateChatMutation();
   const router = useRouter();
   const t = useTranslations<AppMessageKeys>("Chat");
 
@@ -22,7 +23,7 @@ export function ChatStartMenuItem({
 
     try {
       setLoading(true);
-      const { chatId } = await createChatFromWorkflow({ workflowId });
+      const { chatId } = await createChatMutation.mutateAsync({ workflowId });
       if (!chatId) {
         throw new Error(t("toast.createFailed"));
       }

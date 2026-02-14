@@ -13,7 +13,7 @@ type ChatTitleInputProps = {
   currentTitle: string | null;
   placeholder?: string;
   onClose: () => void;
-  onBlur: (title: string | null) => void;
+  onBlur?: (title: string | null) => void;
   variant?: "sidebar" | "header";
 };
 

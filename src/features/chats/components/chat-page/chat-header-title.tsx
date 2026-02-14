@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChatSidebarDeleteDialog } from "@/features/chats/components/chat-page/chat-sidebar-delete-dialog";
 import { ChatTitleInput } from "@/features/chats/components/chat-page/chat-title-input";
+import { useChatTitleByChatId } from "@/features/chats/lib/query/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
@@ -21,8 +22,8 @@ type ChatHeaderTitleProps = {
 };
 
 export function ChatHeaderTitle({ chatId, chatTitle }: ChatHeaderTitleProps) {
+  const optimisticTitle = useChatTitleByChatId(chatId);
   const [isEditing, setIsEditing] = useState(false);
-  const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const t = useTranslations<AppMessageKeys>("Chat");
 
@@ -38,7 +39,6 @@ export function ChatHeaderTitle({ chatId, chatTitle }: ChatHeaderTitleProps) {
             onClose={() => {
               setIsEditing(false);
             }}
-            onBlur={(optimisticTitle) => setOptimisticTitle(optimisticTitle)}
             variant="header"
           />
         ) : (

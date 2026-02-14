@@ -1,16 +1,17 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+  type InfiniteData,
+  useInfiniteQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { getChatsByUserPageAction } from "@/features/chats/server/actions";
+import { type UserChatPage } from "@/features/chats/server/queries";
 
 const CHAT_SIDEBAR_PAGE_SIZE = 30;
 
-export type ChatSidebarPage = Awaited<
-  ReturnType<typeof getChatsByUserPageAction>
->;
-
 type UseChatSidebarInfiniteQueryParams = {
-  initialPage: ChatSidebarPage;
+  initialPage: UserChatPage;
 };
 
 export const chatQueryKeys = {
@@ -39,3 +40,33 @@ export const useChatSidebarInfiniteQuery = ({
       pageParams: [""],
     },
   });
+
+const selectChatTitleByChatId = ({
+  data,
+  chatId,
+}: {
+  data: InfiniteData<UserChatPage, string>;
+  chatId: string;
+}) => {
+  if (!chatId || !data) return null;
+
+  for (const page of data.pages) {
+    const found = page.items.find((item) => item.id === chatId);
+    if (found) return found.title ?? null;
+  }
+  return null;
+};
+
+export const useChatTitleByChatId = (chatId: string): string | null => {
+  const queryClient = useQueryClient();
+
+  const data = queryClient.getQueryData<InfiniteData<UserChatPage, string>>(
+    chatQueryKeys.sidebarList,
+  );
+
+  if (!data || !chatId) {
+    return null;
+  }
+
+  return selectChatTitleByChatId({ data, chatId });
+};

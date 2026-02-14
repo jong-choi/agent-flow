@@ -5,23 +5,21 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import { chatQueryKeys } from "@/features/chats/lib/query/queries";
 import {
-  type ChatSidebarPage,
-  chatQueryKeys,
-} from "@/features/chats/lib/query/queries";
-import {
+  createChatFromWorkflow,
   softDeleteChat,
   updateChatTitle,
+  updateChatTitleIfMissing,
 } from "@/features/chats/server/actions";
-
-type ChatSidebarInfiniteData = InfiniteData<ChatSidebarPage, string>;
+import { type UserChatPage } from "@/features/chats/server/queries";
 
 const applySidebarTitleUpdate = ({
   oldData,
   chatId,
   title,
 }: {
-  oldData: ChatSidebarInfiniteData | undefined;
+  oldData: InfiniteData<UserChatPage, string> | undefined;
   chatId: string;
   title: string | null;
 }) => {
@@ -46,9 +44,9 @@ export const useUpdateChatTitleMutation = () => {
   return useMutation({
     mutationFn: updateChatTitle,
     onMutate: ({ chatId, title }) => {
-      let snapshot: ChatSidebarInfiniteData | undefined;
+      let snapshot: InfiniteData<UserChatPage, string> | undefined;
 
-      queryClient.setQueryData<ChatSidebarInfiniteData>(
+      queryClient.setQueryData<InfiniteData<UserChatPage, string>>(
         chatQueryKeys.sidebarList,
         (oldData) => {
           snapshot = oldData;
@@ -69,11 +67,56 @@ export const useUpdateChatTitleMutation = () => {
   });
 };
 
+export const useUpdateChatTitleIfMissingMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateChatTitleIfMissing,
+    onMutate: ({ chatId, title }) => {
+      let snapshot: InfiniteData<UserChatPage, string> | undefined;
+
+      queryClient.setQueryData<InfiniteData<UserChatPage, string>>(
+        chatQueryKeys.sidebarList,
+        (oldData) => {
+          snapshot = oldData;
+
+          return applySidebarTitleUpdate({
+            oldData,
+            chatId,
+            title,
+          });
+        },
+      );
+
+      return { snapshot };
+    },
+    onError: (_error, _variables, context) => {
+      queryClient.setQueryData(chatQueryKeys.sidebarList, context?.snapshot);
+    },
+    onSuccess: (updated, variables, context) => {
+      if (!updated) {
+        queryClient.setQueryData(chatQueryKeys.sidebarList, context?.snapshot);
+        return;
+      }
+
+      queryClient.setQueryData<InfiniteData<UserChatPage, string>>(
+        chatQueryKeys.sidebarList,
+        (oldData) =>
+          applySidebarTitleUpdate({
+            oldData,
+            chatId: variables.chatId,
+            title: updated.title,
+          }),
+      );
+    },
+  });
+};
+
 const applySidebarDelete = ({
   oldData,
   chatId,
 }: {
-  oldData: ChatSidebarInfiniteData | undefined;
+  oldData: InfiniteData<UserChatPage, string> | undefined;
   chatId: string;
 }) => {
   if (!oldData) {
@@ -95,9 +138,9 @@ export const useDeleteChatMutation = () => {
   return useMutation({
     mutationFn: softDeleteChat,
     onMutate: ({ chatId }) => {
-      let snapshot: ChatSidebarInfiniteData | undefined;
+      let snapshot: InfiniteData<UserChatPage, string> | undefined;
 
-      queryClient.setQueryData<ChatSidebarInfiniteData>(
+      queryClient.setQueryData<InfiniteData<UserChatPage, string>>(
         chatQueryKeys.sidebarList,
         (oldData) => {
           snapshot = oldData;
@@ -113,6 +156,68 @@ export const useDeleteChatMutation = () => {
     },
     onError: (_error, _variables, context) => {
       queryClient.setQueryData(chatQueryKeys.sidebarList, context?.snapshot);
+    },
+  });
+};
+
+const applySidebarCreate = ({
+  oldData,
+  chatId,
+  workflowId,
+}: {
+  oldData: InfiniteData<UserChatPage, string> | undefined;
+  chatId: string;
+  workflowId: string;
+}) => {
+  if (!oldData || oldData.pages.length === 0) {
+    return oldData;
+  }
+
+  const now = new Date();
+  const nextItem: UserChatPage["items"][number] = {
+    id: chatId,
+    workflowId,
+    title: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const [firstPage, ...restPages] = oldData.pages;
+
+  return {
+    ...oldData,
+    pages: [
+      {
+        ...firstPage,
+        items: [
+          nextItem,
+          ...firstPage.items.filter((chat) => chat.id !== chatId),
+        ],
+      },
+      ...restPages,
+    ],
+  };
+};
+
+export const useCreateChatMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createChatFromWorkflow,
+    onSuccess: (result, variables) => {
+      const chatId = result.chatId;
+      if (!chatId) {
+        return;
+      }
+
+      queryClient.setQueryData<InfiniteData<UserChatPage, string>>(
+        chatQueryKeys.sidebarList,
+        (oldData) =>
+          applySidebarCreate({
+            oldData,
+            chatId,
+            workflowId: variables.workflowId,
+          }),
+      );
     },
   });
 };
