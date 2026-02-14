@@ -58,7 +58,7 @@ export function FlowApp({
   workflow,
 }: FlowAppProps) {
   const t = useTranslations<AppMessageKeys>("Workflows");
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const checkValidGraph = useCheckValidGraph();
   const setLoading = useCanvasStore((s) => s.setIsStartLoading);
@@ -102,6 +102,11 @@ export function FlowApp({
   useEffect(() => {
     setWorkflow(workflow ?? defaultWorkflowState);
   }, [setWorkflow, workflow]);
+
+  useEffect(() => {
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, [initialEdges, initialNodes, setEdges, setNodes]);
 
   return (
     <div className="relative h-full w-full" data-testid="flow-canvas">
