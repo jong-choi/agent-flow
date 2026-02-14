@@ -2,18 +2,19 @@
 
 import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
+import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function ChatPanelContainer({ children }: React.PropsWithChildren) {
   const t = useTranslations<AppMessageKeys>("Chat");
-  const setSearchParams = useSetSearchParams();
+  const threadId = useCanvasStore((s) => s.threadId);
+  const setThreadId = useCanvasStore((s) => s.setThreadId);
 
   return (
     <Dialog
-      open={true}
+      open={Boolean(threadId)}
       onOpenChange={(open) => {
-        if (!open) setSearchParams({ thread_id: null });
+        if (!open) setThreadId(null);
       }}
     >
       <DialogTitle className="sr-only">{t("dialog.chatPanelTitle")}</DialogTitle>

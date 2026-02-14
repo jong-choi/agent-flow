@@ -4,16 +4,16 @@ import { useCallback } from "react";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
+import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function ChatPanelCloseButton() {
   const t = useTranslations<AppMessageKeys>("Chat");
-  const setSearchParams = useSetSearchParams();
+  const setThreadId = useCanvasStore((s) => s.setThreadId);
 
   const handleClose = useCallback(() => {
-    setSearchParams({ thread_id: null });
-  }, [setSearchParams]);
+    setThreadId(null);
+  }, [setThreadId]);
 
   return (
     <Button

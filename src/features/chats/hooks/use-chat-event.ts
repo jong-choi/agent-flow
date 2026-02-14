@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { clientStreamEventSchema } from "@/app/api/chat/_types/chat-events";
@@ -25,8 +24,6 @@ export function useChatEvent() {
   const eventSourceRef = useRef<EventSource | null>(null);
   const streamErrorShownRef = useRef(false);
   const updateChatTitleIfMissingMutation = useUpdateChatTitleIfMissingMutation();
-  const searchParams = useSearchParams();
-  const searchThreadId = searchParams.get("thread_id");
   const mode = useChatStore((s) => s.mode);
   const storedThreadId = useChatStore((s) => s.threadId);
   const storedChatId = useChatStore((s) => s.chatId);
@@ -59,7 +56,7 @@ export function useChatEvent() {
   }, [closeEventSource, mode]);
 
   const resolveTarget = () => {
-    let threadId = storedThreadId ?? searchThreadId;
+    let threadId = storedThreadId;
     let chatId = storedChatId;
     let endpointBase = "/api/chat/temporary";
 

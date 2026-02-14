@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
 import { ChatStoreProvider } from "@/features/chats/store/chat-store";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
@@ -18,25 +16,24 @@ export function ChatEventWrapper({
   initialMessages,
   estimatedCredits,
   mode = "temporary",
+  onInvalidThredId,
 }: React.PropsWithChildren<{
   initialThreadId?: string;
   initialChatId?: string;
   initialMessages?: ClientChatMessage[];
   estimatedCredits?: number | null;
   mode?: ChatEventWrapperMode;
+  onInvalidThredId?: () => void;
 }>) {
   const t = useTranslations<AppMessageKeys>("Chat");
-  const threadSearchParam = useSearchParams().get("thread_id");
 
-  let threadId = initialThreadId ?? threadSearchParam;
+  let threadId = initialThreadId ?? null;
   let chatId: string | null = null;
 
   if (mode === "persistent") {
     threadId = null;
     chatId = initialChatId ?? null;
   }
-  const setSearchParams = useSetSearchParams();
-
   useEffect(() => {
     const controller = new AbortController();
     if (mode !== "temporary" || !threadId) {
@@ -58,9 +55,7 @@ export function ChatEventWrapper({
         } else if (response.status === 404) {
           toast.error(t("toast.startSessionNotFound"));
         }
-        if (threadSearchParam) {
-          setSearchParams({ thread_id: null });
-        }
+        onInvalidThredId?.();
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") {
           return;
@@ -74,7 +69,7 @@ export function ChatEventWrapper({
     return () => {
       controller.abort();
     };
-  }, [mode, setSearchParams, t, threadId, threadSearchParam]);
+  }, [mode, onInvalidThredId, t, threadId]);
 
   if (mode === "temporary" && !threadId) {
     return null;
@@ -93,6 +88,8 @@ export function ChatEventWrapper({
   };
 
   return (
-    <ChatStoreProvider initialState={initialState}>{children}</ChatStoreProvider>
+    <ChatStoreProvider initialState={initialState}>
+      {children}
+    </ChatStoreProvider>
   );
 }

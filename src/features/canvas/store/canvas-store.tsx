@@ -4,6 +4,10 @@ import { type ReactNode, createContext, useContext, useState } from "react";
 import { useStore } from "zustand";
 import { createStore } from "zustand";
 import {
+  type ChatThreadSlice,
+  createChatThreadSlice,
+} from "@/features/canvas/store/slices/chat-thread-slice";
+import {
   type FlowValidationSlice,
   createFlowValidationSlice,
 } from "@/features/canvas/store/slices/flow-validation-slice";
@@ -23,7 +27,8 @@ import {
 type CanvasState = FlowValidationSlice &
   SidebarInfoSlice &
   SelectedNodeSlice &
-  WorkflowSlice;
+  WorkflowSlice &
+  ChatThreadSlice;
 
 const createCanvasStore = (initialState?: Partial<CanvasState>) =>
   createStore<CanvasState>()((set, get, api) => ({
@@ -31,6 +36,7 @@ const createCanvasStore = (initialState?: Partial<CanvasState>) =>
     ...createSidebarInfoSlice(set, get, api),
     ...createSelectedNodeSlice(set, get, api),
     ...createWorkflowSlice(set, get, api),
+    ...createChatThreadSlice(set, get, api),
     ...initialState,
   }));
 
