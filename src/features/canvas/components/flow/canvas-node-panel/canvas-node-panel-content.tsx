@@ -30,10 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  type FlowCanvasNode,
-  type FlowNodeData,
-} from "@/db/types/sidebar-nodes";
+import { type FlowNodeData } from "@/db/types/sidebar-nodes";
 import { DocumentReferenceDialog } from "@/features/canvas/components/flow/document-reference/document-reference-dialog";
 import { Icons, isIconName } from "@/features/canvas/constants/icons";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
@@ -70,7 +67,13 @@ const createFormSchema = (t: WorkflowsTranslator) =>
       .refine(handleCountRefine, t("canvas.nodePanel.validation.handleRange")),
   });
 
-export function CanvasNodePanelContent({ node }: { node: FlowCanvasNode }) {
+export function CanvasNodePanelContent({
+  selectedNodeId,
+}: {
+  selectedNodeId: string;
+}) {
+  const { getNode } = useCanvasReactFlow();
+  const node = getNode(selectedNodeId)!;
   const locale = useLocale();
   const t = useTranslations<AppMessageKeys>("Workflows");
   const { updateNodeData, getEdges, setEdges } = useCanvasReactFlow();
