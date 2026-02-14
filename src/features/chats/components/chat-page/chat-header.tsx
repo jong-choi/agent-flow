@@ -7,7 +7,6 @@ type ChatHeaderProps = {
   locale: string;
   chatId: string;
   chatTitle: string | null;
-  createdAt: Date | string;
   workflowTitle?: string | null;
   workflowId?: string | null;
 };

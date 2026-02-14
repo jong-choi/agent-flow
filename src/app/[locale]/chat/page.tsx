@@ -5,11 +5,10 @@ import { getTranslations } from "next-intl/server";
 import { PageContainer, PageHeading } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { type ChatPageWorkflow } from "@/features/chats/types/chat-page-list";
-import { ChatSidebar } from "@/features/chats/components/chat-page/chat-sidebar";
 import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
 import { ChatWorkflowListDialog } from "@/features/chats/components/chat-page/chat-workflow-list-dialog";
 import { getRecentWorkflowsForChat } from "@/features/chats/server/queries";
+import { type ChatPageWorkflow } from "@/features/chats/types/chat-page-list";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
 
@@ -36,11 +35,7 @@ export default async function Page({ params }: PageProps<"/[locale]/chat">) {
   });
 
   return (
-    <PageContainer
-      LeftPanel={<ChatSidebar params={params} isCreating />}
-      className="max-w-full"
-      withoutRightPanel
-    >
+    <PageContainer className="max-w-full" withoutLeftPanel withoutRightPanel>
       <div className="flex h-full flex-col items-center justify-center gap-16 pb-32">
         <PageHeading>{t("page.heading")}</PageHeading>
         <Suspense fallback={<ChatWorkflowSectionFallback />}>
@@ -64,12 +59,7 @@ async function ChatWorkflowSection({ locale }: { locale: string }) {
         <div className="flex w-3/5 min-w-[450px] flex-col gap-8">
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
             {data.map((workflow: ChatPageWorkflow) => {
-              return (
-                <ChatWorkflowCard
-                  key={workflow.id}
-                  workflow={workflow}
-                />
-              );
+              return <ChatWorkflowCard key={workflow.id} workflow={workflow} />;
             })}
           </div>
         </div>

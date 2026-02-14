@@ -5,23 +5,20 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import { chatQueryKeys } from "@/features/chats/lib/query/queries";
 import {
-  type ChatSidebarPage,
-  chatQueryKeys,
-} from "@/features/chats/lib/query/queries";
-import {
+  createChatFromWorkflow,
   softDeleteChat,
   updateChatTitle,
 } from "@/features/chats/server/actions";
-
-type ChatSidebarInfiniteData = InfiniteData<ChatSidebarPage, string>;
+import { type UserChatPage } from "@/features/chats/server/queries";
 
 const applySidebarTitleUpdate = ({
   oldData,
   chatId,
   title,
 }: {
-  oldData: ChatSidebarInfiniteData | undefined;
+  oldData: InfiniteData<UserChatPage, string> | undefined;
   chatId: string;
   title: string | null;
 }) => {
@@ -46,9 +43,9 @@ export const useUpdateChatTitleMutation = () => {
   return useMutation({
     mutationFn: updateChatTitle,
     onMutate: ({ chatId, title }) => {
-      let snapshot: ChatSidebarInfiniteData | undefined;
+      let snapshot: InfiniteData<UserChatPage, string> | undefined;
 
-      queryClient.setQueryData<ChatSidebarInfiniteData>(
+      queryClient.setQueryData<InfiniteData<UserChatPage, string>>(
         chatQueryKeys.sidebarList,
         (oldData) => {
           snapshot = oldData;
@@ -69,11 +66,24 @@ export const useUpdateChatTitleMutation = () => {
   });
 };
 
+export const useCreateChatFromWorkflowMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createChatFromWorkflow,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: chatQueryKeys.sidebarList,
+      });
+    },
+  });
+};
+
 const applySidebarDelete = ({
   oldData,
   chatId,
 }: {
-  oldData: ChatSidebarInfiniteData | undefined;
+  oldData: InfiniteData<UserChatPage, string> | undefined;
   chatId: string;
 }) => {
   if (!oldData) {
@@ -95,9 +105,9 @@ export const useDeleteChatMutation = () => {
   return useMutation({
     mutationFn: softDeleteChat,
     onMutate: ({ chatId }) => {
-      let snapshot: ChatSidebarInfiniteData | undefined;
+      let snapshot: InfiniteData<UserChatPage, string> | undefined;
 
-      queryClient.setQueryData<ChatSidebarInfiniteData>(
+      queryClient.setQueryData<InfiniteData<UserChatPage, string>>(
         chatQueryKeys.sidebarList,
         (oldData) => {
           snapshot = oldData;

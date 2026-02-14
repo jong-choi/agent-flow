@@ -51,7 +51,9 @@ export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
             aria-current={isActive ? "page" : undefined}
             className="block"
           >
-            <div className="truncate">{optimisticTitle || displayTitle}</div>
+            <div className="max-w-38 truncate">
+              {optimisticTitle || displayTitle}
+            </div>
             <div className="mt-0.5 text-xs text-muted-foreground">
               {formatYMD(chat.updatedAt)}
             </div>

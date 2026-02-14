@@ -5,39 +5,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChatSidebarClient } from "@/features/chats/components/chat-page/chat-sidebar-client";
 import { getChatsByUserPage } from "@/features/chats/server/queries";
 
-export function ChatSidebar({
-  params,
-  isCreating = false,
-}: {
-  params: PageProps<"/[locale]/chat">["params"] & Promise<{ chatId?: string }>;
-  isCreating?: boolean;
-}) {
+export function ChatSidebar() {
   return (
     <Suspense fallback={<ChatSidebarFallback />}>
-      <ChatSidebarContent params={params} isCreating={isCreating} />
+      <ChatSidebarContent />
     </Suspense>
   );
 }
 
-async function ChatSidebarContent({
-  params,
-  isCreating = false,
-}: {
-  params: PageProps<"/[locale]/chat">["params"] & Promise<{ chatId?: string }>;
-
-  isCreating?: boolean;
-}) {
-  const resolevedParams = await params;
-  const chatId = resolevedParams.chatId;
+async function ChatSidebarContent() {
   const initialPage = await getChatsByUserPage({ limit: 30 });
 
-  return (
-    <ChatSidebarClient
-      chatId={chatId}
-      isCreating={isCreating}
-      initialPage={initialPage}
-    />
-  );
+  return <ChatSidebarClient initialPage={initialPage} />;
 }
 
 function ChatSidebarFallback() {
