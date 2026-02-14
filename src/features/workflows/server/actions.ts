@@ -1,13 +1,13 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { and, eq, inArray, isNotNull, ne, or } from "drizzle-orm";
 import { type FlowEdge, type FlowNode } from "@/app/api/chat/_types/nodes";
 import { db } from "@/db/client";
-import { getUserId } from "@/features/auth/server/queries";
 import { presetPurchases, presets, workflowPresets } from "@/db/schema/presets";
-import { presetTags as presetCacheTags } from "@/features/presets/server/cache/tags";
 import { workflowEdges, workflowNodes, workflows } from "@/db/schema/workflows";
+import { getUserId } from "@/features/auth/server/queries";
+import { presetTags as presetCacheTags } from "@/features/presets/server/cache/tags";
 import { workflowTags } from "@/features/workflows/server/cache/tags";
 
 type WorkflowGraphInput = {
@@ -15,6 +15,12 @@ type WorkflowGraphInput = {
   edges: FlowEdge[];
   presetIds?: string[];
 };
+
+type SaveWorkflowInput = {
+  workflowId: string | null;
+  title: string;
+  description: string | null;
+} & WorkflowGraphInput;
 
 const getUniquePresetIds = (presetIds?: string[]) => {
   if (!presetIds) {
@@ -105,15 +111,15 @@ const buildWorkflowEdgeValue = (
   targetHandle: edge.targetHandle || "target",
 });
 
-const revalidateWorkflowTags = (ownerId: string, workflowId?: string) => {
-  revalidateTag(workflowTags.allByUser(ownerId), "max");
-  revalidateTag(workflowTags.listByUser(ownerId), "max");
-  revalidateTag(workflowTags.recentByUser(ownerId), "max");
+const updateWorkflowTags = (ownerId: string, workflowId?: string) => {
+  updateTag(workflowTags.allByUser(ownerId));
+  updateTag(workflowTags.listByUser(ownerId));
+  updateTag(workflowTags.recentByUser(ownerId));
 
   if (workflowId) {
-    revalidateTag(workflowTags.graphByWorkflow(workflowId), "max");
-    revalidateTag(workflowTags.metaByWorkflow(workflowId), "max");
-    revalidateTag(presetCacheTags.pricingByWorkflow(workflowId), "max");
+    updateTag(workflowTags.graphByWorkflow(workflowId));
+    updateTag(workflowTags.metaByWorkflow(workflowId));
+    updateTag(presetCacheTags.pricingByWorkflow(workflowId));
   }
 };
 
@@ -184,7 +190,7 @@ export const createWorkflowGraph = async ({
         .onConflictDoNothing();
     }
 
-    revalidateWorkflowTags(ownerId, workflowId);
+    updateWorkflowTags(ownerId, workflowId);
     return workflow;
   });
 };
@@ -339,8 +345,42 @@ export const updateWorkflowGraph = async ({
         );
     }
 
-    revalidateWorkflowTags(ownerId, workflowId);
+    updateWorkflowTags(ownerId, workflowId);
 
     return workflow;
+  });
+};
+
+export const saveWorkflowAction = async ({
+  workflowId,
+  title,
+  description,
+  nodes,
+  edges,
+  presetIds,
+}: SaveWorkflowInput) => {
+  const normalizedTitle = title.trim();
+  if (!normalizedTitle) {
+    throw new Error("워크플로우 제목은 필수입니다.");
+  }
+  const normalizedDescription = description ?? "";
+
+  if (workflowId) {
+    return updateWorkflowGraph({
+      workflowId,
+      title: normalizedTitle,
+      description: normalizedDescription,
+      nodes,
+      edges,
+      presetIds,
+    });
+  }
+
+  return createWorkflowGraph({
+    title: normalizedTitle,
+    description: normalizedDescription,
+    nodes,
+    edges,
+    presetIds,
   });
 };
