@@ -151,7 +151,7 @@ async function TemplateMarketContent({
     namespace: "Presets",
   });
   const selectedCategory = resolveParam(resolvedSearchParams?.category, "all");
-  const selectedSort = resolveParam(resolvedSearchParams?.sort, "popular");
+  const selectedSort = resolveParam(resolvedSearchParams?.sort, "latest");
   const query = resolveParam(resolvedSearchParams?.q, "");
   const rawCursor = Array.isArray(resolvedSearchParams?.cursor)
     ? resolvedSearchParams?.cursor[0]
@@ -175,7 +175,7 @@ async function TemplateMarketContent({
   };
   const paginationDefaults = {
     category: "all",
-    sort: "popular",
+    sort: "latest",
   };
 
   const { presets, totalCount, pageInfo } = await getPresets(
@@ -185,11 +185,12 @@ async function TemplateMarketContent({
       priceMin: priceMin ?? undefined,
       priceMax: priceMax ?? undefined,
       sort:
+        selectedSort === "popular" ||
         selectedSort === "latest" ||
         selectedSort === "rating" ||
         selectedSort === "price-asc"
           ? selectedSort
-          : "popular",
+          : "latest",
     },
     { cursor, dir, limit: PAGE_SIZE },
   );
