@@ -4,7 +4,6 @@ import { BoringCardAvatar } from "@/components/boring-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -81,15 +80,18 @@ function PresetsCard({
   return (
     <Card className="h-full">
       <CardHeader>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
             {resolveCategoryLabel(t, preset.category)}
           </span>
           <span>
             {t("list.updatedAt", { date: formatDate(preset.updatedAt) })}
           </span>
+          <span className="ml-auto rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
+            {formatPrice(t, preset.totalPrice)}
+          </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <BoringCardAvatar
             seed={preset.id}
             size={40}
@@ -97,20 +99,15 @@ function PresetsCard({
             className="size-10 shrink-0"
           />
           <div className="min-h-18 min-w-0 space-y-1">
-            <CardTitle className="text-lg">{preset.title}</CardTitle>
+            <CardTitle className="truncate text-lg">{preset.title}</CardTitle>
             <CardDescription className="line-clamp-2">
               {preset.summary ?? t("common.noDescription")}
             </CardDescription>
           </div>
         </div>
-        <CardAction>
-          <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
-            {formatPrice(t, preset.totalPrice)}
-          </span>
-        </CardAction>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+        <div className="flex gap-3 text-xs text-muted-foreground">
           {showPurchaseCount ? (
             <span>
               {t("list.purchaseCount", { count: preset.purchaseCount ?? 0 })}

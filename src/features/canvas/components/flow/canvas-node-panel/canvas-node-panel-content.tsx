@@ -406,7 +406,7 @@ function ContentContentFormField({
                 onValueChange={field.onChange}
                 value={field.value || undefined}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full truncate">
                   <SelectValue placeholder={content.placeholder} />
                 </SelectTrigger>
                 <SelectContent>
