@@ -10,6 +10,7 @@ import {
   createChatFromWorkflow,
   softDeleteChat,
   updateChatTitle,
+  updateChatTitleIfMissing,
 } from "@/features/chats/server/actions";
 import { type UserChatPage } from "@/features/chats/server/queries";
 
@@ -66,15 +67,69 @@ export const useUpdateChatTitleMutation = () => {
   });
 };
 
+export const useUpdateChatTitleIfMissingMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateChatTitleIfMissing,
+    onSuccess: (updated) => {
+      if (!updated) {
+        return;
+      }
+
+      queryClient.setQueryData<InfiniteData<UserChatPage, string>>(
+        chatQueryKeys.sidebarList,
+        (oldData) =>
+          applySidebarTitleUpdate({
+            oldData,
+            chatId: updated.id,
+            title: updated.title,
+          }),
+      );
+    },
+  });
+};
+
+const applySidebarChatInsert = ({
+  oldData,
+  chat,
+}: {
+  oldData: InfiniteData<UserChatPage, string> | undefined;
+  chat: UserChatPage["items"][number];
+}) => {
+  if (!oldData) {
+    return oldData;
+  }
+
+  const exists = oldData.pages.some((page) =>
+    page.items.some((item) => item.id === chat.id),
+  );
+  if (exists) {
+    return oldData;
+  }
+
+  return {
+    ...oldData,
+    pages: oldData.pages.map((page, index) =>
+      index === 0 ? { ...page, items: [chat, ...page.items] } : page,
+    ),
+  };
+};
+
 export const useCreateChatFromWorkflowMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: createChatFromWorkflow,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: chatQueryKeys.sidebarList,
-      });
+    onSuccess: (createdChat) => {
+      queryClient.setQueryData<InfiniteData<UserChatPage, string>>(
+        chatQueryKeys.sidebarList,
+        (oldData) =>
+          applySidebarChatInsert({
+            oldData,
+            chat: createdChat,
+          }),
+      );
     },
   });
 };

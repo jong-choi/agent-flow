@@ -41,13 +41,19 @@ export const createChatFromWorkflow = async ({
   const [chat] = await db
     .insert(chats)
     .values({ userId, workflowId })
-    .returning({ chatId: chats.id });
+    .returning({
+      id: chats.id,
+      workflowId: chats.workflowId,
+      title: chats.title,
+      createdAt: chats.createdAt,
+      updatedAt: chats.updatedAt,
+    });
 
-  if (!chat?.chatId) {
+  if (!chat) {
     throw new Error("채팅 생성에 실패했습니다.");
   }
 
-  updateChatTags(userId, chat.chatId);
+  updateChatTags(userId, chat.id);
 
   return chat;
 };

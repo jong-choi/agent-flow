@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { BotMessageSquare, SquarePen } from "lucide-react";
@@ -20,11 +21,28 @@ export function ChatSidebarClient({
 }) {
   const t = useTranslations<AppMessageKeys>("Chat");
   const { chatId } = useParams();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { data, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useChatSidebarInfiniteQuery({ initialPage });
 
   const chats = data?.pages.flatMap((page) => page.items) ?? [];
+  const firstChatId = chats?.[0]?.id;
+
+  useEffect(() => {
+    if (!firstChatId || chatId !== firstChatId) return;
+
+    const scrollElement = scrollAreaRef.current?.querySelector(
+      "[data-radix-scroll-area-viewport]",
+    );
+
+    if (!scrollElement) return;
+
+    scrollElement.scrollTo({
+      top: 0,
+      behavior: "auto",
+    });
+  }, [chatId, firstChatId]);
 
   return (
     <>
@@ -56,7 +74,7 @@ export function ChatSidebarClient({
       <div className="px-4">
         <Separator />
       </div>
-      <ScrollArea className="min-h-0 flex-1 px-4">
+      <ScrollArea ref={scrollAreaRef} className="min-h-0 flex-1 px-4">
         <div className="flex min-h-full flex-col py-1">
           <nav className="flex flex-col gap-1">
             {chats.length === 0 ? (
@@ -73,7 +91,7 @@ export function ChatSidebarClient({
               ))
             )}
           </nav>
-          {hasNextPage ? (
+          {hasNextPage && (
             <div className="mt-auto pt-3">
               <Button
                 type="button"
@@ -87,7 +105,7 @@ export function ChatSidebarClient({
                 {t("action.more")}
               </Button>
             </div>
-          ) : null}
+          )}
         </div>
       </ScrollArea>
     </>

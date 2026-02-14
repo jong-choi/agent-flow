@@ -20,11 +20,11 @@ export function ChatStartMenuItem({
     if (!workflowId || createChatMutation.isPending) return;
 
     try {
-      const { chatId } = await createChatMutation.mutateAsync({ workflowId });
-      if (!chatId) {
+      const createdChat = await createChatMutation.mutateAsync({ workflowId });
+      if (!createdChat.id) {
         throw new Error(t("toast.createFailed"));
       }
-      router.push(`/chat/${chatId}`);
+      router.push(`/chat/${createdChat.id}`);
     } catch {
       toast.error(t("toast.createFailed"));
     }

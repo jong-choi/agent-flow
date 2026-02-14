@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { clientStreamEventSchema } from "@/app/api/chat/_types/chat-events";
 import { type NodeType } from "@/features/canvas/constants/node-types";
-import { updateChatTitleIfMissing } from "@/features/chats/server/actions";
+import { useUpdateChatTitleIfMissingMutation } from "@/features/chats/lib/query/mutations";
 import { useChatStore } from "@/features/chats/store/chat-store";
 import { createHumanMessage } from "@/features/chats/utils/chat-message";
 import { updateCreditTagsAction } from "@/features/credits/server/actions";
@@ -24,6 +24,7 @@ export function useChatEvent() {
   const t = useTranslations<AppMessageKeys>("Chat");
   const eventSourceRef = useRef<EventSource | null>(null);
   const streamErrorShownRef = useRef(false);
+  const updateChatTitleIfMissingMutation = useUpdateChatTitleIfMissingMutation();
   const searchParams = useSearchParams();
   const searchThreadId = searchParams.get("thread_id");
   const mode = useChatStore((s) => s.mode);
@@ -213,9 +214,9 @@ export function useChatEvent() {
               const title =
                 typeof data?.title === "string" ? data.title.trim() : "";
               if (!title) return;
-              updateChatTitleIfMissing({ chatId: targetId, title }).catch(
-                () => null,
-              );
+              updateChatTitleIfMissingMutation
+                .mutateAsync({ chatId: targetId, title })
+                .catch(() => null);
             })
             .catch(() => null);
         }
