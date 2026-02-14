@@ -22,7 +22,7 @@ export default function ChatPanelPage() {
       <ChatEventWrapper
         key={threadId}
         initialThreadId={threadId}
-        onInvalidThredId={handleThreadInvalid}
+        onInvalidThreadId={handleThreadInvalid}
       >
         <ChatPanelContainer>
           <ChatPanelContent />

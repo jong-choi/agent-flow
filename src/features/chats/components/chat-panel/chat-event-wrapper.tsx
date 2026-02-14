@@ -16,14 +16,14 @@ export function ChatEventWrapper({
   initialMessages,
   estimatedCredits,
   mode = "temporary",
-  onInvalidThredId,
+  onInvalidThreadId,
 }: React.PropsWithChildren<{
   initialThreadId?: string;
   initialChatId?: string;
   initialMessages?: ClientChatMessage[];
   estimatedCredits?: number | null;
   mode?: ChatEventWrapperMode;
-  onInvalidThredId?: () => void;
+  onInvalidThreadId?: () => void;
 }>) {
   const t = useTranslations<AppMessageKeys>("Chat");
 
@@ -55,7 +55,7 @@ export function ChatEventWrapper({
         } else if (response.status === 404) {
           toast.error(t("toast.startSessionNotFound"));
         }
-        onInvalidThredId?.();
+        onInvalidThreadId?.();
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") {
           return;
@@ -69,7 +69,7 @@ export function ChatEventWrapper({
     return () => {
       controller.abort();
     };
-  }, [mode, onInvalidThredId, t, threadId]);
+  }, [mode, onInvalidThreadId, t, threadId]);
 
   if (mode === "temporary" && !threadId) {
     return null;

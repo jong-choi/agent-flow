@@ -1,12 +1,19 @@
 "use client";
 
+import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import { Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import { Button } from "@/components/ui/button";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn, formatTimeToday } from "@/lib/utils";
+
+const ContentMarkdown = dynamic(() =>
+  import("@/components/markdown/content-markdown").then(
+    (mod) => mod.ContentMarkdown,
+  ),
+);
 
 export function ChatMessageItem({ message }: { message: ClientChatMessage }) {
   const t = useTranslations<AppMessageKeys>("Chat");
@@ -32,7 +39,15 @@ export function ChatMessageItem({ message }: { message: ClientChatMessage }) {
               : "w-full",
           )}
         >
-          <ContentMarkdown>{message.content}</ContentMarkdown>
+          <Suspense
+            fallback={
+              <p className="leading-relaxed whitespace-pre-wrap text-transparent">
+                {message.content}
+              </p>
+            }
+          >
+            <ContentMarkdown>{message.content}</ContentMarkdown>
+          </Suspense>
         </div>
         <div
           className={cn(
