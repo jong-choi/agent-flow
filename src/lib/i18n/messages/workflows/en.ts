@@ -89,6 +89,7 @@ const message = {
       },
     },
     loadPreset: {
+      groupLabel: "Preset",
       dialog: {
         title: "Load Preset",
         description:

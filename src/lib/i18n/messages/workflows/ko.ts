@@ -87,6 +87,7 @@ const message = {
       },
     },
     loadPreset: {
+      groupLabel: "프리셋",
       dialog: {
         title: "프리셋 불러오기",
         description: "구매했거나 만든 프리셋을 현재 캔버스에 추가할 수 있어요.",
