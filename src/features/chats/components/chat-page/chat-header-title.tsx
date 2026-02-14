@@ -26,8 +26,6 @@ export function ChatHeaderTitle({ chatId, chatTitle }: ChatHeaderTitleProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const t = useTranslations<AppMessageKeys>("Chat");
 
-  const displayTitle = chatTitle?.trim() || t("title.newChat");
-
   return (
     <div className="flex items-center gap-2 md:max-w-[50vw]">
       <div className={cn("min-w-0", isEditing && "w-[50vw]")}>
@@ -42,8 +40,11 @@ export function ChatHeaderTitle({ chatId, chatTitle }: ChatHeaderTitleProps) {
             variant="header"
           />
         ) : (
-          <div className="cursor-default truncate text-lg font-semibold text-foreground">
-            {optimisticTitle || displayTitle}
+          <div
+            key={chatTitle}
+            className="cursor-default truncate text-lg font-semibold text-foreground"
+          >
+            {optimisticTitle || chatTitle || t("title.newChat")}
           </div>
         )}
       </div>

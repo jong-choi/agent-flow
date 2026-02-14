@@ -2,22 +2,15 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getChatsByUserPageAction } from "@/features/chats/server/actions";
+import { type UserChatPage } from "@/features/chats/server/queries";
 
 const CHAT_SIDEBAR_PAGE_SIZE = 30;
-
-export type ChatSidebarPage = Awaited<
-  ReturnType<typeof getChatsByUserPageAction>
->;
-
-type UseChatSidebarInfiniteQueryParams = {
-  initialPage: ChatSidebarPage;
-};
 
 export const chatQueryKeys = {
   sidebarList: ["chat", "sidebar", "list"] as const,
 };
 
-const getChatSidebarPage = async (cursor?: string) =>
+const getUserChatPage = async (cursor?: string) =>
   getChatsByUserPageAction({
     cursor: typeof cursor === "string" && cursor ? cursor : undefined,
     limit: CHAT_SIDEBAR_PAGE_SIZE,
@@ -25,11 +18,13 @@ const getChatSidebarPage = async (cursor?: string) =>
 
 export const useChatSidebarInfiniteQuery = ({
   initialPage,
-}: UseChatSidebarInfiniteQueryParams) =>
+}: {
+  initialPage: UserChatPage;
+}) =>
   useInfiniteQuery({
     queryKey: chatQueryKeys.sidebarList,
     queryFn: ({ pageParam }) =>
-      getChatSidebarPage(
+      getUserChatPage(
         typeof pageParam === "string" && pageParam ? pageParam : undefined,
       ),
     initialPageParam: "",

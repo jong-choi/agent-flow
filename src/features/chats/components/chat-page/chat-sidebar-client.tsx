@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { BotMessageSquare, SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -8,24 +9,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { ChatSidebarItem } from "@/features/chats/components/chat-page/chat-sidebar-item";
-import {
-  type ChatSidebarPage,
-  useChatSidebarInfiniteQuery,
-} from "@/features/chats/lib/query/queries";
+import { useChatSidebarInfiniteQuery } from "@/features/chats/lib/query/queries";
+import { type UserChatPage } from "@/features/chats/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
-type ChatSidebarClientProps = {
-  chatId?: string;
-  isCreating?: boolean;
-  initialPage: ChatSidebarPage;
-};
-
 export function ChatSidebarClient({
-  chatId,
-  isCreating = false,
   initialPage,
-}: ChatSidebarClientProps) {
+}: {
+  initialPage: UserChatPage;
+}) {
   const t = useTranslations<AppMessageKeys>("Chat");
+  const { chatId } = useParams();
+
   const { data, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useChatSidebarInfiniteQuery({ initialPage });
 
@@ -34,7 +29,7 @@ export function ChatSidebarClient({
   return (
     <>
       <div className="h-7 px-4">
-        {isCreating ? (
+        {!chatId ? (
           <Button
             size="sm"
             variant="ghost"

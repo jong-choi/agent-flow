@@ -4,7 +4,6 @@ import { getTranslations } from "next-intl/server";
 import { PageContainer } from "@/components/page-template";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatHeader } from "@/features/chats/components/chat-page/chat-header";
-import { ChatSidebar } from "@/features/chats/components/chat-page/chat-sidebar";
 import { ChatEventWrapper } from "@/features/chats/components/chat-panel/chat-event-wrapper";
 import { ChatPanelContent } from "@/features/chats/components/chat-panel/content/chat-panel-content";
 import {
@@ -47,7 +46,7 @@ export default function ChatRunPage({
   return (
     <PageContainer
       className="flex h-[calc(100dvh-3.5rem)] max-w-full flex-col py-4"
-      LeftPanel={<ChatSidebar params={params} />}
+      withoutLeftPanel
       withoutRightPanel
     >
       <Suspense fallback={<ChatRunPageFallback />}>
@@ -85,7 +84,6 @@ async function ChatRunContent({
         locale={locale}
         chatId={chatId}
         chatTitle={chat.title}
-        createdAt={chat.createdAt}
         workflowTitle={workflow?.title}
         workflowId={chat.workflowId}
       />
