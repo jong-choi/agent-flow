@@ -20,7 +20,6 @@ import { cn, formatYMD } from "@/lib/utils";
 type ChatSidebarItemProps = {
   chat: ChatListItem;
   isActive: boolean;
-  first?: boolean;
 };
 
 export function ChatSidebarItem({ chat, isActive }: ChatSidebarItemProps) {
