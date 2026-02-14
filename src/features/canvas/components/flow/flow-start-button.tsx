@@ -1,14 +1,12 @@
 "use client";
 
 import { useCallback } from "react";
-import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { type ChatCreateThreadRequest } from "@/app/api/chat/temporary/route";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
-import { useSetSearchParams } from "@/features/canvas/hooks/use-set-search-params";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
@@ -17,15 +15,14 @@ export function FlowStartButton() {
   const isValidGraph = useCanvasStore((s) => s.isValidGraph);
   const loading = useCanvasStore((s) => s.isStartLoading);
   const setLoading = useCanvasStore((s) => s.setIsStartLoading);
-  const thread_id = useSearchParams().get("thread_id");
+  const threadId = useCanvasStore((s) => s.threadId);
+  const setThreadId = useCanvasStore((s) => s.setThreadId);
   const { getEdges, getNodes } = useCanvasReactFlow();
 
-  const disabled = !isValidGraph || !!thread_id || loading;
-
-  const setSearchParams = useSetSearchParams();
+  const disabled = !isValidGraph || !!threadId || loading;
 
   const handleStart = useCallback(async () => {
-    if (loading || !isValidGraph || thread_id) return;
+    if (loading || !isValidGraph || threadId) return;
 
     setLoading(true);
 
@@ -59,7 +56,7 @@ export function FlowStartButton() {
         throw new Error(t("canvas.start.errors.missingThreadId"));
       }
 
-      setSearchParams({ thread_id: nextThreadId });
+      setThreadId(nextThreadId);
     } catch (error) {
       console.error("Error while starting chat:", error);
       const message =
@@ -73,11 +70,11 @@ export function FlowStartButton() {
   }, [
     loading,
     isValidGraph,
-    thread_id,
+    threadId,
     setLoading,
+    setThreadId,
     getEdges,
     getNodes,
-    setSearchParams,
     t,
   ]);
 
