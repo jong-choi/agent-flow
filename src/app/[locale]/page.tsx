@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { LandingSectionBackdrop } from "@/components/landing/landing-section-backdrop";
+import { LandingShowcaseImage } from "@/components/landing/landing-showcase-image";
 import { BrutalBadge } from "@/components/main/ui/brutal-badge";
 import { BrutalButton } from "@/components/main/ui/brutal-button";
 import { BrutalCard } from "@/components/main/ui/brutal-card";
@@ -40,14 +41,7 @@ export default async function BrutalLandingPage({
     locale,
     namespace: "Home",
   });
-  const canvasNodes = [
-    t("canvas.nodes.presets"),
-    t("canvas.nodes.llmCall"),
-    t("canvas.nodes.search"),
-    t("canvas.nodes.document"),
-    t("canvas.nodes.fanOut"),
-    t("canvas.nodes.output"),
-  ];
+  const landingShowcaseLocale = locale === "en" ? "en" : "ko";
   const howItWorksSteps = [
     {
       step: "01",
@@ -72,28 +66,6 @@ export default async function BrutalLandingPage({
       title: "Deploy",
       desc: t("howItWorks.deployDesc"),
       variant: "inverse" as const,
-    },
-  ];
-  const presetCards = [
-    {
-      name: t("presets.items.customerSupport.name"),
-      tag: t("presets.items.customerSupport.tag"),
-      price: 1,
-    },
-    {
-      name: t("presets.items.seoBlog.name"),
-      tag: t("presets.items.seoBlog.tag"),
-      price: 5,
-    },
-    {
-      name: t("presets.items.projectManagement.name"),
-      tag: t("presets.items.projectManagement.tag"),
-      price: 0,
-    },
-    {
-      name: t("presets.items.parallelCode.name"),
-      tag: t("presets.items.parallelCode.tag"),
-      price: 3,
     },
   ];
   const weekdays = [
@@ -193,28 +165,19 @@ console.log(result.choices[0].message.content);`;
           </div>
 
           <BrutalCard
-            variant="outline"
-            padding="default"
-            className="border-brutal-background/40 bg-transparent text-brutal-background"
+            padding="none"
+            className="overflow-hidden border-0 border-brutal-background/40 bg-transparent text-brutal-background"
           >
-            <div className="grid grid-cols-3 gap-4">
-              {canvasNodes.map((node, i) => (
-                <div
-                  key={node}
-                  className={`border-2 p-4 text-center text-xs font-black uppercase italic ${
-                    i === 1 || i === 4
-                      ? "border-brutal-background bg-brutal-background text-brutal-foreground"
-                      : "border-brutal-background/40 bg-transparent text-brutal-background/80"
-                  }`}
-                >
-                  {node}
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 flex items-center gap-2">
-              <div className="h-[3px] flex-1 bg-brutal-background/50" />
-              <div className="h-3 w-3 rotate-45 bg-brutal-background" />
-            </div>
+            <LandingShowcaseImage
+              variant="canvas"
+              locale={landingShowcaseLocale}
+              objectPosition="center top"
+              className="h-[24rem] rounded-none border-0 bg-transparent"
+              scale={1.3}
+              offsetX={100}
+              theme="inverse"
+              resolutionMultiplier={1.5}
+            />
           </BrutalCard>
         </div>
       </BrutalSection>
@@ -263,36 +226,21 @@ console.log(result.choices[0].message.content);`;
       >
         <BrutalRadialGlow className="opacity-80" />
         <div className="relative z-10 grid items-center gap-16 lg:grid-cols-2">
-          <div className="space-y-4">
-            <BrutalCard
-              variant="default"
-              padding="sm"
-              className="ml-8 max-w-md p-5 font-bold text-brutal-foreground uppercase"
-            >
-              <span className="mb-2 block text-sm tracking-widest text-brutal-muted-foreground uppercase">
-                {t("chat.demo.userLabel")}
-              </span>
-              {t("chat.demo.userMessage1")}
-            </BrutalCard>
-            <BrutalCard
-              variant="inverse"
-              className="mr-8 max-w-md p-5 font-bold uppercase"
-            >
-              <span className="mb-2 block text-sm tracking-widest opacity-60">
-                {t("chat.demo.agentLabel")}
-              </span>
-              {t("chat.demo.agentMessage")}
-            </BrutalCard>
-            <BrutalCard
-              variant="default"
-              className="ml-4 max-w-md p-5 font-bold text-brutal-foreground uppercase"
-            >
-              <span className="mb-2 block text-sm tracking-widest text-brutal-muted-foreground uppercase">
-                {t("chat.demo.userLabel")}
-              </span>
-              {t("chat.demo.userMessage2")}
-            </BrutalCard>
-          </div>
+          <BrutalCard
+            padding="none"
+            className="h-80 w-lg overflow-hidden border-0 border-brutal-background/40 bg-transparent text-brutal-background"
+          >
+            <LandingShowcaseImage
+              variant="chats"
+              locale={landingShowcaseLocale}
+              theme="inverse"
+              objectPosition="center top"
+              className="rounded-none border-0 bg-transparent"
+              scale={1.3}
+              offsetY={35}
+              resolutionMultiplier={1.3}
+            />
+          </BrutalCard>
 
           <div>
             <BrutalBadge variant="inverse" className="mb-4">
@@ -356,31 +304,19 @@ console.log(result.choices[0].message.content);`;
             </BrutalButton>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            {presetCards.map((preset) => (
-              <BrutalCard
-                key={preset.name}
-                variant="default"
-                padding="default"
-                className="group mt-6 p-6"
-              >
-                <div className="mb-6 flex items-start justify-between">
-                  <span className="text-sm font-black tracking-widest text-brutal-muted-foreground uppercase">
-                    {preset.tag}
-                  </span>
-                  <span className="text-lg font-black text-brutal-foreground">
-                    {preset.price
-                      ? t("presets.priceCredits", { count: preset.price })
-                      : t("presets.free")}
-                  </span>
-                </div>
-                <h5 className="text-md leading-tight font-black uppercase">
-                  {preset.name}
-                </h5>
-                <div className="mt-4 w-full border-t border-brutal-foreground" />
-              </BrutalCard>
-            ))}
-          </div>
+          <BrutalCard
+            padding="none"
+            className="mt-6 h-80 w-lg overflow-hidden border-0"
+          >
+            <LandingShowcaseImage
+              variant="presets"
+              locale={landingShowcaseLocale}
+              objectPosition="center top"
+              className="rounded-none border-0 bg-transparent"
+              scale={1.0}
+              resolutionMultiplier={1.3}
+            />
+          </BrutalCard>
         </div>
       </BrutalSection>
 
