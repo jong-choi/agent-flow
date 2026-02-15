@@ -1,7 +1,5 @@
-import { revalidateTag } from "next/cache";
 import { z } from "zod";
-import { chatTags } from "@/features/chats/server/cache/tags";
-import { insertChatMessage } from "@/features/chats/server/actions";
+import { insertChatMessage } from "@/features/chats/server/mutations";
 import { getChatById } from "@/features/chats/server/queries";
 
 const chatMessageSchema = z.object({
@@ -29,9 +27,6 @@ export async function POST(
 
     const chat = await getChatById(chatId);
     await insertChatMessage({ chatId, role: "user", content: message });
-    revalidateTag(chatTags.messagesByChat(chat.id), "max");
-    revalidateTag(chatTags.detailByChat(chat.id), "max");
-    revalidateTag(chatTags.listByUser(chat.userId), "max");
 
     return Response.json({ ok: true, hasTitle: Boolean(chat.title) });
   } catch (error) {

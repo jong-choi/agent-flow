@@ -4,7 +4,7 @@ import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-inpu
 import {
   mergeDocumentContentById,
   replaceDocumentContentById,
-} from "@/features/documents/server/actions";
+} from "@/features/documents/server/mutations";
 import { getDocumentById } from "@/features/documents/server/queries";
 
 const DOCUMENT_ACTIONS = ["읽기", "대치", "병합"] as const;

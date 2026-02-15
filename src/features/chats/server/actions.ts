@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import { type CursorOptions } from "@/db/query/cursor";
-import { chatMessages, chats } from "@/db/schema";
+import { chats } from "@/db/schema";
 import { getUserId } from "@/features/auth/server/queries";
 import { chatTags } from "@/features/chats/server/cache/tags";
 import {
@@ -56,33 +56,6 @@ export const createChatFromWorkflow = async ({
   updateChatTags(userId, chat.id);
 
   return chat;
-};
-
-export const insertChatMessage = async ({
-  chatId,
-  role,
-  content,
-}: {
-  chatId: string;
-  role: "user" | "assistant" | "system";
-  content: string;
-}) => {
-  const [message] = await db
-    .insert(chatMessages)
-    .values({ chatId, role, content })
-    .returning({
-      id: chatMessages.id,
-      chatId: chatMessages.chatId,
-      role: chatMessages.role,
-      content: chatMessages.content,
-      createdAt: chatMessages.createdAt,
-    });
-
-  if (!message) {
-    throw new Error("메시지 저장에 실패했습니다.");
-  }
-
-  return message;
 };
 
 export const updateChatTitle = async ({

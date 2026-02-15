@@ -1,4 +1,3 @@
-import { revalidateTag } from "next/cache";
 import {
   AIMessage,
   HumanMessage,
@@ -16,8 +15,7 @@ import {
 import { mapLanggraphEventToClientEvent } from "@/app/api/chat/_utils/map-stream-event-to-client";
 import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
-import { insertChatMessage } from "@/features/chats/server/actions";
-import { chatTags } from "@/features/chats/server/cache/tags";
+import { insertChatMessage } from "@/features/chats/server/mutations";
 import {
   getChatById,
   getChatMessagesByChatId,
@@ -159,9 +157,6 @@ export async function GET(
               role: "assistant",
               content: aiMessageContent,
             });
-            revalidateTag(chatTags.messagesByChat(chat.id), "max");
-            revalidateTag(chatTags.detailByChat(chat.id), "max");
-            revalidateTag(chatTags.listByUser(chat.userId), "max");
           }
         } catch (error) {
           console.error("SSE stream error:", error);
