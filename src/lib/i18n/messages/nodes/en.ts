@@ -61,9 +61,9 @@ const message = {
     search: {
       label: "Search",
       title: "Search Node",
-      summary: "Runs Google search.",
+      summary: "Runs web search.",
       description:
-        "Runs Google searches using input keywords. Multiple keywords can be separated by commas.",
+        "Runs web searches using input keywords. Multiple keywords can be separated by commas.",
       guides: {
         first: "Enter a single keyword, or",
         second: "separate multiple keywords with commas to run together.",

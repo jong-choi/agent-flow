@@ -10,14 +10,6 @@ const message = {
       "드래그 앤 드롭으로 노드를 배치하고, 엣지로 연결하세요.",
     descriptionLine2: "채팅, 검색, 문서를 다양하게 연결할 수 있습니다.",
     cta: "캔버스로 이동하기",
-    nodes: {
-      presets: "프리셋",
-      llmCall: "LLM 호출",
-      search: "검색",
-      document: "문서",
-      fanOut: "분기",
-      output: "출력",
-    },
   },
   howItWorks: {
     designDesc: "캔버스에서 노드와 엣지로 에이전트 로직을 설계합니다.",
@@ -28,38 +20,11 @@ const message = {
   chat: {
     descriptionLine1: "설계한 워크플로우를 즉시 채팅 인터페이스로 실행하세요.",
     descriptionLine2: "메모리와 컨텍스트를 유지하며 멀티턴 대화를 지원합니다.",
-    demo: {
-      userLabel: "사용자",
-      agentLabel: "에이전트",
-      userMessage1: "요즘 유행어에 대해 검색하고 문서에 저장해줘",
-      agentMessage: "검색 결과를 바탕으로 작성해드리겠습니다",
-      userMessage2: "SEO에 최적화된 방식으로 블로그 게시물을 추가해줘",
-    },
   },
   presets: {
     descriptionLine1: "커뮤니티가 만든 에이전트 프리셋을 탐색하고,",
     descriptionLine2: "크레딧으로 구매하여 바로 사용하세요.",
     cta: "프리셋 보러가기",
-    free: "무료",
-    priceCredits: "{count} 크레딧",
-    items: {
-      customerSupport: {
-        name: "고객 상담용 챗봇",
-        tag: "고객지원",
-      },
-      seoBlog: {
-        name: "SEO 키워드 맞춤 블로그 게시물",
-        tag: "마케팅",
-      },
-      projectManagement: {
-        name: "프로젝트 관리 챗봇",
-        tag: "운영",
-      },
-      parallelCode: {
-        name: "병렬 코드 작성",
-        tag: "개발",
-      },
-    },
   },
   credits: {
     descriptionLine1: "매일 출석 체크로 무료 크레딧을 획득하세요.",

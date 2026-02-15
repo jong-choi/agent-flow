@@ -6,10 +6,8 @@ import {
   resolveAiModel,
 } from "@/app/api/chat/_nodes/chat-node/models";
 import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
-import {
-  getCreditBalanceByUserId,
-} from "@/features/credits/server/queries";
-import { spendCreditsByUserId } from "@/features/credits/server/actions";
+import { spendCreditsByUserId } from "@/features/credits/server/mutations";
+import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
 
 /**
  * 채팅 모델 실행 노드
@@ -43,7 +41,9 @@ export const chatNode = async (
 
   const price = Math.max(0, aiModel.price ?? 0);
 
-  const configurable = config.configurable as Record<string, unknown> | undefined;
+  const configurable = config.configurable as
+    | Record<string, unknown>
+    | undefined;
   const userId =
     typeof configurable?.user_id === "string" ? configurable.user_id : null;
 

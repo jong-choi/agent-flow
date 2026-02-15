@@ -1,6 +1,6 @@
 "use server";
 
-import { cacheTag, revalidateTag, updateTag } from "next/cache";
+import { cacheTag, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   and,
@@ -20,9 +20,9 @@ import {
 import { normalizeOptionalText } from "@/app/[locale]/presets/_utils/form-utils";
 import { db } from "@/db/client";
 import {
+  type CursorOptions,
   buildCursorOrderBy,
   buildCursorWhere,
-  type CursorOptions,
   toCursorTimestamp,
 } from "@/db/query/cursor";
 import { users } from "@/db/schema/auth";
@@ -43,13 +43,10 @@ import {
   getChatsByWorkflowId,
   getPublicChatMessagesByChatId,
 } from "@/features/chats/server/queries";
-import {
-  revalidateCreditTagsByUserIds,
-  updateCreditTagsByUserIds,
-} from "@/features/credits/server/actions";
+import { updateCreditTagsByUserIds } from "@/features/credits/server/actions";
 import { presetTags as presetCacheTags } from "@/features/presets/server/cache/tags";
 import { getWorkflowWithGraph } from "@/features/workflows/server/queries";
-import { routing, type Locale } from "@/lib/i18n/routing";
+import { type Locale, routing } from "@/lib/i18n/routing";
 import { SHORT_TEXT_MAX_LENGTH_WITH_IME_BUFFER } from "@/lib/utils";
 
 const workflowReferencedPresetPricing = db
@@ -201,44 +198,6 @@ const updatePresetTags = ({
   if (workflowIds?.length) {
     getUniqueWorkflowIds(workflowIds).forEach((workflowId) => {
       updateTag(presetCacheTags.pricingByWorkflow(workflowId));
-    });
-  }
-};
-
-const revalidatePresetTags = ({
-  market,
-  presetIds,
-  ownedUserIds,
-  purchasedUserIds,
-  canvasLibraryUserIds,
-  workflowIds,
-}: PresetTagTargets) => {
-  if (market) {
-    revalidateTag(presetCacheTags.market(), "max");
-  }
-  if (presetIds?.length) {
-    getUniquePresetIds(presetIds).forEach((presetId) => {
-      revalidateTag(presetCacheTags.detailByPreset(presetId), "max");
-    });
-  }
-  if (ownedUserIds?.length) {
-    getUniqueUserIds(ownedUserIds).forEach((userId) => {
-      revalidateTag(presetCacheTags.ownedByUser(userId), "max");
-    });
-  }
-  if (purchasedUserIds?.length) {
-    getUniqueUserIds(purchasedUserIds).forEach((userId) => {
-      revalidateTag(presetCacheTags.purchasedByUser(userId), "max");
-    });
-  }
-  if (canvasLibraryUserIds?.length) {
-    getUniqueUserIds(canvasLibraryUserIds).forEach((userId) => {
-      revalidateTag(presetCacheTags.canvasLibraryByUser(userId), "max");
-    });
-  }
-  if (workflowIds?.length) {
-    getUniqueWorkflowIds(workflowIds).forEach((workflowId) => {
-      revalidateTag(presetCacheTags.pricingByWorkflow(workflowId), "max");
     });
   }
 };
@@ -535,7 +494,8 @@ const getPresetsCached = async ({
   const hasNext = appliedDir === "next" ? hasMore : Boolean(cursorAnchor);
 
   const firstId = presetsList[0]?.id ?? cursorAnchor?.id ?? null;
-  const lastId = presetsList[presetsList.length - 1]?.id ?? cursorAnchor?.id ?? null;
+  const lastId =
+    presetsList[presetsList.length - 1]?.id ?? cursorAnchor?.id ?? null;
 
   return {
     presets: presetsList,
@@ -963,12 +923,10 @@ export const purchasePresetAction = async (
         presetIds: affectedPresetIds,
       };
       updatePresetTags(tagTargets);
-      revalidatePresetTags(tagTargets);
     }
 
     if (result.status === "success" && result.totalPrice > 0) {
       void updateCreditTagsByUserIds(creditAffectedUserIdsSnapshot);
-      void revalidateCreditTagsByUserIds(creditAffectedUserIdsSnapshot);
     }
 
     return result as PresetPurchaseResult;
@@ -1105,7 +1063,7 @@ const getPresetLibraryForCanvasBase = async ({
     updatedAt: row.updatedAt.toISOString(),
   }));
 
-  const nextCursor = hasNext ? items[items.length - 1]?.id ?? null : null;
+  const nextCursor = hasNext ? (items[items.length - 1]?.id ?? null) : null;
 
   return {
     items,
@@ -1122,8 +1080,7 @@ export const getPresetLibraryForCanvasAction = async (
   const userId = await getUserId();
   const cursor = options?.cursor?.trim() ?? "";
   const query = options?.query?.trim() ?? "";
-  const limitValue =
-    typeof options?.limit === "number" ? options.limit : 20;
+  const limitValue = typeof options?.limit === "number" ? options.limit : 20;
   const limit = Math.max(1, Math.min(100, Math.trunc(limitValue)));
 
   return getPresetLibraryForCanvasCached({ userId, query, cursor, limit });
@@ -1476,6 +1433,7 @@ const getPurchasedPresetsCached = async ({
   limit: number;
 }) => {
   "use cache";
+  cacheTag(presetCacheTags.ownedByUser(buyerId));
   cacheTag(presetCacheTags.purchasedByUser(buyerId));
 
   return getPurchasedPresetsBase({ filters, buyerId, cursor, dir, limit });
@@ -1585,7 +1543,6 @@ export const createPreset = async ({
     presetIds: preset ? [preset.id] : [],
   };
   updatePresetTags(tagTargets);
-  revalidatePresetTags(tagTargets);
 
   return preset ?? null;
 };
@@ -1680,7 +1637,6 @@ export const updatePreset = async ({
     workflowIds: affectedWorkflowIds,
   };
   updatePresetTags(tagTargets);
-  revalidatePresetTags(tagTargets);
 
   return preset ?? null;
 };
@@ -1715,7 +1671,6 @@ export const deletePreset = async ({ presetId }: { presetId: string }) => {
     workflowIds: affectedWorkflowIds,
   };
   updatePresetTags(tagTargets);
-  revalidatePresetTags(tagTargets);
 
   return preset ?? null;
 };

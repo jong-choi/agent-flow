@@ -39,13 +39,14 @@ export function FlowNodeContent({
   const locale = useLocale();
   const t = useTranslations<AppMessageKeys>("Workflows");
   const { updateNodeData } = useCanvasReactFlow();
-  const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
+
+  const setUpdatedAt = useCanvasStore((s) => s.setUpdatedAt);
 
   if (!content) return null;
 
   const handleValueChange = (value: string) => {
-    requestAnimationFrame(() => setSelectedNodeId(null));
     updateNodeData(id, { content: { ...content, value } });
+    requestAnimationFrame(() => setUpdatedAt(Date.now().toString()));
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -99,7 +100,7 @@ export function FlowNodeContent({
               updateNodeData(id, {
                 content: { ...content, referenceId: nextReferenceId },
               });
-              requestAnimationFrame(() => setSelectedNodeId(null));
+              requestAnimationFrame(() => setUpdatedAt(Date.now().toString()));
             }}
           />
         ) : null}

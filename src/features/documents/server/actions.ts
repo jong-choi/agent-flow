@@ -1,30 +1,20 @@
 "use server";
 
-import { revalidateTag, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq, ilike, isNull, sql } from "drizzle-orm";
+import { and, eq, ilike, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import { documents } from "@/db/schema/documents";
 import { getUserId } from "@/features/auth/server/queries";
 import { documentTags } from "@/features/documents/server/cache/tags";
 import {
   getDocumentTitleById,
-  getRecentDocumentsForPickerPage,
   getRecentDocumentsForPicker,
+  getRecentDocumentsForPickerPage,
   searchDocumentsByTitle,
 } from "@/features/documents/server/queries";
 
 const untitledPrefix = "untitled-";
-
-const revalidateDocumentTags = (ownerId: string, docId?: string) => {
-  revalidateTag(documentTags.allByUser(ownerId), "max");
-  revalidateTag(documentTags.listByUser(ownerId), "max");
-  revalidateTag(documentTags.pickerByUser(ownerId), "max");
-
-  if (docId) {
-    revalidateTag(documentTags.detailByUserAndDoc(ownerId, docId), "max");
-  }
-};
 
 const updateDocumentTags = (ownerId: string, docId?: string) => {
   updateTag(documentTags.allByUser(ownerId));
@@ -44,66 +34,6 @@ const parseUntitledIndex = (title: string) => {
 
   const parsed = Number(match[1]);
   return Number.isFinite(parsed) ? parsed : null;
-};
-
-export const replaceDocumentContentById = async ({
-  docId,
-  content,
-}: {
-  docId: string;
-  content: string;
-}) => {
-  const ownerId = await getUserId();
-  const [document] = await db
-    .update(documents)
-    .set({
-      content,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(documents.id, docId),
-        eq(documents.ownerId, ownerId),
-        isNull(documents.deletedAt),
-      ),
-    )
-    .returning({ content: documents.content });
-
-  if (document) {
-    revalidateDocumentTags(ownerId, docId);
-  }
-
-  return document?.content ?? null;
-};
-
-export const mergeDocumentContentById = async ({
-  docId,
-  content,
-}: {
-  docId: string;
-  content: string;
-}) => {
-  const ownerId = await getUserId();
-  const [document] = await db
-    .update(documents)
-    .set({
-      content: sql`${documents.content} || ${content}`,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(documents.id, docId),
-        eq(documents.ownerId, ownerId),
-        isNull(documents.deletedAt),
-      ),
-    )
-    .returning({ content: documents.content });
-
-  if (document) {
-    revalidateDocumentTags(ownerId, docId);
-  }
-
-  return document?.content ?? null;
 };
 
 export const createUntitledDocument = async () => {

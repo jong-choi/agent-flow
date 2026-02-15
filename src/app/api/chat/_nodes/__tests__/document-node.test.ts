@@ -5,10 +5,8 @@ import { documentNode } from "@/app/api/chat/_nodes/document-node";
 import {
   mergeDocumentContentById,
   replaceDocumentContentById,
-} from "@/features/documents/server/actions";
-import {
-  getDocumentById,
-} from "@/features/documents/server/queries";
+} from "@/features/documents/server/mutations";
+import { getDocumentById } from "@/features/documents/server/queries";
 
 vi.mock("@/features/documents/server/queries", () => {
   return {
@@ -16,7 +14,7 @@ vi.mock("@/features/documents/server/queries", () => {
   };
 });
 
-vi.mock("@/features/documents/server/actions", () => {
+vi.mock("@/features/documents/server/mutations", () => {
   return {
     replaceDocumentContentById: vi.fn(),
     mergeDocumentContentById: vi.fn(),

@@ -6,18 +6,22 @@ import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flo
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 
 export default function NodePanel() {
-  const selectedNodeId = useCanvasStore((s) => s.selectedNodeId);
   const { getNode } = useCanvasReactFlow();
+  const updatedAt = useCanvasStore((s) => s.updatedAt);
 
-  const node = selectedNodeId ? getNode(selectedNodeId) : null;
+  const selectedNodeId = useCanvasStore((s) => s.selectedNodeId);
+  if (!selectedNodeId) {
+    return null;
+  }
 
+  const node = getNode(selectedNodeId);
   if (!node) {
     return null;
   }
 
   return (
     <CanvasNodePanelContainer defaultSize={20} minSize={10}>
-      <CanvasNodePanelContent node={node} />
+      <CanvasNodePanelContent selectedNodeId={selectedNodeId} key={updatedAt} />
     </CanvasNodePanelContainer>
   );
 }

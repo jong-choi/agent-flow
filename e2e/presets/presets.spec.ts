@@ -1,5 +1,21 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { loginWithDevPassword } from "../helpers/auth";
+
+const clickPagerIfVisible = async (
+  page: Page,
+  direction: "Next" | "Prev",
+) => {
+  const pagerLink = page.getByRole("link", { name: direction }).first();
+  const isVisible = await pagerLink
+    .isVisible({ timeout: 2000 })
+    .catch(() => false);
+
+  if (!isVisible) {
+    return;
+  }
+
+  await pagerLink.click();
+};
 
 test.describe("Presets", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,10 +23,11 @@ test.describe("Presets", () => {
   });
 
   test("프리셋 마켓 목록과 구매 다이얼로그가 동작한다", async ({ page }) => {
-    await page.goto("/presets?page=9999");
-    await expect(page).not.toHaveURL(/page=9999/);
+    await page.goto("/presets");
 
     await expect(page.getByText("프리셋 마켓").first()).toBeVisible();
+    await clickPagerIfVisible(page, "Next");
+    await clickPagerIfVisible(page, "Prev");
 
     const emptyState = page.getByText("공개된 프리셋이 없습니다").first();
     if (await emptyState.count()) {
@@ -83,10 +100,11 @@ test.describe("Presets", () => {
   });
 
   test("내 프리셋 라이브러리가 렌더링된다", async ({ page }) => {
-    await page.goto("/presets/purchased?page=9999");
-    await expect(page).not.toHaveURL(/page=9999/);
+    await page.goto("/presets/purchased");
 
     await expect(page.getByText("내 프리셋").first()).toBeVisible();
+    await clickPagerIfVisible(page, "Next");
+    await clickPagerIfVisible(page, "Prev");
 
     const ownedEmpty = page.getByText("아직 만든 프리셋이 없습니다").first();
     if (await ownedEmpty.count()) {

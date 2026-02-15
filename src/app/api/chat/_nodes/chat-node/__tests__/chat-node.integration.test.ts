@@ -14,7 +14,7 @@ import {
 } from "@/app/api/chat/_nodes/chat-node/models";
 import { type AiModel } from "@/db/schema";
 import { getActiveAiModels } from "@/features/chats/server/queries";
-import { spendCreditsByUserId } from "@/features/credits/server/actions";
+import { spendCreditsByUserId } from "@/features/credits/server/mutations";
 import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
 
 const baseModel: AiModel = {
@@ -79,7 +79,7 @@ vi.mock("@/features/credits/server/queries", () => ({
   getCreditBalanceByUserId: vi.fn(),
 }));
 
-vi.mock("@/features/credits/server/actions", () => ({
+vi.mock("@/features/credits/server/mutations", () => ({
   spendCreditsByUserId: vi.fn(),
 }));
 

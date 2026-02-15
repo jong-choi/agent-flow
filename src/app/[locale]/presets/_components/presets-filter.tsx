@@ -24,8 +24,8 @@ const MARKET_PRICE_FILTERS = [
 ] as const;
 
 const MARKET_SORT_OPTIONS = [
-  { key: "popular", value: "popular" },
   { key: "latest", value: "latest" },
+  { key: "popular", value: "popular" },
   { key: "rating", value: "rating" },
   { key: "priceAsc", value: "price-asc" },
 ] as const;
@@ -128,7 +128,7 @@ const FILTER_CONFIGS = {
     sortOptionGroup: "marketSortOptions",
     defaults: {
       category: "all",
-      sort: "popular",
+      sort: "latest",
     },
   },
   purchased: {

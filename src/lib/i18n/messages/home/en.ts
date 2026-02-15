@@ -9,14 +9,6 @@ const message = {
     descriptionLine1: "Drag and drop nodes, then connect them with edges.",
     descriptionLine2: "Combine chat, search, and documents in one flow.",
     cta: "Go to Canvas",
-    nodes: {
-      presets: "Presets",
-      llmCall: "LLM Call",
-      search: "Search",
-      document: "Document",
-      fanOut: "Fan-out",
-      output: "Output",
-    },
   },
   howItWorks: {
     designDesc: "Design your agent logic on the canvas with nodes and edges.",
@@ -27,38 +19,11 @@ const message = {
   chat: {
     descriptionLine1: "Run your designed workflow instantly through chat.",
     descriptionLine2: "Supports multi-turn conversations with memory and context.",
-    demo: {
-      userLabel: "User",
-      agentLabel: "Agent",
-      userMessage1: "Search current slang trends and save them to a document.",
-      agentMessage: "Sure, I will draft it based on the search results.",
-      userMessage2: "Add a blog post optimized for SEO.",
-    },
   },
   presets: {
     descriptionLine1: "Discover community-made agent presets,",
     descriptionLine2: "buy with credits, and use them instantly.",
     cta: "Browse Presets",
-    free: "Free",
-    priceCredits: "{count} credits",
-    items: {
-      customerSupport: {
-        name: "Customer Support Chatbot",
-        tag: "Support",
-      },
-      seoBlog: {
-        name: "SEO Keyword Blog Writer",
-        tag: "Marketing",
-      },
-      projectManagement: {
-        name: "Project Management Chatbot",
-        tag: "Operations",
-      },
-      parallelCode: {
-        name: "Parallel Code Writer",
-        tag: "Development",
-      },
-    },
   },
   credits: {
     descriptionLine1: "Earn free credits with daily attendance check-ins.",

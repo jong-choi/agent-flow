@@ -1,8 +1,8 @@
+import { claimDailyAttendance } from "@/features/credits/server/mutations";
 import {
   type CreditAttendanceSummary,
   getCreditAttendanceSummary,
 } from "@/features/credits/server/queries";
-import { claimDailyAttendance } from "@/features/credits/server/actions";
 
 export type AttendanceResult = {
   credited: boolean;

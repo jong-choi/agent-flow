@@ -4,7 +4,6 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { type WorkflowSaveRequest } from "@/app/api/workflows/_types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { extractPresetIdsFromNodes } from "@/features/canvas/utils/preset-import";
+import { saveWorkflowAction } from "@/features/workflows/server/actions";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { SHORT_TEXT_MAX_LENGTH } from "@/lib/utils";
 
@@ -89,41 +89,22 @@ export function FlowSaveButton() {
       const edges = getEdges();
       const presetIds = extractPresetIdsFromNodes(nodes);
 
-      const requestBody: WorkflowSaveRequest = {
-        title: normalizedTitle,
-        description,
-        nodes,
-        edges,
-        presetIds,
-      };
-
       try {
         setIsSaving(true);
-
-        const workflowId = workflow.id;
-        const target = workflowId
-          ? `/api/workflows/${workflowId}`
-          : "/api/workflows";
-        const response = await fetch(target, {
-          method: workflowId ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
+        const saved = await saveWorkflowAction({
+          workflowId: workflow.id ?? null,
+          title: normalizedTitle,
+          description,
+          nodes,
+          edges,
+          presetIds,
         });
-
-        if (!response.ok) {
-          router.refresh();
-          const payload = await response.json().catch(() => null);
-          const message =
-            typeof payload?.error === "string"
-              ? payload.error
-              : t("canvas.save.errors.saveFailed");
-          throw new Error(message);
+        if (!saved) {
+          throw new Error(t("canvas.save.errors.saveFailed"));
         }
 
-        const payload = (await response.json()) as {
-          data?: { id?: string; title?: string; description?: string | null };
-        };
-        const nextId = payload?.data?.id ?? workflowId;
+        const workflowId = workflow.id;
+        const nextId = saved.id ?? workflowId;
 
         if (!workflowId && nextId) {
           router.push(`/workflows/canvas/${nextId}`);
@@ -131,9 +112,8 @@ export function FlowSaveButton() {
 
         setWorkflow({
           id: nextId ?? workflowId,
-          title: payload?.data?.title ?? normalizedTitle,
-          description:
-            payload?.data?.description ?? requestBody.description ?? null,
+          title: saved.title ?? normalizedTitle,
+          description: saved.description ?? description ?? null,
         });
 
         setOpen(false);
