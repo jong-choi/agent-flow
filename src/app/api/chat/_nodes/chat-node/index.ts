@@ -24,11 +24,6 @@ export const chatNode = async (
     throw new Error("nodeId가 문자열이 아닙니다.");
   }
 
-  const input = findSingleNodeInput({ state, config });
-  if (typeof input !== "string") {
-    throw new Error("chat-node 입력이 문자열이 아닙니다.");
-  }
-
   const modelId = metadata?.data?.content?.value;
   if (typeof modelId !== "string") {
     throw new Error("chat-node 모델이 선택되지 않았습니다.");
@@ -62,9 +57,20 @@ export const chatNode = async (
     throw new Error(`지원하지 않는 provider입니다: ${aiModel.provider}`);
   }
 
-  const newMessage = new HumanMessage(input);
+  const prevNodeId = state.inputTree[nodeId]?.target;
+  const isPrevStartNode = prevNodeId === state.startNodeId;
+  const messages = [...state.messages];
 
-  const response = await chatModel.invoke([...state.messages, newMessage]);
+  if (!isPrevStartNode) {
+    const input = findSingleNodeInput({ state, config });
+    if (typeof input !== "string") {
+      throw new Error("chat-node 입력이 문자열이 아닙니다.");
+    }
+    const newMessage = new HumanMessage(input);
+    messages.push(newMessage);
+  }
+
+  const response = await chatModel.invoke(messages);
 
   const content = response.content;
 

@@ -4,6 +4,7 @@ import { Annotation, messagesStateReducer } from "@langchain/langgraph";
 export type OutputMap = Record<string, string | null>;
 export type InputTree = Record<string, Record<string, string>>;
 export type InitialInput = string | null;
+type StartNodeId = string | null;
 
 export const FlowStateAnnotation = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
@@ -11,6 +12,10 @@ export const FlowStateAnnotation = Annotation.Root({
     reducer: messagesStateReducer,
   }),
   initialInput: Annotation<InitialInput>({
+    reducer: (prev, next) => (next === undefined ? prev : next),
+    default: () => null,
+  }),
+  startNodeId: Annotation<StartNodeId>({
     reducer: (prev, next) => (next === undefined ? prev : next),
     default: () => null,
   }),

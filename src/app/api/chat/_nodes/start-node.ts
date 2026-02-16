@@ -20,5 +20,5 @@ export const startNode = async (
     throw new Error("initialInput이 문자열이 아닙니다.");
   }
 
-  return { outputMap: { [nodeId]: initialInput } };
+  return { outputMap: { [nodeId]: initialInput }, startNodeId: nodeId };
 };

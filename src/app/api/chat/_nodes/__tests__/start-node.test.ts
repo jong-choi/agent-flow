@@ -21,6 +21,7 @@ describe("startNode", () => {
     const result = await startNode(state, config);
 
     expect(result.outputMap?.[nodeId]).toBe(initialInput);
+    expect(result.startNodeId).toBe(nodeId);
   });
 
   it("initialInput이 문자열이 아니면 에러가 발생한다", async () => {

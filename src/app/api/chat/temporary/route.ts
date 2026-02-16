@@ -48,6 +48,7 @@ export async function POST(request: Request) {
     const state: ThreadContext["state"] = {
       messages: [],
       initialInput: "",
+      startNodeId: null,
       outputMap: {},
       inputTree: buildInputTree(graph),
     };

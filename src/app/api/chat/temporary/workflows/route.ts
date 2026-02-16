@@ -5,8 +5,8 @@ import {
   createThread,
 } from "@/app/api/chat/_engines/handle-connect";
 import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
-import { getWorkflowWithGraphForChat } from "@/features/chats/server/queries";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
+import { getWorkflowWithGraphForChat } from "@/features/chats/server/queries";
 import { auth } from "@/lib/auth";
 
 const ChatCreateThreadRequestSchema = z.object({
@@ -80,6 +80,7 @@ export async function POST(request: Request) {
     const state: ThreadContext["state"] = {
       messages: [],
       initialInput: "",
+      startNodeId: null,
       outputMap: {},
       inputTree: buildInputTree(graph),
     };
