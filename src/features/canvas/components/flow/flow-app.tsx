@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -31,6 +31,7 @@ import {
   NODE_TYPE,
 } from "@/features/canvas/constants/flow";
 import { useCheckValidGraph } from "@/features/canvas/hooks/use-check-valid-graph";
+import { useGraphSession } from "@/features/canvas/hooks/use-graph-session";
 import { useIsValidConnection } from "@/features/canvas/hooks/use-is-valid-connection";
 import { useReconnectEdge } from "@/features/canvas/hooks/use-reconnect-edge";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
@@ -40,9 +41,18 @@ import {
 } from "@/features/canvas/store/slices/workflow-slice";
 import { useDebounce } from "@/hooks/use-debounce";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
+import { usePathname } from "@/lib/i18n/navigation";
 
 const ReactFlow = dynamic<ReactFlowProps<FlowCanvasNode, Edge>>(
   () => import("@xyflow/react").then((m) => m.ReactFlow),
+  { ssr: false },
+);
+
+const FlowSessionLoader = dynamic(
+  () =>
+    import("@/features/canvas/components/flow/flow-session-loader").then(
+      (m) => m.FlowSessionLoader,
+    ),
   { ssr: false },
 );
 
@@ -57,12 +67,17 @@ export function FlowApp({
   initialEdges = INITIAL_EDGES,
   workflow,
 }: FlowAppProps) {
+  const pathname = usePathname();
+  const isCanvas = pathname.startsWith("/workflows/canvas");
+  const initRef = useRef<boolean>(false);
   const t = useTranslations<AppMessageKeys>("Workflows");
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const checkValidGraph = useCheckValidGraph();
+  const { saveGraphSession } = useGraphSession();
   const setLoading = useCanvasStore((s) => s.setIsStartLoading);
   const setWorkflow = useCanvasStore((s) => s.setWorkflow);
+  const workflowId = useCanvasStore((s) => s.workflow.id);
   const isValidGraph = useCanvasStore((s) => s.isValidGraph);
   const isValidGraphMessage = useCanvasStore((s) => s.isValidGraphMessage);
   const title = useCanvasStore((s) => s.workflow.title.trim());
@@ -91,6 +106,7 @@ export function FlowApp({
 
   const debouncedCheckValidGraph = useDebounce(() => {
     checkValidGraph({ nodes, edges });
+    saveGraphSession({ workflowId, nodes, edges });
     setLoading(false);
   }, 500);
 
@@ -104,9 +120,18 @@ export function FlowApp({
   }, [setWorkflow, workflow]);
 
   useEffect(() => {
-    setNodes(initialNodes);
-    setEdges(initialEdges);
+    if (!initRef.current) {
+      setNodes(initialNodes);
+      setEdges(initialEdges);
+      initRef.current = true;
+    }
   }, [initialEdges, initialNodes, setEdges, setNodes]);
+
+  useEffect(() => {
+    return () => {
+      initRef.current = false;
+    };
+  }, []);
 
   return (
     <div className="relative h-full w-full" data-testid="flow-canvas">
@@ -128,6 +153,7 @@ export function FlowApp({
             <FlowSaveButton />
           </div>
         </div>
+        {isCanvas && <FlowSessionLoader />}
         {!isValidGraph && isValidGraphMessage ? (
           <p className="px-1 text-xs text-muted-foreground">
             {t(`canvas.validation.${isValidGraphMessage}`)}

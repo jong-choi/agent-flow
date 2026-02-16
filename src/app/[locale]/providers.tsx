@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { MainErrorFallback } from "@/components/errors/main";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { useResetGraphSession } from "@/features/canvas/hooks/use-graph-session";
 import { queryConfig } from "@/lib/react-query";
 
 export function AppProvider({ children }: React.PropsWithChildren) {
@@ -26,12 +27,19 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     >
       <ErrorBoundary FallbackComponent={MainErrorFallback}>
         <SessionProvider>
-          <QueryClientProvider client={queryClient}>
-            {process.env.DEV && <ReactQueryDevtools />}
-            {children}
-          </QueryClientProvider>
+          <WithGraphSession>
+            <QueryClientProvider client={queryClient}>
+              {process.env.DEV && <ReactQueryDevtools />}
+              {children}
+            </QueryClientProvider>
+          </WithGraphSession>
         </SessionProvider>
       </ErrorBoundary>
     </ThemeProvider>
   );
+}
+
+function WithGraphSession({ children }: React.PropsWithChildren) {
+  useResetGraphSession();
+  return children;
 }
