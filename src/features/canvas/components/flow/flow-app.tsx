@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import { Suspense, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -62,16 +62,19 @@ type FlowAppProps = {
   workflow?: WorkflowState;
 };
 
-export function FlowApp({
+export function FlowAppWithRemount(props: FlowAppProps) {
+  const pathname = usePathname();
+
+  return <FlowApp key={pathname} {...props} />;
+}
+
+function FlowApp({
   initialNodes = INITIAL_NODES,
   initialEdges = INITIAL_EDGES,
   workflow,
 }: FlowAppProps) {
-  const pathname = usePathname();
-  const isCanvas = pathname.startsWith("/workflows/canvas");
-  const initRef = useRef<boolean>(false);
   const t = useTranslations<AppMessageKeys>("Workflows");
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const checkValidGraph = useCheckValidGraph();
   const { saveGraphSession } = useGraphSession();
@@ -119,20 +122,6 @@ export function FlowApp({
     setWorkflow(workflow ?? defaultWorkflowState);
   }, [setWorkflow, workflow]);
 
-  useEffect(() => {
-    if (!initRef.current) {
-      setNodes(initialNodes);
-      setEdges(initialEdges);
-      initRef.current = true;
-    }
-  }, [initialEdges, initialNodes, setEdges, setNodes]);
-
-  useEffect(() => {
-    return () => {
-      initRef.current = false;
-    };
-  }, []);
-
   return (
     <div className="relative h-full w-full" data-testid="flow-canvas">
       <div className="absolute top-4 left-4 z-10 flex flex-col items-start gap-2">
@@ -153,7 +142,7 @@ export function FlowApp({
             <FlowSaveButton />
           </div>
         </div>
-        {isCanvas && <FlowSessionLoader />}
+        <FlowSessionLoader />
         {!isValidGraph && isValidGraphMessage ? (
           <p className="px-1 text-xs text-muted-foreground">
             {t(`canvas.validation.${isValidGraphMessage}`)}
