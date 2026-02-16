@@ -5,7 +5,7 @@ import { getTranslations } from "next-intl/server";
 import "@xyflow/react/dist/style.css";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DroppableZone } from "@/features/canvas/components/dnd/droppable-zone";
-import { FlowApp } from "@/features/canvas/components/flow/flow-app";
+import { FlowAppWithRemount } from "@/features/canvas/components/flow/flow-app";
 import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 import {
@@ -73,7 +73,7 @@ async function CanvasWorkflowContent({
 
   return (
     <DroppableZone>
-      <FlowApp
+      <FlowAppWithRemount
         initialNodes={nodes}
         initialEdges={edges}
         workflow={{
