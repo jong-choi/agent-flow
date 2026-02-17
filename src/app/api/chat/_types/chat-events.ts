@@ -22,6 +22,7 @@ export const clientStreamEventSchema = z
     chunk: z
       .object({
         content: z.string().optional(),
+        referenceId: z.string().optional(),
       })
       .optional(),
   })

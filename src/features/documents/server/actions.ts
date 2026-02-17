@@ -204,3 +204,8 @@ export const getDocumentTitleByIdAction = async ({
 }) => {
   return getDocumentTitleById({ docId });
 };
+
+export const updateDocumentsTagsAction = async (referenceId?: string) => {
+  const ownerId = await getUserId();
+  updateDocumentTags(ownerId, referenceId);
+};

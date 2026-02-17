@@ -100,11 +100,17 @@ export async function GET(
         const encoder = new TextEncoder();
 
         try {
-          for await (const chunk of app.streamEvents(state, {
-            version: "v2",
-            configurable: { thread_id: chatId, user_id: chat.userId },
-            durability: "exit",
-          })) {
+          for await (const chunk of app.streamEvents(
+            state,
+            {
+              version: "v2",
+              configurable: { thread_id: chatId, user_id: chat.userId },
+              durability: "exit",
+            },
+            {
+              excludeTags: ["langsmith:hidden"],
+            },
+          )) {
             const parsed = langgraphStreamEventSchema.safeParse(chunk);
             if (!parsed.success) {
               continue;
