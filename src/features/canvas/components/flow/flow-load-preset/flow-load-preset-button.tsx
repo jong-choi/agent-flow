@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { filterPresetLibrary } from "@/features/canvas/utils/preset-library";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { type Locale } from "@/lib/i18n/routing";
+import { cn } from "@/lib/utils";
 
 export function FlowLoadPresetButton() {
   const locale = useLocale() as Locale;
@@ -38,8 +40,10 @@ export function FlowLoadPresetButton() {
     errorMessage,
     isLoading,
     isFetchingNextPage,
+    isRefetching,
     hasNextPage,
     fetchNextPage,
+    refetch,
   } = usePresetLibraryForCanvasQuery({
     enabled: open,
     query,
@@ -136,12 +140,30 @@ export function FlowLoadPresetButton() {
           </DialogDescription>
         </DialogHeader>
 
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("canvas.loadPreset.dialog.searchPlaceholder")}
-          autoComplete="off"
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("canvas.loadPreset.dialog.searchPlaceholder")}
+            autoComplete="off"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="group"
+            aria-label={t("canvas.loadPreset.dialog.refreshAriaLabel")}
+            onClick={() => void refetch()}
+            disabled={isRefetching || Boolean(activePresetId)}
+          >
+            <RefreshCw
+              className={cn(
+                "size-4 transition-transform duration-200 group-hover:rotate-90",
+                isRefetching && "animate-spin",
+              )}
+            />
+          </Button>
+        </div>
 
         <ScrollArea className="h-80 overflow-auto rounded-md border">
           <div className="flex min-h-full flex-col py-1">
