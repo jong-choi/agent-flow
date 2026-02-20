@@ -31,6 +31,24 @@ export const mapLanggraphEventToClientEvent = (
     return null;
   }
 
+  type DocData = {
+    content?: { value?: "병합" | "읽기" | "대치"; referenceId?: string };
+  };
+
+  if (type === "documentNode") {
+    const docData = (metadata.data as DocData).content || null;
+    const mode = docData?.value;
+    const referenceId = docData?.referenceId;
+    if (!!mode && mode !== "읽기" && referenceId) {
+      return {
+        type,
+        event,
+        langgraph_node,
+        chunk: { referenceId },
+      };
+    }
+  }
+
   if (event === "on_chain_start" || event === "on_chain_end") {
     return { type, event, langgraph_node };
   }

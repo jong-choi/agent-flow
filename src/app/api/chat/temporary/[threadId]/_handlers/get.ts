@@ -56,11 +56,17 @@ export async function GET(
         const encoder = new TextEncoder();
 
         try {
-          for await (const chunk of app.streamEvents(state, {
-            version: "v2",
-            configurable: { thread_id: threadId, user_id: userId },
-            durability: "exit", // 랭그래프 종료 시점에만 상태 업데이트
-          })) {
+          for await (const chunk of app.streamEvents(
+            state,
+            {
+              version: "v2",
+              configurable: { thread_id: threadId, user_id: userId },
+              durability: "exit", // 랭그래프 종료 시점에만 상태 업데이트
+            },
+            {
+              excludeTags: ["langsmith:hidden"],
+            },
+          )) {
             const parsed = langgraphStreamEventSchema.safeParse(chunk);
             if (!parsed.success) {
               continue;

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { clientStreamEventSchema } from "@/app/api/chat/_types/chat-events";
 import { type NodeType } from "@/features/canvas/constants/node-types";
 import { useUpdateChatTitleIfMissingMutation } from "@/features/chats/lib/query/mutations";
 import { useChatStore } from "@/features/chats/store/chat-store";
 import { createHumanMessage } from "@/features/chats/utils/chat-message";
 import { updateCreditTagsAction } from "@/features/credits/server/actions";
+import { updateDocumentsTagsAction } from "@/features/documents/server/actions";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 const TRACKED_RUNNING_NODE_TYPES = new Set<NodeType>([
@@ -21,9 +23,11 @@ const shouldTrackRunningNodeType = (type: NodeType) => {
 
 export function useChatEvent() {
   const t = useTranslations<AppMessageKeys>("Chat");
+  const queryClient = useQueryClient();
   const eventSourceRef = useRef<EventSource | null>(null);
   const streamErrorShownRef = useRef(false);
-  const updateChatTitleIfMissingMutation = useUpdateChatTitleIfMissingMutation();
+  const updateChatTitleIfMissingMutation =
+    useUpdateChatTitleIfMissingMutation();
   const mode = useChatStore((s) => s.mode);
   const storedThreadId = useChatStore((s) => s.threadId);
   const storedChatId = useChatStore((s) => s.chatId);
@@ -121,6 +125,7 @@ export function useChatEvent() {
 
           if (data.event === "on_chat_model_end") {
             finishRunningNode(nodeId);
+            void updateCreditTagsAction().catch(() => null);
           }
           return;
         }
@@ -137,13 +142,25 @@ export function useChatEvent() {
           if (nodeId && shouldTrackRunningNodeType(data.type)) {
             finishRunningNode(nodeId);
           }
+
+          if (data.type === "documentNode") {
+            const referenceId = data.chunk?.referenceId;
+            if (referenceId) {
+              void updateDocumentsTagsAction(referenceId)
+                .catch(() => null)
+                .finally(() => {
+                  void queryClient.invalidateQueries({
+                    queryKey: ["documents", "recent", "picker"],
+                  });
+                });
+            }
+          }
         }
 
         if (data.type === "endNode" && data.event === "on_chain_end") {
           if (data.error) {
             notifyStreamError();
           }
-          updateCreditTagsAction().catch(() => null);
           flushStreamingToMessages();
           setIsStreaming(false);
           resetRunningNodes();
