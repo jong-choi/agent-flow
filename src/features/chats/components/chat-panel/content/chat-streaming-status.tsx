@@ -40,14 +40,18 @@ export function ChatStreamingStatus() {
   }, [runningNodes, t]);
 
   if (!isStreaming) {
-    return <span className="text-xs text-muted-foreground">{t("status.idle")}</span>;
+    return (
+      <span className="text-xs text-muted-foreground">{t("status.idle")}</span>
+    );
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+    <span className="inline-flex gap-1.5 text-xs text-muted-foreground">
       <Spinner className="size-4" />
       <span>
-        {statusLabels.length > 0 ? statusLabels.join(" · ") : t("status.processing")}
+        {statusLabels.length > 0
+          ? statusLabels.join(" · ")
+          : t("status.processing")}
       </span>
     </span>
   );

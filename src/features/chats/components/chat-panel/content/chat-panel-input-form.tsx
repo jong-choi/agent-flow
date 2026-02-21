@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CornerDownLeft, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useNodes } from "@xyflow/react";
@@ -8,6 +9,7 @@ import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
 import { ChatStreamingStatus } from "@/features/chats/components/chat-panel/content/chat-streaming-status";
 import { useChatEvent } from "@/features/chats/hooks/use-chat-event";
 import { useChatStore } from "@/features/chats/store/chat-store";
+import { CHAT_MESSAGE_QUEUE_LIMIT } from "@/features/chats/store/slices/chat-message-queue-slice";
 import {
   isApiClientError,
   resolveApiToastMessage,
@@ -19,27 +21,39 @@ export function ChatPanelInputForm() {
   const t = useTranslations<AppMessageKeys>("Chat");
   const mode = useChatStore((s) => s.mode);
   const isStreaming = useChatStore((s) => s.isStreaming);
+  const isQueueFull = useChatStore(
+    (s) => s.messageQueue.length >= CHAT_MESSAGE_QUEUE_LIMIT,
+  );
+  const enqueueMessageQueue = useChatStore((s) => s.enqueueMessageQueue);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const sendMessage = useChatEvent();
   const [hasMessage, setHasMessage] = useState(false);
-  const isSendingAvailable = !isStreaming && hasMessage;
+  const isSendingAvailable = hasMessage && (!isStreaming || !isQueueFull);
 
-  const handleSubmit = async () => {
-    if (!isSendingAvailable) {
+  const clearInput = () => {
+    if (!textareaRef.current) {
       return;
     }
+    textareaRef.current.value = "";
+    setHasMessage(false);
+  };
 
+  const handleSubmit = () => {
     const message = textareaRef.current?.value.trim();
     if (!textareaRef.current || !message) {
       setHasMessage(false);
       return;
     }
 
-    try {
-      textareaRef.current.value = "";
-      setHasMessage(false);
-      await sendMessage(message);
-    } catch (error) {
+    if (isStreaming) {
+      if (isQueueFull) return;
+      clearInput();
+      enqueueMessageQueue(message);
+      return;
+    }
+
+    clearInput();
+    void sendMessage(message).catch((error) => {
       toast.error(
         resolveApiToastMessage({
           t,
@@ -47,16 +61,25 @@ export function ChatPanelInputForm() {
           fallbackKey: "toast.responseUnavailable",
         }),
       );
-    }
+    });
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isSendingAvailable) {
+      return;
+    }
     void handleSubmit();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey && !isComposingRef.current) {
+    if (
+      e.key === "Enter" &&
+      !e.shiftKey &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !isComposingRef.current
+    ) {
       if (!isSendingAvailable) {
         return;
       }
@@ -67,6 +90,7 @@ export function ChatPanelInputForm() {
 
   return (
     <form className="flex flex-col gap-2" onSubmit={handleFormSubmit}>
+      <ChatPanelInputFormMessageQueue />
       <Textarea
         ref={textareaRef}
         onChange={(event) => setHasMessage(Boolean(event.target.value.trim()))}
@@ -82,7 +106,6 @@ export function ChatPanelInputForm() {
       />
       <div className="flex justify-between">
         <ChatStreamingStatus />
-
         <div className="flex flex-col justify-end">
           <Button
             type="submit"
@@ -144,5 +167,76 @@ function PersistentWorkflowCreditEstimate() {
     <span className="text-end text-[10px] text-muted-foreground">
       {t("input.credits", { count: estimatedCredits.toLocaleString() })}
     </span>
+  );
+}
+
+function ChatPanelInputFormMessageQueue() {
+  const t = useTranslations<AppMessageKeys>("Chat");
+  const queuedMessages = useChatStore((s) => s.messageQueue);
+  const removeMessageQueue = useChatStore((s) => s.removeMessageQueue);
+  const sendMessage = useChatEvent();
+  const isStreaming = useChatStore((s) => s.isStreaming);
+
+  useEffect(() => {
+    if (isStreaming) {
+      return;
+    }
+
+    const nextQueuedMessage = queuedMessages[0];
+    if (!nextQueuedMessage) {
+      return;
+    }
+
+    removeMessageQueue(nextQueuedMessage.id);
+
+    void sendMessage(nextQueuedMessage.message).catch((error) => {
+      toast.error(
+        resolveApiToastMessage({
+          t,
+          code: isApiClientError(error) ? error.payload.code : undefined,
+          fallbackKey: "toast.responseUnavailable",
+        }),
+      );
+    });
+  }, [isStreaming, queuedMessages, removeMessageQueue, sendMessage, t]);
+
+  if (queuedMessages.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-end">
+        <span className="text-[10px] text-muted-foreground">
+          {queuedMessages.length}/{CHAT_MESSAGE_QUEUE_LIMIT}
+        </span>
+      </div>
+      {queuedMessages.map((queuedMessage) => (
+        <div
+          key={queuedMessage.id}
+          className="flex items-center gap-2 rounded-lg border bg-muted/30 px-2 py-1"
+        >
+          <CornerDownLeft className="size-3.5 shrink-0 text-muted-foreground" />
+          <span
+            title={queuedMessage.message}
+            className="min-w-0 flex-1 truncate text-xs text-muted-foreground"
+          >
+            {queuedMessage.message}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("action.delete")}
+            className="size-6 text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              removeMessageQueue(queuedMessage.id);
+            }}
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
+        </div>
+      ))}
+    </div>
   );
 }

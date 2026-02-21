@@ -4,6 +4,10 @@ import { type ReactNode, createContext, useContext, useState } from "react";
 import { useStore } from "zustand";
 import { createStore } from "zustand";
 import {
+  type ChatMessageQueueSlice,
+  createChatMessageQueueSlice,
+} from "@/features/chats/store/slices/chat-message-queue-slice";
+import {
   type ChatMessageSlice,
   createChatMessageSlice,
 } from "@/features/chats/store/slices/chat-message-slice";
@@ -12,11 +16,12 @@ import {
   createChatStatusSlice,
 } from "@/features/chats/store/slices/chat-status-slice";
 
-type ChatState = ChatMessageSlice & ChatStatusSlice;
+type ChatState = ChatMessageSlice & ChatMessageQueueSlice & ChatStatusSlice;
 
 const createChatStore = (initialState?: Partial<ChatState>) =>
   createStore<ChatState>()((set, get, api) => ({
     ...createChatMessageSlice(set, get, api),
+    ...createChatMessageQueueSlice(set, get, api),
     ...createChatStatusSlice(set, get, api),
     ...initialState,
   }));
