@@ -15,24 +15,21 @@ const message = {
   },
   indexPage: {
     heading: "Developer API",
-    description:
-      "Issue service keys and run workflows from external services.",
+    description: "Issue service keys and run workflows from external services.",
     workflowApiButton: "Workflow API",
     secretCardTitle: "Service Keys",
     secretCardDescription:
-      "Send it in the <code>X-CANVAS-SECRET</code> header for API calls. The key is shown only once when issued.",
+      "Send it in the <code>X-FLOW-SECRET</code> header for API calls. The key is shown only once when issued.",
     guidesCardTitle: "Developer API Guides",
     openAiGuideTitle: "OpenAI Compatibility Guide",
-    openAiGuideDescription:
-      "How to call directly from OpenAI SDK/clients",
+    openAiGuideDescription: "How to call directly from OpenAI SDK/clients",
     agentflowGuideTitle: "AgentFlow API Guide",
-    agentflowGuideDescription:
-      "/api/v1/chat (X-CANVAS-SECRET + X-CANVAS-ID)",
+    agentflowGuideDescription: "/api/v1/chat (X-FLOW-SECRET + X-FLOW-ID)",
   },
   apisPage: {
     heading: "Workflow API",
     description:
-      "Issue per-workflow <code>X-CANVAS-ID</code> values and copy invocation code.",
+      "Issue per-workflow <code>X-FLOW-ID</code> values and copy invocation code.",
     serviceKeysButton: "Manage Service Keys",
   },
   secretManager: {
@@ -64,11 +61,11 @@ const message = {
     curl: "cURL",
     empty: {
       title: "No workflows",
-      description: "Create a workflow in canvas first.",
+      description: "Create a workflow first.",
     },
     toasts: {
       issueFailed: "Failed to issue workflow ID.",
-      rotated: "A new X-CANVAS-ID has been issued.",
+      rotated: "A new X-FLOW-ID has been issued.",
       rotateFailed: "Failed to reissue.",
       revoked: "Deactivated.",
       revokeFailed: "Failed to deactivate.",
@@ -97,12 +94,11 @@ const message = {
     },
     dialog: {
       description:
-        "<code>X-CANVAS-ID</code> is issued per workflow. On OpenAI-compatible routes, use this value as <code>model</code>.",
-      canvasIdLabel: "X-CANVAS-ID",
+        "<code>X-FLOW-ID</code> is issued per workflow. On OpenAI-compatible routes, use this value as <code>model</code>.",
+      canvasIdLabel: "X-FLOW-ID",
       rotate: "Reissue",
       revoke: "Deactivate",
-      footer:
-        "Issue and store service keys at <code>/developers</code>.",
+      footer: "Issue and store service keys at <code>/developers</code>.",
     },
   },
 };

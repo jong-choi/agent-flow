@@ -1,8 +1,8 @@
 "use client";
 
 import { useId, useMemo, useState, useTransition } from "react";
-import { useTranslations } from "next-intl";
 import { Copy, RotateCcw, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { BoringCardAvatar } from "@/components/boring-avatar";
 import { Button } from "@/components/ui/button";
@@ -130,8 +130,8 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
 
   const agentFlowCurlSnippet = `curl -X POST "${agentFlowEndpoint}" \\
   -H "Content-Type: application/json" \\
-  -H "X-CANVAS-SECRET: ${SECRET_PLACEHOLDER}" \\
-  -H "X-CANVAS-ID: ${canvasIdValue}" \\
+  -H "X-FLOW-SECRET: ${SECRET_PLACEHOLDER}" \\
+  -H "X-FLOW-ID: ${canvasIdValue}" \\
   -d '{
     "message": "${samplePrompt}"
   }'`;
@@ -140,8 +140,8 @@ export function WorkflowApiList({ workflows, baseUrl }: WorkflowApiListProps) {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "X-CANVAS-SECRET": "${SECRET_PLACEHOLDER}",
-    "X-CANVAS-ID": "${canvasIdValue}"
+    "X-FLOW-SECRET": "${SECRET_PLACEHOLDER}",
+    "X-FLOW-ID": "${canvasIdValue}"
   },
   body: JSON.stringify({
     message: "${samplePrompt}"
@@ -287,7 +287,9 @@ const result = await client.responses.create({
       >
         <DialogContent className="sm:max-w-2xl" ariaDescribedby={descriptionId}>
           <DialogHeader>
-            <DialogTitle>{selected?.title ?? t("meta.workflowApiTitle")}</DialogTitle>
+            <DialogTitle>
+              {selected?.title ?? t("meta.workflowApiTitle")}
+            </DialogTitle>
             <DialogDescription id={descriptionId}>
               {t.rich("workflowApi.dialog.description", {
                 code: (chunks) => <code>{chunks}</code>,
@@ -362,7 +364,9 @@ const result = await client.responses.create({
               </p>
               <ScrollArea className="h-[500px] min-h-0 overflow-auto">
                 <div className="space-y-2">
-                  <div className="text-sm font-semibold">{t("workflowApi.curl")}</div>
+                  <div className="text-sm font-semibold">
+                    {t("workflowApi.curl")}
+                  </div>
                   <CodeBlock
                     code={activeSnippet.curl}
                     onCopy={() =>

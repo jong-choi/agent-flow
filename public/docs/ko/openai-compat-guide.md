@@ -10,16 +10,16 @@
 ## 빠른 시작
 
 1. `/developers`에서 서비스 키를 발급합니다.
-2. `/developers/apis`에서 워크플로우별 `X-CANVAS-ID`를 발급합니다.
-3. OpenAI 요청의 `model` 필드에 `X-CANVAS-ID` 값을 넣어 호출합니다.
+2. `/developers/apis`에서 워크플로우별 `X-FLOW-ID`를 발급합니다.
+3. OpenAI 요청의 `model` 필드에 `X-FLOW-ID` 값을 넣어 호출합니다.
 
 ## 기본 규칙
 
 - Base URL: `https://agentflow.jongchoi.com/api/v1/openai`
 - 인증:
   - 권장: `Authorization: Bearer <SERVICE_KEY>`
-  - 호환: `X-CANVAS-SECRET: <SERVICE_KEY>`
-- 워크플로우 식별: `model = X-CANVAS-ID`
+  - 호환: `X-FLOW-SECRET: <SERVICE_KEY>`
+- 워크플로우 식별: `model = X-FLOW-ID`
   - 예: `"model": "af-id-xxxxxxxxxxxxxxxx"`
 
 ## 지원 엔드포인트
@@ -140,7 +140,7 @@ OpenAI 스타일 에러 포맷을 사용합니다.
 ```json
 {
   "error": {
-    "message": "유효하지 않은 model(X-CANVAS-ID)입니다.",
+    "message": "Invalid model (X-FLOW-ID).",
     "type": "invalid_request_error",
     "code": "invalid_model"
   }

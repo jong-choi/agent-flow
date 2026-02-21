@@ -4,8 +4,8 @@
 
 ## 빠른 시작
 
-1. `/developers`에서 **서비스 키(X-CANVAS-SECRET)** 를 발급하고 안전하게 보관합니다. (발급 시 1회만 노출)
-2. `/developers/apis`에서 워크플로우별 **X-CANVAS-ID** 를 발급합니다.
+1. `/developers`에서 **서비스 키(X-FLOW-SECRET)** 를 발급하고 안전하게 보관합니다. (발급 시 1회만 노출)
+2. `/developers/apis`에서 워크플로우별 **X-FLOW-ID** 를 발급합니다.
 3. 아래 예시처럼 `/api/v1/chat`을 호출합니다.
 
 ## 기본 정보
@@ -14,8 +14,8 @@
 - **메서드**: `POST`
 - **Content-Type**: `application/json`
 - **인증 헤더**
-  - `X-CANVAS-SECRET`: 서비스 키 (예: `af-**********************`)
-  - `X-CANVAS-ID`: 워크플로우 ID (예: `af-id-*******************`)
+  - `X-FLOW-SECRET`: 서비스 키 (예: `af-**********************`)
+  - `X-FLOW-ID`: 워크플로우 ID (예: `af-id-*******************`)
 
 ## 요청 형식
 
@@ -39,7 +39,7 @@
 {
   "data": {
     "response": "AI 응답 문자열",
-    "canvasId": "af-id-...",
+    "flowId": "af-id-...",
     "workflowId": "워크플로우 UUID"
   }
 }
@@ -47,46 +47,25 @@
 
 ## 오류 응답
 
-### 400 Bad Request
-
-- JSON 형식이 올바르지 않거나, `message`가 비어있는 경우
+모든 에러는 아래 envelope 형식을 사용합니다.
 
 ```json
 {
-  "message": "Invalid body",
-  "issues": []
+  "error": {
+    "message": "Human-readable error message",
+    "type": "invalid_request_error",
+    "code": "invalid_body"
+  }
 }
 ```
 
-### 401 Unauthorized
+자주 발생하는 케이스:
 
-- `X-CANVAS-SECRET`가 없거나 유효하지 않은 경우
-
-```json
-{
-  "error": "유효하지 않은 시크릿 키입니다."
-}
-```
-
-### 403 Forbidden
-
-- `X-CANVAS-ID`가 내 워크플로우가 아닌 경우
-
-```json
-{
-  "error": "워크플로우에 대한 접근 권한이 없습니다."
-}
-```
-
-### 404 Not Found
-
-- `X-CANVAS-ID`가 유효하지 않은 경우
-
-```json
-{
-  "error": "유효하지 않은 Canvas ID입니다."
-}
-```
+- `400 invalid_body`: `Invalid body.`
+- `400 graph_not_found`: `Failed to build graph from workflow.`
+- `401 auth_required`: `Authentication headers are required.` 또는 `Invalid secret key.`
+- `403 forbidden`: `You do not have permission to access this workflow.`
+- `404 workflow_not_found`: `Invalid flow ID.` 또는 `Workflow not found.`
 
 ## 사용 예시
 
@@ -97,8 +76,8 @@
 ```bash
 curl -X POST "https://agentflow.jongchoi.com/api/v1/chat" \
   -H "Content-Type: application/json" \
-  -H "X-CANVAS-SECRET: af-**********************" \
-  -H "X-CANVAS-ID: af-id-*******************" \
+  -H "X-FLOW-SECRET: af-**********************" \
+  -H "X-FLOW-ID: af-id-*******************" \
   -d '{
     "message": "강아지 키우는 법을 검색해줘"
   }'
@@ -111,8 +90,8 @@ await fetch(`https://agentflow.jongchoi.com/api/v1/chat`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "X-CANVAS-SECRET": "af-**********************",
-    "X-CANVAS-ID": "af-id-*******************",
+    "X-FLOW-SECRET": "af-**********************",
+    "X-FLOW-ID": "af-id-*******************",
   },
   body: JSON.stringify({
     message: "강아지 키우는 법을 검색해줘",
@@ -122,5 +101,5 @@ await fetch(`https://agentflow.jongchoi.com/api/v1/chat`, {
 
 ## 참고 사항
 
-- 서비스 키(`X-CANVAS-SECRET`)는 안전하게 보관하고 공개 저장소에 커밋하지 마세요.
+- 서비스 키(`X-FLOW-SECRET`)는 안전하게 보관하고 공개 저장소에 커밋하지 마세요.
 - 키가 유출된 경우 즉시 비활성화하고 재발급 받으세요.
