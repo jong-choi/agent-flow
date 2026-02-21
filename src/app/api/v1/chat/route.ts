@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { HumanMessage } from "@langchain/core/messages";
+import { apiErrorResponse } from "@/app/api/_errors/api-error";
 import {
   buildInputTree,
   buildStateGraph,
@@ -24,7 +25,7 @@ const V1ChatRequestSchema = z.object({
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-CANVAS-SECRET, X-CANVAS-ID",
+  "Access-Control-Allow-Headers": "Content-Type, X-FLOW-SECRET, X-FLOW-ID",
   "Access-Control-Max-Age": "86400",
 } as const;
 
@@ -34,41 +35,61 @@ export async function OPTIONS() {
 
 /**
  * 외부 서비스용 워크플로우 실행 API
- * - 인증: X-CANVAS-SECRET(서비스 키), X-CANVAS-ID(워크플로우 ID)
+ * - 인증: X-FLOW-SECRET(서비스 키), X-FLOW-ID(워크플로우 ID)
  * - 응답: stream이 아닌 단일 JSON
  */
 export async function POST(request: Request) {
   try {
-    const secret = request.headers.get("X-CANVAS-SECRET")?.trim() ?? "";
-    const canvasId = request.headers.get("X-CANVAS-ID")?.trim() ?? "";
+    const secret = request.headers.get("X-FLOW-SECRET")?.trim() ?? "";
+    const flowId = request.headers.get("X-FLOW-ID")?.trim() ?? "";
 
-    if (!secret || !canvasId) {
-      return Response.json(
-        { error: "인증 헤더가 필요합니다." },
-        { status: 401, headers: corsHeaders },
+    if (!secret || !flowId) {
+      return apiErrorResponse(
+        {
+          status: 401,
+          type: "authentication_error",
+          code: "auth_required",
+          message: "Authentication headers are required.",
+        },
+        { headers: corsHeaders },
       );
     }
 
     const userId = await getUserIdByCanvasSecret({ secret });
     if (!userId) {
-      return Response.json(
-        { error: "유효하지 않은 시크릿 키입니다." },
-        { status: 401, headers: corsHeaders },
+      return apiErrorResponse(
+        {
+          status: 401,
+          type: "authentication_error",
+          code: "auth_required",
+          message: "Invalid secret key.",
+        },
+        { headers: corsHeaders },
       );
     }
 
-    const workflowRef = await getWorkflowByCanvasId({ canvasId });
+    const workflowRef = await getWorkflowByCanvasId({ canvasId: flowId });
     if (!workflowRef) {
-      return Response.json(
-        { error: "유효하지 않은 Canvas ID입니다." },
-        { status: 404, headers: corsHeaders },
+      return apiErrorResponse(
+        {
+          status: 404,
+          type: "not_found_error",
+          code: "workflow_not_found",
+          message: "Invalid flow ID.",
+        },
+        { headers: corsHeaders },
       );
     }
 
     if (workflowRef.ownerId !== userId) {
-      return Response.json(
-        { error: "워크플로우에 대한 접근 권한이 없습니다." },
-        { status: 403, headers: corsHeaders },
+      return apiErrorResponse(
+        {
+          status: 403,
+          type: "authorization_error",
+          code: "forbidden",
+          message: "You do not have permission to access this workflow.",
+        },
+        { headers: corsHeaders },
       );
     }
 
@@ -76,9 +97,14 @@ export async function POST(request: Request) {
     const parsed = V1ChatRequestSchema.safeParse(json);
 
     if (!parsed.success) {
-      return Response.json(
-        { message: "Invalid body", issues: parsed.error.issues },
-        { status: 400, headers: corsHeaders },
+      return apiErrorResponse(
+        {
+          status: 400,
+          type: "invalid_request_error",
+          code: "invalid_body",
+          message: "Invalid body.",
+        },
+        { headers: corsHeaders },
       );
     }
 
@@ -86,9 +112,14 @@ export async function POST(request: Request) {
 
     const workflowData = await getWorkflowWithGraph(workflowRef.workflowId);
     if (!workflowData) {
-      return Response.json(
-        { error: "워크플로우를 찾을 수 없습니다." },
-        { status: 404, headers: corsHeaders },
+      return apiErrorResponse(
+        {
+          status: 404,
+          type: "not_found_error",
+          code: "workflow_not_found",
+          message: "Workflow not found.",
+        },
+        { headers: corsHeaders },
       );
     }
 
@@ -100,9 +131,14 @@ export async function POST(request: Request) {
     });
 
     if (!nodes || !edges) {
-      return Response.json(
-        { error: "workflow로 그래프를 생성하는 데에 실패하였습니다." },
-        { status: 400, headers: corsHeaders },
+      return apiErrorResponse(
+        {
+          status: 400,
+          type: "invalid_request_error",
+          code: "graph_not_found",
+          message: "Failed to build graph from workflow.",
+        },
+        { headers: corsHeaders },
       );
     }
 
@@ -178,7 +214,7 @@ export async function POST(request: Request) {
       {
         data: {
           response: responseText,
-          canvasId,
+          flowId,
           workflowId: workflowRef.workflowId,
         },
       },
@@ -186,9 +222,6 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("POST /api/v1/chat error:", error);
-    return Response.json(
-      { error: "Internal Server Error" },
-      { status: 500, headers: corsHeaders },
-    );
+    return apiErrorResponse(error, { headers: corsHeaders });
   }
 }

@@ -1,3 +1,4 @@
+import { createApiError } from "@/app/api/_errors/api-error";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 
@@ -16,14 +17,18 @@ export const mergeNode = async (
   const nodeId = config.metadata?.langgraph_node;
   const outputMap = state.outputMap;
   if (typeof nodeId !== "string") {
-    throw new Error("nodeId가 문자열이 아닙니다.");
+    throw createApiError("invalidRequest", {
+      message: "Invalid merge node id.",
+    });
   }
 
   // 이전 노드들의 결과값을 inputs 객체로 저장한다
   const inputs: Record<string, string | null> = {};
   const inputChildren = state.inputTree[nodeId];
   if (!inputChildren) {
-    throw new Error("병합 노드에 입력 트리가 없습니다.");
+    throw createApiError("graphNotFound", {
+      message: "Missing merge node input tree.",
+    });
   }
 
   const inputChildrenEntries = Object.entries(inputChildren);

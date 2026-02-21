@@ -32,6 +32,22 @@ const message = {
     nodeLabel: "노드",
     edgeLabel: "엣지",
   },
+  toast: {
+    createFailed: "채팅을 생성하지 못했습니다.",
+    invalidBody: "요청이 올바르지 않습니다.",
+    invalidRequest: "요청이 올바르지 않습니다.",
+    invalidModel: "모델이 올바르지 않습니다.",
+    workflowNotFound: "워크플로우를 찾을 수 없습니다.",
+    missingThreadId: "채팅 ID가 발급되지 않았습니다.",
+    fallback: "채팅 시작에 실패했습니다.",
+    authRequired: "로그인이 필요합니다.",
+    forbidden: "이 작업에 대한 권한이 없습니다.",
+    insufficientCredit: "크레딧이 부족합니다.",
+    contextTooLarge: "대화가 너무 깁니다. 새 채팅을 시도하세요.",
+    chatNotFound: "채팅을 찾을 수 없습니다. 새 채팅을 시작하세요.",
+    startSessionNotFound: "채팅 시작 중 오류: 세션을 찾을 수 없습니다.",
+    startGraphNotFound: "채팅 시작 중 오류: 그래프를 찾을 수 없습니다.",
+  },
   canvas: {
     header: {
       newWorkflow: "새 워크플로우",
@@ -49,13 +65,6 @@ const message = {
       nodeTypeMissing: "노드 타입이 지정되지 않았습니다.",
       chatNodeValueMissing: "채팅 노드의 모델 선택이 필요합니다.",
       documentNodeReferenceMissing: "문서 노드의 문서 연결이 필요합니다.",
-    },
-    start: {
-      errors: {
-        createFailed: "채팅을 생성하지 못했습니다.",
-        missingThreadId: "채팅 ID가 발급되지 않았습니다.",
-        fallback: "채팅 시작에 실패했습니다.",
-      },
     },
     save: {
       validation: {

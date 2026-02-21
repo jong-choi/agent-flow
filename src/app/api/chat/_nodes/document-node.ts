@@ -1,3 +1,4 @@
+import { createApiError } from "@/app/api/_errors/api-error";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
@@ -21,23 +22,33 @@ export const documentNode = async (
   const metadata = config.metadata;
   const nodeId = metadata?.langgraph_node;
   if (typeof nodeId !== "string") {
-    throw new Error("nodeId가 문자열이 아닙니다.");
+    throw createApiError("invalidRequest", {
+      message: "Invalid document node id.",
+    });
   }
 
   const action = metadata?.data?.content?.value;
   if (!isDocumentAction(action)) {
-    throw new Error("documentNode action이 올바르지 않습니다.");
+    throw createApiError("invalidRequest", {
+      message: "Invalid document node action.",
+    });
   }
 
   const referenceId = metadata?.data?.content?.referenceId;
   if (typeof referenceId !== "string" || referenceId.trim().length === 0) {
-    throw new Error("documentNode referenceId가 없습니다.");
+    throw createApiError("invalidRequest", {
+      message: "Missing document reference id.",
+    });
   }
 
   if (action === "읽기") {
     const doc = await getDocumentById({ docId: referenceId });
     if (!doc) {
-      throw new Error("문서를 찾을 수 없습니다.");
+      throw createApiError("invalidRequest", {
+        status: 404,
+        type: "not_found_error",
+        message: "Document not found.",
+      });
     }
 
     return { outputMap: { [nodeId]: doc.content } };
@@ -45,7 +56,9 @@ export const documentNode = async (
 
   const input = findSingleNodeInput({ state, config });
   if (typeof input !== "string") {
-    throw new Error("문서 노드에 input이 주어지지 않았습니다.");
+    throw createApiError("invalidRequest", {
+      message: "Missing document node input.",
+    });
   }
 
   if (action === "대치") {
@@ -54,7 +67,9 @@ export const documentNode = async (
       content: input,
     });
     if (content == null) {
-      throw new Error("문서를 대치하지 못했습니다.");
+      throw createApiError("internalError", {
+        message: "Failed to replace document content.",
+      });
     }
 
     return { outputMap: { [nodeId]: content } };
@@ -66,7 +81,9 @@ export const documentNode = async (
       content: input,
     });
     if (content == null) {
-      throw new Error("문서를 병합하지 못했습니다.");
+      throw createApiError("internalError", {
+        message: "Failed to merge document content.",
+      });
     }
 
     return { outputMap: { [nodeId]: content } };

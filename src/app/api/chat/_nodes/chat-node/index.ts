@@ -1,4 +1,9 @@
+import { getEncoding } from "js-tiktoken";
 import { HumanMessage } from "@langchain/core/messages";
+import {
+  createApiError,
+  mapUnknownToApiTypedError,
+} from "@/app/api/_errors/api-error";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import {
@@ -8,6 +13,9 @@ import {
 import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
 import { spendCreditsByUserId } from "@/features/credits/server/mutations";
 import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
+
+const o200kBaseEncoding = getEncoding("o200k_base");
+const CHAT_NODE_MAX_O200K_TOKENS = 8000;
 
 /**
  * 채팅 모델 실행 노드
@@ -21,17 +29,23 @@ export const chatNode = async (
   const metadata = config.metadata;
   const nodeId = metadata?.langgraph_node;
   if (typeof nodeId !== "string") {
-    throw new Error("nodeId가 문자열이 아닙니다.");
+    throw createApiError("invalidRequest", {
+      message: "Invalid chat node id.",
+    });
   }
 
   const modelId = metadata?.data?.content?.value;
   if (typeof modelId !== "string") {
-    throw new Error("chat-node 모델이 선택되지 않았습니다.");
+    throw createApiError("invalidModel", {
+      message: "No model selected for chat node.",
+    });
   }
 
   const aiModel = await resolveAiModel(modelId);
   if (!aiModel) {
-    throw new Error(`존재하지 않는 모델입니다: ${modelId}`);
+    throw createApiError("invalidModel", {
+      message: `Unknown model: ${modelId}`,
+    });
   }
 
   const price = Math.max(0, aiModel.price ?? 0);
@@ -44,17 +58,19 @@ export const chatNode = async (
 
   if (price > 0) {
     if (!userId) {
-      throw new Error("사용자 정보가 없습니다.");
+      throw createApiError("authRequired");
     }
     const balance = await getCreditBalanceByUserId(userId);
     if (balance < price) {
-      throw new Error("크레딧이 부족합니다.");
+      throw createApiError("insufficientCredit");
     }
   }
 
   const chatModel = createChatModel(aiModel);
   if (!chatModel) {
-    throw new Error(`지원하지 않는 provider입니다: ${aiModel.provider}`);
+    throw createApiError("invalidModel", {
+      message: `Unsupported provider: ${aiModel.provider}`,
+    });
   }
 
   const prevNodeId = state.inputTree[nodeId]?.target;
@@ -64,13 +80,38 @@ export const chatNode = async (
   if (!isPrevStartNode) {
     const input = findSingleNodeInput({ state, config });
     if (typeof input !== "string") {
-      throw new Error("chat-node 입력이 문자열이 아닙니다.");
+      throw createApiError("invalidRequest", {
+        message: "Invalid chat node input.",
+      });
     }
     const newMessage = new HumanMessage(input);
     messages.push(newMessage);
   }
 
-  const response = await chatModel.invoke(messages);
+  const o200kBaseTokens = o200kBaseEncoding.encode(
+    messages
+      .map((message) => {
+        const content = message.content;
+        if (typeof content === "string") {
+          return content;
+        }
+        return JSON.stringify(content);
+      })
+      .join("\n\n"),
+  ).length;
+
+  if (o200kBaseTokens > CHAT_NODE_MAX_O200K_TOKENS) {
+    throw createApiError("rateLimitExceeded", {
+      message: `Request too large for model limit (o200k_base). Limit ${CHAT_NODE_MAX_O200K_TOKENS}, requested ${o200kBaseTokens}.`,
+    });
+  }
+
+  let response;
+  try {
+    response = await chatModel.invoke(messages);
+  } catch (error) {
+    throw mapUnknownToApiTypedError(error);
+  }
 
   const content = response.content;
 
@@ -97,7 +138,7 @@ export const chatNode = async (
     });
 
     if (!spendResult.ok && spendResult.reason === "insufficient_credit") {
-      throw new Error("크레딧이 부족합니다.");
+      throw createApiError("insufficientCredit");
     }
   }
 

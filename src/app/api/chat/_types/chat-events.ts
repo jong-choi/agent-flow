@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { apiErrorPayloadSchema } from "@/app/api/_types/api-error";
 import { nodeTypes } from "@/features/canvas/constants/node-types";
 
 type RunnableType = "llm" | "chat_model" | "prompt" | "tool" | "chain";
@@ -17,7 +18,7 @@ export const clientStreamEventSchema = z
     type: z.enum(nodeTypes),
     event: z.custom<EventName>(isEventName, "Invalid event name"),
     message: z.string().optional(),
-    error: z.string().optional(),
+    error: apiErrorPayloadSchema.optional(),
     langgraph_node: z.string().optional(),
     chunk: z
       .object({

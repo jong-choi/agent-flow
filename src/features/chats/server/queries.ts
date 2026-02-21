@@ -2,11 +2,12 @@ import { cache } from "react";
 import { cacheTag } from "next/cache";
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import "server-only";
+import { createApiError } from "@/app/api/_errors/api-error";
 import { db } from "@/db/client";
 import {
+  type CursorOptions,
   buildCursorOrderBy,
   buildCursorWhere,
-  type CursorOptions,
   toCursorTimestamp,
 } from "@/db/query/cursor";
 import { chatMessages, chats } from "@/db/schema";
@@ -15,8 +16,8 @@ import { getUserId } from "@/features/auth/server/queries";
 import { chatTags } from "@/features/chats/server/cache/tags";
 import {
   getOwnedWorkflowById,
-  getOwnedWorkflowsPage,
   getOwnedWorkflows,
+  getOwnedWorkflowsPage,
   getRecentWorkflows,
   getWorkflowWithGraph,
 } from "@/features/workflows/server/queries";
@@ -69,7 +70,9 @@ export const getWorkflowWithGraphForChat = async (workflowId: string) =>
 export const getChatById = async (chatId: string) => {
   const normalizedChatId = chatId.trim();
   if (!normalizedChatId) {
-    throw new Error("채팅을 찾을 수 없습니다.");
+    throw createApiError("chatNotFound", {
+      message: "Chat not found.",
+    });
   }
 
   const userId = await getUserId();
@@ -96,7 +99,9 @@ const getChatByIdCached = cache(async (userId: string, chatId: string) => {
     .limit(1);
 
   if (!chat || chat.deletedAt || chat.userId !== userId) {
-    throw new Error("채팅을 찾을 수 없습니다.");
+    throw createApiError("chatNotFound", {
+      message: "Chat not found.",
+    });
   }
 
   return chat;
@@ -165,82 +170,88 @@ export const getChatsByUserPage = async (
   return getChatsByUserPageCached(userId, cursor, limit);
 };
 
-const getChatsByUserPageCached = cache(async (
-  userId: string,
-  cursor: string,
-  limit: number,
-): Promise<UserChatPage> => {
-  "use cache";
-  cacheTag(chatTags.listByUser(userId));
+const getChatsByUserPageCached = cache(
+  async (
+    userId: string,
+    cursor: string,
+    limit: number,
+  ): Promise<UserChatPage> => {
+    "use cache";
+    cacheTag(chatTags.listByUser(userId));
 
-  const whereClause = and(eq(chats.userId, userId), isNull(chats.deletedAt));
-  if (!whereClause) {
-    return { items: [], pageInfo: { hasNext: false, nextCursor: null } };
-  }
+    const whereClause = and(eq(chats.userId, userId), isNull(chats.deletedAt));
+    if (!whereClause) {
+      return { items: [], pageInfo: { hasNext: false, nextCursor: null } };
+    }
 
-  let cursorAnchor: { id: string; updatedAt: string } | null = null;
-  if (cursor) {
-    const [row] = await db
-      .select({
-        id: chats.id,
-        updatedAt: toCursorTimestamp(chats.updatedAt),
-      })
-      .from(chats)
-      .where(and(whereClause, eq(chats.id, cursor)))
-      .limit(1);
-    cursorAnchor = row ?? null;
-  }
+    let cursorAnchor: { id: string; updatedAt: string } | null = null;
+    if (cursor) {
+      const [row] = await db
+        .select({
+          id: chats.id,
+          updatedAt: toCursorTimestamp(chats.updatedAt),
+        })
+        .from(chats)
+        .where(and(whereClause, eq(chats.id, cursor)))
+        .limit(1);
+      cursorAnchor = row ?? null;
+    }
 
-  const orderBy = buildCursorOrderBy(
-    [
-      { value: chats.updatedAt, direction: "desc" },
-      { value: chats.id, direction: "desc" },
-    ],
-    "next",
-  );
-
-  let listWhere = whereClause;
-  if (cursorAnchor) {
-    const cursorWhere = buildCursorWhere(
+    const orderBy = buildCursorOrderBy(
       [
-        { value: chats.updatedAt, cursor: cursorAnchor.updatedAt, direction: "desc" },
-        { value: chats.id, cursor: cursorAnchor.id, direction: "desc" },
+        { value: chats.updatedAt, direction: "desc" },
+        { value: chats.id, direction: "desc" },
       ],
       "next",
     );
-    if (cursorWhere) {
-      const mergedWhere = and(whereClause, cursorWhere);
-      if (mergedWhere) {
-        listWhere = mergedWhere;
+
+    let listWhere = whereClause;
+    if (cursorAnchor) {
+      const cursorWhere = buildCursorWhere(
+        [
+          {
+            value: chats.updatedAt,
+            cursor: cursorAnchor.updatedAt,
+            direction: "desc",
+          },
+          { value: chats.id, cursor: cursorAnchor.id, direction: "desc" },
+        ],
+        "next",
+      );
+      if (cursorWhere) {
+        const mergedWhere = and(whereClause, cursorWhere);
+        if (mergedWhere) {
+          listWhere = mergedWhere;
+        }
       }
     }
-  }
 
-  const rows = await db
-    .select({
-      id: chats.id,
-      workflowId: chats.workflowId,
-      title: chats.title,
-      createdAt: chats.createdAt,
-      updatedAt: chats.updatedAt,
-    })
-    .from(chats)
-    .where(listWhere)
-    .orderBy(...orderBy)
-    .limit(limit + 1);
+    const rows = await db
+      .select({
+        id: chats.id,
+        workflowId: chats.workflowId,
+        title: chats.title,
+        createdAt: chats.createdAt,
+        updatedAt: chats.updatedAt,
+      })
+      .from(chats)
+      .where(listWhere)
+      .orderBy(...orderBy)
+      .limit(limit + 1);
 
-  const hasNext = rows.length > limit;
-  const items = rows.slice(0, limit);
-  const nextCursor = hasNext ? items[items.length - 1]?.id ?? null : null;
+    const hasNext = rows.length > limit;
+    const items = rows.slice(0, limit);
+    const nextCursor = hasNext ? (items[items.length - 1]?.id ?? null) : null;
 
-  return {
-    items,
-    pageInfo: {
-      hasNext,
-      nextCursor,
-    },
-  };
-});
+    return {
+      items,
+      pageInfo: {
+        hasNext,
+        nextCursor,
+      },
+    };
+  },
+);
 
 export const getPublicChatMessagesByChatId = async ({
   chatId,

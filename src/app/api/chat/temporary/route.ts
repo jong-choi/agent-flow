@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { apiErrorResponse } from "@/app/api/_errors/api-error";
 import { buildInputTree } from "@/app/api/chat/_engines/build-state-graph";
 import {
   type ThreadContext,
@@ -28,19 +29,23 @@ export async function POST(request: Request) {
 
     const parsed = ChatCreateThreadRequestSchema.safeParse(json);
     if (!parsed.success) {
-      return Response.json(
-        { message: "Invalid body", issues: parsed.error.issues },
-        { status: 400 },
-      );
+      return apiErrorResponse({
+        status: 400,
+        type: "invalid_request_error",
+        code: "invalid_body",
+        message: "Invalid body.",
+      });
     }
 
     const { nodes, edges } = parsed.data;
 
     if (!Array.isArray(nodes) || !Array.isArray(edges)) {
-      return Response.json(
-        { error: "nodes와 edges가 필요합니다." },
-        { status: 400 },
-      );
+      return apiErrorResponse({
+        status: 400,
+        type: "invalid_request_error",
+        code: "invalid_request",
+        message: "nodes and edges are required.",
+      });
     }
 
     const graph: ThreadContext["graph"] = { nodes, edges };
@@ -63,11 +68,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("쓰레드 생성 에러:", error);
-
-    const errorResponse = {
-      error: "쓰레드 생성에 실패하였습니다.",
-    };
-
-    return Response.json(errorResponse, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

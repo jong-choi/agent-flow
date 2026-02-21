@@ -1,4 +1,5 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
+import { createApiError } from "@/app/api/_errors/api-error";
 import { FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import * as runnableNodes from "@/app/api/chat/_nodes";
 import {
@@ -109,7 +110,9 @@ export const buildStateGraph = ({
   if (startNode) {
     graph.addEdge(START, startNode.id);
   } else {
-    throw new Error("시작 노드가 없습니다");
+    throw createApiError("graphNotFound", {
+      message: "Start node is missing.",
+    });
   }
 
   // 엣지 연결 (merge 노드 제외)
@@ -142,7 +145,9 @@ export const buildStateGraph = ({
   if (endNode) {
     graph.addEdge(endNode.id, END);
   } else {
-    throw new Error("종료 노드가 없습니다");
+    throw createApiError("graphNotFound", {
+      message: "End node is missing.",
+    });
   }
 
   return graph;

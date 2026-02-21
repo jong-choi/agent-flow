@@ -5,6 +5,10 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ChatStoreProvider } from "@/features/chats/store/chat-store";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
+import {
+  parseApiErrorPayload,
+  resolveApiToastMessage,
+} from "@/lib/errors/api-client-error";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type ChatEventWrapperMode = "temporary" | "persistent";
@@ -50,11 +54,15 @@ export function ChatEventWrapper({
           return;
         }
 
-        if (response.status === 400) {
-          toast.error(t("toast.startGraphNotFound"));
-        } else if (response.status === 404) {
-          toast.error(t("toast.startSessionNotFound"));
-        }
+        const payload = await response.json().catch(() => null);
+        const parsedError = parseApiErrorPayload(payload);
+        toast.error(
+          resolveApiToastMessage({
+            t,
+            code: parsedError?.code,
+            fallbackKey: "toast.responseUnavailable",
+          }),
+        );
         onInvalidThreadId?.();
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") {

@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { asc, ilike } from "drizzle-orm";
+import { apiErrorResponse } from "@/app/api/_errors/api-error";
 import { db } from "@/db/client";
 import { presetTags } from "@/db/schema/presets";
 
@@ -28,9 +29,6 @@ export async function GET(request: Request) {
     return Response.json({ tags: rows.map((row) => row.tag) });
   } catch (error) {
     console.error("프리셋 태그 검색 실패:", error);
-    return Response.json(
-      { error: "프리셋 태그 검색에 실패했습니다." },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

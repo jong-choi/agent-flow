@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { apiErrorResponse } from "@/app/api/_errors/api-error";
 import { insertChatMessage } from "@/features/chats/server/mutations";
 import { getChatById } from "@/features/chats/server/queries";
 
@@ -17,10 +18,12 @@ export async function POST(
     const parsed = chatMessageSchema.safeParse(json);
 
     if (!parsed.success) {
-      return Response.json(
-        { message: "Invalid body", issues: parsed.error.issues },
-        { status: 400 },
-      );
+      return apiErrorResponse({
+        status: 400,
+        type: "invalid_request_error",
+        code: "invalid_body",
+        message: "Invalid body.",
+      });
     }
 
     const { message } = parsed.data;
@@ -30,24 +33,7 @@ export async function POST(
 
     return Response.json({ ok: true, hasTitle: Boolean(chat.title) });
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === "사용자 정보가 없습니다.") {
-        return Response.json({ error: "인증이 필요합니다." }, { status: 401 });
-      }
-      if (error.message === "채팅을 찾을 수 없습니다.") {
-        return Response.json(
-          { error: "채팅을 찾을 수 없습니다." },
-          { status: 404 },
-        );
-      }
-      if (error.message === "채팅에 대한 접근 권한이 없습니다.") {
-        return Response.json(
-          { error: "채팅에 대한 접근 권한이 없습니다." },
-          { status: 403 },
-        );
-      }
-    }
     console.error("POST /api/chat/persistent/[chatId] error:", error);
-    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

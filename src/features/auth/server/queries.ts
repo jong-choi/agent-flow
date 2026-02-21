@@ -1,7 +1,8 @@
+import { cache } from "react";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import "server-only";
-import { cache } from "react";
+import { createApiError } from "@/app/api/_errors/api-error";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -28,7 +29,7 @@ const getUserIdCached = cache(async (throwOnError: boolean) => {
       return undefined;
     }
 
-    throw new Error("사용자 정보가 없습니다.");
+    throw createApiError("authRequired");
   }
 
   return userId;

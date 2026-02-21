@@ -1,3 +1,4 @@
+import { createApiError } from "@/app/api/_errors/api-error";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 
@@ -8,13 +9,17 @@ export const endNode = async (
   const metadata = config.metadata;
   const nodeId = metadata?.langgraph_node;
   if (typeof nodeId !== "string") {
-    throw new Error("nodeId가 문자열이 아닙니다.");
+    throw createApiError("invalidRequest", {
+      message: "Invalid end node id.",
+    });
   }
 
   const inputChildren = state.inputTree[nodeId] ?? {};
   const inputEntries = Object.entries(inputChildren);
   if (inputEntries.length !== 1) {
-    throw new Error("end-node는 단일 입력만 허용합니다.");
+    throw createApiError("invalidRequest", {
+      message: "End node only accepts a single input.",
+    });
   }
 
   return {};

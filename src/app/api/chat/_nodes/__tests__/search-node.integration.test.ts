@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
-import { searchNode } from "@/app/api/chat/_nodes/search-node";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
+import { searchNode } from "@/app/api/chat/_nodes/search-node";
 
 const originalApiKey = process.env.GOOGLE_SEARCH_API_KEY;
 const originalCx = process.env.GOOGLE_SEARCH_CX;
@@ -94,9 +94,10 @@ describe("searchNode (integration)", () => {
     const state = buildState({ nodeId, inputNodeId, input: "고양이" });
     const config = buildConfig(nodeId);
 
-    const result = await searchNode(state, config);
-
-    expect(result.outputMap?.[nodeId]).toBe("검색 중 에러가 발생하였습니다.");
+    await expect(searchNode(state, config)).rejects.toMatchObject({
+      code: "internal_error",
+      type: "server_error",
+    });
   });
 
   it("nodeId가 문자열이 아니면 에러가 발생한다", async () => {
@@ -108,7 +109,7 @@ describe("searchNode (integration)", () => {
     } as unknown as FlowRunnableConfig;
 
     await expect(searchNode(state, config)).rejects.toThrow(
-      "nodeId가 문자열이 아닙니다.",
+      "Invalid search node id.",
     );
   });
 
@@ -119,7 +120,7 @@ describe("searchNode (integration)", () => {
     const config = buildConfig(nodeId);
 
     await expect(searchNode(state, config)).rejects.toThrow(
-      "검색 노드에 input이 주어지지 않았습니다.",
+      "Missing search node input.",
     );
   });
 
@@ -139,7 +140,7 @@ describe("searchNode (integration)", () => {
     const config = buildConfig(nodeId);
 
     await expect(searchNode(state, config)).rejects.toThrow(
-      "단일 입력 노드에 여러 입력이 있습니다.",
+      "Single input node has multiple inputs.",
     );
   });
 
@@ -158,9 +159,10 @@ describe("searchNode (integration)", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await searchNode(state, config);
-
-    expect(result.outputMap?.[nodeId]).toBe("검색 중 에러가 발생하였습니다.");
+    await expect(searchNode(state, config)).rejects.toMatchObject({
+      code: "internal_error",
+      type: "server_error",
+    });
   });
 
   it("검색 결과를 요약해 outputMap에 저장한다", async () => {
@@ -214,8 +216,9 @@ describe("searchNode (integration)", () => {
     const fetchMock = vi.fn().mockResolvedValue(buildResponse({ data: {} }));
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await searchNode(state, config);
-
-    expect(result.outputMap?.[nodeId]).toBe("검색 중 에러가 발생하였습니다.");
+    await expect(searchNode(state, config)).rejects.toMatchObject({
+      code: "internal_error",
+      type: "server_error",
+    });
   });
 });

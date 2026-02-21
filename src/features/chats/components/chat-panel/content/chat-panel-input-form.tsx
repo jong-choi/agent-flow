@@ -8,6 +8,10 @@ import { type FlowCanvasNode } from "@/db/types/sidebar-nodes";
 import { ChatStreamingStatus } from "@/features/chats/components/chat-panel/content/chat-streaming-status";
 import { useChatEvent } from "@/features/chats/hooks/use-chat-event";
 import { useChatStore } from "@/features/chats/store/chat-store";
+import {
+  isApiClientError,
+  resolveApiToastMessage,
+} from "@/lib/errors/api-client-error";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function ChatPanelInputForm() {
@@ -26,15 +30,23 @@ export function ChatPanelInputForm() {
     }
 
     const message = textareaRef.current?.value.trim();
-    if (!message) {
+    if (!textareaRef.current || !message) {
       setHasMessage(false);
       return;
     }
 
     try {
+      textareaRef.current.value = "";
+      setHasMessage(false);
       await sendMessage(message);
-    } catch {
-      toast.error(t("toast.responseUnavailable"));
+    } catch (error) {
+      toast.error(
+        resolveApiToastMessage({
+          t,
+          code: isApiClientError(error) ? error.payload.code : undefined,
+          fallbackKey: "toast.responseUnavailable",
+        }),
+      );
     }
   };
 

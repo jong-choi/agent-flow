@@ -4,6 +4,10 @@ import {
   SystemMessage,
 } from "@langchain/core/messages";
 import {
+  apiErrorResponse,
+  mapUnknownToApiTypedError,
+} from "@/app/api/_errors/api-error";
+import {
   buildInputTree,
   buildStateGraph,
 } from "@/app/api/chat/_engines/build-state-graph";
@@ -46,10 +50,12 @@ export async function GET(
 
     const workflowData = await getWorkflowWithGraphForChat(chat.workflowId);
     if (!workflowData) {
-      return Response.json(
-        { error: "workflowData를 불러오는 데에 실패하였습니다." },
-        { status: 400 },
-      );
+      return apiErrorResponse({
+        status: 404,
+        type: "not_found_error",
+        code: "workflow_not_found",
+        message: "Workflow not found.",
+      });
     }
 
     const sidebarNodes = await getSidebarNodesWithOptions();
@@ -60,10 +66,12 @@ export async function GET(
     });
 
     if (!nodes || !edges) {
-      return Response.json(
-        { error: "workflow로 그래프를 생성하는 데에 실패하였습니다." },
-        { status: 400 },
-      );
+      return apiErrorResponse({
+        status: 400,
+        type: "invalid_request_error",
+        code: "graph_not_found",
+        message: "Failed to build graph from workflow.",
+      });
     }
 
     const messages = await getChatMessagesByChatId(chatId);
@@ -166,16 +174,18 @@ export async function GET(
           }
         } catch (error) {
           console.error("SSE stream error:", error);
+          const mappedError = mapUnknownToApiTypedError(error);
           emitEvent({
             type: "endNode",
             event: "on_chain_end",
-            error: "stream_error",
+            error: {
+              message: mappedError.message,
+              type: mappedError.type,
+              code: mappedError.code,
+            },
           });
           controller.close();
-          return Response.json(
-            { error: "Internal Server Error" },
-            { status: 500 },
-          );
+          return;
         }
       },
     });
@@ -189,24 +199,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === "사용자 정보가 없습니다.") {
-        return Response.json({ error: "인증이 필요합니다." }, { status: 401 });
-      }
-      if (error.message === "채팅을 찾을 수 없습니다.") {
-        return Response.json(
-          { error: "채팅을 찾을 수 없습니다." },
-          { status: 404 },
-        );
-      }
-      if (error.message === "채팅에 대한 접근 권한이 없습니다.") {
-        return Response.json(
-          { error: "채팅에 대한 접근 권한이 없습니다." },
-          { status: 403 },
-        );
-      }
-    }
     console.error("GET /api/chat/persistent/[chatId] error:", error);
-    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

@@ -1,4 +1,5 @@
 import { HumanMessage } from "@langchain/core/messages";
+import { createApiError } from "@/app/api/_errors/api-error";
 import {
   buildInputTree,
   buildStateGraph,
@@ -30,7 +31,9 @@ const createWorkflowRuntime = async ({
 }: RunWorkflowParams) => {
   const workflowData = await getWorkflowWithGraph(workflowId);
   if (!workflowData) {
-    throw new Error("워크플로우를 찾을 수 없습니다.");
+    throw createApiError("workflowNotFound", {
+      message: "Workflow not found.",
+    });
   }
 
   const sidebarNodes = await getSidebarNodesWithOptions();
@@ -41,7 +44,9 @@ const createWorkflowRuntime = async ({
   });
 
   if (!nodes || !edges) {
-    throw new Error("workflow로 그래프를 생성하는 데에 실패하였습니다.");
+    throw createApiError("graphNotFound", {
+      message: "Failed to build graph from workflow.",
+    });
   }
 
   const state = {
