@@ -1,27 +1,18 @@
+import { mapUnknownToApiTypedError } from "@/app/api/_errors/api-error";
+import {
+  type ApiErrorCode,
+  type ApiErrorType,
+} from "@/app/api/_types/api-error";
 import {
   getUserIdByCanvasSecret,
   getWorkflowByCanvasId,
 } from "@/features/developers/server/queries";
 
-type OpenAiErrorType =
-  | "invalid_request_error"
-  | "authentication_error"
-  | "not_found_error"
-  | "server_error";
-
-type OpenAiErrorCode =
-  | "invalid_api_key"
-  | "invalid_model"
-  | "invalid_body"
-  | "invalid_messages"
-  | "invalid_input"
-  | "internal_error";
-
 export const openAiCorsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-CANVAS-SECRET, OpenAI-Beta",
+    "Content-Type, Authorization, X-FLOW-SECRET, OpenAI-Beta",
   "Access-Control-Max-Age": "86400",
 } as const;
 
@@ -35,8 +26,8 @@ export const openAiSseHeaders = {
 
 export class OpenAiCompatError extends Error {
   readonly status: number;
-  readonly type: OpenAiErrorType;
-  readonly code?: OpenAiErrorCode;
+  readonly type: ApiErrorType;
+  readonly code?: ApiErrorCode;
 
   constructor({
     status,
@@ -45,8 +36,8 @@ export class OpenAiCompatError extends Error {
     message,
   }: {
     status: number;
-    type: OpenAiErrorType;
-    code?: OpenAiErrorCode;
+    type: ApiErrorType;
+    code?: ApiErrorCode;
     message: string;
   }) {
     super(message);
@@ -70,8 +61,8 @@ export const openAiErrorResponse = ({
   headers,
 }: {
   status: number;
-  type: OpenAiErrorType;
-  code?: OpenAiErrorCode;
+  type: ApiErrorType;
+  code?: ApiErrorCode;
   message: string;
   headers?: HeadersInit;
 }) =>
@@ -106,11 +97,12 @@ export const handleOpenAiRouteError = (routeLabel: string, error: unknown) => {
   }
 
   console.error(`${routeLabel} error:`, error);
+  const mappedError = mapUnknownToApiTypedError(error);
   return openAiErrorResponse({
-    status: 500,
-    type: "server_error",
-    code: "internal_error",
-    message: "Internal Server Error",
+    status: mappedError.status,
+    type: mappedError.type,
+    code: mappedError.code,
+    message: mappedError.message,
   });
 };
 
@@ -121,7 +113,7 @@ export const getOpenAiSecretFromHeaders = (headers: Headers) => {
     return bearerMatch[1].trim();
   }
 
-  return headers.get("X-CANVAS-SECRET")?.trim() ?? "";
+  return headers.get("X-FLOW-SECRET")?.trim() ?? "";
 };
 
 export const resolveOpenAiWorkflowContext = async ({
@@ -137,7 +129,7 @@ export const resolveOpenAiWorkflowContext = async ({
       status: 400,
       type: "invalid_request_error",
       code: "invalid_model",
-      message: "model(X-CANVAS-ID)은 필수입니다.",
+      message: "model (X-FLOW-ID) is required.",
     });
   }
 
@@ -147,7 +139,7 @@ export const resolveOpenAiWorkflowContext = async ({
       status: 401,
       type: "authentication_error",
       code: "invalid_api_key",
-      message: "Authorization: Bearer <key> 또는 X-CANVAS-SECRET이 필요합니다.",
+      message: "Authorization: Bearer <key> or X-FLOW-SECRET is required.",
     });
   }
 
@@ -157,7 +149,7 @@ export const resolveOpenAiWorkflowContext = async ({
       status: 401,
       type: "authentication_error",
       code: "invalid_api_key",
-      message: "유효하지 않은 API Key입니다.",
+      message: "Invalid API key.",
     });
   }
 
@@ -167,7 +159,7 @@ export const resolveOpenAiWorkflowContext = async ({
       status: 404,
       type: "invalid_request_error",
       code: "invalid_model",
-      message: "유효하지 않은 model(X-CANVAS-ID)입니다.",
+      message: "Invalid model (X-FLOW-ID).",
     });
   }
 

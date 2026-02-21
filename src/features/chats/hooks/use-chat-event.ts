@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { type ApiErrorPayload } from "@/app/api/_types/api-error";
 import { clientStreamEventSchema } from "@/app/api/chat/_types/chat-events";
 import { type NodeType } from "@/features/canvas/constants/node-types";
 import { useUpdateChatTitleIfMissingMutation } from "@/features/chats/lib/query/mutations";
@@ -9,6 +10,11 @@ import { useChatStore } from "@/features/chats/store/chat-store";
 import { createHumanMessage } from "@/features/chats/utils/chat-message";
 import { updateCreditTagsAction } from "@/features/credits/server/actions";
 import { updateDocumentsTagsAction } from "@/features/documents/server/actions";
+import {
+  ApiClientError,
+  parseApiErrorPayload,
+  resolveApiToastMessage,
+} from "@/lib/errors/api-client-error";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 const TRACKED_RUNNING_NODE_TYPES = new Set<NodeType>([
@@ -86,7 +92,16 @@ export function useChatEvent() {
       const payload = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(t("errors.responseUnavailable"));
+        const parsedError = parseApiErrorPayload(payload);
+        if (parsedError) {
+          throw new ApiClientError(parsedError);
+        }
+
+        throw new ApiClientError({
+          message: t("errors.responseUnavailable"),
+          type: "server_error",
+          code: "internal_error",
+        });
       }
 
       if (mode === "persistent") {
@@ -180,12 +195,18 @@ function useChatEventSource() {
     const eventSource = new EventSource(`${endpointBase}/${targetId}`);
     eventSourceRef.current = eventSource;
 
-    const notifyStreamErrorOnce = () => {
+    const notifyStreamErrorOnce = (payload?: ApiErrorPayload) => {
       if (streamErrorShownRef.current) {
         return;
       }
       streamErrorShownRef.current = true;
-      toast.error(t("toast.streamFailed"));
+      toast.error(
+        resolveApiToastMessage({
+          t,
+          code: payload?.code,
+          fallbackKey: "toast.streamFailed",
+        }),
+      );
     };
 
     eventSource.onmessage = (event) => {
@@ -253,7 +274,7 @@ function useChatEventSource() {
 
         if (data.type === "endNode" && data.event === "on_chain_end") {
           if (data.error) {
-            notifyStreamErrorOnce();
+            notifyStreamErrorOnce(data.error);
           }
           flushStreamingToMessages();
           setIsStreaming(false);

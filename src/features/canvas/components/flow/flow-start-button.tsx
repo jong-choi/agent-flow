@@ -8,6 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+import {
+  ApiClientError,
+  isApiClientError,
+  parseApiErrorPayload,
+  resolveApiToastMessage,
+} from "@/lib/errors/api-client-error";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function FlowStartButton() {
@@ -40,11 +46,15 @@ export function FlowStartButton() {
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        const message =
-          typeof payload?.error === "string"
-            ? payload.error
-            : t("canvas.start.errors.createFailed");
-        throw new Error(message);
+        const parsedError = parseApiErrorPayload(payload);
+        if (parsedError) {
+          throw new ApiClientError(parsedError);
+        }
+        throw new ApiClientError({
+          message: t("toast.createFailed"),
+          type: "invalid_request_error",
+          code: "invalid_request",
+        });
       }
 
       const payload = (await response.json()) as {
@@ -53,17 +63,23 @@ export function FlowStartButton() {
       const nextThreadId = payload?.data?.thread_id;
 
       if (!nextThreadId) {
-        throw new Error(t("canvas.start.errors.missingThreadId"));
+        throw new ApiClientError({
+          message: t("toast.missingThreadId"),
+          type: "invalid_request_error",
+          code: "missing_thread_id",
+        });
       }
 
       setThreadId(nextThreadId);
     } catch (error) {
       console.error("Error while starting chat:", error);
-      const message =
-        error instanceof Error
-          ? error.message
-          : t("canvas.start.errors.fallback");
-      toast.error(message);
+      toast.error(
+        resolveApiToastMessage({
+          t,
+          code: isApiClientError(error) ? error.payload.code : undefined,
+          fallbackKey: "toast.fallback",
+        }),
+      );
     } finally {
       setLoading(false);
     }

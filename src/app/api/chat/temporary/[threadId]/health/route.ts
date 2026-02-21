@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/app/api/_errors/api-error";
 import {
   resetIdleTimer,
   threadContextManager,
@@ -13,17 +14,21 @@ export async function GET(
     const threadContext = threadContextManager.get(threadId);
 
     if (!threadContext) {
-      return Response.json(
-        { error: "세션을 찾을 수 없습니다." },
-        { status: 404 },
-      );
+      return apiErrorResponse({
+        status: 404,
+        type: "not_found_error",
+        code: "thread_not_found",
+        message: "Session not found.",
+      });
     }
 
     if (!threadContext.graph) {
-      return Response.json(
-        { error: "그래프 정보가 없습니다." },
-        { status: 400 },
-      );
+      return apiErrorResponse({
+        status: 400,
+        type: "invalid_request_error",
+        code: "graph_not_found",
+        message: "Graph information is missing.",
+      });
     }
 
     resetIdleTimer(threadId);
@@ -31,6 +36,6 @@ export async function GET(
     return Response.json({ ok: true });
   } catch (error) {
     console.error("GET /api/chat/temporary/[threadId]/health error:", error);
-    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

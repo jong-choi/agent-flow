@@ -1,3 +1,7 @@
+import {
+  createApiError,
+  mapUnknownToApiTypedError,
+} from "@/app/api/_errors/api-error";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
@@ -19,49 +23,53 @@ export const searchNode = async (
   const metadata = config.metadata;
   const nodeId = metadata?.langgraph_node;
   if (typeof nodeId !== "string") {
-    throw new Error("nodeId가 문자열이 아닙니다.");
+    throw createApiError("invalidRequest", {
+      message: "Invalid search node id.",
+    });
   }
 
   const input = findSingleNodeInput({ state, config });
   if (!input) {
-    throw new Error("검색 노드에 input이 주어지지 않았습니다.");
+    throw createApiError("invalidRequest", {
+      message: "Missing search node input.",
+    });
   }
 
   let searchResults: GoogleSearchItem[] = [];
-  let errMessage: string = "";
+  let lastError: unknown = null;
 
   try {
     searchResults = await searxngSearch(input);
-  } catch {
-    errMessage = "메타검색 중 에러가 발생하였습니다.";
+  } catch (error) {
+    lastError = error;
   }
 
   if (!searchResults.length) {
     try {
       searchResults = await googleSearch(input);
-    } catch {
-      errMessage = "구글 검색 중 에러가 발생하였습니다.";
+    } catch (error) {
+      lastError = error;
     }
   }
 
   if (!searchResults.length) {
     try {
       searchResults = await braveSearch(input);
-    } catch {
-      errMessage = "Brave 검색 중 에러가 발생하였습니다.";
+    } catch (error) {
+      lastError = error;
     }
   }
 
   if (!searchResults.length) {
     try {
       searchResults = await naverSearch(input);
-    } catch {
-      errMessage = "검색 중 에러가 발생하였습니다.";
+    } catch (error) {
+      lastError = error;
     }
   }
 
-  if (!searchResults.length && errMessage) {
-    return { outputMap: { [nodeId]: errMessage } };
+  if (!searchResults.length && lastError) {
+    throw mapUnknownToApiTypedError(lastError);
   }
 
   // 검색 결과를 요약한 메시지 생성
@@ -104,7 +112,10 @@ const searxngSearch = async (input: string): Promise<GoogleSearchItem[]> => {
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    throw new Error(`SearXNG error: ${response.status} ${body}`);
+    throw createApiError("providerError", {
+      status: response.status,
+      message: `SearXNG error: ${response.status} ${body}`,
+    });
   }
 
   const data: SearxngResponse = await response.json();
@@ -122,7 +133,9 @@ const googleSearch = async (input: string) => {
   const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
   const GOOGLE_SEARCH_CX = process.env.GOOGLE_SEARCH_CX;
   if (!GOOGLE_SEARCH_API_KEY || !GOOGLE_SEARCH_CX) {
-    throw new Error("Google Search API 키가 설정되지 않았습니다.");
+    throw createApiError("internalError", {
+      message: "Google Search API key is not configured.",
+    });
   }
 
   const params = new URLSearchParams({
@@ -137,7 +150,10 @@ const googleSearch = async (input: string) => {
   const response = await fetch(searchUrl);
   if (!response.ok) {
     const errText = await response.text();
-    throw new Error("Google Search API error:" + response.status + errText);
+    throw createApiError("providerError", {
+      status: response.status,
+      message: `Google Search API error: ${response.status} ${errText}`,
+    });
   }
 
   const data: GoogleSearchResponse = await response.json();
@@ -165,7 +181,9 @@ type BraveSearchResponse = {
 const braveSearch = async (input: string): Promise<GoogleSearchItem[]> => {
   const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
   if (!BRAVE_API_KEY) {
-    throw new Error("Brave Search API 키가 설정되지 않았습니다.");
+    throw createApiError("internalError", {
+      message: "Brave Search API key is not configured.",
+    });
   }
 
   const url = new URL("https://api.search.brave.com/res/v1/web/search");
@@ -180,7 +198,10 @@ const braveSearch = async (input: string): Promise<GoogleSearchItem[]> => {
   });
 
   if (!response.ok) {
-    throw new Error(`Brave API error: ${response.status}`);
+    throw createApiError("providerError", {
+      status: response.status,
+      message: `Brave API error: ${response.status}`,
+    });
   }
 
   const data: BraveSearchResponse = await response.json();
@@ -211,7 +232,9 @@ const naverSearch = async (input: string) => {
   const clientId = process.env.NAVER_CLIENT_ID;
   const clientSecret = process.env.NAVER_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    throw new Error("NAVER Search API 키가 설정되지 않았습니다.");
+    throw createApiError("internalError", {
+      message: "NAVER Search API key is not configured.",
+    });
   }
 
   const url = new URL("https://openapi.naver.com/v1/search/blog");
@@ -226,7 +249,10 @@ const naverSearch = async (input: string) => {
   });
 
   if (!response.ok) {
-    throw new Error("NAVER Search API error:" + response.status);
+    throw createApiError("providerError", {
+      status: response.status,
+      message: `NAVER Search API error: ${response.status}`,
+    });
   }
 
   const data: NaverBlogResponse = await response.json();

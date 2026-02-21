@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { and, eq, isNull } from "drizzle-orm";
+import { createApiError } from "@/app/api/_errors/api-error";
 import { db } from "@/db/client";
 import { type CursorOptions } from "@/db/query/cursor";
 import { chats } from "@/db/schema";
@@ -30,12 +31,16 @@ export const createChatFromWorkflow = async ({
 }) => {
   const workflowData = await getWorkflowWithGraphForChat(workflowId);
   if (!workflowData) {
-    throw new Error("워크플로우를 찾을 수 없습니다.");
+    throw createApiError("workflowNotFound", {
+      message: "Workflow not found.",
+    });
   }
 
   const userId = await getUserId();
   if (workflowData.workflow.ownerId !== userId) {
-    throw new Error("워크플로우에 대한 접근 권한이 없습니다.");
+    throw createApiError("forbidden", {
+      message: "You do not have permission to access this workflow.",
+    });
   }
 
   const [chat] = await db
@@ -50,7 +55,9 @@ export const createChatFromWorkflow = async ({
     });
 
   if (!chat) {
-    throw new Error("채팅 생성에 실패했습니다.");
+    throw createApiError("internalError", {
+      message: "Failed to create chat.",
+    });
   }
 
   updateChatTags(userId, chat.id);
@@ -78,7 +85,9 @@ export const updateChatTitle = async ({
     });
 
   if (!updated) {
-    throw new Error("채팅 이름 변경에 실패했습니다.");
+    throw createApiError("internalError", {
+      message: "Failed to update chat title.",
+    });
   }
 
   updateChatTags(chat.userId, chat.id);
@@ -127,7 +136,9 @@ export const softDeleteChat = async ({ chatId }: { chatId: string }) => {
     .returning({ id: chats.id });
 
   if (!deleted) {
-    throw new Error("채팅 삭제에 실패했습니다.");
+    throw createApiError("internalError", {
+      message: "Failed to delete chat.",
+    });
   }
 
   updateChatTags(chat.userId, chat.id);

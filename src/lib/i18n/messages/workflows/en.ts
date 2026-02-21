@@ -32,6 +32,22 @@ const message = {
     nodeLabel: "Nodes",
     edgeLabel: "Edges",
   },
+  toast: {
+    createFailed: "Unable to start chat.",
+    invalidBody: "Invalid request body.",
+    invalidRequest: "Invalid request.",
+    invalidModel: "Invalid model.",
+    workflowNotFound: "Workflow not found.",
+    missingThreadId: "Chat ID was not issued.",
+    fallback: "Failed to start chat.",
+    authRequired: "Please log in and try again.",
+    forbidden: "You do not have permission for this action.",
+    insufficientCredit: "Insufficient credits.",
+    contextTooLarge: "This conversation is too long. Try a new chat.",
+    chatNotFound: "Chat not found. Start a new chat.",
+    startSessionNotFound: "Chat start failed: Session not found.",
+    startGraphNotFound: "Chat start failed: Graph not found.",
+  },
   canvas: {
     header: {
       newWorkflow: "New Workflow",
@@ -50,13 +66,6 @@ const message = {
       chatNodeValueMissing: "Please select a model for the chat node.",
       documentNodeReferenceMissing:
         "The document node must have a linked document.",
-    },
-    start: {
-      errors: {
-        createFailed: "Unable to start chat.",
-        missingThreadId: "Chat ID was not issued.",
-        fallback: "Failed to start chat.",
-      },
     },
     save: {
       validation: {

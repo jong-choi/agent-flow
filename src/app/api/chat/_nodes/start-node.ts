@@ -1,3 +1,4 @@
+import { createApiError } from "@/app/api/_errors/api-error";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 
@@ -12,12 +13,16 @@ export const startNode = async (
   const metadata = config.metadata;
   const nodeId = metadata?.langgraph_node;
   if (typeof nodeId !== "string") {
-    throw new Error("nodeId가 문자열이 아닙니다.");
+    throw createApiError("invalidRequest", {
+      message: "Invalid start node id.",
+    });
   }
 
   const initialInput = state.initialInput;
   if (typeof initialInput !== "string") {
-    throw new Error("initialInput이 문자열이 아닙니다.");
+    throw createApiError("invalidRequest", {
+      message: "Invalid initial input.",
+    });
   }
 
   return { outputMap: { [nodeId]: initialInput }, startNodeId: nodeId };

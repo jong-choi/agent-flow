@@ -10,16 +10,16 @@ You can call your workflow through an OpenAI-compatible interface via:
 ## Quick Start
 
 1. Create a service key in `/developers`.
-2. Issue an `X-CANVAS-ID` for a workflow in `/developers/apis`.
-3. Put that `X-CANVAS-ID` into the OpenAI request `model` field.
+2. Issue an `X-FLOW-ID` for a workflow in `/developers/apis`.
+3. Put that `X-FLOW-ID` into the OpenAI request `model` field.
 
 ## Core Rules
 
 - Base URL: `https://agentflow.jongchoi.com/api/v1/openai`
 - Auth:
   - Recommended: `Authorization: Bearer <SERVICE_KEY>`
-  - Compatibility: `X-CANVAS-SECRET: <SERVICE_KEY>`
-- Workflow identifier: `model = X-CANVAS-ID`
+  - Compatibility: `X-FLOW-SECRET: <SERVICE_KEY>`
+- Workflow identifier: `model = X-FLOW-ID`
   - Example: `"model": "af-id-xxxxxxxxxxxxxxxx"`
 
 ## Supported Endpoints
@@ -140,7 +140,7 @@ Errors follow an OpenAI-style envelope:
 ```json
 {
   "error": {
-    "message": "Invalid model (X-CANVAS-ID).",
+    "message": "Invalid model (X-FLOW-ID).",
     "type": "invalid_request_error",
     "code": "invalid_model"
   }

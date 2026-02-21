@@ -1,5 +1,6 @@
 import { revalidateTag } from "next/cache";
 import "server-only";
+import { createApiError } from "@/app/api/_errors/api-error";
 import { db } from "@/db/client";
 import { chatMessages } from "@/db/schema";
 import { chatTags } from "@/features/chats/server/cache/tags";
@@ -33,7 +34,9 @@ export const insertChatMessage = async ({
     });
 
   if (!message) {
-    throw new Error("메시지 저장에 실패했습니다.");
+    throw createApiError("internalError", {
+      message: "Failed to save message.",
+    });
   }
 
   revalidateChatMessageTags(chat.userId, chat.id);

@@ -1,8 +1,8 @@
 // target핸들에 연결된 하나의 응답을 source핸들에 연결된 여러 노드들에게 보내주는 노드
 import { describe, expect, it } from "vitest";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
-import { splitNode } from "@/app/api/chat/_nodes/split-node";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
+import { splitNode } from "@/app/api/chat/_nodes/split-node";
 
 describe("splitNode", () => {
   it("입력이 있으면 입력값을 그대로 저장한다", async () => {
@@ -46,8 +46,9 @@ describe("splitNode", () => {
       metadata: { langgraph_node: nodeId },
     } as unknown as FlowRunnableConfig;
 
-    await expect(splitNode(state, config)).rejects.toThrow(
-      "단일 입력 노드에 여러 입력이 있습니다.",
-    );
+    await expect(splitNode(state, config)).rejects.toMatchObject({
+      code: "invalid_request",
+      type: "invalid_request_error",
+    });
   });
 });

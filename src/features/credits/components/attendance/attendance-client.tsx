@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { updateCreditTagsAction } from "@/features/credits/server/actions";
+import { parseApiErrorPayload } from "@/lib/errors/api-client-error";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 type WeeklyAttendanceItem = {
@@ -44,15 +45,7 @@ type AttendanceClientProps = {
   summary: AttendanceSummary;
 };
 
-const WEEKDAY_KEYS = [
-  "mon",
-  "tue",
-  "wed",
-  "thu",
-  "fri",
-  "sat",
-  "sun",
-] as const;
+const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
 export function AttendanceClient({ summary }: AttendanceClientProps) {
   const t = useTranslations<AppMessageKeys>("Credits");
@@ -70,15 +63,29 @@ export function AttendanceClient({ summary }: AttendanceClientProps) {
       const response = await fetch("/api/credits/attendance", {
         method: "POST",
       });
-      const data: AttendanceResult = await response.json();
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
+        const parsedError = parseApiErrorPayload(data);
+        if (parsedError?.code === "invalid_request") {
+          const parsed = JSON.parse(parsedError.message) as {
+            reason?: string;
+            attendance: AttendanceSummary;
+            balance?: number;
+          };
+          if (parsed.reason === "already_claimed") {
+            setAttendance(parsed.attendance);
+            void updateCreditTagsAction({ includeAttendance: true });
+            return;
+          }
+        }
         throw new Error(t("attendance.checkInFailed"));
       }
 
-      setAttendance(data.attendance);
+      const result = data as AttendanceResult;
+      setAttendance(result.attendance);
 
-      if (data.credited) {
+      if (result.credited) {
         void updateCreditTagsAction({ includeAttendance: true });
         setShowReward(true);
         setTimeout(() => setShowReward(false), 3000);
@@ -170,18 +177,24 @@ export function AttendanceClient({ summary }: AttendanceClientProps) {
           </Card>
           <Card>
             <CardHeader>
-              <CardDescription>{t("attendance.totalAttendance")}</CardDescription>
+              <CardDescription>
+                {t("attendance.totalAttendance")}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-chart-2">
-                {t("attendance.dayCount", { count: attendance.totalAttendance })}
+                {t("attendance.dayCount", {
+                  count: attendance.totalAttendance,
+                })}
               </div>
             </CardContent>
           </Card>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">{t("attendance.weeklyTitle")}</CardTitle>
+            <CardTitle className="text-lg">
+              {t("attendance.weeklyTitle")}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-7 gap-2">

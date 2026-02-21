@@ -1,6 +1,6 @@
 {
   "name": "agentflow",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -49,6 +49,7 @@
     "dayjs": "^1.11.19",
     "drizzle-orm": "^0.45.0",
     "drizzle-zod": "^0.8.3",
+    "js-tiktoken": "^1.0.21",
     "lucide-react": "^0.555.0",
     "mermaid": "^11.12.2",
     "nanoid": "^5.1.6",

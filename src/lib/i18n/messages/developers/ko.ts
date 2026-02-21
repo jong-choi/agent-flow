@@ -20,19 +20,17 @@ const message = {
     workflowApiButton: "워크플로우 API",
     secretCardTitle: "서비스 키",
     secretCardDescription:
-      "API 호출 시 <code>X-CANVAS-SECRET</code> 헤더로 전달합니다. 키는 발급 시 1회만 노출됩니다.",
+      "API 호출 시 <code>X-FLOW-SECRET</code> 헤더로 전달합니다. 키는 발급 시 1회만 노출됩니다.",
     guidesCardTitle: "Developer API 사용 가이드",
     openAiGuideTitle: "OpenAI 호환 가이드",
-    openAiGuideDescription:
-      "OpenAI SDK/클라이언트에서 바로 호출하는 방법",
+    openAiGuideDescription: "OpenAI SDK/클라이언트에서 바로 호출하는 방법",
     agentflowGuideTitle: "AgentFlow API 가이드",
-    agentflowGuideDescription:
-      "/api/v1/chat (X-CANVAS-SECRET + X-CANVAS-ID)",
+    agentflowGuideDescription: "/api/v1/chat (X-FLOW-SECRET + X-FLOW-ID)",
   },
   apisPage: {
     heading: "워크플로우 API",
     description:
-      "워크플로우별 <code>X-CANVAS-ID</code>를 발급하고 호출 코드를 복사합니다.",
+      "워크플로우별 <code>X-FLOW-ID</code>를 발급하고 호출 코드를 복사합니다.",
     serviceKeysButton: "서비스 키 관리",
   },
   secretManager: {
@@ -64,11 +62,11 @@ const message = {
     curl: "cURL",
     empty: {
       title: "워크플로우가 없습니다",
-      description: "먼저 캔버스에서 워크플로우를 만들어 주세요.",
+      description: "먼저 워크플로우를 만들어 주세요.",
     },
     toasts: {
       issueFailed: "워크플로우 ID 발급에 실패했습니다.",
-      rotated: "새 X-CANVAS-ID가 발급되었습니다.",
+      rotated: "새 X-FLOW-ID가 발급되었습니다.",
       rotateFailed: "재발급에 실패했습니다.",
       revoked: "비활성화되었습니다.",
       revokeFailed: "비활성화에 실패했습니다.",
@@ -97,12 +95,11 @@ const message = {
     },
     dialog: {
       description:
-        "<code>X-CANVAS-ID</code>는 워크플로우별로 발급됩니다. OpenAI 호환 라우트에서는 이 값을 <code>model</code>로 사용합니다.",
-      canvasIdLabel: "X-CANVAS-ID",
+        "<code>X-FLOW-ID</code>는 워크플로우별로 발급됩니다. OpenAI 호환 라우트에서는 이 값을 <code>model</code>로 사용합니다.",
+      canvasIdLabel: "X-FLOW-ID",
       rotate: "재발급",
       revoke: "비활성화",
-      footer:
-        "서비스 키는 <code>/developers</code>에서 발급 후 보관해 주세요.",
+      footer: "서비스 키는 <code>/developers</code>에서 발급 후 보관해 주세요.",
     },
   },
 };

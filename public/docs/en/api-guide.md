@@ -4,8 +4,8 @@ The `/api/v1/chat` endpoint is a REST API that lets you **run your workflow from
 
 ## Quick Start
 
-1. Go to `/developers` and create a **service key (X-CANVAS-SECRET)**. Keep it safe (shown only once).
-2. Go to `/developers/apis` and issue a workflow **X-CANVAS-ID**.
+1. Go to `/developers` and create a **service key (X-FLOW-SECRET)**. Keep it safe (shown only once).
+2. Go to `/developers/apis` and issue a workflow **X-FLOW-ID**.
 3. Call `/api/v1/chat` with the headers and JSON body below.
 
 ## Basics
@@ -14,8 +14,8 @@ The `/api/v1/chat` endpoint is a REST API that lets you **run your workflow from
 - **Method**: `POST`
 - **Content-Type**: `application/json`
 - **Auth headers**
-  - `X-CANVAS-SECRET`: service key (e.g. `af-**********************`)
-  - `X-CANVAS-ID`: workflow id (e.g. `af-id-*******************`)
+  - `X-FLOW-SECRET`: service key (e.g. `af-**********************`)
+  - `X-FLOW-ID`: workflow id (e.g. `af-id-*******************`)
 
 ## Request
 
@@ -39,7 +39,7 @@ The `/api/v1/chat` endpoint is a REST API that lets you **run your workflow from
 {
   "data": {
     "response": "AI response text",
-    "canvasId": "af-id-...",
+    "flowId": "af-id-...",
     "workflowId": "workflow UUID"
   }
 }
@@ -47,38 +47,25 @@ The `/api/v1/chat` endpoint is a REST API that lets you **run your workflow from
 
 ## Errors
 
-### 400 Bad Request
+All errors use this envelope:
 
 ```json
 {
-  "message": "Invalid body",
-  "issues": []
+  "error": {
+    "message": "Human-readable error message",
+    "type": "invalid_request_error",
+    "code": "invalid_body"
+  }
 }
 ```
 
-### 401 Unauthorized
+Common cases:
 
-```json
-{
-  "error": "유효하지 않은 시크릿 키입니다."
-}
-```
-
-### 403 Forbidden
-
-```json
-{
-  "error": "워크플로우에 대한 접근 권한이 없습니다."
-}
-```
-
-### 404 Not Found
-
-```json
-{
-  "error": "유효하지 않은 Canvas ID입니다."
-}
-```
+- `400 invalid_body`: `Invalid body.`
+- `400 graph_not_found`: `Failed to build graph from workflow.`
+- `401 auth_required`: `Authentication headers are required.` or `Invalid secret key.`
+- `403 forbidden`: `You do not have permission to access this workflow.`
+- `404 workflow_not_found`: `Invalid flow ID.` or `Workflow not found.`
 
 ## Examples
 
@@ -89,8 +76,8 @@ In the snippets below, `baseUrl` refers to the `BASE_URL` env (e.g. `http://loca
 ```bash
 curl -X POST "https://agentflow.jongchoi.com/api/v1/chat" \
   -H "Content-Type: application/json" \
-  -H "X-CANVAS-SECRET: af-**********************" \
-  -H "X-CANVAS-ID: af-id-*******************" \
+  -H "X-FLOW-SECRET: af-**********************" \
+  -H "X-FLOW-ID: af-id-*******************" \
   -d '{
     "message": "Search how to raise a puppy"
   }'
@@ -103,8 +90,8 @@ await fetch(`https://agentflow.jongchoi.com/api/v1/chat`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "X-CANVAS-SECRET": "af-**********************",
-    "X-CANVAS-ID": "af-id-*******************",
+    "X-FLOW-SECRET": "af-**********************",
+    "X-FLOW-ID": "af-id-*******************",
   },
   body: JSON.stringify({
     message: "Search how to raise a puppy",
@@ -114,5 +101,5 @@ await fetch(`https://agentflow.jongchoi.com/api/v1/chat`, {
 
 ## Notes
 
-- Keep your service key (`X-CANVAS-SECRET`) safe and never commit it to a public repository.
+- Keep your service key (`X-FLOW-SECRET`) safe and never commit it to a public repository.
 - If a key is leaked, revoke and re-issue it immediately.

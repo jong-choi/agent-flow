@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
-import { startNode } from "@/app/api/chat/_nodes/start-node";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
+import { startNode } from "@/app/api/chat/_nodes/start-node";
 
 describe("startNode", () => {
   it("initialInput을 outputMap에 저장한다", async () => {
@@ -37,8 +37,9 @@ describe("startNode", () => {
       metadata: { langgraph_node: nodeId },
     } as unknown as FlowRunnableConfig;
 
-    await expect(startNode(state, config)).rejects.toThrow(
-      "initialInput이 문자열이 아닙니다.",
-    );
+    await expect(startNode(state, config)).rejects.toMatchObject({
+      code: "invalid_request",
+      type: "invalid_request_error",
+    });
   });
 });

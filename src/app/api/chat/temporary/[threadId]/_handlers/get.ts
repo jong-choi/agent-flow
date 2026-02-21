@@ -1,3 +1,7 @@
+import {
+  apiErrorResponse,
+  mapUnknownToApiTypedError,
+} from "@/app/api/_errors/api-error";
 import { buildStateGraph } from "@/app/api/chat/_engines/build-state-graph";
 import {
   checkpointer,
@@ -27,17 +31,21 @@ export async function GET(
     const threadContext = threadContextManager.get(threadId);
 
     if (!threadContext) {
-      return Response.json(
-        { error: "세션을 찾을 수 없습니다." },
-        { status: 404 },
-      );
+      return apiErrorResponse({
+        status: 404,
+        type: "not_found_error",
+        code: "thread_not_found",
+        message: "Session not found.",
+      });
     }
 
     if (!threadContext.graph) {
-      return Response.json(
-        { error: "그래프 정보가 없습니다." },
-        { status: 400 },
-      );
+      return apiErrorResponse({
+        status: 400,
+        type: "invalid_request_error",
+        code: "graph_not_found",
+        message: "Graph information is missing.",
+      });
     }
 
     const userId = await getUserId();
@@ -78,16 +86,18 @@ export async function GET(
           }
         } catch (error) {
           console.error("SSE stream error:", error);
+          const mappedError = mapUnknownToApiTypedError(error);
           emitEvent({
             type: "endNode",
             event: "on_chain_end",
-            error: "stream_error",
+            error: {
+              message: mappedError.message,
+              type: mappedError.type,
+              code: mappedError.code,
+            },
           });
           controller.close();
-          return Response.json(
-            { error: "Internal Server Error" },
-            { status: 500 },
-          );
+          return;
         }
       },
     });
@@ -103,10 +113,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "사용자 정보가 없습니다.") {
-      return Response.json({ error: "인증이 필요합니다." }, { status: 401 });
-    }
     console.error("GET /api/chat/temporary/[threadId] error:", error);
-    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

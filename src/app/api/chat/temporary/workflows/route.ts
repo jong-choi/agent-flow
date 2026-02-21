@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { apiErrorResponse } from "@/app/api/_errors/api-error";
 import { buildInputTree } from "@/app/api/chat/_engines/build-state-graph";
 import {
   type ThreadContext,
@@ -30,35 +31,43 @@ export async function POST(request: Request) {
 
     const parsed = ChatCreateThreadRequestSchema.safeParse(json);
     if (!parsed.success) {
-      return Response.json(
-        { message: "Invalid body", issues: parsed.error.issues },
-        { status: 400 },
-      );
+      return apiErrorResponse({
+        status: 400,
+        type: "invalid_request_error",
+        code: "invalid_body",
+        message: "Invalid body.",
+      });
     }
 
     const { workflowId } = parsed.data;
 
     if (!workflowId) {
-      return Response.json(
-        { error: "workflowId가 전달되지 않았습니다." },
-        { status: 400 },
-      );
+      return apiErrorResponse({
+        status: 400,
+        type: "invalid_request_error",
+        code: "invalid_request",
+        message: "workflowId is required.",
+      });
     }
 
     const workflowData = await getWorkflowWithGraphForChat(workflowId);
     if (!workflowData) {
-      return Response.json(
-        { error: "workflowData를 불러오는 데에 실패하였습니다." },
-        { status: 400 },
-      );
+      return apiErrorResponse({
+        status: 404,
+        type: "not_found_error",
+        code: "workflow_not_found",
+        message: "Workflow not found.",
+      });
     }
 
     const session = await auth();
     if (!session?.user || session.user.id !== workflowData.workflow.ownerId) {
-      return Response.json(
-        { error: "해당 workflow에 접근할 권한이 없습니다." },
-        { status: 403 },
-      );
+      return apiErrorResponse({
+        status: 403,
+        type: "authorization_error",
+        code: "forbidden",
+        message: "You do not have permission to access this workflow.",
+      });
     }
 
     const sidebarNodes = await getSidebarNodesWithOptions();
@@ -69,10 +78,12 @@ export async function POST(request: Request) {
     });
 
     if (!nodes || !edges) {
-      return Response.json(
-        { error: "workflow로 그래프를 생성하는 데에 실패하였습니다." },
-        { status: 400 },
-      );
+      return apiErrorResponse({
+        status: 400,
+        type: "invalid_request_error",
+        code: "graph_not_found",
+        message: "Failed to build graph from workflow.",
+      });
     }
 
     const graph: ThreadContext["graph"] = { nodes, edges };
@@ -95,11 +106,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("쓰레드 생성 에러:", error);
-
-    const errorResponse = {
-      error: "쓰레드 생성에 실패하였습니다.",
-    };
-
-    return Response.json(errorResponse, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

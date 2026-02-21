@@ -1,3 +1,4 @@
+import { apiErrorResponse, createApiError } from "@/app/api/_errors/api-error";
 import { claimDailyAttendance } from "@/features/credits/server/mutations";
 import {
   type CreditAttendanceSummary,
@@ -17,14 +18,14 @@ export async function POST() {
     const attendance = await getCreditAttendanceSummary();
 
     if (!claimResult.credited && claimResult.reason === "already_claimed") {
-      return Response.json(
-        {
-          error: "이미 오늘 출석체크를 완료했습니다.",
+      const errorPayload = createApiError("attendanceAlreadyClaimed", {
+        message: JSON.stringify({
+          reason: "already_claimed",
           attendance,
           balance: claimResult.balance,
-        },
-        { status: 409 },
-      );
+        }),
+      });
+      return apiErrorResponse(errorPayload, { status: errorPayload.status });
     }
 
     return Response.json({
@@ -34,13 +35,7 @@ export async function POST() {
       attendance,
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "사용자 정보가 없습니다.") {
-      return Response.json({ error: "인증이 필요합니다." }, { status: 401 });
-    }
     console.error("POST /api/credits/attendance error:", error);
-    return Response.json(
-      { error: "출석 체크에 실패했습니다." },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

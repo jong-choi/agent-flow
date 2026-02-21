@@ -145,7 +145,7 @@ describe("chatNode (integration)", () => {
     vi.mocked(getActiveAiModels).mockResolvedValue([]);
 
     await expect(() => chatNode(state, config)).rejects.toThrow(
-      `존재하지 않는 모델입니다: ${modelId}`,
+      `Unknown model: ${modelId}`,
     );
   });
 
@@ -163,7 +163,7 @@ describe("chatNode (integration)", () => {
     ]);
 
     await expect(() => chatNode(state, config)).rejects.toThrow(
-      "지원하지 않는 provider입니다: anthropic",
+      "Unsupported provider: anthropic",
     );
   });
 
@@ -182,9 +182,10 @@ describe("chatNode (integration)", () => {
 
     vi.mocked(ChatGoogle).mockImplementation(MockChatGoogle);
 
-    await expect(() => chatNode(state, config)).rejects.toThrow(
-      "invoke failed",
-    );
+    await expect(() => chatNode(state, config)).rejects.toMatchObject({
+      code: "internal_error",
+      type: "server_error",
+    });
   });
 
   it("입력 -> 모델 조회 -> invoke 결과를 outputMap에 저장한다", async () => {

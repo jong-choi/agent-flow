@@ -39,9 +39,10 @@ describe("documentNode", () => {
       },
     } as unknown as FlowRunnableConfig;
 
-    await expect(documentNode(state, config)).rejects.toThrow(
-      "documentNode referenceId가 없습니다.",
-    );
+    await expect(documentNode(state, config)).rejects.toMatchObject({
+      code: "invalid_request",
+      type: "invalid_request_error",
+    });
   });
 
   it("읽기는 문서 내용을 outputMap에 저장한다", async () => {
@@ -162,8 +163,9 @@ describe("documentNode", () => {
       },
     } as unknown as FlowRunnableConfig;
 
-    await expect(documentNode(state, config)).rejects.toThrow(
-      "문서 노드에 input이 주어지지 않았습니다.",
-    );
+    await expect(documentNode(state, config)).rejects.toMatchObject({
+      code: "invalid_request",
+      type: "invalid_request_error",
+    });
   });
 });

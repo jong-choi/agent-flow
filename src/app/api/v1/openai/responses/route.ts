@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { mapUnknownToApiTypedError } from "@/app/api/_errors/api-error";
 import {
   OpenAiCompatError,
   buildOpenAiId,
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
         status: 400,
         type: "invalid_request_error",
         code: "invalid_body",
-        message: "요청 본문(JSON)을 파싱할 수 없습니다.",
+        message: "Request body must be valid JSON.",
       });
     }
 
@@ -86,7 +87,7 @@ export async function POST(request: Request) {
         status: 400,
         type: "invalid_request_error",
         code: "invalid_body",
-        message: "요청 본문 형식이 올바르지 않습니다.",
+        message: "Invalid request body format.",
       });
     }
 
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
         status: 400,
         type: "invalid_request_error",
         code: "invalid_input",
-        message: "input에서 user 텍스트를 찾을 수 없습니다.",
+        message: "Unable to find user text in input.",
       });
     }
 
@@ -199,7 +200,16 @@ export async function POST(request: Request) {
           emit("data: [DONE]\n\n");
           controller.close();
         } catch (error) {
-          controller.error(error);
+          const mappedError = mapUnknownToApiTypedError(error);
+          emitJson({
+            error: {
+              message: mappedError.message,
+              type: mappedError.type,
+              code: mappedError.code,
+            },
+          });
+          emit("data: [DONE]\n\n");
+          controller.close();
         }
       },
     });
