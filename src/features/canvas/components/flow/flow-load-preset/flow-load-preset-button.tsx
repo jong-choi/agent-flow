@@ -16,12 +16,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
-import { getPresetGraphForCanvasAction } from "@/features/presets/server/actions";
 import { PresetLibraryItemButton } from "@/features/canvas/components/flow/flow-load-preset/preset-library-item-button";
 import { useAppendPresetGraphToCanvas } from "@/features/canvas/hooks/use-append-preset-graph-to-canvas";
 import { usePresetLibraryForCanvasQuery } from "@/features/canvas/hooks/use-preset-library-for-canvas-query";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { filterPresetLibrary } from "@/features/canvas/utils/preset-library";
+import { getPresetGraphForCanvasAction } from "@/features/presets/server/actions";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { type Locale } from "@/lib/i18n/routing";
 import { cn } from "@/lib/utils";
@@ -134,36 +134,37 @@ export function FlowLoadPresetButton() {
         className="sm:max-w-lg"
       >
         <DialogHeader>
-          <DialogTitle>{t("canvas.loadPreset.dialog.title")}</DialogTitle>
+          <div className="flex items-center gap-2">
+            <DialogTitle>{t("canvas.loadPreset.dialog.title")}</DialogTitle>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="group"
+              title={t("canvas.loadPreset.dialog.refreshTitle")}
+              aria-label={t("canvas.loadPreset.dialog.refreshAriaLabel")}
+              onClick={() => void refetch()}
+              disabled={isRefetching || Boolean(activePresetId)}
+            >
+              <RefreshCw
+                className={cn(
+                  "size-4 text-muted-foreground transition-transform duration-200 group-hover:rotate-90",
+                  isRefetching && "animate-spin",
+                )}
+              />
+            </Button>
+          </div>
           <DialogDescription>
             {t("canvas.loadPreset.dialog.description")}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-2">
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("canvas.loadPreset.dialog.searchPlaceholder")}
-            autoComplete="off"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="group"
-            aria-label={t("canvas.loadPreset.dialog.refreshAriaLabel")}
-            onClick={() => void refetch()}
-            disabled={isRefetching || Boolean(activePresetId)}
-          >
-            <RefreshCw
-              className={cn(
-                "size-4 transition-transform duration-200 group-hover:rotate-90",
-                isRefetching && "animate-spin",
-              )}
-            />
-          </Button>
-        </div>
+        <Input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t("canvas.loadPreset.dialog.searchPlaceholder")}
+          autoComplete="off"
+        />
 
         <ScrollArea className="h-80 overflow-auto rounded-md border">
           <div className="flex min-h-full flex-col py-1">
