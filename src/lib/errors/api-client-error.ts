@@ -50,9 +50,9 @@ export const resolveApiToastMessage = ({
   fallbackKey,
 }: {
   t: (key: string) => string;
-  code?: ApiErrorCode | string;
+  code?: ApiErrorCode;
   fallbackKey: string;
 }) => {
-  const mappedKey = code ? apiToastKeyMaps[code as ApiErrorCode] : undefined;
+  const mappedKey = code ? apiToastKeyMaps[code] : undefined;
   return t(mappedKey ?? fallbackKey);
 };
