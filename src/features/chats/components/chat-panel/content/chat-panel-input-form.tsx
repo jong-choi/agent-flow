@@ -17,42 +17,24 @@ export function ChatPanelInputForm() {
   const isStreaming = useChatStore((s) => s.isStreaming);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const sendMessage = useChatEvent();
-  const [draft, setDraft] = useState("");
-  const isMessage = Boolean(draft.trim());
-  const isSendingAvailable = !isStreaming && isMessage;
-
-  const handleCompositionStart = () => {
-    isComposingRef.current = true;
-  };
-
-  const handleCompositionEnd = () => {
-    isComposingRef.current = false;
-  };
+  const [hasMessage, setHasMessage] = useState(false);
+  const isSendingAvailable = !isStreaming && hasMessage;
 
   const handleSubmit = async () => {
     if (!isSendingAvailable) {
       return;
     }
 
-    const message = draft.trim();
+    const message = textareaRef.current?.value.trim();
     if (!message) {
+      setHasMessage(false);
       return;
     }
-
-    setDraft("");
-    requestAnimationFrame(() => {
-      textareaRef.current?.focus();
-    });
 
     try {
       await sendMessage(message);
     } catch {
-      setDraft((prev) => prev || message);
       toast.error(t("toast.responseUnavailable"));
-    } finally {
-      requestAnimationFrame(() => {
-        textareaRef.current?.focus();
-      });
     }
   };
 
@@ -75,13 +57,16 @@ export function ChatPanelInputForm() {
     <form className="flex flex-col gap-2" onSubmit={handleFormSubmit}>
       <Textarea
         ref={textareaRef}
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
+        onChange={(event) => setHasMessage(Boolean(event.target.value.trim()))}
         onKeyDown={handleKeyDown}
         placeholder={t("input.placeholder")}
-        className="h-24"
-        onCompositionStart={handleCompositionStart}
-        onCompositionEnd={handleCompositionEnd}
+        className="h-24 focus-visible:ring-[0px] focus-visible:ring-accent-foreground"
+        onCompositionStart={() => {
+          isComposingRef.current = true;
+        }}
+        onCompositionEnd={() => {
+          isComposingRef.current = false;
+        }}
       />
       <div className="flex justify-between">
         <ChatStreamingStatus />

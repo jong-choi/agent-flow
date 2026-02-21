@@ -9,7 +9,7 @@
 
   /* 긴 URL/토큰 */
   :where(a, code, kbd, samp, td, th) {
-    @apply break-all;
+    @apply break-all whitespace-pre-wrap;
   }
 
   /* 코드블록 */
@@ -19,7 +19,7 @@
 
   /* 테이블 */
   table {
-    @apply block w-full overflow-x-auto;
+    @apply block w-full;
   }
 
   /* 일반 텍스트는 anywhere로 끊기 */
