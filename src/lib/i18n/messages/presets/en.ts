@@ -127,6 +127,9 @@ const message = {
     title: "Chat Example",
     description:
       "Choose a chat example to display in the market. The selected chat shows up to 4 messages.",
+    refreshTitle: "Refresh chat example list",
+    refreshAriaLabel: "Refresh chat example list",
+    refreshFailed: "Failed to load chat example list.",
     noneOption: "None",
     chatFallbackLabel: "Chat {index}",
     messageCount: "{count} messages",

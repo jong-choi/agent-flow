@@ -126,6 +126,9 @@ const message = {
     title: "채팅 예시",
     description:
       "마켓에 노출될 채팅 예시를 선택합니다. 선택된 채팅은 최대 4개의 메시지를 노출합니다.",
+    refreshTitle: "채팅 예시 목록 새로고침",
+    refreshAriaLabel: "채팅 예시 목록 새로고침",
+    refreshFailed: "채팅 예시 목록을 불러오는 데 실패했습니다.",
     noneOption: "선택 안함",
     chatFallbackLabel: "채팅 {index}",
     messageCount: "메시지 {count}개",

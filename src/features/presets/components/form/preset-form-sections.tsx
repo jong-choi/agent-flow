@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { getChatsByWorkflowId } from "@/features/chats/server/queries";
+import { PresetChatExampleRefreshButton } from "@/features/presets/components/form/preset-chat-example-refresh-button";
 import { PresetDescriptionEditor } from "@/features/presets/components/form/preset-description-editor";
 import { PresetChatExampleOptions } from "@/features/presets/components/preset-chat-example-options";
 import { PresetTagInput } from "@/features/presets/components/preset-tag-input";
@@ -147,7 +148,10 @@ export async function PresetChatExampleCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("chatExampleCard.title")}</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle>{t("chatExampleCard.title")}</CardTitle>
+          <PresetChatExampleRefreshButton />
+        </div>
         <CardDescription>{t("chatExampleCard.description")}</CardDescription>
       </CardHeader>
       <CardContent>

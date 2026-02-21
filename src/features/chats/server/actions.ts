@@ -135,6 +135,11 @@ export const softDeleteChat = async ({ chatId }: { chatId: string }) => {
   return deleted;
 };
 
+export const updateChatTagsAction = async () => {
+  const userId = await getUserId();
+  updateChatTags(userId);
+};
+
 export const getChatsByUserPageAction = async (options?: CursorOptions) =>
   getChatsByUserPage(options);
 

@@ -95,6 +95,7 @@ const message = {
         description:
           "You can add purchased or created presets to the current canvas.",
         searchPlaceholder: "Search presets (title)",
+        refreshTitle: "Refresh preset list",
         refreshAriaLabel: "Refresh preset list",
         loadMore: "Load more",
       },
