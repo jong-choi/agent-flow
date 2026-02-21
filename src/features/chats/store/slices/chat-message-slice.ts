@@ -44,7 +44,7 @@ export const createChatMessageSlice: StateCreator<ChatMessageSlice> = (
     const currentStreamingMap = get().streamingChunkMap;
     const streamingChunkMap = {
       ...currentStreamingMap,
-      [nodeId]: currentStreamingMap[nodeId] + delta,
+      [nodeId]: (currentStreamingMap[nodeId] ?? "") + delta,
     };
     set({ streamingChunkMap });
   },

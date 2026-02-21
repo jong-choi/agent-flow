@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { useChatStore } from "@/features/chats/store/chat-store";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { cn, formatTimeToday } from "@/lib/utils";
@@ -39,15 +40,10 @@ export function ChatMessageItem({ message }: { message: ClientChatMessage }) {
               : "w-full",
           )}
         >
-          <Suspense
-            fallback={
-              <p className="leading-relaxed whitespace-pre-wrap text-transparent">
-                {message.content}
-              </p>
-            }
-          >
-            <ContentMarkdown>{message.content}</ContentMarkdown>
-          </Suspense>
+          <ChatMessageContent
+            messageId={message.id}
+            messageContent={message.content}
+          />
         </div>
         <div
           className={cn(
@@ -74,5 +70,29 @@ export function ChatMessageItem({ message }: { message: ClientChatMessage }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function ChatMessageContent({
+  messageId,
+  messageContent,
+}: {
+  messageId: string;
+  messageContent: string;
+}) {
+  const streamingChunkMapContent = useChatStore(
+    (s) => s.streamingChunkMap[messageId],
+  );
+  const content = streamingChunkMapContent ?? messageContent;
+  return (
+    <Suspense
+      fallback={
+        <p className="leading-relaxed whitespace-pre-wrap text-transparent">
+          {content}
+        </p>
+      }
+    >
+      <ContentMarkdown>{content}</ContentMarkdown>
+    </Suspense>
   );
 }

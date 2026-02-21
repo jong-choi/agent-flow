@@ -13,12 +13,9 @@ import { type AppMessageKeys } from "@/lib/i18n/messages";
 const SCROLL_OFFSET = 120;
 export const BOTTOM_PADDING = 30;
 
-const NEAR_BOTTOM = 80; // 바닥 근처 판정 px
-
 export function ChatPanelContent() {
   const t = useTranslations<AppMessageKeys>("Chat");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const isAutoScrollRef = useRef(true);
 
   const setLastMessageHeight = useChatStore((s) => s.setLastMessageHeight);
   const isMessage = useChatStore((s) => Boolean(s.messages.length));
@@ -34,25 +31,13 @@ export function ChatPanelContent() {
 
     // 최초 마운트시 바닥 스크롤
     viewport.scrollTop = viewport.scrollHeight;
-
-    // 유저가 바닥 근처면 자동 스크롤 유지, 위로 올리면 해제
-    const onScroll = () => {
-      const distanceToBottom =
-        viewport.scrollHeight - (viewport.scrollTop + viewport.clientHeight);
-      isAutoScrollRef.current = distanceToBottom <= NEAR_BOTTOM;
-    };
-
-    viewport.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
-    return () => viewport.removeEventListener("scroll", onScroll);
   }, [isMessage]);
 
   useEffect(() => {
     const scrollElement = scrollAreaRef.current?.querySelector(
       "[data-radix-scroll-area-viewport]",
     );
-    // 스트리밍 시작 시 스크롤 로직 시작
+    // 스트리밍 시작 시 스크롤 로직 시작, 스트리밍 시작 시점은 message가 send된 순간
     if (isStreaming && scrollElement) {
       setLastMessageHeight(
         scrollElement.clientHeight - SCROLL_OFFSET - BOTTOM_PADDING,
@@ -65,28 +50,6 @@ export function ChatPanelContent() {
       });
     }
   }, [isStreaming, setLastMessageHeight]);
-
-  useEffect(() => {
-    const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
-      "[data-radix-scroll-area-viewport]",
-    );
-    if (!viewport) return;
-
-    const content = viewport.firstElementChild as HTMLElement | null;
-    if (!content) return;
-
-    // 스트리밍으로 메시지 높이가 계속 변하는 걸 감지해서, 바닥 근처면 계속 아래로 붙임
-    const ro = new ResizeObserver(() => {
-      if (!isAutoScrollRef.current) return;
-      viewport.scrollTo({
-        top: viewport.scrollHeight,
-        behavior: "smooth",
-      });
-    });
-
-    ro.observe(content);
-    return () => ro.disconnect();
-  }, [isStreaming]);
 
   return (
     <div className="flex h-full flex-col justify-center p-2">
