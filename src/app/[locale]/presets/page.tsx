@@ -2,8 +2,6 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { PresetsFilter } from "@/app/[locale]/presets/_components/presets-filter";
-import { PresetsList } from "@/app/[locale]/presets/_components/presets-list";
 import {
   PageContainer,
   PageDescription,
@@ -22,6 +20,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
+import { PresetsFilter } from "@/features/presets/components/presets-filter";
+import { PresetsList } from "@/features/presets/components/presets-list";
 import { getPresets } from "@/features/presets/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";

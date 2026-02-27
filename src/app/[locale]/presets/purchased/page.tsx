@@ -2,15 +2,13 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { PresetsFilter } from "@/app/[locale]/presets/_components/presets-filter";
-import { PresetsList } from "@/app/[locale]/presets/_components/presets-list";
-import { PagerButton } from "@/components/pager-button";
 import {
   PageContainer,
   PageDescription,
   PageHeader,
   PageHeading,
 } from "@/components/page-template";
+import { PagerButton } from "@/components/pager-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,6 +20,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
+import { PresetsFilter } from "@/features/presets/components/presets-filter";
+import { PresetsList } from "@/features/presets/components/presets-list";
 import { getPurchasedPresets } from "@/features/presets/server/queries";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { resolveMetadataLocale } from "@/lib/metadata";
@@ -83,7 +83,10 @@ export default async function PurchasedPresetsPage({
           </div>
         </div>
         <Suspense fallback={<PurchasedPresetsContentFallback />}>
-          <PurchasedPresetsContent locale={locale} searchParams={searchParams} />
+          <PurchasedPresetsContent
+            locale={locale}
+            searchParams={searchParams}
+          />
         </Suspense>
       </div>
     </PageContainer>
@@ -146,7 +149,8 @@ async function PurchasedPresetsContent({
     ownership: "all",
   };
   const prevHref =
-    purchasedPageResult.pageInfo.hasPrev && purchasedPageResult.pageInfo.prevCursor
+    purchasedPageResult.pageInfo.hasPrev &&
+    purchasedPageResult.pageInfo.prevCursor
       ? `/presets/purchased${buildQueryString(
           baseParams,
           { cursor: purchasedPageResult.pageInfo.prevCursor, dir: "prev" },
@@ -154,7 +158,8 @@ async function PurchasedPresetsContent({
         )}`
       : "";
   const nextHref =
-    purchasedPageResult.pageInfo.hasNext && purchasedPageResult.pageInfo.nextCursor
+    purchasedPageResult.pageInfo.hasNext &&
+    purchasedPageResult.pageInfo.nextCursor
       ? `/presets/purchased${buildQueryString(
           baseParams,
           { cursor: purchasedPageResult.pageInfo.nextCursor, dir: "next" },
@@ -162,7 +167,8 @@ async function PurchasedPresetsContent({
         )}`
       : "";
   const hasPager =
-    purchasedPageResult.pageInfo.hasPrev || purchasedPageResult.pageInfo.hasNext;
+    purchasedPageResult.pageInfo.hasPrev ||
+    purchasedPageResult.pageInfo.hasNext;
   const hasFilter =
     query.trim() !== "" ||
     selectedCategory !== "all" ||

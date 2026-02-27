@@ -17,7 +17,6 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { normalizeOptionalText } from "@/app/[locale]/presets/_utils/form-utils";
 import { db } from "@/db/client";
 import {
   type CursorOptions,
@@ -145,6 +144,15 @@ const getUniqueNormalizedValues = (values: string[]) =>
 
 const clampPresetSummary = (summary: string | null) =>
   summary ? summary.slice(0, SHORT_TEXT_MAX_LENGTH_WITH_IME_BUFFER) : null;
+
+const normalizeOptionalText = (value: FormDataEntryValue | null) => {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+};
 
 const getUniquePresetIds = (presetIds: string[]) =>
   getUniqueNormalizedValues(presetIds);

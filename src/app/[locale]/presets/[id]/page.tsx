@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { PresetChatExampleSection } from "@/app/[locale]/presets/[id]/_components/preset-chat-example-section";
 import { ContentMarkdown } from "@/components/markdown/content-markdown";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserId } from "@/features/auth/server/queries";
 import { CanvasPreview } from "@/features/canvas/components/cavas-preview/canvas-preview";
+import { PresetChatExampleSection } from "@/features/presets/components/preset-chat-example-section";
 import { PresetDetailRightPanel } from "@/features/presets/components/preset-detail-right-panel";
 import { resolvePresetCategoryKey } from "@/features/presets/constants/category-options";
 import { getPresetDetail } from "@/features/presets/server/queries";
