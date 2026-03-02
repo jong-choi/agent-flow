@@ -177,6 +177,7 @@ console.log(result.choices[0].message.content);`;
               offsetX={100}
               theme="inverse"
               resolutionMultiplier={1.5}
+              priority
             />
           </BrutalCard>
         </div>
