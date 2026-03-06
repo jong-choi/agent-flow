@@ -8,7 +8,11 @@ export function HeaderAccountMenuTrigger({
 }) {
   return (
     <DropdownMenuTrigger asChild>
-      <div className="relative size-8 shrink-0 cursor-pointer overflow-hidden rounded-full">
+      <div
+        role="button"
+        className="relative size-8 shrink-0 cursor-pointer overflow-hidden rounded-full"
+        aria-label="Open account menu"
+      >
         <BoringUserAvatar seed={avatarHash} className="size-8" />
       </div>
     </DropdownMenuTrigger>

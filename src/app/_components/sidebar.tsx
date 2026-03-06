@@ -19,7 +19,6 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { BrutalCI } from "@/components/main/ui/brutal-logo";
 import { SidebarContainer } from "@/components/sidebar-container";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
@@ -113,10 +112,10 @@ export function SidebarNav() {
       </Suspense>
       <div className="mt-auto space-y-3 text-center">
         <div className="px-2">
-          <p className="text-[10px] leading-tight text-muted-foreground">
+          <p className="text-[10px] leading-tight text-neutral-50/90 dark:text-neutral-300">
             © 2026
           </p>
-          <p className="text-[10px] leading-tight text-muted-foreground">
+          <p className="text-[10px] leading-tight text-neutral-50/90 dark:text-neutral-300">
             AgentFlow
           </p>
         </div>
@@ -153,22 +152,24 @@ function SidebarNavContent() {
             key={item.name}
             href={item.href}
             title={item.name}
-            className="group flex cursor-pointer flex-col items-center transition-all"
+            aria-label={item.name}
+            aria-current={isActive ? "page" : undefined}
+            className="group flex min-h-12 w-12 cursor-pointer flex-col items-center justify-center rounded-md transition-all"
             prefetch
           >
-            <Button
+            <span
               className={cn(
-                "h-8 w-8 cursor-pointer bg-transparent text-neutral-50 dark:text-neutral-200",
+                "flex size-10 items-center justify-center rounded-md bg-transparent text-neutral-50 dark:text-neutral-200",
                 isActive
                   ? "bg-neutral-300/30 group-hover:bg-neutral-300/30 hover:bg-neutral-300/30 dark:bg-neutral-600"
                   : "bg-transparent group-hover:bg-neutral-400/20 hover:bg-neutral-400/20 dark:group-hover:bg-neutral-700 dark:hover:bg-neutral-700",
               )}
             >
-              <ItemIcon className="size-5" strokeWidth={1.75} />
-            </Button>
-            <div className="text-[10px] text-neutral-50 dark:text-neutral-200">
+              <ItemIcon className="size-5" strokeWidth={1.75} aria-hidden />
+            </span>
+            <span className="text-[10px] text-neutral-50 dark:text-neutral-200">
               {item.name}
-            </div>
+            </span>
           </Link>
         );
       })}
