@@ -74,7 +74,7 @@ export const proxy = auth((req) => {
 
   // localePrefix: "never" 모드에서는 / 요청이 내부적으로 /{locale}로 rewrite 된다.
   // rewrite 된 내부 경로에서 미들웨어가 다시 실행되면 intlMiddleware 재호출로 루프가 생길 수 있다.
-  if (hasLocalePrefix(pathname)) {
+  if (hasLocalePrefix(pathname) && req.headers.has("x-next-intl-locale")) {
     return NextResponse.next();
   }
 
