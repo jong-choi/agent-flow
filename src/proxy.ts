@@ -3,82 +3,71 @@ import createMiddleware from "next-intl/middleware";
 import { auth } from "@/lib/auth";
 import { routing } from "@/lib/i18n/routing";
 
-const publicPaths = ["/", "/login"];
+const PUBLIC_PATHS = ["/", "/login"];
 const intlMiddleware = createMiddleware(routing);
 
-const hasLocalePrefix = (pathname: string) => {
-  return routing.locales.some((locale) => {
-    const prefix = `/${locale}`;
-    return pathname === prefix || pathname.startsWith(`${prefix}/`);
-  });
+// intl rewrite URL에서 locale prefix를 제거한 경로를 반환
+const stripLocalePrefix = (pathname: string): string => {
+  const [, , ...rest] = pathname.split("/");
+  return "/" + rest.join("/");
 };
 
-const normalizePath = (pathname: string) => {
-  for (const locale of routing.locales) {
-    const prefix = `/${locale}`;
-    if (pathname === prefix) {
-      return "/";
-    }
-    if (pathname.startsWith(`${prefix}/`)) {
-      return pathname.slice(prefix.length);
-    }
+// 오픈 리다이렉트 공격 방지 함수
+const getSafeCallbackUrl = (
+  callbackUrl: string | null,
+  origin: string,
+): URL | null => {
+  // 상대 경로가 아니거나 protocol-relative URL이면 차단
+  if (!callbackUrl?.startsWith("/") || callbackUrl.startsWith("//")) {
+    return null;
   }
-  return pathname;
+
+  const target = new URL(callbackUrl, origin);
+  const normalizedCallbackPath = stripLocalePrefix(target.pathname);
+
+  // 로그인 루프 방지 및 URL 파서 우회 공격 차단
+  if (normalizedCallbackPath === "/login" || target.origin !== origin) {
+    return null;
+  }
+
+  return target;
 };
 
 export const proxy = auth((req) => {
-  const { pathname } = req.nextUrl;
-  const normalizedPath = normalizePath(pathname);
-  const isPublicPath = publicPaths.includes(normalizedPath);
-
-  // 로그인되지 않은 사용자가 공개 경로가 아닌 곳에 접근 시
-  if (!req.auth?.user && !isPublicPath) {
-    const url = req.nextUrl.clone();
-    const callbackUrl = `${pathname}${req.nextUrl.search}`;
-    url.pathname = "/login";
-    url.search = "";
-    url.searchParams.set("callbackUrl", callbackUrl);
-    return NextResponse.redirect(url);
-  }
-
-  // 로그인된 사용자가 로그인 페이지에 접속 시
-  if (normalizedPath === "/login" && req.auth?.user) {
-    const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
-    const origin = req.nextUrl.origin;
-    let normalizedCallbackPath: string | null = null;
-    if (callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//")) {
-      try {
-        normalizedCallbackPath = normalizePath(
-          new URL(callbackUrl, origin).pathname,
-        );
-      } catch {
-        normalizedCallbackPath = null;
-      }
-    }
-    if (
-      callbackUrl?.startsWith("/") &&
-      !callbackUrl.startsWith("//") &&
-      normalizedCallbackPath !== "/login"
-    ) {
-      const targetUrl = new URL(callbackUrl, origin);
-      if (targetUrl.origin === origin) {
-        return NextResponse.redirect(targetUrl);
-      }
-    }
-
-    const fallbackUrl = req.nextUrl.clone();
-    fallbackUrl.pathname = "/";
-    fallbackUrl.search = "";
-    return NextResponse.redirect(fallbackUrl);
-  }
-
-  // localePrefix: "never" 모드에서는 / 요청이 내부적으로 /{locale}로 rewrite 된다.
-  // rewrite 된 내부 경로에서 미들웨어가 다시 실행되면 intlMiddleware 재호출로 루프가 생길 수 있다.
-  if (hasLocalePrefix(pathname)) {
+  // 프록시 처리가 완료된 요청인지 확인 후 즉시 이동
+  if (req.headers.get("x-next-intl-locale")) {
     return NextResponse.next();
   }
 
-  return intlMiddleware(req);
+  const { pathname, search, origin } = req.nextUrl;
+  const intlResponse = intlMiddleware(req);
+
+  const rewriteUrl = intlResponse.headers.get("x-middleware-rewrite"); // localePrefix를 붙인 주소
+  const normalizedPath = rewriteUrl
+    ? stripLocalePrefix(new URL(rewriteUrl).pathname)
+    : pathname;
+
+  const isAuthenticated = !!req.auth?.user;
+  const isPublicPath = PUBLIC_PATHS.includes(normalizedPath);
+
+  // 미인증 사용자는 로그인 페이지로 리다이렉트
+  if (!isAuthenticated && !isPublicPath) {
+    const signInUrl = new URL("/login", req.url);
+    signInUrl.searchParams.set("callbackUrl", `${pathname}${search}`);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // 인증된 사용자가 로그인 페이지 접근 시 callbackUrl을 검증 후 리다이렉트
+  if (isAuthenticated && normalizedPath === "/login") {
+    const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
+    const safeTarget = getSafeCallbackUrl(callbackUrl, origin);
+    if (safeTarget) return NextResponse.redirect(safeTarget);
+
+    // callbackUrl 검증 실패시 홈화면으로 이동
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  return intlResponse;
 });
 
 // 주소에 .이 있는 경우 무시됨
