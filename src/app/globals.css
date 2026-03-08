@@ -187,8 +187,13 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    overflow-y: scroll;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-sans text-foreground antialiased;
   }
 }
 

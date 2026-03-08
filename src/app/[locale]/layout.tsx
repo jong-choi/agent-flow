@@ -96,8 +96,8 @@ export default async function AppLayout({
   const messages = await getMessages({ locale });
 
   return (
-    <html lang={locale} suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
+    <html lang={locale} className="scrollbar-slim" suppressHydrationWarning>
+      <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AppProvider>
             <div className="flex h-full w-full">
