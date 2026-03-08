@@ -1,10 +1,10 @@
 "use client";
 
-import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { useChatStore } from "@/features/chats/store/chat-store";
 import { type ClientChatMessage } from "@/features/chats/utils/chat-message";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
@@ -85,7 +85,7 @@ function ChatMessageContent({
   );
   const content = streamingChunkMapContent ?? messageContent;
   return (
-    <Suspense
+    <FadeSuspense
       fallback={
         <p className="leading-relaxed whitespace-pre-wrap text-transparent">
           {content}
@@ -93,6 +93,6 @@ function ChatMessageContent({
       }
     >
       <ContentMarkdown>{content}</ContentMarkdown>
-    </Suspense>
+    </FadeSuspense>
   );
 }

@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -12,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
@@ -72,12 +72,12 @@ export default async function PresetCreatePage({
             </Button>
           </div>
         </div>
-        <Suspense fallback={<PresetCreateWorkflowListFallback />}>
+        <FadeSuspense fallback={<PresetCreateWorkflowListFallback />}>
           <PresetCreateWorkflowList
             locale={locale}
             searchParams={searchParams}
           />
-        </Suspense>
+        </FadeSuspense>
       </div>
     </PageContainer>
   );

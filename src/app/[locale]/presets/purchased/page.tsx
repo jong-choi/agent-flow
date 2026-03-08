@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -17,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
@@ -60,9 +60,9 @@ export default async function PurchasedPresetsPage({
   return (
     <PageContainer
       RightPanel={
-        <Suspense>
+        <FadeSuspense>
           <PresetsFilter variant="purchased" />
-        </Suspense>
+        </FadeSuspense>
       }
     >
       <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -82,12 +82,12 @@ export default async function PurchasedPresetsPage({
             </Button>
           </div>
         </div>
-        <Suspense fallback={<PurchasedPresetsContentFallback />}>
+        <FadeSuspense fallback={<PurchasedPresetsContentFallback />}>
           <PurchasedPresetsContent
             locale={locale}
             searchParams={searchParams}
           />
-        </Suspense>
+        </FadeSuspense>
       </div>
     </PageContainer>
   );

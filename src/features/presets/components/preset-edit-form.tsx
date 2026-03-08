@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { type PresetEditRes } from "@/app/[locale]/presets/[id]/edit/page";
@@ -10,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import {
   PresetChatExampleCard,
   PresetChatExampleCardSkeleton,
@@ -85,13 +85,13 @@ export async function PresetEditForm({
           }
         />
 
-        <Suspense fallback={<PresetChatExampleCardSkeleton />}>
+        <FadeSuspense fallback={<PresetChatExampleCardSkeleton />}>
           <PresetChatExampleCard
             locale={locale}
             workflowId={preset.workflowId}
             defaultSelectedId={preset.chatId}
           />
-        </Suspense>
+        </FadeSuspense>
 
         <PresetPricePublishCard
           description={t("forms.pricePublishDescriptionEdit")}

@@ -16,9 +16,7 @@ const CanvasPreviewClient = dynamic(
     ).then((m) => m.CanvasPreviewClient),
   {
     ssr: false,
-    loading: () => (
-      <Skeleton className="h-[200px] w-full rounded-lg border bg-background/70" />
-    ),
+    loading: () => <Skeleton className="h-[200px] w-full rounded-lg border" />,
   },
 );
 

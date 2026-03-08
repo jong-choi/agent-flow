@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import { BoringAvatarClient } from "@/components/boring-avatar-client";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ export function BoringUserAvatar({
   square?: boolean;
 }) {
   return (
-    <Suspense
+    <FadeSuspense
       fallback={
         <AvatarSkeleton size={size} square={square} className={className} />
       }
@@ -27,7 +27,7 @@ export function BoringUserAvatar({
         size={size}
         className={className}
       />
-    </Suspense>
+    </FadeSuspense>
   );
 }
 
@@ -45,7 +45,7 @@ export function BoringCardAvatar({
   variant?: "bauhaus" | "marble";
 }) {
   return (
-    <Suspense
+    <FadeSuspense
       fallback={
         <AvatarSkeleton size={size} square={square} className={className} />
       }
@@ -57,7 +57,7 @@ export function BoringCardAvatar({
         size={size}
         className={className}
       />
-    </Suspense>
+    </FadeSuspense>
   );
 }
 

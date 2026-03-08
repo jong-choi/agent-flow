@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PresetCreateForm } from "@/features/presets/components/preset-create-form";
 import { createPresetAction } from "@/features/presets/server/actions";
@@ -64,12 +64,12 @@ export default function PresetCreateDetailPage({
   return (
     <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
-        <Suspense fallback={<PresetCreateDetailHeaderFallback />}>
+        <FadeSuspense fallback={<PresetCreateDetailHeaderFallback />}>
           <PresetCreateDetailHeader paramsPromise={params} />
-        </Suspense>
-        <Suspense fallback={<PresetCreateDetailFallback />}>
+        </FadeSuspense>
+        <FadeSuspense fallback={<PresetCreateDetailFallback />}>
           <PresetCreateDetailContent paramsPromise={params} />
-        </Suspense>
+        </FadeSuspense>
       </div>
     </PageContainer>
   );

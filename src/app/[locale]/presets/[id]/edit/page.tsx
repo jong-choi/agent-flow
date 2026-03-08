@@ -1,10 +1,10 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { PageContainer } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PresetEditForm } from "@/features/presets/components/preset-edit-form";
 import {
@@ -66,12 +66,12 @@ export default async function PresetEditPage({
   return (
     <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
-        <Suspense fallback={<PresetEditHeaderFallback />}>
+        <FadeSuspense fallback={<PresetEditHeaderFallback />}>
           <PresetEditHeader paramsPromise={params} />
-        </Suspense>
-        <Suspense fallback={<PresetEditContentFallback />}>
+        </FadeSuspense>
+        <FadeSuspense fallback={<PresetEditContentFallback />}>
           <PresetEditContent paramsPromise={params} />
-        </Suspense>
+        </FadeSuspense>
       </div>
     </PageContainer>
   );

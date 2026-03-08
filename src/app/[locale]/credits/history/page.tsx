@@ -1,8 +1,6 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { format } from "date-fns";
 import { getTranslations } from "next-intl/server";
-import { PagerButton } from "@/components/pager-button";
 import {
   PageContainer,
   PageDescription,
@@ -10,8 +8,10 @@ import {
   PageHeading,
   PageStack,
 } from "@/components/page-template";
+import { PagerButton } from "@/components/pager-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
@@ -54,9 +54,9 @@ export default async function CreditsHistoryPage({
   return (
     <PageContainer
       RightPanel={
-        <Suspense>
+        <FadeSuspense>
           <CreditHistoryFilter />
-        </Suspense>
+        </FadeSuspense>
       }
     >
       <PageStack>
@@ -64,9 +64,9 @@ export default async function CreditsHistoryPage({
           <PageHeading>{t("history.heading")}</PageHeading>
           <PageDescription>{t("history.description")}</PageDescription>
         </PageHeader>
-        <Suspense fallback={<CreditHistoryFallback />}>
+        <FadeSuspense fallback={<CreditHistoryFallback />}>
           <CreditHistory params={params} searchParams={searchParams} />
-        </Suspense>
+        </FadeSuspense>
       </PageStack>
     </PageContainer>
   );

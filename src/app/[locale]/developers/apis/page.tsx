@@ -1,15 +1,15 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { PagerButton } from "@/components/pager-button";
 import {
   PageContainer,
   PageDescription,
   PageHeading,
   PageStack,
 } from "@/components/page-template";
+import { PagerButton } from "@/components/pager-button";
 import { Button } from "@/components/ui/button";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
@@ -63,9 +63,12 @@ export default async function DevelopersApisPage({
           </Button>
         </div>
 
-        <Suspense fallback={<WorkflowApiListFallback />}>
-          <WorkflowApiListServer baseUrl={baseUrl} searchParams={searchParams} />
-        </Suspense>
+        <FadeSuspense fallback={<WorkflowApiListFallback />}>
+          <WorkflowApiListServer
+            baseUrl={baseUrl}
+            searchParams={searchParams}
+          />
+        </FadeSuspense>
       </PageStack>
     </PageContainer>
   );
@@ -110,7 +113,8 @@ async function WorkflowApiListServer({
             <PagerButton
               direction="prev"
               href={
-                workflowPage.pageInfo.hasPrev && workflowPage.pageInfo.prevCursor
+                workflowPage.pageInfo.hasPrev &&
+                workflowPage.pageInfo.prevCursor
                   ? `/developers/apis${buildQueryString(
                       {},
                       { cursor: workflowPage.pageInfo.prevCursor, dir: "prev" },
@@ -122,7 +126,8 @@ async function WorkflowApiListServer({
             <PagerButton
               direction="next"
               href={
-                workflowPage.pageInfo.hasNext && workflowPage.pageInfo.nextCursor
+                workflowPage.pageInfo.hasNext &&
+                workflowPage.pageInfo.nextCursor
                   ? `/developers/apis${buildQueryString(
                       {},
                       { cursor: workflowPage.pageInfo.nextCursor, dir: "next" },

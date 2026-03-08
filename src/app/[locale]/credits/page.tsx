@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
@@ -14,6 +13,7 @@ import {
 } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TransactionItem } from "@/features/credits/components/transaction-item";
 import {
@@ -55,9 +55,9 @@ export default async function CreditsPage({
           <PageDescription>{t("page.descriptionLine1")}</PageDescription>
           <PageDescription>{t("page.descriptionLine2")}</PageDescription>
         </PageHeader>
-        <Suspense fallback={<CreditsSummaryFallback />}>
+        <FadeSuspense fallback={<CreditsSummaryFallback />}>
           <CreditsSummaryContent locale={locale} />
-        </Suspense>
+        </FadeSuspense>
       </PageStack>
     </PageContainer>
   );

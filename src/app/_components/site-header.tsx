@@ -1,7 +1,7 @@
-import { Suspense } from "react";
 import { LocaleSelectorButton } from "@/components/locale-selector-button";
 import { BrutalLogo } from "@/components/main/ui/brutal-logo";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Separator } from "@/components/ui/separator";
 import { HeaderAccountMenu } from "@/features/auth/components/header-account-menu/header-account-menu";
 
@@ -15,17 +15,17 @@ export function SiteHeader({ locale }: { locale: string }) {
       <div className="flex items-center gap-2">
         <div className="flex items-center text-sm font-medium text-muted-foreground">
           <ThemeToggleButton />
-          <Suspense fallback={<HeaderLocaleFallback />}>
+          <FadeSuspense fallback={<HeaderLocaleFallback />}>
             <LocaleSelectorButton />
-          </Suspense>
+          </FadeSuspense>
         </div>
         <div className="h-5">
           <Separator orientation="vertical" />
         </div>
         <div className="flex min-w-32 justify-end">
-          <Suspense fallback={<HeaderAccountMenuFallback />}>
+          <FadeSuspense fallback={<HeaderAccountMenuFallback />}>
             <HeaderAccountMenu locale={locale} />
-          </Suspense>
+          </FadeSuspense>
         </div>
       </div>
     </header>

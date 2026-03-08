@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,7 +11,9 @@ import {
   PageHeading,
 } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DocumentDeleteDialog } from "@/features/documents/components/detail/document-delete-dialog";
 import { DocumentEditor } from "@/features/documents/components/detail/document-editor";
 import { DocumentSaveButton } from "@/features/documents/components/detail/document-save-button";
@@ -56,9 +57,9 @@ export default function DocumentViewPage(
   props: PageProps<"/[locale]/docs/[docId]">,
 ) {
   return (
-    <Suspense fallback={<DocumentViewPageFallback />}>
+    <FadeSuspense fallback={<DocumentViewPageFallback />}>
       <DocumentViewContent {...props} />
-    </Suspense>
+    </FadeSuspense>
   );
 }
 
@@ -147,10 +148,10 @@ function DocumentViewPageFallback() {
   return (
     <PageContainer>
       <div className="flex min-h-0 flex-1 flex-col gap-6 pt-6 pb-16">
-        <div className="h-8 w-56 animate-pulse rounded bg-muted" />
-        <div className="h-5 w-40 animate-pulse rounded bg-muted" />
+        <Skeleton className="h-8 w-56 rounded" />
+        <Skeleton className="h-5 w-40 rounded" />
         <Separator />
-        <div className="h-72 w-full animate-pulse rounded bg-muted/70" />
+        <Skeleton className="h-72 w-full rounded" />
       </div>
     </PageContainer>
   );
