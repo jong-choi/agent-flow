@@ -10,7 +10,7 @@ function FallbackFadeIn({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="fallback-fade-in"
       className={cn(
-        "animate-in delay-300 duration-150 fill-mode-backwards fade-in",
+        "animate-in delay-150 duration-500 fill-mode-backwards fade-in",
         className,
       )}
       {...props}
