@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { type Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,6 +10,7 @@ import {
   PageDescription,
 } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorkflowDataView } from "@/features/workflows/components/workflow-data-view";
 import {
@@ -50,9 +50,9 @@ export default function WorkflowDetailPage({
 }: PageProps<"/[locale]/workflows/[id]">) {
   return (
     <PageContainer>
-      <Suspense fallback={<WorkflowDetailFallback />}>
+      <FadeSuspense fallback={<WorkflowDetailFallback />}>
         <WorkflowDetailContent paramsPromise={params} />
-      </Suspense>
+      </FadeSuspense>
     </PageContainer>
   );
 }

@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import {
@@ -8,6 +7,7 @@ import {
   PageStack,
 } from "@/components/page-template";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AttendanceClient } from "@/features/credits/components/attendance/attendance-client";
 import { getCreditAttendanceSummary } from "@/features/credits/server/queries";
@@ -39,11 +39,11 @@ export default async function AttendancePage({
   });
 
   return (
-    <Suspense
+    <FadeSuspense
       fallback={<AttendancePageFallback heading={t("attendance.heading")} />}
     >
       <AttendancePageContent />
-    </Suspense>
+    </FadeSuspense>
   );
 }
 

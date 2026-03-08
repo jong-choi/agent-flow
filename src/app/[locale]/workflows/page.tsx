@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -8,6 +7,7 @@ import {
   PageHeading,
 } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorkflowListView } from "@/features/workflows/components/workflow-list-view";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
@@ -50,9 +50,9 @@ export default async function WorkflowsPage({
             <Link href="/workflows/canvas">{t("listPage.newWorkflow")}</Link>
           </Button>
         </div>
-        <Suspense fallback={<WorkflowListViewFallback />}>
+        <FadeSuspense fallback={<WorkflowListViewFallback />}>
           <WorkflowListView locale={locale} searchParams={searchParams} />
-        </Suspense>
+        </FadeSuspense>
       </div>
     </PageContainer>
   );

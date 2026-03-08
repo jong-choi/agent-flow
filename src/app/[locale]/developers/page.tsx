@@ -1,4 +1,4 @@
-import { type ReactNode, Suspense } from "react";
+import { type ReactNode } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
@@ -17,6 +17,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiGuideMarkdown } from "@/features/developers/components/api-guide-markdown";
 import { SecretKeysManager } from "@/features/developers/components/secret-keys-manager";
@@ -73,9 +74,9 @@ export default async function DevelopersPage({
                 code: (chunks) => <code>{chunks}</code>,
               })}
             </p>
-            <Suspense fallback={<SecretKeysManagerFallback />}>
+            <FadeSuspense fallback={<SecretKeysManagerFallback />}>
               <SecretKeysManagerServer />
-            </Suspense>
+            </FadeSuspense>
           </CardContent>
         </Card>
 
@@ -88,21 +89,21 @@ export default async function DevelopersPage({
               title={t("indexPage.openAiGuideTitle")}
               description={t("indexPage.openAiGuideDescription")}
             >
-              <Suspense fallback={<ApiGuideMarkdownFallback />}>
+              <FadeSuspense fallback={<ApiGuideMarkdownFallback />}>
                 <ApiGuideMarkdown
                   locale={locale}
                   docName="openai-compat-guide"
                 />
-              </Suspense>
+              </FadeSuspense>
             </GuideCollapsible>
 
             <GuideCollapsible
               title={t("indexPage.agentflowGuideTitle")}
               description={t("indexPage.agentflowGuideDescription")}
             >
-              <Suspense fallback={<ApiGuideMarkdownFallback />}>
+              <FadeSuspense fallback={<ApiGuideMarkdownFallback />}>
                 <ApiGuideMarkdown locale={locale} docName="api-guide" />
-              </Suspense>
+              </FadeSuspense>
             </GuideCollapsible>
           </CardContent>
         </Card>
@@ -125,9 +126,9 @@ function SecretKeysManagerFallback() {
       </div>
       <div className="h-56 rounded-md bg-accent/40 p-2">
         <div className="space-y-2">
-          <Skeleton className="h-[52px] rounded-md border bg-background" />
-          <Skeleton className="h-[52px] rounded-md border bg-background" />
-          <Skeleton className="h-[52px] rounded-md border bg-background" />
+          <Skeleton className="h-[52px] rounded-md border" />
+          <Skeleton className="h-[52px] rounded-md border" />
+          <Skeleton className="h-[52px] rounded-md border" />
         </div>
       </div>
     </div>

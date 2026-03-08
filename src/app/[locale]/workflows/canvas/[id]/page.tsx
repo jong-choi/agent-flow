@@ -1,8 +1,8 @@
-import { Suspense } from "react";
 import { type Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import "@xyflow/react/dist/style.css";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DroppableZone } from "@/features/canvas/components/dnd/droppable-zone";
 import { FlowAppWithRemount } from "@/features/canvas/components/flow/flow-app";
@@ -43,9 +43,9 @@ export default function CanvasWorkflowPage({
   params,
 }: PageProps<"/[locale]/workflows/canvas/[id]">) {
   return (
-    <Suspense fallback={<CanvasWorkflowFallback />}>
+    <FadeSuspense fallback={<CanvasWorkflowFallback />}>
       <CanvasWorkflowContent paramsPromise={params} />
-    </Suspense>
+    </FadeSuspense>
   );
 }
 

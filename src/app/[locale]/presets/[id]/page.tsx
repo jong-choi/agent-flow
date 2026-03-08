@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserId } from "@/features/auth/server/queries";
 import { CanvasPreview } from "@/features/canvas/components/cavas-preview/canvas-preview";
@@ -80,9 +80,9 @@ export default function PresetDetailPage({
   params,
 }: PageProps<"/[locale]/presets/[id]">) {
   return (
-    <Suspense fallback={<PresetDetailPageFallback />}>
+    <FadeSuspense fallback={<PresetDetailPageFallback />}>
       <PresetDetailContent paramsPromise={params} />
-    </Suspense>
+    </FadeSuspense>
   );
 }
 
@@ -110,9 +110,9 @@ async function PresetDetailContent({
     <>
       <PageContainer
         RightPanel={
-          <Suspense>
+          <FadeSuspense>
             <PresetDetailRightPanel locale={locale} presetId={id} />
-          </Suspense>
+          </FadeSuspense>
         }
       >
         <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">

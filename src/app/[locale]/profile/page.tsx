@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import {
@@ -8,6 +7,8 @@ import {
   PageStack,
 } from "@/components/page-template";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileForm } from "@/features/profile/components/profile-form";
 import { checkDisplayNameTakenAction } from "@/features/profile/server/actions";
 import { getUserProfile } from "@/features/profile/server/queries";
@@ -49,9 +50,9 @@ export default async function ProfilePage({
             <CardTitle>{t("page.basicInfo")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <Suspense fallback={<ProfileCardContentFallback />}>
+            <FadeSuspense fallback={<ProfileCardContentFallback />}>
               <ProfileCardContent />
-            </Suspense>
+            </FadeSuspense>
           </CardContent>
         </Card>
       </PageStack>
@@ -75,9 +76,9 @@ async function ProfileCardContent() {
 function ProfileCardContentFallback() {
   return (
     <div className="space-y-6">
-      <div className="h-20 w-full animate-pulse rounded bg-muted/70" />
-      <div className="h-10 w-full animate-pulse rounded bg-muted/70" />
-      <div className="h-9 w-24 animate-pulse rounded bg-muted/70" />
+      <Skeleton className="h-20 w-full rounded" />
+      <Skeleton className="h-10 w-full rounded" />
+      <Skeleton className="h-9 w-24 rounded" />
     </div>
   );
 }

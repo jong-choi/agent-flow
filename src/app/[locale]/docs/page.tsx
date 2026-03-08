@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import {
@@ -8,8 +7,10 @@ import {
   PageHeading,
 } from "@/components/page-template";
 import { PagerButton } from "@/components/pager-button";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
 import { CreateDocumentButton } from "@/features/documents/components/list/create-document-button";
 import { DocumentsGrid } from "@/features/documents/components/list/documents-grid";
@@ -54,12 +55,12 @@ export default async function DocsPage(props: PageProps<"/[locale]/docs">) {
           <CreateDocumentButton />
         </div>
         <Separator />
-        <Suspense fallback={<DocsContentFallback />}>
+        <FadeSuspense fallback={<DocsContentFallback />}>
           <DocsContent
             locale={locale}
             searchParamsPromise={props.searchParams}
           />
-        </Suspense>
+        </FadeSuspense>
       </div>
     </PageContainer>
   );
@@ -147,8 +148,8 @@ async function DocsContent({
 function DocsContentFallback() {
   return (
     <div className="space-y-6">
-      <div className="h-9 w-full animate-pulse rounded bg-muted/70" />
-      <div className="h-48 w-full animate-pulse rounded bg-muted/60" />
+      <Skeleton className="h-9 w-full rounded" />
+      <Skeleton className="h-48 w-full rounded" />
     </div>
   );
 }

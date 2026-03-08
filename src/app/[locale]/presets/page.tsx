@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -17,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildQueryString } from "@/features/chats/utils/query-string";
@@ -98,9 +98,9 @@ export default async function TemplateMarketPage({
   return (
     <PageContainer
       RightPanel={
-        <Suspense>
+        <FadeSuspense>
           <PresetsFilter variant="market" />
-        </Suspense>
+        </FadeSuspense>
       }
     >
       <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -130,9 +130,9 @@ export default async function TemplateMarketPage({
             </Button>
           </CardContent>
         </Card>
-        <Suspense fallback={<TemplateMarketContentFallback />}>
+        <FadeSuspense fallback={<TemplateMarketContentFallback />}>
           <TemplateMarketContent locale={locale} searchParams={searchParams} />
-        </Suspense>
+        </FadeSuspense>
       </div>
     </PageContainer>
   );

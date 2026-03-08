@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { BrutalCI } from "@/components/main/ui/brutal-logo";
@@ -9,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { DevLoginCardContent } from "@/features/auth/components/dev-login/dev-login-card-content";
 import {
   GoogleLoginForm,
@@ -63,7 +63,7 @@ export default async function LoginPage({
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
-          <Suspense
+          <FadeSuspense
             fallback={
               <GoogleLoginFormFallback
                 className="mt-0"
@@ -77,7 +77,7 @@ export default async function LoginPage({
               className="mt-0"
               searchParams={searchParams}
             />
-          </Suspense>
+          </FadeSuspense>
 
           {ENABLE_DEV_LOGIN && (
             <div className="rounded-lg bg-muted/30 p-1">

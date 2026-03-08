@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,9 +7,9 @@ import { getChatsByUserPage } from "@/features/chats/server/queries";
 
 export function ChatSidebar() {
   return (
-    <Suspense fallback={<ChatSidebarFallback />}>
+    <FadeSuspense fallback={<ChatSidebarFallback />}>
       <ChatSidebarContent />
-    </Suspense>
+    </FadeSuspense>
   );
 }
 

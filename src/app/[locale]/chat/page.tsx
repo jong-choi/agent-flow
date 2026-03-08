@@ -1,9 +1,9 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { PageContainer, PageHeading } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatWorkflowCard } from "@/features/chats/components/chat-page/chat-workflow-card";
 import { ChatWorkflowListDialog } from "@/features/chats/components/chat-page/chat-workflow-list-dialog";
@@ -38,9 +38,9 @@ export default async function Page({ params }: PageProps<"/[locale]/chat">) {
     <PageContainer className="max-w-full" withoutLeftPanel withoutRightPanel>
       <div className="flex h-full flex-col items-center justify-center gap-16 pb-32">
         <PageHeading>{t("page.heading")}</PageHeading>
-        <Suspense fallback={<ChatWorkflowSectionFallback />}>
+        <FadeSuspense fallback={<ChatWorkflowSectionFallback />}>
           <ChatWorkflowSection locale={locale} />
-        </Suspense>
+        </FadeSuspense>
       </div>
     </PageContainer>
   );

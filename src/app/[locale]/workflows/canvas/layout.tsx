@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
+import { FadeSuspense } from "@/components/ui/fade-suspense";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CanvasContext } from "@/features/canvas/components/canvas-context";
@@ -31,9 +31,9 @@ export default function CanvasLayout({
                 className="h-full w-full"
                 footer={<SidebarInfoContent />}
               >
-                <Suspense fallback={<CanvasSidebarFallback />}>
+                <FadeSuspense fallback={<CanvasSidebarFallback />}>
                   <SidebarContent params={params} />
-                </Suspense>
+                </FadeSuspense>
               </SidebarContainer>
             </div>
             <ResizablePanelGroup
