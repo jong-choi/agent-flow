@@ -1,6 +1,6 @@
 import * as React from "react";
-import Link from "next/link";
 import { type VariantProps, cva } from "class-variance-authority";
+import { Link } from "@/lib/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 const logoVariants = cva(

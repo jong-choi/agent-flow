@@ -105,7 +105,9 @@ export function SidebarNav() {
   return (
     <aside className="sticky top-0 flex h-screen w-20 flex-col items-center gap-2 bg-brutal-primary pb-6 text-brutal-primary-foreground dark:bg-neutral-800">
       <div className="py-4">
-        <BrutalCI className="text-neutral-50" />
+        <Suspense>
+          <BrutalCI className="text-neutral-50" />
+        </Suspense>
       </div>
       <Suspense fallback={null}>
         <SidebarNavContent />

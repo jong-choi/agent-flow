@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LocaleSelectorButton } from "@/components/locale-selector-button";
 import { BrutalLogo } from "@/components/main/ui/brutal-logo";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
@@ -9,7 +10,9 @@ export function SiteHeader({ locale }: { locale: string }) {
   return (
     <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b bg-background px-6">
       <div className="flex items-center gap-6">
-        <BrutalLogo />
+        <Suspense>
+          <BrutalLogo />
+        </Suspense>
       </div>
 
       <div className="flex items-center gap-2">

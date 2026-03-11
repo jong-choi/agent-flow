@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { BrutalCI } from "@/components/main/ui/brutal-logo";
@@ -53,7 +54,9 @@ export default async function LoginPage({
               <div className="relative">
                 <div className="absolute inset-0 rounded-full bg-indigo-500/20 blur-2xl" />
                 <div className="relative transform transition-transform duration-500 hover:scale-110">
-                  <BrutalCI />
+                  <Suspense>
+                    <BrutalCI />
+                  </Suspense>
                 </div>
               </div>
             </div>
