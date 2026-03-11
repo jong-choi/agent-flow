@@ -156,6 +156,7 @@ function SidebarNavContent() {
             aria-current={isActive ? "page" : undefined}
             className="group flex min-h-12 w-12 cursor-pointer flex-col items-center justify-center rounded-md transition-all"
             prefetch
+            locale={locale}
           >
             <span
               className={cn(
@@ -224,6 +225,7 @@ function SecondarySidebarContent() {
                   "rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted",
                   isActive && "bg-muted text-foreground",
                 )}
+                locale={locale}
               >
                 {child.name}
               </Link>
