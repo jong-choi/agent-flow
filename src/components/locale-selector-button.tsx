@@ -32,7 +32,7 @@ export function LocaleSelectorButton() {
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" aria-label="Select language">
           <Languages className="h-[1.2rem] w-[1.2rem]" />

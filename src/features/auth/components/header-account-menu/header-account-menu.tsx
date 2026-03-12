@@ -31,7 +31,7 @@ export async function HeaderAccountMenu({ locale }: { locale: string }) {
         <FadeSuspense fallback={<CreditButtonFallback />}>
           <HeaderCreditsButton />
         </FadeSuspense>
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <HeaderAccountMenuTrigger
             avatarHash={session.user.avatarHash ?? "default"}
           />
