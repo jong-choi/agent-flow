@@ -3,6 +3,7 @@ import { db } from "@/db/client";
 import {
   catalogRuns,
   maintenanceEvents,
+  maintenanceJobs,
   modelHealth,
   providerHealth,
 } from "@/db/schema/ai-maintenance";
@@ -193,6 +194,17 @@ export async function applyCatalog(
             snapshot.provider === "ollama" && plan.added.length > 0,
         },
       });
+    if (discover && plan.added.length) {
+      // Newly discovered candidates should not wait for the next 15-minute
+      // health sweep, including after a credential/deployment recovery.
+      await tx
+        .insert(maintenanceJobs)
+        .values({ key: "probes", nextRunAt: new Date() })
+        .onConflictDoUpdate({
+          target: maintenanceJobs.key,
+          set: { nextRunAt: sql`least(${maintenanceJobs.nextRunAt}, now())` },
+        });
+    }
     return plan;
   });
 }

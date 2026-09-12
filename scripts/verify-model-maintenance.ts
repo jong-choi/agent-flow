@@ -246,6 +246,7 @@ async function main() {
     await worker.initializeJobs(now);
     // Official discovery must reach selectable activation without a manual
     // INSERT, seed, or per-model free-policy command. Network is mocked here.
+    await sql`update ai_maintenance_jobs set next_run_at=${new Date(Date.now() + 15 * MINUTE)} where key='probes'`;
     await catalog.applyCatalog(
       {
         provider: "ollama",
@@ -265,6 +266,12 @@ async function main() {
     const automatic = (await registry.listModelRegistry()).find(
       (m) => m.provider === "ollama" && m.upstreamModelId === "gpt-oss:20b",
     )!;
+    assert.ok(
+      (
+        await sql`select next_run_at from ai_maintenance_jobs where key='probes'`
+      )[0].next_run_at.getTime() <= Date.now(),
+      "Discovery schedules immediate verification",
+    );
     assert.equal(automatic.lifecycle, "candidate");
     assert.equal(automatic.price, 2);
     assert.equal(automatic.metadata?.thinkingLevel, "low");

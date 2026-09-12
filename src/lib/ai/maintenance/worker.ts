@@ -308,7 +308,7 @@ export async function maintenanceLoop(signal: AbortSignal) {
     if (result.status === "completed")
       console.log("Maintenance job completed", result.key);
     await delay(
-      ["completed", "failed"].includes(result.status) ? 1000 : 15 * MINUTE,
+      ["completed", "failed"].includes(result.status) ? 1000 : MINUTE,
       undefined,
       {
         signal,
