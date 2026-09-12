@@ -51,7 +51,10 @@ test.describe("Workflows", () => {
   }) => {
     await page.goto("/workflows");
 
-    const workflowCard = page.locator('a[href^="/workflows/canvas/"]').first();
+    const workflowCard = page
+      .locator('a[href^="/workflows/canvas/"]')
+      .filter({ visible: true })
+      .first();
     if (!(await workflowCard.count())) {
       test.skip(
         true,
@@ -59,7 +62,8 @@ test.describe("Workflows", () => {
       );
     }
 
-    await workflowCard.press("Enter");
+    await expect(workflowCard).toBeVisible();
+    await workflowCard.click();
     await expect(page).toHaveURL(/\/workflows\/canvas\/.+/);
 
     const saveButton = page.getByRole("button", { name: "저장" });
@@ -103,12 +107,16 @@ test.describe("Workflows", () => {
   test("워크플로우 상세 페이지에서 캔버스로 이동한다", async ({ page }) => {
     await page.goto("/workflows");
 
-    const workflowCard = page.locator('a[href^="/workflows/canvas/"]').first();
+    const workflowCard = page
+      .locator('a[href^="/workflows/canvas/"]')
+      .filter({ visible: true })
+      .first();
     if (!(await workflowCard.count())) {
       test.skip(true, "워크플로우가 없어 상세 페이지를 확인할 수 없습니다.");
     }
 
-    await workflowCard.press("Enter");
+    await expect(workflowCard).toBeVisible();
+    await workflowCard.click();
     await expect(page).toHaveURL(/\/workflows\/canvas\/.+/);
 
     const workflowId = page.url().split("/workflows/canvas/")[1];

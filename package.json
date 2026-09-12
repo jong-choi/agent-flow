@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/build.mjs",
     "start": "next start",
     "typegen": "next typegen",
     "lint": "eslint",
@@ -25,7 +25,10 @@
     "test:ai:features": "tsx scripts/verify-provider-features.ts",
     "models:maintenance": "tsx scripts/model-maintenance.ts",
     "test:models:maintenance": "tsx scripts/verify-model-maintenance.ts",
-    "test:ai:candidates": "tsx scripts/verify-candidate-models.ts"
+    "test:ai:candidates": "tsx scripts/verify-candidate-models.ts",
+    "models:release": "tsx scripts/model-release.ts",
+    "test:models:release": "tsx scripts/verify-release.ts",
+    "test:models:backup": "tsx scripts/verify-model-backup.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
@@ -33,7 +36,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@langchain/core": "1.2.11",
     "@langchain/google": "0.2.6",
-    "@langchain/groq": "^1.0.4",
+    "@langchain/groq": "1.0.4",
     "@langchain/langgraph": "^1.0.15",
     "@langchain/langgraph-checkpoint-postgres": "^1.0.0",
     "@langchain/ollama": "1.3.0",

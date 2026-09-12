@@ -18,6 +18,7 @@ import {
   getChatExecutionMessages,
   getWorkflowWithGraphForChat,
 } from "@/features/chats/server/queries";
+import { acquireChatSession, replayChatAnswer } from "@/lib/ai/chat-session";
 import { restoreChatMessage } from "@/lib/ai/history";
 
 /**
@@ -30,13 +31,26 @@ export async function GET(
   request: Request,
   { params }: RouteContext<"/api/chat/persistent/[chatId]">,
 ) {
+  let release: (() => Promise<void>) | undefined;
   try {
     const { chatId } = await params;
 
     const chat = await getChatById(chatId);
+    release = await acquireChatSession(chatId);
+    const messages = await getChatExecutionMessages(chatId);
+    const last = messages.at(-1);
+    if (last?.role === "assistant") {
+      await release();
+      return replayChatAnswer(last.content);
+    }
+    const lastUserMessage = [...messages]
+      .reverse()
+      .find((message) => message.role === "user");
+    if (!lastUserMessage) throw new Error("No user message to execute");
 
     const workflowData = await getWorkflowWithGraphForChat(chat.workflowId);
     if (!workflowData) {
+      await release();
       return apiErrorResponse({
         status: 404,
         type: "not_found_error",
@@ -53,6 +67,7 @@ export async function GET(
     });
 
     if (!nodes || !edges) {
+      await release();
       return apiErrorResponse({
         status: 400,
         type: "invalid_request_error",
@@ -61,12 +76,8 @@ export async function GET(
       });
     }
 
-    const messages = await getChatExecutionMessages(chatId);
     const messageList = messages.flatMap(restoreChatMessage);
 
-    const lastUserMessage = [...messages]
-      .reverse()
-      .find((message) => message.role === "user");
     const initialInput = lastUserMessage?.content ?? "";
 
     const state = {
@@ -84,13 +95,18 @@ export async function GET(
 
     const stream = createChatStream({
       signal: request.signal,
+      onFinally: release,
       events: (signal) =>
         app.streamEvents(
           state,
           {
             version: "v2",
             signal,
-            configurable: { thread_id: chatId, user_id: chat.userId },
+            configurable: {
+              thread_id: chatId,
+              user_id: chat.userId,
+              model_execution_turn: lastUserMessage.id,
+            },
             durability: "exit",
           },
           { excludeTags: ["langsmith:hidden"] },
@@ -108,6 +124,7 @@ export async function GET(
 
     return new Response(stream, { headers: CHAT_STREAM_HEADERS });
   } catch (error) {
+    await release?.();
     console.error("GET /api/chat/persistent/[chatId] error:", error);
     return apiErrorResponse(error);
   }

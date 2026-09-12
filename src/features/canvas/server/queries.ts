@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { cacheTag } from "next/cache";
+import { connection } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import "server-only";
@@ -214,6 +215,8 @@ const hydrateSidebarNodeOptions = async (
 };
 
 export const getSidebarNodesWithOptions = async (locale: Locale = "en") => {
+  // Model health, prices and configured keys must be evaluated at request time.
+  await connection();
   const nodes = await getLocalizedSidebarNodesCached(locale);
   return hydrateSidebarNodeOptions(nodes);
 };

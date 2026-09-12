@@ -10,7 +10,9 @@ test.describe("Developers: /developers/apis", () => {
     await page.goto("/developers/apis");
 
     await expect(page.getByText("워크플로우 API").first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "서비스 키 관리" })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "서비스 키 관리" }),
+    ).toBeVisible();
 
     const emptyCard = page.getByText("워크플로우가 없습니다").first();
     if (await emptyCard.count()) {
@@ -22,7 +24,9 @@ test.describe("Developers: /developers/apis", () => {
     await expect(apiCardTrigger).toBeVisible();
     await apiCardTrigger.click();
 
-    await expect(page.getByText("X-CANVAS-ID").first()).toBeVisible();
+    await expect(
+      page.getByRole("dialog").getByText("X-FLOW-ID", { exact: true }).first(),
+    ).toBeVisible();
 
     const rotateButton = page.getByRole("button", {
       name: "재발급",

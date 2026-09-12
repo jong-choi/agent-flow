@@ -20,7 +20,8 @@ async function main() {
   if (
     command === "migrate" ||
     command === "history-migrate" ||
-    command === "maintenance-migrate"
+    command === "maintenance-migrate" ||
+    command === "billing-migrate"
   ) {
     if (argument !== "up" && argument !== "down")
       throw new Error("Use migrate up|down");
@@ -33,7 +34,7 @@ async function main() {
         await tx`select pg_advisory_xact_lock(21465, 2)`;
         await tx.unsafe(
           await readFile(
-            `migrations/${command === "history-migrate" ? "provider-history" : command === "maintenance-migrate" ? "model-maintenance" : "model-registry"}/001-${argument}.sql`,
+            `migrations/${command === "billing-migrate" ? "execution-billing" : command === "history-migrate" ? "provider-history" : command === "maintenance-migrate" ? "model-maintenance" : "model-registry"}/001-${argument}.sql`,
             "utf8",
           ),
         );

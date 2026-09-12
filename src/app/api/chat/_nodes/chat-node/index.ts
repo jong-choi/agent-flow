@@ -1,4 +1,6 @@
 import { getEncoding } from "js-tiktoken";
+import { randomUUID } from "node:crypto";
+import { mapStoredMessagesToChatMessages } from "@langchain/core/messages";
 import { HumanMessage } from "@langchain/core/messages";
 import {
   createApiError,
@@ -11,16 +13,21 @@ import {
   resolveAiModel,
 } from "@/app/api/chat/_nodes/chat-node/models";
 import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
-import { spendCreditsByUserId } from "@/features/credits/server/mutations";
-import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
-import { runAiCall } from "@/lib/ai/execution";
-import { prepareModelMessages, tagModelMessage } from "@/lib/ai/history";
-import { assertCompleteAnswer, getAnswerText } from "@/lib/ai/message";
-import { getModelLimits } from "@/lib/ai/registry";
+import { revalidateCreditTags } from "@/features/credits/server/mutations";
 import {
-  finishModelExecution,
-  startModelExecution,
-} from "@/lib/ai/registry-store";
+  releaseExpiredModelCredits,
+  releaseModelCredits,
+  reserveModelCredits,
+  settleModelCredits,
+} from "@/lib/ai/billing";
+import { observeModelCall, runAiCall } from "@/lib/ai/execution";
+import {
+  prepareModelMessages,
+  storeModelMessages,
+  tagModelMessage,
+} from "@/lib/ai/history";
+import { getAnswerText } from "@/lib/ai/message";
+import { getModelLimits } from "@/lib/ai/registry";
 
 const o200kBaseEncoding = getEncoding("o200k_base");
 
@@ -56,7 +63,6 @@ export const chatNode = async (
     });
   }
 
-  const price = aiModel.price!;
   const limits = getModelLimits(aiModel);
 
   const configurable = config.configurable as
@@ -65,15 +71,7 @@ export const chatNode = async (
   const userId =
     typeof configurable?.user_id === "string" ? configurable.user_id : null;
 
-  if (price > 0) {
-    if (!userId) {
-      throw createApiError("authRequired");
-    }
-    const balance = await getCreditBalanceByUserId(userId);
-    if (balance < price) {
-      throw createApiError("insufficientCredit");
-    }
-  }
+  if (!userId) throw createApiError("authRequired");
 
   const chatModel = createChatModel(aiModel);
   if (!chatModel) {
@@ -116,59 +114,65 @@ export const chatNode = async (
     });
   }
 
-  const execution = await startModelExecution(aiModel, {
-    userId: userId ?? undefined,
-    threadId:
-      typeof configurable?.thread_id === "string"
-        ? configurable.thread_id
-        : undefined,
-    nodeId,
-  });
-  let completed = false;
+  let reservation: Awaited<ReturnType<typeof reserveModelCredits>> | undefined;
+  const threadId =
+    typeof configurable?.thread_id === "string"
+      ? configurable.thread_id
+      : undefined;
+  const turnId =
+    typeof configurable?.model_execution_turn === "string"
+      ? configurable.model_execution_turn
+      : randomUUID();
   try {
-    let response;
-    try {
-      response = await runAiCall(
-        (signal) => chatModel.invoke(preparedMessages, { signal }),
-        { signal: config.signal, observe: { model: aiModel } },
-      );
-      assertCompleteAnswer(response);
-    } catch (error) {
-      throw mapProviderErrorToApi(error);
-    }
-
-    const output = getAnswerText(response.content);
-
-    if (price > 0 && userId) {
-      const description = `모델 사용 : ${aiModel.name} (${aiModel.provider})`;
-
-      const spendResult = await spendCreditsByUserId({
-        userId,
-        amount: price,
-        category: "workflow",
-        title: "워크플로우 실행",
-        description,
-      });
-
-      if (!spendResult.ok && spendResult.reason === "insufficient_credit") {
-        throw createApiError("insufficientCredit");
-      }
-    }
-
-    completed = true;
+    const response = await runAiCall(
+      async (signal) => {
+        await releaseExpiredModelCredits();
+        reservation = await reserveModelCredits(aiModel, {
+          userId,
+          threadId,
+          nodeId,
+          executionKey: JSON.stringify([
+            userId,
+            threadId,
+            turnId,
+            nodeId,
+            aiModel.id,
+          ]),
+        });
+        if (reservation.cached)
+          return mapStoredMessagesToChatMessages(reservation.cached)[0];
+        let answer;
+        try {
+          answer = await observeModelCall(
+            (current) =>
+              chatModel.invoke(preparedMessages, { signal: current }),
+            { model: aiModel, signal },
+          );
+        } catch (error) {
+          throw mapProviderErrorToApi(error);
+        }
+        signal.throwIfAborted();
+        const tagged = tagModelMessage(answer, aiModel);
+        await settleModelCredits(
+          reservation.id,
+          storeModelMessages([tagged]),
+          `모델 사용 : ${aiModel.name} (${aiModel.provider})`,
+        );
+        return tagged;
+      },
+      { signal: config.signal },
+    );
     return {
-      messages: [tagModelMessage(response, aiModel)],
-      outputMap: { [nodeId]: output },
+      messages: [response],
+      outputMap: { [nodeId]: getAnswerText(response.content) },
     };
   } finally {
-    try {
-      await finishModelExecution(
-        execution.id,
-        completed ? "succeeded" : "failed",
-      );
-    } catch (error) {
-      if (completed) throw error;
-      console.error("Could not finalize failed model execution", execution.id);
+    if (reservation) {
+      try {
+        await releaseModelCredits(reservation.id);
+      } finally {
+        revalidateCreditTags(userId);
+      }
     }
   }
 };

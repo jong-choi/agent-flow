@@ -10,6 +10,7 @@ import {
   createChatStream,
 } from "@/app/api/chat/_utils/create-chat-stream";
 import { getUserId } from "@/features/auth/server/queries";
+import { acquireChatSession } from "@/lib/ai/chat-session";
 
 /**
  * 채팅 실행 GET 요청
@@ -21,12 +22,15 @@ export async function GET(
   request: Request,
   { params }: RouteContext<"/api/chat/temporary/[threadId]">,
 ) {
+  let release: (() => Promise<void>) | undefined;
   try {
     const { threadId } = await params;
+    release = await acquireChatSession(threadId);
 
     const threadContext = threadContextManager.get(threadId);
 
     if (!threadContext) {
+      await release();
       return apiErrorResponse({
         status: 404,
         type: "not_found_error",
@@ -36,6 +40,7 @@ export async function GET(
     }
 
     if (!threadContext.graph) {
+      await release();
       return apiErrorResponse({
         status: 400,
         type: "invalid_request_error",
@@ -52,13 +57,18 @@ export async function GET(
 
     const stream = createChatStream({
       signal: request.signal,
+      onFinally: release,
       events: (signal) =>
         app.streamEvents(
           state,
           {
             version: "v2",
             signal,
-            configurable: { thread_id: threadId, user_id: userId },
+            configurable: {
+              thread_id: threadId,
+              user_id: userId,
+              model_execution_turn: threadContext.turnId ?? threadId,
+            },
             durability: "exit",
           },
           { excludeTags: ["langsmith:hidden"] },
@@ -68,6 +78,7 @@ export async function GET(
 
     return new Response(stream, { headers: CHAT_STREAM_HEADERS });
   } catch (error) {
+    await release?.();
     console.error("GET /api/chat/temporary/[threadId] error:", error);
     return apiErrorResponse(error);
   }

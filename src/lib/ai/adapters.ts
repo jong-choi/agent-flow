@@ -1,8 +1,8 @@
 import { ChatGoogle } from "@langchain/google";
-import { ChatGroq } from "@langchain/groq";
 import { ChatOllama } from "@langchain/ollama";
 import type { AiModel } from "@/db/schema/ai-models";
 import { aiFetch } from "./execution";
+import { CompatibleChatGroq } from "./groq";
 import { getModelLimits } from "./registry";
 import { resolveThinkingLevel } from "./thinking";
 
@@ -42,7 +42,7 @@ const builders = {
     const qwen = ["qwen/qwen3.6-27b", "qwen/qwen3.8-27b"].includes(
       model.upstreamModelId,
     );
-    return new ChatGroq({
+    return new CompatibleChatGroq({
       model: model.upstreamModelId,
       apiKey: requireKey("GROQ_API_KEY"),
       maxTokens: getModelLimits(model).output,

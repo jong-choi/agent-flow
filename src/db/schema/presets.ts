@@ -45,11 +45,9 @@ export const workflowPresets = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
-    {
-      pk: primaryKey({
-        columns: [table.workflowId, table.presetId],
-      }),
-    },
+    primaryKey({
+      columns: [table.workflowId, table.presetId],
+    }),
   ],
 );
 
@@ -66,11 +64,9 @@ export const presetPurchases = pgTable(
     purchasedAt: timestamp("purchased_at").notNull().defaultNow(),
   },
   (table) => [
-    {
-      pk: primaryKey({
-        columns: [table.presetId, table.buyerId],
-      }),
-    },
+    primaryKey({
+      columns: [table.presetId, table.buyerId],
+    }),
   ],
 );
 
@@ -84,11 +80,9 @@ export const presetTags = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
-    {
-      pk: primaryKey({
-        columns: [table.presetId, table.tag],
-      }),
-    },
+    primaryKey({
+      columns: [table.presetId, table.tag],
+    }),
   ],
 );
 

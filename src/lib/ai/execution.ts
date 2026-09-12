@@ -57,6 +57,52 @@ export const aiFetch: typeof fetch = async (input, init) => {
   }
 };
 
+/** Observe only the provider operation, excluding billing, replay and admission failures. */
+export async function observeModelCall<T>(
+  operation: (signal: AbortSignal) => Promise<T>,
+  options: {
+    model: AiModel;
+    signal: AbortSignal;
+    source?: "runtime" | "probe";
+    expectAnswer?: boolean;
+  },
+): Promise<T> {
+  const { assertModelAdmission, recordObservation } = await import(
+    "./maintenance/state-store"
+  );
+  await assertModelAdmission(options.model.id, options.source === "probe");
+  let result: T;
+  try {
+    result = await operation(options.signal);
+    options.signal.throwIfAborted();
+    if (options.expectAnswer !== false)
+      assertCompleteAnswer(result as { content: unknown });
+  } catch (error) {
+    try {
+      await recordObservation(options.model, {
+        ok: false,
+        source: options.source ?? "runtime",
+        at: Date.now(),
+        error: normalizeProviderError(
+          options.signal.aborted ? options.signal.reason : error,
+        ),
+      });
+    } catch {
+      console.warn(
+        "Could not persist model health observation",
+        options.model.id,
+      );
+    }
+    throw options.signal.aborted ? options.signal.reason : error;
+  }
+  await recordObservation(options.model, {
+    ok: true,
+    source: options.source ?? "runtime",
+    at: Date.now(),
+  });
+  return result;
+}
+
 /** Session-level PostgreSQL advisory lock shared by web, CLI, and future maintenance workers. */
 export async function runAiCall<T>(
   operation: (signal: AbortSignal) => Promise<T>,
@@ -96,7 +142,6 @@ export async function runAiCall<T>(
   });
   const scope: CallContext = { signal, transports: [] };
   let heartbeat: ReturnType<typeof setInterval> | undefined;
-  let callStarted = false;
   try {
     while (!locked) {
       signal.throwIfAborted();
@@ -112,47 +157,12 @@ export async function runAiCall<T>(
         stop.abort(new Error("AI execution lock connection lost")),
       );
     }, 5000);
-    return await context.run(scope, async () => {
-      if (options.observe) {
-        const { assertModelAdmission } = await import(
-          "./maintenance/state-store"
-        );
-        await assertModelAdmission(
-          options.observe.model.id,
-          options.observe.source === "probe",
-        );
-      }
-      callStarted = true;
-      const result = await operation(signal);
-      if (options.observe) {
-        if (options.observe.expectAnswer !== false)
-          assertCompleteAnswer(result as { content: unknown });
-        const { recordObservation } = await import("./maintenance/state-store");
-        await recordObservation(options.observe.model, {
-          ok: true,
-          source: options.observe.source ?? "runtime",
-          at: Date.now(),
-        });
-      }
-      return result;
-    });
+    return await context.run(scope, () =>
+      options.observe
+        ? observeModelCall(operation, { ...options.observe, signal })
+        : operation(signal),
+    );
   } catch (error) {
-    if (options.observe && callStarted) {
-      try {
-        const { recordObservation } = await import("./maintenance/state-store");
-        await recordObservation(options.observe.model, {
-          ok: false,
-          source: options.observe.source ?? "runtime",
-          at: Date.now(),
-          error: normalizeProviderError(signal.aborted ? signal.reason : error),
-        });
-      } catch {
-        console.warn(
-          "Could not persist model health observation",
-          options.observe.model.id,
-        );
-      }
-    }
     if (signal.aborted) throw signal.reason;
     throw error;
   } finally {

@@ -134,3 +134,43 @@ it("chooses an explicitly configured, available title model", () => {
   expect(selectTitleModel([{ ...a, isActive: false }, b])?.id).toBe(b.id);
   expect(selectTitleModel([testModel({ metadata: {} })])).toBeNull();
 });
+it("retains Groq stream truncation metadata on message chunks", async () => {
+  const data = [
+    {
+      choices: [
+        {
+          index: 0,
+          delta: { role: "assistant", content: "partial" },
+          finish_reason: null,
+        },
+      ],
+    },
+    { choices: [{ index: 0, delta: {}, finish_reason: "length" }] },
+    {
+      choices: [],
+      usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+    },
+  ];
+  fetchMock.mockResolvedValue(
+    new Response(
+      data
+        .map(
+          (d) =>
+            `data: ${JSON.stringify({ id: "fixture", model: "openai/gpt-oss-20b", ...d })}\n\n`,
+        )
+        .join("") + "data: [DONE]\n\n",
+      { headers: { "content-type": "text/event-stream" } },
+    ),
+  );
+  const model = createProviderModel(
+    testModel({
+      provider: "groq",
+      upstreamModelId: "openai/gpt-oss-20b",
+      metadata: {},
+    }),
+  )!;
+  const chunks = [];
+  for await (const chunk of await model.stream("hello")) chunks.push(chunk);
+  const combined = chunks.reduce((a, b) => a.concat(b));
+  expect(combined.response_metadata.finish_reason).toBe("length");
+});

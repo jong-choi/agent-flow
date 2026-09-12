@@ -1,11 +1,11 @@
 import {
+  date,
   integer,
   pgEnum,
   pgTable,
   primaryKey,
   text,
   timestamp,
-  date,
   uuid,
 } from "drizzle-orm/pg-core";
 import { users } from "@/db/schema/auth";
@@ -65,11 +65,9 @@ export const creditDailyEvents = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
-    {
-      pk: primaryKey({
-        columns: [table.userId, table.eventDate],
-      }),
-    },
+    primaryKey({
+      columns: [table.userId, table.eventDate],
+    }),
   ],
 );
 

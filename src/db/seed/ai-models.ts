@@ -1,5 +1,8 @@
 import { db } from "@/db/client";
 import { type AiModelInsert, aiModels } from "@/db/schema/ai-models";
+import { initialFreeCandidates } from "@/lib/ai/maintenance/initial-candidates";
+import { initialProviderModels } from "@/lib/ai/onboarding";
+import { upsertCatalogModel } from "@/lib/ai/registry-store";
 
 const aiModelsData: Omit<AiModelInsert, "upstreamModelId">[] = [
   {
@@ -152,11 +155,27 @@ export const seedAiModels = async () => {
         .values({
           ...model,
           upstreamModelId: model.modelId,
-          lifecycle: "active",
+          lifecycle: "candidate",
+          isActive: false,
         })
         .onConflictDoNothing({
           target: [aiModels.provider, aiModels.upstreamModelId],
         });
     }
   });
+  for (const profile of [...initialProviderModels, ...initialFreeCandidates]) {
+    await upsertCatalogModel(
+      {
+        provider: profile.provider,
+        upstreamModelId: profile.upstreamModelId,
+        displayName: profile.name,
+        metadata: {},
+      },
+      {
+        appMaxOutputTokens: profile.provider === "groq" ? 512 : 4096,
+        metadata: { thinkingLevel: profile.thinkingLevel },
+        requireFreeAccess: profile.provider !== "google",
+      },
+    );
+  }
 };

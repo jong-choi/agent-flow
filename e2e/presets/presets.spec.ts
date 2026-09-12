@@ -1,10 +1,7 @@
-import { expect, test, type Page } from "@playwright/test";
+import { type Page, expect, test } from "@playwright/test";
 import { loginWithDevPassword } from "../helpers/auth";
 
-const clickPagerIfVisible = async (
-  page: Page,
-  direction: "Next" | "Prev",
-) => {
+const clickPagerIfVisible = async (page: Page, direction: "Next" | "Prev") => {
   const pagerLink = page.getByRole("link", { name: direction }).first();
   const isVisible = await pagerLink
     .isVisible({ timeout: 2000 })
@@ -23,7 +20,7 @@ test.describe("Presets", () => {
   });
 
   test("프리셋 마켓 목록과 구매 다이얼로그가 동작한다", async ({ page }) => {
-    await page.goto("/presets");
+    await page.goto("/presets", { waitUntil: "domcontentloaded" });
 
     await expect(page.getByText("프리셋 마켓").first()).toBeVisible();
     await clickPagerIfVisible(page, "Next");
@@ -51,7 +48,7 @@ test.describe("Presets", () => {
   });
 
   test("프리셋 상세/수정 페이지가 렌더링된다", async ({ page }) => {
-    await page.goto("/presets");
+    await page.goto("/presets", { waitUntil: "domcontentloaded" });
 
     const detailLink = page.getByRole("link", { name: "상세 보기" }).first();
     if (!(await detailLink.count())) {

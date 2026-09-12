@@ -1,0 +1,91 @@
+name: Release rehearsal (mock providers, no deployment)
+on:
+  push:
+    branches: [codex/model-management-stage-5]
+  pull_request:
+    paths:
+      - "src/lib/ai/**"
+      - "src/app/api/chat/**"
+      - "migrations/**"
+      - "prod.Dockerfile"
+      - "scripts/build.mjs"
+permissions:
+  contents: read
+concurrency:
+  group: release-rehearsal-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  container-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: agentflow
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: agentflow_release
+        ports: ["55432:5432"]
+        options: >-
+          --memory=512m --memory-swap=512m
+          --health-cmd 'pg_isready -U agentflow -d agentflow_release'
+          --health-interval 2s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://agentflow:ci-only-password@127.0.0.1:55432/agentflow_release
+      AUTH_SECRET: ci-only-auth-secret-not-production
+      AUTH_URL: http://localhost:3000
+      BASE_URL: http://localhost:3000
+      AUTH_TRUST_HOST: "true"
+      TEST_PASSWORD: ci-only-login-password
+      NEXT_PUBLIC_ENABLE_DEV_LOGIN: "true"
+      GOOGLE_AI_API_KEY: fixture-google
+      GROQ_API_KEY: fixture-groq
+      OLLAMA_API_KEY: fixture-ollama
+      AI_PROVIDER_REPLAY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run models:release -- migrate --apply
+      - run: npx tsx scripts/seed-release-e2e.ts
+      - name: Build in Node on the hosted runner
+        run: npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=1536
+      - name: Start bounded container with mock providers
+        run: |
+          docker run -d --name release-app --user "$(id -u):$(id -g)" --network host --memory=768m --memory-swap=768m --cpus=1 \
+            -e DATABASE_URL -e AUTH_SECRET -e AUTH_URL -e BASE_URL -e AUTH_TRUST_HOST -e TEST_PASSWORD -e NEXT_PUBLIC_ENABLE_DEV_LOGIN \
+            -e GOOGLE_AI_API_KEY -e GROQ_API_KEY -e OLLAMA_API_KEY -e AI_PROVIDER_REPLAY -e AI_REPLAY_CONTAINER=1 \
+            -e 'NODE_OPTIONS=--max-old-space-size=512 --import=/app/provider-replay.mjs' \
+            -v "$PWD/.next/standalone:/app" -v "$PWD/.next/static:/app/.next/static:ro" -v "$PWD/public:/app/public:ro" \
+            -v "$PWD/scripts/testing/provider-replay.mjs:/app/provider-replay.mjs:ro" \
+            -w /app -e HOSTNAME=0.0.0.0 -e PORT=3000 node:22-bookworm-slim node server.js
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/api/auth/csrf >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          docker logs release-app
+          exit 1
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx playwright test --workers=1 --retries=0
+      - name: Runtime artifact must not contain environment files
+        run: |
+          docker exec release-app sh -c 'test ! -f /app/.env && test ! -f /app/.env.local'
+          docker inspect --format '{{.State.OOMKilled}}' release-app | grep '^false$'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: mock-e2e-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 3
+      - name: Cleanup rehearsal containers
+        if: always()
+        run: |
+          docker logs release-app 2>&1 | tail -40 || true
+          docker rm -f release-app || true

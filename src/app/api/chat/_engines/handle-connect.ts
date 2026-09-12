@@ -11,6 +11,7 @@ export const persistentCheckpointer = PostgresSaver.fromConnString(
 
 export type ThreadContext = {
   id: string;
+  turnId?: string;
   graph: {
     nodes: FlowNode[];
     edges: FlowEdge[];
