@@ -42,3 +42,5 @@ RUN_AI_LIVE=1 npm run test:ai:live
 - PostgreSQL lock은 동일한 DB의 직접 연결/세션 유지 연결이 전제다. transaction pooling endpoint를 사용하면 안 된다. 프로세스 중단 시 DB 세션 종료로 잠금이 해제되며, 연결 상실 감지 시 provider 요청을 취소한다.
 - 기본 120초 제한은 대기+실행 시간 합계다. 지원하지 않는 transport가 취소를 무시하는 경우에는 기존 작업이 끝날 때까지 잠금을 유지한다.
 - 이번 단계는 스키마 migration/모델 은퇴/가격 정책/운영 worker를 적용하지 않는다. 현재 영속 대화의 role/content-only 이력은 도구 서명 영속화까지 지원하지 않으며 3단계 연결 시 보완한다.
+
+CI의 Node 20/npm 10 clean install에서 발견된 optional peer lock 항목 누락을 보정했다. `.nvmrc`로 개발 runtime 기준을 명시하고 동일 npm 계열의 `npm ci --dry-run`을 통과했다.
