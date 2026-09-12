@@ -244,6 +244,81 @@ async function main() {
       globalThis.fetch = nativeFetch;
     }
     await worker.initializeJobs(now);
+    // Official discovery must reach selectable activation without a manual
+    // INSERT, seed, or per-model free-policy command. Network is mocked here.
+    await catalog.applyCatalog(
+      {
+        provider: "ollama",
+        modelIds: ["candidate", "gpt-oss:20b"],
+        models: [
+          {
+            provider: "ollama",
+            upstreamModelId: "gpt-oss:20b",
+            displayName: "gpt-oss:20b",
+            metadata: { sourceUrl: "https://ollama.com/api/tags" },
+          },
+        ],
+        fetchedAt: Date.now(),
+      },
+      true,
+    );
+    const automatic = (await registry.listModelRegistry()).find(
+      (m) => m.provider === "ollama" && m.upstreamModelId === "gpt-oss:20b",
+    )!;
+    assert.equal(automatic.lifecycle, "candidate");
+    assert.equal(automatic.price, 2);
+    assert.equal(automatic.metadata?.thinkingLevel, "low");
+    let autoCalls = 0;
+    globalThis.fetch = async (input, init) => {
+      const request = new Request(input, init);
+      assert.equal(new URL(request.url).origin, "https://ollama.com");
+      const body = await request.json();
+      autoCalls++;
+      const result = {
+        model: "gpt-oss:20b",
+        created_at: new Date().toISOString(),
+        message: { role: "assistant", content: "20분입니다." },
+        done: true,
+        done_reason: "stop",
+        prompt_eval_count: 5,
+        eval_count: 5,
+        total_duration: 1,
+        load_duration: 1,
+        prompt_eval_duration: 1,
+        eval_duration: 1,
+      };
+      return body.stream
+        ? new Response(JSON.stringify(result) + "\n", {
+            headers: { "content-type": "application/x-ndjson" },
+          })
+        : Response.json(result);
+    };
+    try {
+      assert.equal(
+        (await probes.probeModel(automatic.id, { verifyCandidate: true }))
+          .status,
+        "passed",
+      );
+      assert.equal(autoCalls, 2);
+      const active = (await registry.getModelByReference(automatic.id))!;
+      assert.equal(active.lifecycle, "active");
+      assert.equal(
+        (await health.availabilityMap([active])).get(active.id)?.available,
+        true,
+      );
+      await registry.updateModelSettings(active.id, {
+        isActive: false,
+        price: 23,
+      });
+      assert.equal(
+        (await probes.probeModel(active.id, { verifyCandidate: true })).status,
+        "manual_hold",
+      );
+      assert.equal(autoCalls, 2, "Operator hold must not consume another call");
+      assert.equal((await registry.getModelByReference(active.id))!.price, 23);
+    } finally {
+      globalThis.fetch = nativeFetch;
+    }
     let release!: () => void;
     let started!: () => void;
     const ready = new Promise<void>((resolve) => {

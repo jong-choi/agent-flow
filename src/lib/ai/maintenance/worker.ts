@@ -13,6 +13,7 @@ import {
 import { aiModels } from "@/db/schema/ai-models";
 import { normalizeProviderError } from "../error";
 import { aiFetch, runAiCall } from "../execution";
+import { hasAutomaticFreeAccess } from "./automatic-access";
 import { applyCatalog } from "./catalog-store";
 import { type Provider, collectCatalog, providers } from "./collectors";
 import { HOUR, MINUTE, initialHealth } from "./policy";
@@ -156,13 +157,15 @@ export async function applyScheduledRetirements(now = Date.now()) {
       );
     const policies = await tx.select().from(freeAccessPolicies);
     for (const model of managed) {
-      const valid = policies.some(
-        (p) =>
-          p.provider === model.provider &&
-          p.credentialVersion === credentialVersion(model.provider) &&
-          p.expiresAt.getTime() > now &&
-          p.modelIds.includes(model.upstreamModelId),
-      );
+      const valid =
+        hasAutomaticFreeAccess(model, now) ||
+        policies.some(
+          (p) =>
+            p.provider === model.provider &&
+            p.credentialVersion === credentialVersion(model.provider) &&
+            p.expiresAt.getTime() > now &&
+            p.modelIds.includes(model.upstreamModelId),
+        );
       if (!valid) {
         await tx
           .update(aiModels)
@@ -302,8 +305,14 @@ export async function maintenanceLoop(signal: AbortSignal) {
     const result = await runMaintenanceTick({ signal });
     if (result.status === "failed")
       console.warn("Maintenance job failed", result.key);
-    await delay(result.status === "completed" ? 1000 : 15 * MINUTE, undefined, {
-      signal,
-    }).catch(() => {});
+    if (result.status === "completed")
+      console.log("Maintenance job completed", result.key);
+    await delay(
+      ["completed", "failed"].includes(result.status) ? 1000 : 15 * MINUTE,
+      undefined,
+      {
+        signal,
+      },
+    ).catch(() => {});
   }
 }

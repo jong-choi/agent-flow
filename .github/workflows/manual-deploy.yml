@@ -125,6 +125,11 @@ jobs:
             echo "🏗️  Building with --no-cache --pull..."
             docker compose -f "$COMPOSE_FILE" build --no-cache --pull
 
+            echo "Applying model schema migrations..."
+            for migration in migrate history-migrate maintenance-migrate; do
+              docker compose -f "$COMPOSE_FILE" run --rm --no-deps agentflow-maintenance npm run models -- "$migration" up
+            done
+
             echo "▶️  Starting services..."
             docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
 

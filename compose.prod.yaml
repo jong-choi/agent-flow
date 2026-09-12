@@ -54,7 +54,7 @@ services:
       - npm-network
 
   agentflow-maintenance:
-    profiles: ["maintenance"]
+    container_name: agentflow-maintenance
     mem_limit: 512m
     memswap_limit: 512m
     cpus: 0.5
@@ -66,9 +66,9 @@ services:
       GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY}
       OLLAMA_API_KEY: ${OLLAMA_API_KEY}
-      AI_MAINTENANCE_ENABLED: ${AI_MAINTENANCE_ENABLED:-false}
+      AI_MAINTENANCE_ENABLED: "true"
       NODE_OPTIONS: --max-old-space-size=256
-    restart: "no"
+    restart: unless-stopped
     networks:
       - npm-network
 

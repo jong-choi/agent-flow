@@ -11,6 +11,7 @@ import {
 import { type AiModel, aiModels } from "@/db/schema/ai-models";
 import { isSelectableModel } from "../registry";
 import { getModelByReference } from "../registry-store";
+import { hasAutomaticFreeAccess } from "./automatic-access";
 import {
   MINUTE,
   type Observation,
@@ -72,7 +73,12 @@ export async function availabilityMap(models: AiModel[], now = Date.now()) {
         reason = "retired";
       if (p && p.state.status !== "healthy")
         reason = p.state.reason ?? "provider_unavailable";
-      if (model.requireFreeAccess && !policy) reason = "free_access_unverified";
+      if (
+        model.requireFreeAccess &&
+        !policy &&
+        !hasAutomaticFreeAccess(model, now)
+      )
+        reason = "free_access_unverified";
       return [
         model.id,
         {

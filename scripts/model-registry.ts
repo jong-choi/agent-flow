@@ -12,10 +12,15 @@ async function main() {
   const [command, argument, file] = process.argv.slice(2);
   if (
     command !== "list" &&
-    new URL(process.env.DATABASE_URL!).hostname !== "127.0.0.1"
+    new URL(process.env.DATABASE_URL!).hostname !== "127.0.0.1" &&
+    !(
+      process.env.AI_MAINTENANCE_ENABLED === "true" &&
+      ["migrate", "history-migrate", "maintenance-migrate"].includes(command) &&
+      argument === "up"
+    )
   )
     throw new Error(
-      "Writes are limited to the local development DB in this phase",
+      "Registry writes require local DB; production up migrations require AI_MAINTENANCE_ENABLED=true",
     );
   if (
     command === "migrate" ||

@@ -8,8 +8,8 @@ import {
 } from "@/db/schema/ai-maintenance";
 import { aiModels } from "@/db/schema/ai-models";
 import { upsertCatalogModel } from "../registry-store";
+import { automaticModelProfile } from "./automatic-access";
 import type { CatalogSnapshot } from "./collectors";
-import { initialFreeCandidates } from "./initial-candidates";
 import {
   catalogGuard,
   hasRetirementEvidence,
@@ -85,18 +85,24 @@ export async function applyCatalog(
       const existing = current.find(
         (m) => m.upstreamModelId === model.upstreamModelId,
       );
-      const profile = initialFreeCandidates.find(
-        (p) =>
-          p.provider === model.provider &&
-          p.upstreamModelId === model.upstreamModelId,
+      const profile = automaticModelProfile(
+        model.provider,
+        model.upstreamModelId,
       );
       if (existing || discover)
         await upsertCatalogModel(
-          model,
+          { ...model, displayName: profile?.name ?? model.displayName },
           {
             appMaxOutputTokens: profile?.provider === "groq" ? 512 : 4096,
             ...(profile
-              ? { metadata: { thinkingLevel: profile.thinkingLevel } }
+              ? {
+                  metadata: {
+                    thinkingLevel: profile.thinkingLevel,
+                    ...("titlePriority" in profile
+                      ? { titlePriority: profile.titlePriority }
+                      : {}),
+                  },
+                }
               : {}),
             ...(!existing &&
             (snapshot.provider === "ollama" || profile?.provider === "groq")

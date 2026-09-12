@@ -1,6 +1,8 @@
 # 모델 목록·상태·은퇴 운영
 
-4단계 구현. 운영에서는 기본 비활성이다. 아래 apply 예시는 로컬 DB에서 검증한 명령이며, 운영 적용은 별도 배포 단계다.
+운영 Compose는 앱과 모델 관리 워커를 함께 실행한다. 자동·수동 배포 모두 모델 스키마의 up migration을 적용한 뒤 서비스를 시작한다.
+
+공식 무료 제공 여부와 호출 방식이 검증된 초기 Google/Groq/Ollama 프로필은 공식 목록에서 발견되면 고정 크레딧·추론 설정을 받아 candidate로 등록되고, 순차 invoke·stream 검증을 통과하면 자동 활성화된다. 수동 seed나 모델별 승인 명령은 필요하지 않다. 목록 재확인은 매일, 신규 발견은 매주 실행하며 첫 기동에는 즉시 실행한다. 아직 무료 제공 여부를 확인하지 못한 다른 모델은 candidate로 보존한다.
 
 ## 상태와 기존 연결
 
@@ -75,7 +77,7 @@ reset은 건강 상태만 초기화하며 은퇴/숨김을 해제하지 않는�
 
 로컬 Postgres는 메모리/스왑 합계 256 MiB, CPU 1개, shared_buffers 32 MiB로 제한한다. maintenance는 512 MiB, CPU 0.5개, Node heap 256 MiB로 제한한다. 무거운 이미지/앱 빌드와 DB 테스트를 겹쳐 실행하지 않는다. 메모리 상한에 도달하면 해당 컨테이너가 종료될 수 있으므로 데이터 volume을 유지하고 상태/로그를 점검한다.
 
-`maintenance.Dockerfile`과 compose의 `maintenance` profile을 준비했다. `AI_MAINTENANCE_ENABLED=false`가 기본값이고 운영 프로필은 실행하지 않았다. 기존 배포 workflow는 maintenance를 자동으로 켜지 않는다. 실제 운영 반영 시 migration→수동 dry-run/검토→한 번 실행→worker 활성화 순서를 별도로 수행한다.
+`maintenance.Dockerfile`로 워커를 빌드하며 운영 Compose는 `AI_MAINTENANCE_ENABLED=true`와 자동 재시작을 설정한다. 로컬 CLI는 계속 명시적 활성화를 요구한다. 최초 운영 스키마 적용 전에는 DB를 백업한다. 2026-09-13 운영 DB 백업 및 모델 관련 migration 3개 적용을 완료했고 기존 워크플로우 11개, 노드 101개, edge 107개 및 기존 모델 설정 보존을 확인했다.
 
 raw는 `AI_DIAGNOSTIC_DIR=.local/ai-captures/...`를 지정했을 때만 저장한다. 인증 헤더 및 URL의 key/token 쿼리를 제외하고 0600 권한을 사용한다. `.local`, `.env`는 Git/Docker에서 제외한다. `.env.example`에는 빈 키/기본 플래그만 둔다.
 

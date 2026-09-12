@@ -7,6 +7,7 @@ import {
 import { db } from "@/db/client";
 import {
   freeAccessPolicies,
+  maintenanceEvents,
   modelHealth,
   probeBudgets,
   providerHealth,
@@ -17,6 +18,7 @@ import { runAiCall } from "../execution";
 import { assertCompleteAnswer, getAnswerText } from "../message";
 import { listModelRegistry } from "../registry-store";
 import { supportedThinkingLevels } from "../thinking";
+import { hasAutomaticFreeAccess } from "./automatic-access";
 import { isChatCatalogModel } from "./collectors";
 import { DAY, initialHealth, readHealth } from "./policy";
 import { credentialVersion } from "./state-store";
@@ -63,7 +65,10 @@ export async function probeModel(
   if (!isChatCatalogModel(model.provider, model.upstreamModelId))
     return { status: "unsupported_model" };
   const count = options.verifyCandidate ? 2 : 1;
-  if (model.requireFreeAccess || model.lifecycle === "candidate") {
+  if (
+    (model.requireFreeAccess || model.lifecycle === "candidate") &&
+    !hasAutomaticFreeAccess(model)
+  ) {
     const [policy] = await db
       .select()
       .from(freeAccessPolicies)
@@ -148,7 +153,10 @@ export async function probeModel(
         (current.retirementAt && current.retirementAt.getTime() <= Date.now())
       )
         return "skipped";
-      if (current.requireFreeAccess || current.lifecycle === "candidate") {
+      if (
+        (current.requireFreeAccess || current.lifecycle === "candidate") &&
+        !hasAutomaticFreeAccess(current)
+      ) {
         const [policy] = await tx
           .select()
           .from(freeAccessPolicies)
@@ -185,6 +193,12 @@ export async function probeModel(
             target: modelHealth.modelId,
             set: { state, updatedAt: new Date() },
           });
+        await tx.insert(maintenanceEvents).values({
+          kind: "model_activated",
+          provider: current.provider,
+          modelId: id,
+          details: { source: "automatic_probe", checks: ["invoke", "stream"] },
+        });
       } else if (current.requireFreeAccess) {
         await tx
           .update(aiModels)
@@ -232,13 +246,15 @@ export async function runDueProbes(signal?: AbortSignal, now = Date.now()) {
           (s.lastSuccessAt === null ? 0 : s.lastSuccessAt + DAY)) <= now
       );
     });
-    // Prioritize recovery over new candidates, so discovery cannot starve existing service.
+    // Recover unavailable models first, then onboard candidates before routine
+    // checks of healthy models consume the daily verification budget.
+    const priority = (model: (typeof due)[number]) =>
+      model.lifecycle === "candidate" ? 1 : model.health === "healthy" ? 2 : 0;
     due.sort(
       (a, b) =>
         Number(b.id === state?.state.probeModelId) -
           Number(a.id === state?.state.probeModelId) ||
-        Number(a.lifecycle === "candidate") -
-          Number(b.lifecycle === "candidate"),
+        priority(a) - priority(b),
     );
     for (const model of due) {
       const result = await probeModel(model.id, {
@@ -246,8 +262,13 @@ export async function runDueProbes(signal?: AbortSignal, now = Date.now()) {
         verifyCandidate: model.lifecycle === "candidate",
       });
       results.push({ id: model.id, ...result });
-      if (["passed", "failed", "budget_exhausted"].includes(result.status))
-        break;
+      console.log(
+        "Model probe",
+        model.provider,
+        model.upstreamModelId,
+        result.status,
+      );
+      if (["failed", "budget_exhausted"].includes(result.status)) break;
     }
   }
   return results;
