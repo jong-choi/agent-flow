@@ -15,12 +15,13 @@ async function main() {
   if (process.argv[2] === "worker") {
     const name = process.argv[3];
     const abort = new AbortController();
+    process.once("disconnect", () => abort.abort());
     let timer =
       name === "cancel" ? setTimeout(() => abort.abort(), 200) : undefined;
     try {
       await runAiCall(
         async (signal) => {
-          process.send?.({ name, event: "start" });
+          if (process.connected) process.send?.({ name, event: "start" });
           if (name === "abort-running")
             timer = setTimeout(() => abort.abort(), 100);
           try {
@@ -42,22 +43,24 @@ async function main() {
                 signal,
               });
           } finally {
-            process.send?.({ name, event: "end" });
+            if (process.connected) process.send?.({ name, event: "end" });
           }
           if (name === "failure") throw new Error("Expected mock failure");
         },
         { signal: abort.signal },
       );
     } catch (error) {
-      process.send?.({
-        name,
-        event: "error",
-        message: error instanceof Error ? error.name : "unknown",
-      });
+      if (process.connected)
+        process.send?.({
+          name,
+          event: "error",
+          message: error instanceof Error ? error.name : "unknown",
+        });
       if (name !== "cancel" && name !== "failure" && name !== "abort-running")
         throw error;
     } finally {
       if (timer) clearTimeout(timer);
+      if (process.connected) process.disconnect();
     }
     return;
   }
@@ -85,18 +88,18 @@ async function main() {
       );
     });
     return {
-      started: Promise.race([
-        started,
-        done.then(() => {
-          throw new Error(`Worker ${name} exited before acquiring the lock`);
-        }),
-      ]),
+      started,
       done,
       release: () => child.send("release"),
     };
   };
   const hold = launch("hold");
-  await hold.started;
+  await Promise.race([
+    hold.started,
+    hold.done.then(() => {
+      throw new Error("Holder exited before acquiring the lock");
+    }),
+  ]);
   const queued = launch("next");
   const cancel = launch("cancel");
   await cancel.done;
