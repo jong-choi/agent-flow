@@ -24,11 +24,23 @@ async function main() {
           if (name === "abort-running")
             timer = setTimeout(() => abort.abort(), 100);
           try {
-            await delay(
-              name === "hold" ? 1200 : name === "abort-running" ? 5000 : 100,
-              undefined,
-              { signal },
-            );
+            if (name === "hold") {
+              await new Promise<void>((resolve, reject) => {
+                const release = () => {
+                  signal.removeEventListener("abort", cancelled);
+                  resolve();
+                };
+                const cancelled = () => {
+                  process.off("message", release);
+                  reject(signal.reason);
+                };
+                process.once("message", release);
+                signal.addEventListener("abort", cancelled, { once: true });
+              });
+            } else
+              await delay(name === "abort-running" ? 5000 : 100, undefined, {
+                signal,
+              });
           } finally {
             process.send?.({ name, event: "end" });
           }
@@ -72,13 +84,24 @@ async function main() {
           : reject(new Error(`Worker ${name} exited ${code}`)),
       );
     });
-    return { started, done };
+    return {
+      started: Promise.race([
+        started,
+        done.then(() => {
+          throw new Error(`Worker ${name} exited before acquiring the lock`);
+        }),
+      ]),
+      done,
+      release: () => child.send("release"),
+    };
   };
   const hold = launch("hold");
   await hold.started;
   const queued = launch("next");
   const cancel = launch("cancel");
-  await Promise.all([hold.done, queued.done, cancel.done]);
+  await cancel.done;
+  hold.release();
+  await Promise.all([hold.done, queued.done]);
   const failure = launch("failure");
   await failure.done;
   const running = launch("abort-running");
