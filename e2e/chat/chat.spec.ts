@@ -44,7 +44,7 @@ async function startChatFromFirstWorkflow(page: Page) {
   await startChat.click({ noWaitAfter: true });
 
   const moved = await page
-    .waitForURL(/\/chat\/.+/)
+    .waitForURL(/\/chat\/.+/, { waitUntil: "domcontentloaded", timeout: 15000 })
     .then(() => true)
     .catch(() => false);
 
@@ -78,7 +78,10 @@ test.describe("Chat", () => {
   test("채팅 생성 후 상세 동작이 가능하다", async ({ page }) => {
     const url = await startChatFromFirstWorkflow(page);
     if (!url) {
-      test.skip(true, "워크플로우가 없거나 채팅 생성이 지연되어 시작할 수 없습니다.");
+      test.skip(
+        true,
+        "워크플로우가 없거나 채팅 생성이 지연되어 시작할 수 없습니다.",
+      );
     }
 
     await expect(page).toHaveURL(/\/chat\/[^/]+$/);
@@ -89,9 +92,13 @@ test.describe("Chat", () => {
       .first();
 
     await expect(headerMenuButton).toBeVisible();
-    await expect(page.getByPlaceholder("메시지를 입력하세요...")).toBeVisible();
+    await expect(
+      page.getByPlaceholder("메시지를 입력하세요...").filter({ visible: true }),
+    ).toBeVisible();
 
-    const messageInput = page.getByPlaceholder("메시지를 입력하세요...");
+    const messageInput = page
+      .getByPlaceholder("메시지를 입력하세요...")
+      .filter({ visible: true });
     await messageInput.fill("안녕");
 
     const sendButton = page.getByRole("button", { name: "전송" });
@@ -113,7 +120,9 @@ test.describe("Chat", () => {
     await titleInput.fill(`채팅-${Date.now()}`);
     await titleInput.press("Enter");
 
-    await expect(page.getByText("채팅 이름을 변경했어요.").first()).toBeVisible();
+    await expect(
+      page.getByText("채팅 이름을 변경했어요.").first(),
+    ).toBeVisible();
 
     await headerMenuButton.click();
     const deleteItem = page

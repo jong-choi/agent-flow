@@ -18,6 +18,7 @@ test("영속 채팅의 한글 스트림과 다시 열기", async ({ page }) => {
     await sql`insert into workflows (id,title,owner_id) values (${workflow},'E2E stream contract',${user})`;
     await sql`insert into chats (id,user_id,workflow_id,title) values (${chat},${user},${workflow},'E2E stream contract')`;
     await loginWithDevPassword(page);
+    let persisted = false;
     await page.route(`**/api/chat/persistent/${chat}`, async (route) => {
       if (route.request().method() !== "GET") {
         await route.continue();
@@ -42,7 +43,10 @@ test("영속 채팅의 한글 스트림과 다시 열기", async ({ page }) => {
         },
         { type: "endNode", event: "on_chain_end", langgraph_node: "end" },
       ];
-      await sql`insert into chat_messages (chat_id,role,content,model_messages) values (${chat},'assistant',${answer},${sql.json([{ type: "ai", data: { content: answer, additional_kwargs: { signature: "fixture-private-signature" } } }])})`;
+      if (!persisted) {
+        persisted = true;
+        await sql`insert into chat_messages (chat_id,role,content,model_messages) values (${chat},'assistant',${answer},${sql.json([{ type: "ai", data: { content: answer, additional_kwargs: { signature: "fixture-private-signature" } } }])})`;
+      }
       await route.fulfill({
         status: 200,
         contentType: "text/event-stream",
@@ -60,13 +64,19 @@ test("영속 채팅의 한글 스트림과 다시 열기", async ({ page }) => {
       .filter({ visible: true })
       .click();
     await expect(
-      page.locator("article").getByText(answer, { exact: true }),
+      page
+        .locator("article")
+        .getByText(answer, { exact: true })
+        .filter({ visible: true }),
     ).toBeVisible();
     await page.reload();
     const html = await (await page.request.get(`/chat/${chat}`)).text();
     expect(html).not.toContain("fixture-private-signature");
     await expect(
-      page.locator("article").getByText(answer, { exact: true }),
+      page
+        .locator("article")
+        .getByText(answer, { exact: true })
+        .filter({ visible: true }),
     ).toBeVisible();
   } finally {
     await sql`delete from chats where id=${chat}`;

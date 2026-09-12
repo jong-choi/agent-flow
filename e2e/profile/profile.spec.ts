@@ -20,19 +20,25 @@ test.describe("Profile: /profile", () => {
 
     await expect(avatarHashInput).not.toHaveValue(beforeHash);
 
-    const nameInput = page.getByPlaceholder("닉네임을 입력하세요");
+    const nameInput = page
+      .getByPlaceholder("닉네임을 입력하세요")
+      .filter({ visible: true });
     await expect(nameInput).toBeVisible();
 
     const newName = `playwright-${Date.now()}`;
     await nameInput.fill(newName);
 
-    await expect(page.getByText("사용 가능한 닉네임입니다.").first()).toBeVisible();
+    await expect(
+      page.getByText("사용 가능한 닉네임입니다.").first(),
+    ).toBeVisible();
 
     const saveButton = page.getByRole("button", { name: "변경 저장" });
     await expect(saveButton).toBeEnabled();
     await saveButton.click();
 
-    await expect(page.getByText("닉네임이 변경되었습니다.").first()).toBeVisible();
+    await expect(
+      page.getByText("닉네임이 변경되었습니다.").first(),
+    ).toBeVisible();
 
     // 하드 리프레시 없이 사이드바 이동으로 변경 반영 확인
     await page.getByRole("link", { name: "문서" }).first().click();

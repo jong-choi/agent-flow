@@ -57,7 +57,10 @@ test.describe("Credits", () => {
     });
 
     await expect(
-      checkButton.or(page.getByText("출석 완료!", { exact: true })),
+      checkButton
+        .or(page.getByText("출석 완료!", { exact: true }))
+        .filter({ visible: true })
+        .first(),
     ).toBeVisible();
     if (await checkButton.count()) {
       await expect(checkButton).toBeEnabled();

@@ -11,15 +11,16 @@ vi.mock("../maintenance/state-store", () => ({
 }));
 it("does not record provider success when cancellation wins before completion", async () => {
   const controller = new AbortController();
+  const reason = new DOMException("fixture cancellation", "AbortError");
   await expect(
     observeModelCall(
       async () => {
-        controller.abort();
+        controller.abort(reason);
         return new AIMessage("partial");
       },
       { model: testModel(), signal: controller.signal },
     ),
-  ).rejects.toBe(controller.signal.reason);
+  ).rejects.toBe(reason);
   expect(record).toHaveBeenCalledTimes(1);
   expect(record).toHaveBeenCalledWith(
     expect.anything(),

@@ -52,3 +52,13 @@ Groq 후보: qwen/qwen3.6-27b, qwen/qwen3.8-27b. ALLaM은 공식 무료 구간 �
 [배포·복구 명령](../operations/model-release.md) · [모델 유지 관리](../operations/model-maintenance.md)
 
 공식 구현 근거: [Docker build secrets](https://docs.docker.com/build/building/secrets/), [builder 자원 제한](https://docs.docker.com/build/builders/drivers/docker-container/), [Next connection](https://nextjs.org/docs/app/api-reference/functions/connection).
+
+## 최신 실제 모델 검증
+
+현재 adapter로 Google 4종/Ollama 3종의 invoke·저장/복원한 이력·공통 SSE를 재검증했고 모두 통과했다. Groq GPT OSS20B/120B는 invoke·stream·후속 대화 및 finish_reason=stop 보존을 확인했다. Qwen3.6/3.8 후보도 이력/SSE까지 통과했다. 실제 호출은 모두 순차였으며 로컬 Node heap을 256MiB로 제한했다.
+
+- Google/Ollama: `.local/ai-captures/onboarding-1789243101139`
+- Groq GPT OSS: `.local/ai-captures/groq-release-1789243280397`
+- Qwen 후보: `.local/ai-captures/candidates-1789243339336`
+
+실제 네트워크 adapter 계약 검증과 DB/과금의 mock-provider 서버 검증을 분리했다. 원본 응답·키·쿠키는 Git에 넣지 않았다.

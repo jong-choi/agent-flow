@@ -8,9 +8,9 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -38,8 +38,12 @@ export function DocumentsSearch() {
   const [isLoading, setIsLoading] = useState(false);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const previousQuery = useRef(appliedQuery);
   useEffect(() => {
-    setSearchText(appliedQuery);
+    if (previousQuery.current !== appliedQuery) {
+      previousQuery.current = appliedQuery;
+      setSearchText(appliedQuery);
+    }
   }, [appliedQuery]);
 
   useEffect(() => {
@@ -90,7 +94,12 @@ export function DocumentsSearch() {
 
   const handleSearchSubmit = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
-    const trimmed = searchText.trim();
+    const submitted = event
+      ? new FormData(event.currentTarget).get("q")
+      : searchText;
+    const trimmed = (
+      typeof submitted === "string" ? submitted : searchText
+    ).trim();
     const params = new URLSearchParams(searchParams.toString());
 
     if (trimmed) {
@@ -132,6 +141,7 @@ export function DocumentsSearch() {
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            name="q"
             value={searchText}
             onChange={(event) => {
               const value = event.target.value;
