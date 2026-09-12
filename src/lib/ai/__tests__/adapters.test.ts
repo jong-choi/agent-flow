@@ -10,7 +10,49 @@ beforeEach(() => {
   fetchMock.mockReset();
   vi.stubEnv("GOOGLE_AI_API_KEY", "fixture-google");
   vi.stubEnv("OLLAMA_API_KEY", "fixture-ollama");
+  vi.stubEnv("GROQ_API_KEY", "fixture-groq");
 });
+it.each(["qwen/qwen3.6-27b", "qwen/qwen3.8-27b"])(
+  "separates %s reasoning from answers and maps minimal to none",
+  async (upstreamModelId) => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: "fixture",
+          object: "chat.completion",
+          created: 1,
+          model: upstreamModelId,
+          choices: [
+            {
+              index: 0,
+              message: {
+                role: "assistant",
+                content: "answer",
+                reasoning: "private trace",
+              },
+              finish_reason: "stop",
+            },
+          ],
+          usage: { prompt_tokens: 2, completion_tokens: 3, total_tokens: 5 },
+        }),
+        { headers: { "content-type": "application/json" } },
+      ),
+    );
+    const result = await createProviderModel(
+      testModel({
+        provider: "groq",
+        upstreamModelId,
+        metadata: { thinkingLevel: "minimal" },
+      }),
+    )!.invoke("hello");
+    expect(result.content).toBe("answer");
+    const req = fetchMock.mock.calls[0][0] as Request;
+    expect(await req.json()).toMatchObject({
+      reasoning_format: "parsed",
+      reasoning_effort: "none",
+    });
+  },
+);
 afterEach(() => vi.unstubAllEnvs());
 it("sends Google thinking config and auth through the shared transport", async () => {
   fetchMock.mockResolvedValue(

@@ -37,14 +37,37 @@ const builders = {
       },
     });
   },
-  groq: (model: AiModel) =>
-    new ChatGroq({
+  groq: (model: AiModel) => {
+    const level = resolveThinkingLevel(model);
+    const qwen = ["qwen/qwen3.6-27b", "qwen/qwen3.8-27b"].includes(
+      model.upstreamModelId,
+    );
+    return new ChatGroq({
       model: model.upstreamModelId,
       apiKey: requireKey("GROQ_API_KEY"),
       maxTokens: getModelLimits(model).output,
       maxRetries: 0,
-      fetch: aiFetch,
-    }),
+      // Qwen defaults to raw <think> content. Keep reasoning out of answer SSE/history.
+      fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (!qwen) return aiFetch(input, init);
+        // ChatGroq 1.0.4 fails to initialize reasoningFormat and has no reasoningEffort.
+        const request = new Request(input, init);
+        const body = await request.json();
+        request.headers.delete("content-length");
+        return aiFetch(
+          new Request(request, {
+            body: JSON.stringify({
+              ...body,
+              reasoning_format: "parsed",
+              ...(level === "default"
+                ? {}
+                : { reasoning_effort: level === "minimal" ? "none" : level }),
+            }),
+          }),
+        );
+      },
+    });
+  },
   ollama: (model: AiModel) => {
     const level = resolveThinkingLevel(model);
     return new ChatOllama({

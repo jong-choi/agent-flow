@@ -43,6 +43,7 @@ import {
   pruneEdgesForHandleCount,
 } from "@/features/canvas/utils/canvas-node-panel";
 import { ModelSelect } from "@/features/models/components/model-select";
+import { useReplaceModels } from "@/features/models/use-replace-models";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { sanitizeString } from "@/lib/utils";
 
@@ -403,6 +404,7 @@ function ContentContentFormField({
   isDocumentNode: boolean;
   isKoreanLocale: boolean;
 }) {
+  const replaceModels = useReplaceModels();
   return (
     <FormField
       control={control}
@@ -418,6 +420,9 @@ function ContentContentFormField({
                   value={field.value}
                   options={content.options}
                   onChange={field.onChange}
+                  onReplaceAll={(target) =>
+                    replaceModels(field.value, target, content.options ?? [])
+                  }
                   placeholder={content.placeholder}
                 />
               );

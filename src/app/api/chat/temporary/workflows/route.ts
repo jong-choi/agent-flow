@@ -89,6 +89,7 @@ export async function POST(request: Request) {
     const graph: ThreadContext["graph"] = { nodes, edges };
 
     const state: ThreadContext["state"] = {
+      modelsByNode: {},
       messages: [],
       initialInput: "",
       startNodeId: null,

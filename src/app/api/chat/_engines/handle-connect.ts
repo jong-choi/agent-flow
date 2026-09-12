@@ -5,7 +5,6 @@ import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import { type FlowEdge, type FlowNode } from "@/app/api/chat/_types/nodes";
 
 const THREAD_IDLE_TIMEOUT_MS = 1000 * 60 * 5; // 5분
-export const checkpointer = new MemorySaver();
 export const persistentCheckpointer = PostgresSaver.fromConnString(
   process.env.DATABASE_URL!,
 );
@@ -63,7 +62,20 @@ class ThreadContextManager {
   }
 }
 
-export const threadContextManager = new ThreadContextManager();
+// Next route bundles / development reloads must share the same temporary session
+// store and checkpoints within this server process.
+const runtime = globalThis as typeof globalThis & {
+  agentflowTemporaryChat?: {
+    manager: ThreadContextManager;
+    checkpointer: MemorySaver;
+  };
+};
+const temporary = (runtime.agentflowTemporaryChat ??= {
+  manager: new ThreadContextManager(),
+  checkpointer: new MemorySaver(),
+});
+export const threadContextManager = temporary.manager;
+export const checkpointer = temporary.checkpointer;
 
 export const resetIdleTimer = (threadId: string) => {
   try {

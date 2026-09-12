@@ -1,6 +1,19 @@
 services:
   postgres:
     image: postgres:16-alpine
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 1.0
+    command:
+      - postgres
+      - -c
+      - shared_buffers=32MB
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - max_connections=60
     ports:
       - "127.0.0.1:55432:5432"
     environment:

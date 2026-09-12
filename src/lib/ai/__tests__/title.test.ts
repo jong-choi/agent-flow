@@ -7,7 +7,7 @@ vi.mock("@/features/chats/server/queries", () => ({
   getChatById: vi.fn().mockResolvedValue({ id: "test" }),
 }));
 vi.mock("@/app/api/chat/_nodes/chat-node/models", () => ({
-  getTitleModel: () => ({ invoke }),
+  getTitleModel: () => ({ model: {}, llm: { invoke } }),
 }));
 vi.mock("@/lib/ai/execution", () => ({
   runAiCall: (fn: (signal: AbortSignal) => Promise<unknown>) =>

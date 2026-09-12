@@ -4,8 +4,9 @@ export function isSelectableModel(model: AiModel) {
   return (
     model.isActive &&
     ["active", "deprecated"].includes(model.lifecycle) &&
-    model.health === "healthy" &&
+    ["healthy", "probing"].includes(model.health) &&
     model.entitlement !== "blocked" &&
+    (!model.requireFreeAccess || model.entitlement === "free_confirmed") &&
     model.price !== null &&
     model.price >= 0
   );
@@ -46,6 +47,8 @@ export function toModelOption(model: AiModel) {
     selectable: isSelectableModel(model),
     lifecycle: model.lifecycle,
     health: model.health,
+    replacementModelId: model.replacementModelId,
+    retirementReason: model.retirementReason,
     inputLimit: limits.input,
     outputLimit: limits.output,
     contextWindow: model.contextWindow,
@@ -73,4 +76,7 @@ export const initialCreditPolicy: Record<string, number> = {
   "google/gemma-4-26b-a4b-it": 2,
   "google/gemma-4-31b-it": 3,
   "google/gemini-3.5-flash-lite": 5,
+  "google/gemini-3.1-flash-lite": 4,
+  "groq/qwen/qwen3.6-27b": 15,
+  "groq/qwen/qwen3.8-27b": 20,
 };

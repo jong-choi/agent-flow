@@ -22,7 +22,10 @@
     "test:models:registry": "tsx scripts/verify-model-registry.ts",
     "models:onboard": "tsx scripts/onboard-models.ts",
     "test:ai:history": "tsx scripts/verify-provider-history.ts",
-    "test:ai:features": "tsx scripts/verify-provider-features.ts"
+    "test:ai:features": "tsx scripts/verify-provider-features.ts",
+    "models:maintenance": "tsx scripts/model-maintenance.ts",
+    "test:models:maintenance": "tsx scripts/verify-model-maintenance.ts",
+    "test:ai:candidates": "tsx scripts/verify-candidate-models.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",

@@ -7,6 +7,7 @@ import {
   type FlowNode,
   isValidNodeType,
 } from "@/app/api/chat/_types/nodes";
+import { preflightModels } from "@/lib/ai/maintenance/preflight";
 
 // addEdge가 단일/다중 소스 모두 받도록 타입만 확장한 Graph 래퍼
 type DynamicStateGraph = Omit<
@@ -108,7 +109,14 @@ export const buildStateGraph = ({
 
   // START -> startNode 연결
   if (startNode) {
-    graph.addEdge(START, startNode.id);
+    const gateId = "__agentflow_model_preflight__";
+    if (nodeIds.has(gateId))
+      throw createApiError("invalidRequest", { message: "Reserved node ID" });
+    graph.addNode(gateId, async () => ({
+      modelsByNode: await preflightModels(nodes),
+    }));
+    graph.addEdge(START, gateId);
+    graph.addEdge(gateId, startNode.id);
   } else {
     throw createApiError("graphNotFound", {
       message: "Start node is missing.",

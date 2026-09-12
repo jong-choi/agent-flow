@@ -50,7 +50,9 @@ test("model cards preserve legacy references and reflect operator price/status u
       .getByTestId("model-selector")
       .filter({ visible: true })
       .first();
-    await selector.getByRole("combobox").click();
+    await selector
+      .getByRole("combobox", { name: "모델 선택", exact: true })
+      .click();
     await expect(
       page.getByRole("option", { name: /Updated Registry Model/ }),
     ).toHaveAttribute("data-disabled", "");

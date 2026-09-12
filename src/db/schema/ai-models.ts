@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   check,
   integer,
@@ -21,6 +22,15 @@ export const aiModels = pgTable(
     provider: text("provider").notNull(),
     name: text("name").notNull(),
     description: text("description"),
+    replacementModelId: uuid("replacement_model_id").references(
+      (): AnyPgColumn => aiModels.id,
+      { onDelete: "set null" },
+    ),
+    retirementAt: timestamp("retirement_at"),
+    retirementReason: text("retirement_reason"),
+    retirementSourceUrl: text("retirement_source_url"),
+    promotionBlocked: boolean("promotion_blocked").notNull().default(false),
+    requireFreeAccess: boolean("require_free_access").notNull().default(false),
     order: integer("order").notNull().default(0),
     price: integer("price"),
     isActive: boolean("is_active").notNull().default(false),
@@ -47,6 +57,9 @@ export const aiModels = pgTable(
         outputTokenLimit?: number;
         version?: string;
         capabilities?: string[];
+        supportedGenerationMethods?: string[];
+        freeTierSourceUrl?: string;
+        compatibilityCheckedAt?: string;
         sourceUrl?: string;
       }>()
       .notNull()

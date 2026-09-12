@@ -49,6 +49,11 @@ async function main() {
       [...before],
     );
     await sql.begin((tx) => tx.unsafe(up));
+    const maintenance = await readFile(
+      "migrations/model-maintenance/001-up.sql",
+      "utf8",
+    );
+    await sql.begin((tx) => tx.unsafe(maintenance));
     process.env.DATABASE_URL = url.toString();
     const registry = await import("../src/lib/ai/registry-store");
     const { seedAiModels } = await import("../src/db/seed/ai-models");

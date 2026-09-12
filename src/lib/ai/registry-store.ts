@@ -41,10 +41,11 @@ export async function upsertCatalogModel(
   initialSettings: Pick<
     Partial<ModelSettings>,
     "metadata" | "appMaxOutputTokens"
-  > = {},
+  > & { requireFreeAccess?: boolean } = {},
+  writer: Pick<typeof db, "insert"> = db,
 ) {
   const id = randomUUID();
-  const [model] = await db
+  const [model] = await writer
     .insert(aiModels)
     .values({
       id,
@@ -103,6 +104,9 @@ export async function updateModelSettings(
     .update(aiModels)
     .set({
       ...settings,
+      ...(settings.isActive !== undefined
+        ? { promotionBlocked: !settings.isActive }
+        : {}),
       ...(settings.metadata
         ? {
             metadata: sql`coalesce(${aiModels.metadata}, '{}'::jsonb) || ${JSON.stringify(settings.metadata)}::jsonb`,

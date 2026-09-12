@@ -1,5 +1,7 @@
 "use client";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -18,13 +20,16 @@ export function ModelSelect({
   options = [],
   onChange,
   placeholder,
+  onReplaceAll,
 }: {
   value?: string | null;
   options?: ModelOption[];
   onChange: (value: string) => void;
   placeholder?: string;
+  onReplaceAll?: (target: string) => void;
 }) {
   const t = useTranslations<AppMessageKeys>("Workflows");
+  const [replacement, setReplacement] = useState("");
   const selected = options.find(
     (option) =>
       option.id === value ||
@@ -46,10 +51,19 @@ export function ModelSelect({
           : selected.lifecycle === "deprecated"
             ? t("modelRegistry.deprecated")
             : t("modelRegistry.active");
+  const target = options.find(
+    (o) =>
+      o.value === (replacement || selected?.replacementModelId) &&
+      o.selectable &&
+      o.value !== selectedValue,
+  );
   return (
     <div className="min-w-0 space-y-2" data-testid="model-selector">
       <Select value={selectedValue} onValueChange={onChange}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger
+          className="w-full"
+          aria-label={t("modelRegistry.choose")}
+        >
           <SelectValue placeholder={placeholder ?? t("modelRegistry.choose")}>
             {selected
               ? `${selected.label ?? selected.upstreamModelId} · ${selected.provider}`
@@ -82,6 +96,55 @@ export function ModelSelect({
           data-testid="model-card"
         >
           <div className="font-medium">{status}</div>
+          {selected?.retirementReason ? (
+            <p>{selected.retirementReason}</p>
+          ) : null}
+          {selected?.nextProbeAt ? (
+            <p>
+              {t("modelRegistry.retryAt", {
+                time:
+                  new Date(selected.nextProbeAt)
+                    .toISOString()
+                    .replace("T", " ")
+                    .slice(0, 16) + " UTC",
+              })}
+            </p>
+          ) : null}
+          {selected?.availabilityReason === "free_access_unverified" ? (
+            <p>{t("modelRegistry.freeVerificationRequired")}</p>
+          ) : null}
+          {!selected?.selectable && onReplaceAll ? (
+            <div className="space-y-2" data-testid="model-replacement">
+              <Select value={target?.value} onValueChange={setReplacement}>
+                <SelectTrigger
+                  aria-label={t("modelRegistry.chooseReplacement")}
+                >
+                  <SelectValue
+                    placeholder={t("modelRegistry.chooseReplacement")}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {options
+                    .filter((o) => o.selectable && o.value !== selectedValue)
+                    .map((o) => (
+                      <SelectItem key={o.id} value={o.value}>
+                        {o.label ?? o.value} · {o.provider} · {o.price}{" "}
+                        {t("modelRegistry.creditUnit")}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                size="sm"
+                disabled={!target}
+                onClick={() => target && onReplaceAll(target.value)}
+              >
+                {t("modelRegistry.replaceAll")}
+              </Button>
+            </div>
+          ) : null}
+
           {selected?.thinkingLevel ? (
             <div>
               {t("modelRegistry.thinking", {

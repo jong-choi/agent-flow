@@ -17,7 +17,11 @@ async function main() {
     throw new Error(
       "Writes are limited to the local development DB in this phase",
     );
-  if (command === "migrate" || command === "history-migrate") {
+  if (
+    command === "migrate" ||
+    command === "history-migrate" ||
+    command === "maintenance-migrate"
+  ) {
     if (argument !== "up" && argument !== "down")
       throw new Error("Use migrate up|down");
     const client = postgres(process.env.DATABASE_URL!, {
@@ -29,7 +33,7 @@ async function main() {
         await tx`select pg_advisory_xact_lock(21465, 2)`;
         await tx.unsafe(
           await readFile(
-            `migrations/${command === "history-migrate" ? "provider-history" : "model-registry"}/001-${argument}.sql`,
+            `migrations/${command === "history-migrate" ? "provider-history" : command === "maintenance-migrate" ? "model-maintenance" : "model-registry"}/001-${argument}.sql`,
             "utf8",
           ),
         );

@@ -1,5 +1,11 @@
 const message = {
   modelRegistry: {
+    retryAt: "다음 확인: {time}",
+    freeVerificationRequired: "무료 접근 확인 필요",
+    chooseReplacement: "대체 모델 선택",
+    creditUnit: "크레딧",
+    replaceAll: "이 워크플로우에서 모두 변경",
+
     thinking: "추론: {level}",
     thinkingLevels: {
       default: "기본",

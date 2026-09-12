@@ -83,6 +83,10 @@ const sidebarNodeContentsSelectSchema =
           thinkingLevel: z
             .enum(["default", "minimal", "low", "medium", "high"])
             .optional(),
+          replacementModelId: z.string().nullable().optional(),
+          retirementReason: z.string().nullable().optional(),
+          availabilityReason: z.string().nullable().optional(),
+          nextProbeAt: z.string().nullable().optional(),
           selectable: z.boolean().optional(),
           lifecycle: z.string().optional(),
           health: z.string().optional(),

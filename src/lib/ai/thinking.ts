@@ -10,7 +10,14 @@ export function supportedThinkingLevels(
     ["gemma-4-26b-a4b-it", "gemma-4-31b-it"].includes(model)
   )
     return ["default", "minimal", "high"];
-  if (provider === "google" && model === "gemini-3.5-flash-lite")
+  if (
+    provider === "google" &&
+    ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"].includes(model)
+  )
+    return ["default", "minimal", "low", "medium", "high"];
+  if (provider === "groq" && model === "qwen/qwen3.6-27b")
+    return ["default", "minimal"];
+  if (provider === "groq" && model === "qwen/qwen3.8-27b")
     return ["default", "minimal", "low", "medium", "high"];
   if (provider === "ollama" && model.startsWith("gpt-oss:"))
     return ["default", "low", "medium", "high"];

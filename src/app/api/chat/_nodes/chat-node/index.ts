@@ -48,7 +48,8 @@ export const chatNode = async (
     });
   }
 
-  const aiModel = await resolveAiModel(modelId);
+  const aiModel =
+    state.modelsByNode?.[nodeId] ?? (await resolveAiModel(modelId));
   if (!aiModel) {
     throw createApiError("invalidModel", {
       message: `Unknown model: ${modelId}`,
@@ -129,7 +130,7 @@ export const chatNode = async (
     try {
       response = await runAiCall(
         (signal) => chatModel.invoke(preparedMessages, { signal }),
-        { signal: config.signal },
+        { signal: config.signal, observe: { model: aiModel } },
       );
       assertCompleteAnswer(response);
     } catch (error) {

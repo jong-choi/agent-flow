@@ -9,6 +9,13 @@ export const initialProviderModels: {
 }[] = [
   {
     provider: "google",
+    upstreamModelId: "gemini-3.1-flash-lite",
+    name: "Gemini 3.1 Flash-Lite",
+    thinkingLevel: "minimal",
+    titlePriority: 20,
+  },
+  {
+    provider: "google",
     upstreamModelId: "gemini-3.5-flash-lite",
     name: "Gemini 3.5 Flash-Lite",
     thinkingLevel: "minimal",

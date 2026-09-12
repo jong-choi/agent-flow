@@ -35,7 +35,7 @@ export async function POST(
 
     await getChatById(chatId);
 
-    const model = await getTitleModel();
+    const { model: selectedModel, llm: model } = await getTitleModel();
     const prompt = [
       "Create one short, concise title from the user's message.",
       "Respect the user's language; generate the title in the same language as the message.",
@@ -46,7 +46,7 @@ export async function POST(
 
     const response = await runAiCall(
       (signal) => model.invoke([new HumanMessage(prompt)], { signal }),
-      { signal: request.signal },
+      { signal: request.signal, observe: { model: selectedModel } },
     ).catch((error: unknown) => {
       throw mapProviderErrorToApi(error);
     });

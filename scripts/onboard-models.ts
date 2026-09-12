@@ -217,7 +217,11 @@ async function main() {
           message: first,
           normalized: getModelResponse(first),
         });
-        if (activate && model.lifecycle === "candidate")
+        if (
+          activate &&
+          model.lifecycle === "candidate" &&
+          !model.promotionBlocked
+        )
           await db
             .update(aiModels)
             .set({ lifecycle: "active", isActive: true, updatedAt: new Date() })
@@ -226,7 +230,10 @@ async function main() {
           id: model.id,
           ...profile,
           status: "passed",
-          activated: activate && model.lifecycle === "candidate",
+          activated:
+            activate &&
+            model.lifecycle === "candidate" &&
+            !model.promotionBlocked,
           historyMessages: history,
         });
         console.log(

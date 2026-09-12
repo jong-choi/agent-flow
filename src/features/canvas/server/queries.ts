@@ -14,6 +14,7 @@ import {
 } from "@/db/schema";
 import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 import { canvasTags } from "@/features/canvas/server/cache/tags";
+import { availabilityMap } from "@/lib/ai/maintenance/state-store";
 import { toModelOption } from "@/lib/ai/registry";
 import { listModelRegistry } from "@/lib/ai/registry-store";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
@@ -160,8 +161,18 @@ const getLocalizedSidebarNodesCached = cache(async (locale: Locale) => {
 export const getSidebarNodes = async (locale: Locale = routing.defaultLocale) =>
   getLocalizedSidebarNodesCached(locale);
 
-const getAiModelOptions = async () =>
-  (await listModelRegistry()).map(toModelOption);
+const getAiModelOptions = async () => {
+  const models = await listModelRegistry();
+  const states = await availabilityMap(models);
+  return models.map((model) => ({
+    ...toModelOption(model),
+    selectable: states.get(model.id)?.available ?? false,
+    availabilityReason: states.get(model.id)?.reason,
+    nextProbeAt: states.get(model.id)?.nextProbeAt
+      ? new Date(states.get(model.id)!.nextProbeAt!).toISOString()
+      : null,
+  }));
+};
 
 const hydrateSidebarNodeOptions = async (
   nodes: SidebarNodeData[],

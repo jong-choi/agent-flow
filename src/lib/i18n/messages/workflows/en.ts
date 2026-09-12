@@ -1,5 +1,11 @@
 const message = {
   modelRegistry: {
+    retryAt: "Next check: {time}",
+    freeVerificationRequired: "Free access needs verification",
+    chooseReplacement: "Choose replacement",
+    creditUnit: "credits",
+    replaceAll: "Replace all in this workflow",
+
     thinking: "Thinking: {level}",
     thinkingLevels: {
       default: "Default",

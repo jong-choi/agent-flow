@@ -1,6 +1,9 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { setTimeout as delay } from "node:timers/promises";
 import postgres from "postgres";
+import type { AiModel } from "@/db/schema/ai-models";
+import { normalizeProviderError } from "./error";
+import { assertCompleteAnswer } from "./message";
 
 interface CallContext {
   signal: AbortSignal;
@@ -57,7 +60,15 @@ export const aiFetch: typeof fetch = async (input, init) => {
 /** Session-level PostgreSQL advisory lock shared by web, CLI, and future maintenance workers. */
 export async function runAiCall<T>(
   operation: (signal: AbortSignal) => Promise<T>,
-  options: { signal?: AbortSignal; timeoutMs?: number } = {},
+  options: {
+    signal?: AbortSignal;
+    timeoutMs?: number;
+    observe?: {
+      model: AiModel;
+      source?: "runtime" | "probe";
+      expectAnswer?: boolean;
+    };
+  } = {},
 ): Promise<T> {
   if (context.getStore())
     throw new Error(
@@ -85,6 +96,7 @@ export async function runAiCall<T>(
   });
   const scope: CallContext = { signal, transports: [] };
   let heartbeat: ReturnType<typeof setInterval> | undefined;
+  let callStarted = false;
   try {
     while (!locked) {
       signal.throwIfAborted();
@@ -100,8 +112,47 @@ export async function runAiCall<T>(
         stop.abort(new Error("AI execution lock connection lost")),
       );
     }, 5000);
-    return await context.run(scope, () => operation(signal));
+    return await context.run(scope, async () => {
+      if (options.observe) {
+        const { assertModelAdmission } = await import(
+          "./maintenance/state-store"
+        );
+        await assertModelAdmission(
+          options.observe.model.id,
+          options.observe.source === "probe",
+        );
+      }
+      callStarted = true;
+      const result = await operation(signal);
+      if (options.observe) {
+        if (options.observe.expectAnswer !== false)
+          assertCompleteAnswer(result as { content: unknown });
+        const { recordObservation } = await import("./maintenance/state-store");
+        await recordObservation(options.observe.model, {
+          ok: true,
+          source: options.observe.source ?? "runtime",
+          at: Date.now(),
+        });
+      }
+      return result;
+    });
   } catch (error) {
+    if (options.observe && callStarted) {
+      try {
+        const { recordObservation } = await import("./maintenance/state-store");
+        await recordObservation(options.observe.model, {
+          ok: false,
+          source: options.observe.source ?? "runtime",
+          at: Date.now(),
+          error: normalizeProviderError(signal.aborted ? signal.reason : error),
+        });
+      } catch {
+        console.warn(
+          "Could not persist model health observation",
+          options.observe.model.id,
+        );
+      }
+    }
     if (signal.aborted) throw signal.reason;
     throw error;
   } finally {

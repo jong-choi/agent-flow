@@ -3,6 +3,7 @@ import {
   createProviderModel,
   supportedThinkingLevels,
 } from "@/lib/ai/adapters";
+import { availabilityMap } from "@/lib/ai/maintenance/state-store";
 import { isSelectableModel } from "@/lib/ai/registry";
 import {
   getModelByReference,
@@ -18,7 +19,11 @@ export async function resolveAiModel(
 }
 export const createChatModel = createProviderModel;
 export async function getTitleModel() {
-  const model = selectTitleModel(await listModelRegistry());
+  const models = await listModelRegistry();
+  const availability = await availabilityMap(models);
+  const model = selectTitleModel(
+    models.filter((m) => availability.get(m.id)?.available),
+  );
   if (!model) throw new Error("No available title model configured");
   const levels = supportedThinkingLevels(model.provider, model.upstreamModelId);
   const result = createProviderModel({
@@ -34,5 +39,5 @@ export async function getTitleModel() {
     },
   });
   if (!result) throw new Error("Title model provider is unsupported");
-  return result;
+  return { model, llm: result };
 }

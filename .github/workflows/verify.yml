@@ -38,3 +38,4 @@ jobs:
       - run: npm run test:ai:queue
       - run: npm run test:models:registry
       - run: npm run test:ai:history
+      - run: npm run test:models:maintenance

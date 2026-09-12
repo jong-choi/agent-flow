@@ -26,6 +26,7 @@ import { DocumentReferenceDialog } from "@/features/canvas/components/flow/docum
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
 import { ModelSelect } from "@/features/models/components/model-select";
+import { useReplaceModels } from "@/features/models/use-replace-models";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function FlowNodeContent({
@@ -37,6 +38,7 @@ export function FlowNodeContent({
   id: string;
   nodeType?: string;
 }) {
+  const replaceModels = useReplaceModels();
   const locale = useLocale();
   const t = useTranslations<AppMessageKeys>("Workflows");
   const { updateNodeData } = useCanvasReactFlow();
@@ -64,6 +66,9 @@ export function FlowNodeContent({
         value={content.value}
         options={content.options}
         onChange={handleValueChange}
+        onReplaceAll={(target) =>
+          replaceModels(content.value ?? "", target, content.options ?? [])
+        }
         placeholder={content.placeholder}
       />
     );

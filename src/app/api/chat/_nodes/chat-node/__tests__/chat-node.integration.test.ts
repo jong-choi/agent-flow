@@ -21,6 +21,10 @@ import {
   startModelExecution,
 } from "@/lib/ai/registry-store";
 
+vi.mock("@/lib/ai/maintenance/state-store", () => ({
+  availabilityMap: vi.fn(),
+}));
+
 vi.mock("@/lib/ai/execution", () => ({
   runAiCall: (operation: (signal: AbortSignal) => Promise<unknown>) =>
     operation(new AbortController().signal),
@@ -40,6 +44,12 @@ const baseModel: AiModel = {
   createdAt: new Date(),
   upstreamModelId: "gemma-3-1b-it",
   description: null,
+  replacementModelId: null,
+  retirementAt: null,
+  retirementReason: null,
+  retirementSourceUrl: null,
+  promotionBlocked: false,
+  requireFreeAccess: false,
   lifecycle: "active",
   entitlement: "unknown",
   health: "healthy",
