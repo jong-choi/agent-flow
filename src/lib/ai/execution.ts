@@ -28,29 +28,70 @@ export const aiFetch: typeof fetch = async (input, init) => {
   );
   try {
     const response = await fetch(input, { ...init, signal });
-    if (response.body) {
-      // Drain a clone without buffering. Keep the lease until the HTTP stream has settled.
-      const reader = response.clone().body!.getReader();
-      const cancel = () => {
-        void reader.cancel().catch(() => {});
-      };
-      signal.addEventListener("abort", cancel, { once: true });
-      if (signal.aborted) cancel();
-      void (async () => {
+    if (!response.body) {
+      finish();
+      return response;
+    }
+    // Track the consumed body directly. A tee/clone can leave an unhandled
+    // Undici rejection when an HTTP error is rejected before its body is read.
+    const reader = response.body.getReader();
+    void reader.closed.catch(() => {});
+    let settled = false;
+    let controller: ReadableStreamDefaultController<Uint8Array>;
+    const cleanup = () => {
+      if (settled) return;
+      settled = true;
+      signal.removeEventListener("abort", abort);
+      try {
+        reader.releaseLock();
+      } catch {
+        /* a pending read is cancelled below */
+      }
+      finish();
+    };
+    const abort = () => {
+      if (settled) return;
+      controller.error(signal.reason);
+      void reader
+        .cancel(signal.reason)
+        .catch(() => {})
+        .finally(cleanup);
+    };
+    const body = new ReadableStream<Uint8Array>({
+      start(current) {
+        controller = current;
+        signal.addEventListener("abort", abort, { once: true });
+        if (signal.aborted) abort();
+      },
+      async pull(current) {
         try {
-          while (!(await reader.read()).done) {
-            /* discard diagnostic branch */
-          }
-        } catch {
-          /* the provider consumer receives the transport error */
-        } finally {
-          signal.removeEventListener("abort", cancel);
-          reader.releaseLock();
-          finish();
+          const chunk = await reader.read();
+          if (settled) return;
+          if (chunk.done) {
+            current.close();
+            cleanup();
+          } else current.enqueue(chunk.value);
+        } catch (error) {
+          if (!settled) current.error(error);
+          cleanup();
         }
-      })();
-    } else finish();
-    return response;
+      },
+      async cancel(reason) {
+        try {
+          await reader.cancel(reason);
+        } finally {
+          cleanup();
+        }
+      },
+    });
+    const tracked = new Response(body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    });
+    for (const field of ["url", "redirected", "type"] as const)
+      Object.defineProperty(tracked, field, { value: response[field] });
+    return tracked;
   } catch (error) {
     finish();
     throw error;
@@ -167,7 +208,7 @@ export async function runAiCall<T>(
     throw error;
   } finally {
     if (heartbeat) clearInterval(heartbeat);
-    // Also terminates transports when a caller stops consuming or LangChain rejects early.
+    // Also terminates transports when a caller stops consuming or rejects early.
     stop.abort();
     await Promise.allSettled(scope.transports);
     if (locked) {

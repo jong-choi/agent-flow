@@ -2,8 +2,9 @@
 import "dotenv/config";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { createServer } from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
-import { runAiCall } from "../src/lib/ai/execution";
+import { aiFetch, runAiCall } from "../src/lib/ai/execution";
 
 async function main() {
   const url = new URL(process.env.DATABASE_URL!);
@@ -123,8 +124,57 @@ async function main() {
   assert.ok(!events.some((e) => e.name === "cancel" && e.event === "start"));
   assert.ok(events.some((e) => e.name === "cancel" && e.event === "error"));
   assert.ok(events.some((e) => e.name === "after" && e.event === "end"));
+  // Exercise actual Node fetch streams. A mocked Response cannot reproduce
+  // the Undici tee rejection seen in production on an unread 403 body.
+  const server = createServer((request, response) => {
+    if (request.url === "/ok") {
+      response.end("ok");
+      return;
+    }
+    response.writeHead(request.url === "/error" ? 403 : 200);
+    response.write("partial");
+    const timer = setInterval(() => response.write("chunk"), 25);
+    response.on("close", () => clearInterval(timer));
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  assert.ok(address && typeof address !== "string");
+  const origin = `http://127.0.0.1:${address.port}`;
+  try {
+    await assert.rejects(
+      runAiCall(async (signal) => {
+        const response = await aiFetch(`${origin}/error`, { signal });
+        assert.equal(response.status, 403);
+        throw new Error("Expected HTTP error before reading its body");
+      }),
+      /Expected HTTP error/,
+    );
+    const abort = new AbortController();
+    await assert.rejects(
+      runAiCall(
+        async (signal) => {
+          const response = await aiFetch(`${origin}/stream`, { signal });
+          setTimeout(() => abort.abort(), 50);
+          return response.text();
+        },
+        { signal: abort.signal },
+      ),
+      { name: "AbortError" },
+    );
+    assert.equal(
+      await runAiCall(async (signal) => {
+        const response = await aiFetch(`${origin}/ok`, { signal });
+        assert.equal(response.url, `${origin}/ok`);
+        return response.text();
+      }),
+      "ok",
+    );
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
   console.log(
-    "PASS: cross-process serialization, queued cancellation, failure release, subsequent acquisition",
+    "PASS: cross-process serialization, queued cancellation, failure release, unread HTTP error cleanup, running stream cancellation, subsequent acquisition",
   );
 }
 main().catch((error) => {
