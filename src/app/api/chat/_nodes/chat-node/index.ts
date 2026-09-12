@@ -14,7 +14,8 @@ import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-inpu
 import { spendCreditsByUserId } from "@/features/credits/server/mutations";
 import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
 import { runAiCall } from "@/lib/ai/execution";
-import { getAnswerText } from "@/lib/ai/message";
+import { prepareModelMessages, tagModelMessage } from "@/lib/ai/history";
+import { assertCompleteAnswer, getAnswerText } from "@/lib/ai/message";
 import { getModelLimits } from "@/lib/ai/registry";
 import {
   finishModelExecution,
@@ -95,8 +96,9 @@ export const chatNode = async (
     messages.push(newMessage);
   }
 
+  const preparedMessages = prepareModelMessages(messages, aiModel);
   const o200kBaseTokens = o200kBaseEncoding.encode(
-    messages
+    preparedMessages
       .map((message) => {
         const content = message.content;
         if (typeof content === "string") {
@@ -126,9 +128,10 @@ export const chatNode = async (
     let response;
     try {
       response = await runAiCall(
-        (signal) => chatModel.invoke(messages, { signal }),
+        (signal) => chatModel.invoke(preparedMessages, { signal }),
         { signal: config.signal },
       );
+      assertCompleteAnswer(response);
     } catch (error) {
       throw mapProviderErrorToApi(error);
     }
@@ -152,7 +155,10 @@ export const chatNode = async (
     }
 
     completed = true;
-    return { messages: [response], outputMap: { [nodeId]: output } };
+    return {
+      messages: [tagModelMessage(response, aiModel)],
+      outputMap: { [nodeId]: output },
+    };
   } finally {
     try {
       await finishModelExecution(

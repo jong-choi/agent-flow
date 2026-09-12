@@ -82,6 +82,15 @@ export function ModelSelect({
           data-testid="model-card"
         >
           <div className="font-medium">{status}</div>
+          {selected?.thinkingLevel ? (
+            <div>
+              {t("modelRegistry.thinking", {
+                level: t(
+                  `modelRegistry.thinkingLevels.${selected.thinkingLevel}`,
+                ),
+              })}
+            </div>
+          ) : null}
           {selected?.description ? (
             <p className="text-muted-foreground">{selected.description}</p>
           ) : null}

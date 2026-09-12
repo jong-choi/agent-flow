@@ -54,7 +54,11 @@ export const aiModels = pgTable(
     catalogCheckedAt: timestamp("catalog_checked_at"),
     appMaxInputTokens: integer("app_max_input_tokens").notNull().default(8000),
     appMaxOutputTokens: integer("app_max_output_tokens"),
-    metadata: jsonb("metadata").$type<{ maxOutputTokens?: number }>(),
+    metadata: jsonb("metadata").$type<{
+      maxOutputTokens?: number;
+      thinkingLevel?: "default" | "minimal" | "low" | "medium" | "high";
+      titlePriority?: number;
+    }>(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

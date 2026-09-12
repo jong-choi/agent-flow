@@ -1,5 +1,13 @@
 const message = {
   modelRegistry: {
+    thinking: "추론: {level}",
+    thinkingLevels: {
+      default: "기본",
+      minimal: "최소",
+      low: "낮음",
+      medium: "보통",
+      high: "높음",
+    },
     choose: "모델 선택",
     unknown: "알 수 없는 모델",
     retired: "은퇴한 모델",

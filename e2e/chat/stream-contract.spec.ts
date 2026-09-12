@@ -42,7 +42,7 @@ test("영속 채팅의 한글 스트림과 다시 열기", async ({ page }) => {
         },
         { type: "endNode", event: "on_chain_end", langgraph_node: "end" },
       ];
-      await sql`insert into chat_messages (chat_id,role,content) values (${chat},'assistant',${answer})`;
+      await sql`insert into chat_messages (chat_id,role,content,model_messages) values (${chat},'assistant',${answer},${sql.json([{ type: "ai", data: { content: answer, additional_kwargs: { signature: "fixture-private-signature" } } }])})`;
       await route.fulfill({
         status: 200,
         contentType: "text/event-stream",
@@ -63,6 +63,8 @@ test("영속 채팅의 한글 스트림과 다시 열기", async ({ page }) => {
       page.locator("article").getByText(answer, { exact: true }),
     ).toBeVisible();
     await page.reload();
+    const html = await (await page.request.get(`/chat/${chat}`)).text();
+    expect(html).not.toContain("fixture-private-signature");
     await expect(
       page.locator("article").getByText(answer, { exact: true }),
     ).toBeVisible();

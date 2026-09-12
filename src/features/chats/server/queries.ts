@@ -352,3 +352,18 @@ const getChatsByWorkflowIdCached = cache(
     return chatsWithMessages;
   },
 );
+
+/** Server-only execution history. Do not pass this result to Client Components or public APIs. */
+export async function getChatExecutionMessages(chatId: string) {
+  await getChatById(chatId);
+  return db
+    .select({
+      id: chatMessages.id,
+      role: chatMessages.role,
+      content: chatMessages.content,
+      modelMessages: chatMessages.modelMessages,
+    })
+    .from(chatMessages)
+    .where(eq(chatMessages.chatId, chatId))
+    .orderBy(asc(chatMessages.createdAt));
+}

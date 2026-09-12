@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AIMessage,
   type BaseMessage,
   HumanMessage,
 } from "@langchain/core/messages";
-import { ChatGoogle } from "@langchain/google-gauth";
+import { ChatGoogle } from "@langchain/google";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import { chatNode } from "@/app/api/chat/_nodes/chat-node";
@@ -108,12 +108,13 @@ vi.mock("@/features/credits/server/mutations", () => ({
   spendCreditsByUserId: vi.fn(),
 }));
 
-vi.mock("@langchain/google-gauth", () => ({
+vi.mock("@langchain/google", () => ({
   ChatGoogle: vi.fn(),
 }));
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.stubEnv("GOOGLE_AI_API_KEY", "fixture-key");
   vi.mocked(startModelExecution).mockResolvedValue({
     id: "execution",
   } as Awaited<ReturnType<typeof startModelExecution>>);
@@ -124,6 +125,8 @@ beforeEach(() => {
     balance: 9999,
   });
 });
+
+afterEach(() => vi.unstubAllEnvs());
 
 describe("chat-node models (unit)", () => {
   it("resolveAiModel은 modelId에 맞는 모델을 반환한다", async () => {
@@ -405,6 +408,10 @@ describe("chatNode (integration)", () => {
 
     const result = await chatNode(state, config);
 
-    expect(result.messages).toEqual([response]);
+    expect(result.messages?.[0].content).toEqual(response.content);
+    expect(result.messages?.[0].additional_kwargs.agentflowModel).toEqual({
+      provider: baseModel.provider,
+      upstreamModelId: baseModel.upstreamModelId,
+    });
   });
 });

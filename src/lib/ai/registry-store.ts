@@ -7,6 +7,7 @@ import {
   aiModels,
 } from "@/db/schema/ai-models";
 import { getModelLimits, initialCreditPolicy } from "./registry";
+import { resolveThinkingLevel } from "./thinking";
 
 // These reads intentionally stay fresh: operator CLI updates must be reflected on reload/execution.
 export const listModelRegistry = () =>
@@ -35,7 +36,13 @@ export interface CatalogModel {
   contextWindow?: number | null;
   metadata: AiModel["catalogMetadata"];
 }
-export async function upsertCatalogModel(input: CatalogModel) {
+export async function upsertCatalogModel(
+  input: CatalogModel,
+  initialSettings: Pick<
+    Partial<ModelSettings>,
+    "metadata" | "appMaxOutputTokens"
+  > = {},
+) {
   const id = randomUUID();
   const [model] = await db
     .insert(aiModels)
@@ -51,6 +58,7 @@ export async function upsertCatalogModel(input: CatalogModel) {
       price:
         initialCreditPolicy[`${input.provider}/${input.upstreamModelId}`] ??
         (input.provider === "ollama" ? 3 : null),
+      ...initialSettings,
       isActive: false,
       lifecycle: "candidate",
     })
@@ -78,14 +86,30 @@ export type ModelSettings = Pick<
   | "isActive"
   | "appMaxInputTokens"
   | "appMaxOutputTokens"
+  | "metadata"
 >;
 export async function updateModelSettings(
   id: string,
   settings: Partial<ModelSettings>,
 ) {
+  const existing = await getModelByReference(id);
+  if (!existing) throw new Error("Model not found");
+  if (settings.metadata)
+    resolveThinkingLevel({
+      ...existing,
+      metadata: { ...existing.metadata, ...settings.metadata },
+    });
   const [model] = await db
     .update(aiModels)
-    .set({ ...settings, updatedAt: new Date() })
+    .set({
+      ...settings,
+      ...(settings.metadata
+        ? {
+            metadata: sql`coalesce(${aiModels.metadata}, '{}'::jsonb) || ${JSON.stringify(settings.metadata)}::jsonb`,
+          }
+        : {}),
+      updatedAt: new Date(),
+    })
     .where(eq(aiModels.id, id))
     .returning();
   if (!model) throw new Error("Model not found");

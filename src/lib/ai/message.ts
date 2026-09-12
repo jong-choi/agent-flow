@@ -48,3 +48,24 @@ export function getModelResponse(message: ModelMessage) {
       null,
   };
 }
+
+/** Do not charge or persist a reasoning-only or truncated generation as a completed answer. */
+export function assertCompleteAnswer(message: ModelMessage) {
+  const result = getModelResponse(message);
+  const failed = [
+    "length",
+    "MAX_TOKENS",
+    "SAFETY",
+    "RECITATION",
+    "PROHIBITED_CONTENT",
+    "BLOCKLIST",
+    "SPII",
+  ];
+  if (!result.answer.trim() || failed.includes(String(result.finishReason))) {
+    throw Object.assign(new Error("Model did not produce a complete answer"), {
+      status: 422,
+      code: result.finishReason ?? "EMPTY_RESPONSE",
+    });
+  }
+  return result;
+}

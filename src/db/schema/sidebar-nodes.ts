@@ -80,6 +80,9 @@ const sidebarNodeContentsSelectSchema =
           provider: z.string().optional(),
           upstreamModelId: z.string().optional(),
           description: z.string().optional(),
+          thinkingLevel: z
+            .enum(["default", "minimal", "low", "medium", "high"])
+            .optional(),
           selectable: z.boolean().optional(),
           lifecycle: z.string().optional(),
           health: z.string().optional(),

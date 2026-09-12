@@ -1,5 +1,13 @@
 const message = {
   modelRegistry: {
+    thinking: "Thinking: {level}",
+    thinkingLevels: {
+      default: "Default",
+      minimal: "Minimal",
+      low: "Low",
+      medium: "Medium",
+      high: "High",
+    },
     choose: "Choose a model",
     unknown: "Unknown model",
     retired: "Retired model",

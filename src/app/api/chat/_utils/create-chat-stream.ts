@@ -1,4 +1,9 @@
 import {
+  type BaseMessage,
+  type StoredMessage,
+  isBaseMessage,
+} from "@langchain/core/messages";
+import {
   mapProviderErrorToApi,
   mapUnknownToApiTypedError,
 } from "@/app/api/_errors/api-error";
@@ -7,6 +12,7 @@ import {
   langgraphStreamEventSchema,
 } from "@/app/api/chat/_types/chat-events";
 import { mapLanggraphEventToClientEvent } from "@/app/api/chat/_utils/map-stream-event-to-client";
+import { storeModelMessages } from "@/lib/ai/history";
 import { getAnswerText } from "@/lib/ai/message";
 
 export const CHAT_STREAM_HEADERS = {
@@ -20,7 +26,10 @@ export const CHAT_STREAM_HEADERS = {
 export function createChatStream(options: {
   signal: AbortSignal;
   events: (signal: AbortSignal) => AsyncIterable<unknown>;
-  onComplete?: (answer: string) => Promise<void>;
+  onComplete?: (
+    answer: string,
+    modelMessages: StoredMessage[],
+  ) => Promise<void>;
 }) {
   const abort = new AbortController();
   const signal = AbortSignal.any([options.signal, abort.signal]);
@@ -29,6 +38,7 @@ export function createChatStream(options: {
     async start(controller) {
       const encoder = new TextEncoder();
       const answers = new Map<string, string>();
+      const generated = new Map<string, BaseMessage>();
       let completion: ClientStreamEvent | undefined;
       const emit = (event: ClientStreamEvent) => {
         if (!cancelled && !signal.aborted)
@@ -43,6 +53,22 @@ export function createChatStream(options: {
           const parsed = langgraphStreamEventSchema.safeParse(event);
           if (!parsed.success) continue;
           const source = parsed.data;
+          const output = source.data?.output;
+          if (
+            source.metadata.type === "chatNode" &&
+            source.event === "on_chain_end" &&
+            output &&
+            typeof output === "object" &&
+            "messages" in output &&
+            Array.isArray(output.messages)
+          ) {
+            for (const message of output.messages)
+              if (isBaseMessage(message))
+                generated.set(
+                  `${source.metadata.langgraph_node}:${message.id ?? JSON.stringify(message.toDict())}`,
+                  message,
+                );
+          }
           const mapped = mapLanggraphEventToClientEvent(source);
           if (!mapped) continue;
           const nodeId = mapped.langgraph_node;
@@ -68,7 +94,10 @@ export function createChatStream(options: {
           else emit(mapped);
         }
         signal.throwIfAborted();
-        await options.onComplete?.([...answers.values()].join("\n\n"));
+        await options.onComplete?.(
+          [...answers.values()].join("\n\n"),
+          storeModelMessages([...generated.values()]),
+        );
         if (completion) emit(completion);
       } catch (error) {
         if (!signal.aborted) {
@@ -77,6 +106,8 @@ export function createChatStream(options: {
             (error.name === "AbortError" || error.name === "TimeoutError")
               ? mapProviderErrorToApi(error)
               : mapUnknownToApiTypedError(error);
+          if (mapped.provider)
+            console.warn("Model invocation failed", mapped.provider);
           emit({
             type: "endNode",
             event: "on_chain_end",

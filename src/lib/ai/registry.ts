@@ -41,6 +41,7 @@ export function toModelOption(model: AiModel) {
     provider: model.provider,
     upstreamModelId: model.upstreamModelId,
     description: model.description ?? undefined,
+    thinkingLevel: model.metadata?.thinkingLevel ?? "default",
     price: model.price,
     selectable: isSelectableModel(model),
     lifecycle: model.lifecycle,

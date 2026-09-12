@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { normalizeProviderError } from "../error";
-import { getAnswerText, getModelResponse } from "../message";
+import {
+  assertCompleteAnswer,
+  getAnswerText,
+  getModelResponse,
+} from "../message";
 
 describe("AI response contract", () => {
   it("extracts only final text without changing signed message parts", () => {
@@ -89,4 +93,24 @@ describe("AI response contract", () => {
   ])("classifies %j", (error, category) => {
     expect(normalizeProviderError(error).category).toBe(category);
   });
+});
+
+it("rejects truncated or reasoning-only output as unsuccessful", () => {
+  expect(() =>
+    assertCompleteAnswer({
+      content: "partial",
+      response_metadata: { finish_reason: "length" },
+    }),
+  ).toThrow("complete answer");
+  expect(() =>
+    assertCompleteAnswer({
+      content: [{ type: "text", thought: true, text: "thinking" }],
+    }),
+  ).toThrow("complete answer");
+  expect(
+    assertCompleteAnswer({
+      content: "answer",
+      response_metadata: { finishReason: "STOP" },
+    }).answer,
+  ).toBe("answer");
 });

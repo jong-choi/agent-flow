@@ -1,8 +1,5 @@
-import {
-  AIMessage,
-  HumanMessage,
-  SystemMessage,
-} from "@langchain/core/messages";
+import { RemoveMessage } from "@langchain/core/messages";
+import { REMOVE_ALL_MESSAGES } from "@langchain/langgraph";
 import { apiErrorResponse } from "@/app/api/_errors/api-error";
 import {
   buildInputTree,
@@ -18,16 +15,10 @@ import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-gra
 import { insertChatMessage } from "@/features/chats/server/mutations";
 import {
   getChatById,
-  getChatMessagesByChatId,
+  getChatExecutionMessages,
   getWorkflowWithGraphForChat,
 } from "@/features/chats/server/queries";
-
-const toBaseMessage = (role: string, content: string) => {
-  if (role === "user") return new HumanMessage(content);
-  if (role === "assistant") return new AIMessage(content);
-  if (role === "system") return new SystemMessage(content);
-  return null;
-};
+import { restoreChatMessage } from "@/lib/ai/history";
 
 /**
  * 영속 채팅 실행 GET 요청
@@ -70,12 +61,8 @@ export async function GET(
       });
     }
 
-    const messages = await getChatMessagesByChatId(chatId);
-    const messageList = messages
-      .map((message) => toBaseMessage(message.role, message.content))
-      .filter((message): message is NonNullable<typeof message> =>
-        Boolean(message),
-      );
+    const messages = await getChatExecutionMessages(chatId);
+    const messageList = messages.flatMap(restoreChatMessage);
 
     const lastUserMessage = [...messages]
       .reverse()
@@ -83,7 +70,10 @@ export async function GET(
     const initialInput = lastUserMessage?.content ?? "";
 
     const state = {
-      messages: messageList,
+      messages: [
+        new RemoveMessage({ id: REMOVE_ALL_MESSAGES }),
+        ...messageList,
+      ],
       initialInput,
       outputMap: {},
       inputTree: buildInputTree({ nodes, edges }),
@@ -105,9 +95,14 @@ export async function GET(
           },
           { excludeTags: ["langsmith:hidden"] },
         ),
-      onComplete: async (content) => {
+      onComplete: async (content, modelMessages) => {
         if (content.trim())
-          await insertChatMessage({ chatId, role: "assistant", content });
+          await insertChatMessage({
+            chatId,
+            role: "assistant",
+            content,
+            modelMessages,
+          });
       },
     });
 

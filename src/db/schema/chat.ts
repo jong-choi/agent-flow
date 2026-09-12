@@ -1,4 +1,12 @@
-import { pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
+import type { StoredMessage } from "@langchain/core/messages";
 import { users } from "@/db/schema/auth";
 import { workflows } from "@/db/schema/workflows";
 
@@ -36,6 +44,7 @@ export const chatMessages = pgTable("chat_messages", {
     .references(() => chats.id, { onDelete: "cascade" }),
   role: chatMessageRole("role").notNull(),
   content: text("content").notNull(),
+  modelMessages: jsonb("model_messages").$type<StoredMessage[]>(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

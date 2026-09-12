@@ -4,7 +4,7 @@ import {
   apiErrorResponse,
   mapProviderErrorToApi,
 } from "@/app/api/_errors/api-error";
-import { getSmallestModel } from "@/app/api/chat/_nodes/chat-node/models";
+import { getTitleModel } from "@/app/api/chat/_nodes/chat-node/models";
 import { getChatById } from "@/features/chats/server/queries";
 import { runAiCall } from "@/lib/ai/execution";
 import { getAnswerText } from "@/lib/ai/message";
@@ -35,7 +35,7 @@ export async function POST(
 
     await getChatById(chatId);
 
-    const model = getSmallestModel();
+    const model = await getTitleModel();
     const prompt = [
       "Create one short, concise title from the user's message.",
       "Respect the user's language; generate the title in the same language as the message.",

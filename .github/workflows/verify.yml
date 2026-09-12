@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
       - run: npm ci
       - run: npm run typegen
@@ -37,3 +37,4 @@ jobs:
       - run: npm test -- --run
       - run: npm run test:ai:queue
       - run: npm run test:models:registry
+      - run: npm run test:ai:history

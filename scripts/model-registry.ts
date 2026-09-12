@@ -17,7 +17,7 @@ async function main() {
     throw new Error(
       "Writes are limited to the local development DB in this phase",
     );
-  if (command === "migrate") {
+  if (command === "migrate" || command === "history-migrate") {
     if (argument !== "up" && argument !== "down")
       throw new Error("Use migrate up|down");
     const client = postgres(process.env.DATABASE_URL!, {
@@ -29,7 +29,7 @@ async function main() {
         await tx`select pg_advisory_xact_lock(21465, 2)`;
         await tx.unsafe(
           await readFile(
-            `migrations/model-registry/001-${argument}.sql`,
+            `migrations/${command === "history-migrate" ? "provider-history" : "model-registry"}/001-${argument}.sql`,
             "utf8",
           ),
         );
@@ -53,6 +53,17 @@ async function main() {
         price: z.number().int().min(0).nullable().optional(),
         order: z.number().int().optional(),
         isActive: z.boolean().optional(),
+        metadata: z
+          .object({
+            maxOutputTokens: z.number().int().positive().optional(),
+            thinkingLevel: z
+              .enum(["default", "minimal", "low", "medium", "high"])
+              .optional(),
+            titlePriority: z.number().int().nonnegative().optional(),
+          })
+          .strict()
+          .nullable()
+          .optional(),
         appMaxInputTokens: z.number().int().positive().optional(),
         appMaxOutputTokens: z.number().int().positive().nullable().optional(),
       })
