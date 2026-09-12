@@ -11,7 +11,6 @@ import {
   toCursorTimestamp,
 } from "@/db/query/cursor";
 import { chatMessages, chats } from "@/db/schema";
-import { aiModels } from "@/db/schema/ai-models";
 import { getUserId } from "@/features/auth/server/queries";
 import { chatTags } from "@/features/chats/server/cache/tags";
 import {
@@ -21,6 +20,8 @@ import {
   getRecentWorkflows,
   getWorkflowWithGraph,
 } from "@/features/workflows/server/queries";
+import { isSelectableModel } from "@/lib/ai/registry";
+import { listModelRegistry } from "@/lib/ai/registry-store";
 
 const normalizePositiveNumber = (
   value: number | undefined,
@@ -33,22 +34,8 @@ const normalizePositiveNumber = (
   return Math.max(1, parsed);
 };
 
-const getActiveAiModelsBase = async () => {
-  return db
-    .select()
-    .from(aiModels)
-    .where(eq(aiModels.isActive, true))
-    .orderBy(asc(aiModels.order), desc(aiModels.createdAt));
-};
-
-const getActiveAiModelsCached = cache(async () => {
-  "use cache";
-  cacheTag(chatTags.activeAiModels());
-
-  return getActiveAiModelsBase();
-});
-
-export const getActiveAiModels = async () => getActiveAiModelsCached();
+export const getActiveAiModels = async () =>
+  (await listModelRegistry()).filter(isSelectableModel);
 
 export const getRecentWorkflowsForChat = async (
   params: {

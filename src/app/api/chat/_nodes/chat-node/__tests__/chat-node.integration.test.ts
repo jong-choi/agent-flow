@@ -13,9 +13,13 @@ import {
   resolveAiModel,
 } from "@/app/api/chat/_nodes/chat-node/models";
 import { type AiModel } from "@/db/schema";
-import { getActiveAiModels } from "@/features/chats/server/queries";
 import { spendCreditsByUserId } from "@/features/credits/server/mutations";
 import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
+import {
+  finishModelExecution,
+  getModelByReference,
+  startModelExecution,
+} from "@/lib/ai/registry-store";
 
 vi.mock("@/lib/ai/execution", () => ({
   runAiCall: (operation: (signal: AbortSignal) => Promise<unknown>) =>
@@ -34,6 +38,16 @@ const baseModel: AiModel = {
   isActive: true,
   metadata: { maxOutputTokens: 2048 },
   createdAt: new Date(),
+  upstreamModelId: "gemma-3-1b-it",
+  description: null,
+  lifecycle: "active",
+  entitlement: "unknown",
+  health: "healthy",
+  catalogMetadata: {},
+  catalogCheckedAt: null,
+  appMaxInputTokens: 8000,
+  appMaxOutputTokens: null,
+  updatedAt: new Date(),
 };
 
 const buildState = ({
@@ -80,8 +94,10 @@ const buildConfig = ({
   return config;
 };
 
-vi.mock("@/features/chats/server/queries", () => ({
-  getActiveAiModels: vi.fn(),
+vi.mock("@/lib/ai/registry-store", () => ({
+  getModelByReference: vi.fn(),
+  startModelExecution: vi.fn(),
+  finishModelExecution: vi.fn(),
 }));
 
 vi.mock("@/features/credits/server/queries", () => ({
@@ -98,6 +114,10 @@ vi.mock("@langchain/google-gauth", () => ({
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(startModelExecution).mockResolvedValue({
+    id: "execution",
+  } as Awaited<ReturnType<typeof startModelExecution>>);
+  vi.mocked(finishModelExecution).mockResolvedValue(undefined);
   vi.mocked(getCreditBalanceByUserId).mockResolvedValue(9999);
   vi.mocked(spendCreditsByUserId).mockResolvedValue({
     ok: true,
@@ -107,7 +127,7 @@ beforeEach(() => {
 
 describe("chat-node models (unit)", () => {
   it("resolveAiModel은 modelId에 맞는 모델을 반환한다", async () => {
-    vi.mocked(getActiveAiModels).mockResolvedValue([baseModel]);
+    vi.mocked(getModelByReference).mockResolvedValue(baseModel);
 
     const result = await resolveAiModel("gemma-3-1b-it");
 
@@ -148,7 +168,7 @@ describe("chatNode (integration)", () => {
     const modelId = "missing-model";
     const state = buildState({ nodeId, inputNodeId, input: "안녕" });
     const config = buildConfig({ nodeId, modelId });
-    vi.mocked(getActiveAiModels).mockResolvedValue([]);
+    vi.mocked(getModelByReference).mockResolvedValue(null);
 
     await expect(() => chatNode(state, config)).rejects.toThrow(
       `Unknown model: ${modelId}`,
@@ -160,13 +180,11 @@ describe("chatNode (integration)", () => {
     const state = buildState({ nodeId, inputNodeId, input: "안녕" });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([
-      {
-        ...baseModel,
-        modelId,
-        provider: "anthropic",
-      },
-    ]);
+    vi.mocked(getModelByReference).mockResolvedValue({
+      ...baseModel,
+      modelId,
+      provider: "anthropic",
+    });
 
     await expect(() => chatNode(state, config)).rejects.toThrow(
       "Unsupported provider: anthropic",
@@ -178,7 +196,7 @@ describe("chatNode (integration)", () => {
     const state = buildState({ nodeId, inputNodeId, input: "안녕" });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockRejectedValue(new Error("invoke failed"));
 
@@ -200,7 +218,7 @@ describe("chatNode (integration)", () => {
     const state = buildState({ nodeId, inputNodeId, input });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockResolvedValue({
       content: [
@@ -228,7 +246,7 @@ describe("chatNode (integration)", () => {
         amount: baseModel.price,
         category: "workflow",
         title: "워크플로우 실행",
-        description: `모델 사용 : ${modelId}`,
+        description: `모델 사용 : ${baseModel.name} (${baseModel.provider})`,
       }),
     );
   });
@@ -248,7 +266,7 @@ describe("chatNode (integration)", () => {
     });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockResolvedValue({ content: "ok" });
 
@@ -284,7 +302,7 @@ describe("chatNode (integration)", () => {
     });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockResolvedValue({ content: "ok" });
 
@@ -322,7 +340,7 @@ describe("chatNode (integration)", () => {
     });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockResolvedValue({ content: "ok" });
 
@@ -353,7 +371,7 @@ describe("chatNode (integration)", () => {
     });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockResolvedValue({ content: "최종 응답" });
 
@@ -374,7 +392,7 @@ describe("chatNode (integration)", () => {
     const state = buildState({ nodeId, inputNodeId, input });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const response = new AIMessage("ok");
     const invoke = vi.fn().mockResolvedValue(response);

@@ -15,9 +15,13 @@ import { spendCreditsByUserId } from "@/features/credits/server/mutations";
 import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
 import { runAiCall } from "@/lib/ai/execution";
 import { getAnswerText } from "@/lib/ai/message";
+import { getModelLimits } from "@/lib/ai/registry";
+import {
+  finishModelExecution,
+  startModelExecution,
+} from "@/lib/ai/registry-store";
 
 const o200kBaseEncoding = getEncoding("o200k_base");
-const CHAT_NODE_MAX_O200K_TOKENS = 8000;
 
 /**
  * 채팅 모델 실행 노드
@@ -50,7 +54,8 @@ export const chatNode = async (
     });
   }
 
-  const price = Math.max(0, aiModel.price ?? 0);
+  const price = aiModel.price!;
+  const limits = getModelLimits(aiModel);
 
   const configurable = config.configurable as
     | Record<string, unknown>
@@ -102,39 +107,61 @@ export const chatNode = async (
       .join("\n\n"),
   ).length;
 
-  if (o200kBaseTokens > CHAT_NODE_MAX_O200K_TOKENS) {
+  if (o200kBaseTokens > limits.input) {
     throw createApiError("rateLimitExceeded", {
-      message: `Request too large for model limit (o200k_base). Limit ${CHAT_NODE_MAX_O200K_TOKENS}, requested ${o200kBaseTokens}.`,
+      message: `Request too large for model limit (o200k_base). Limit ${limits.input}, requested ${o200kBaseTokens}.`,
     });
   }
 
-  let response;
+  const execution = await startModelExecution(aiModel, {
+    userId: userId ?? undefined,
+    threadId:
+      typeof configurable?.thread_id === "string"
+        ? configurable.thread_id
+        : undefined,
+    nodeId,
+  });
+  let completed = false;
   try {
-    response = await runAiCall(
-      (signal) => chatModel.invoke(messages, { signal }),
-      { signal: config.signal },
-    );
-  } catch (error) {
-    throw mapProviderErrorToApi(error);
-  }
+    let response;
+    try {
+      response = await runAiCall(
+        (signal) => chatModel.invoke(messages, { signal }),
+        { signal: config.signal },
+      );
+    } catch (error) {
+      throw mapProviderErrorToApi(error);
+    }
 
-  const output = getAnswerText(response.content);
+    const output = getAnswerText(response.content);
 
-  if (price > 0 && userId) {
-    const description = `모델 사용 : ${modelId}`;
+    if (price > 0 && userId) {
+      const description = `모델 사용 : ${aiModel.name} (${aiModel.provider})`;
 
-    const spendResult = await spendCreditsByUserId({
-      userId,
-      amount: price,
-      category: "workflow",
-      title: "워크플로우 실행",
-      description,
-    });
+      const spendResult = await spendCreditsByUserId({
+        userId,
+        amount: price,
+        category: "workflow",
+        title: "워크플로우 실행",
+        description,
+      });
 
-    if (!spendResult.ok && spendResult.reason === "insufficient_credit") {
-      throw createApiError("insufficientCredit");
+      if (!spendResult.ok && spendResult.reason === "insufficient_credit") {
+        throw createApiError("insufficientCredit");
+      }
+    }
+
+    completed = true;
+    return { messages: [response], outputMap: { [nodeId]: output } };
+  } finally {
+    try {
+      await finishModelExecution(
+        execution.id,
+        completed ? "succeeded" : "failed",
+      );
+    } catch (error) {
+      if (completed) throw error;
+      console.error("Could not finalize failed model execution", execution.id);
     }
   }
-
-  return { messages: [response], outputMap: { [nodeId]: output } };
 };

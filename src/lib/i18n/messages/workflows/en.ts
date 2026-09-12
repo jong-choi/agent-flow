@@ -1,4 +1,17 @@
 const message = {
+  modelRegistry: {
+    choose: "Choose a model",
+    unknown: "Unknown model",
+    retired: "Retired model",
+    candidate: "Pending verification",
+    unavailable: "Currently unavailable",
+    deprecated: "Deprecated",
+    active: "Available",
+    priceUnknown: "Price unavailable",
+    credits: "{count} credits per run",
+    appLimits: "App input {input} / output {output} tokens",
+    providerContext: "Provider context: {count} tokens",
+  },
   meta: {
     workflowsTitle: "Workflows",
     workflowFallbackTitle: "Workflow",

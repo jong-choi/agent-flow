@@ -1,7 +1,7 @@
 import { db } from "@/db/client";
 import { type AiModelInsert, aiModels } from "@/db/schema/ai-models";
 
-const aiModelsData: AiModelInsert[] = [
+const aiModelsData: Omit<AiModelInsert, "upstreamModelId">[] = [
   {
     modelId: "gemma-3-1b-it",
     name: "Gemma 3 (1B, IT)",
@@ -149,18 +149,13 @@ export const seedAiModels = async () => {
     for (const model of aiModelsData) {
       await tx
         .insert(aiModels)
-        .values(model)
-        .onConflictDoUpdate({
-          target: aiModels.modelId,
-          set: {
-            name: model.name,
-            order: model.order,
-            provider: model.provider,
-            contextWindow: model.contextWindow,
-            price: model.price,
-            isActive: model.isActive,
-            metadata: model.metadata,
-          },
+        .values({
+          ...model,
+          upstreamModelId: model.modelId,
+          lifecycle: "active",
+        })
+        .onConflictDoNothing({
+          target: [aiModels.provider, aiModels.upstreamModelId],
         });
     }
   });

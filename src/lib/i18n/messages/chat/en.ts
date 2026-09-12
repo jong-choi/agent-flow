@@ -45,6 +45,7 @@ const message = {
     chatPanelTitle: "Chat dialog",
   },
   input: {
+    creditsUnavailable: "Check model availability and pricing",
     placeholder: "Type your message...",
     noMessage: "Enter a message to start chatting",
     credits: "{count} credits",

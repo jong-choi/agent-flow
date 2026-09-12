@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { cacheTag } from "next/cache";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import "server-only";
 import { db } from "@/db/client";
 import {
@@ -9,10 +9,10 @@ import {
   type CursorOptions,
   toCursorTimestamp,
 } from "@/db/query/cursor";
-import { aiModels } from "@/db/schema/ai-models";
+import { listModelRegistry } from "@/lib/ai/registry-store";
+import { estimateModelCredits } from "@/lib/ai/registry";
 import { workflowEdges, workflowNodes, workflows } from "@/db/schema/workflows";
 import { getUserId } from "@/features/auth/server/queries";
-import { chatTags } from "@/features/chats/server/cache/tags";
 import { workflowTags } from "@/features/workflows/server/cache/tags";
 
 const normalizeLimit = (limit: number | undefined, fallback = 6) => {
@@ -300,32 +300,24 @@ export const getOwnedWorkflowChatCreditEstimate = async (
     throw new Error("워크플로우에 대한 접근 권한이 없습니다.");
   }
 
-  return getOwnedWorkflowChatCreditEstimateCached(trimmedWorkflowId);
+  return getWorkflowChatCreditEstimate(trimmedWorkflowId);
 };
 
-const getOwnedWorkflowChatCreditEstimateCached = cache(
-  async (workflowId: string) => {
-    "use cache";
-    cacheTag(workflowTags.graphByWorkflow(workflowId));
-    cacheTag(workflowTags.metaByWorkflow(workflowId));
-    cacheTag(chatTags.activeAiModels());
-
-    const totalSql = sql<number>`
-    coalesce(sum(coalesce(${aiModels.price}, 0)), 0)
-  `.mapWith(Number);
-
-    const [row] = await db
-      .select({ total: totalSql })
+const getWorkflowChatCreditEstimate = async (workflowId: string) => {
+  const [nodes, models] = await Promise.all([
+    db
+      .select({ value: workflowNodes.value })
       .from(workflowNodes)
-      .leftJoin(aiModels, eq(workflowNodes.value, aiModels.modelId))
       .where(
         and(
           eq(workflowNodes.workflowId, workflowId),
           eq(workflowNodes.type, "chatNode"),
         ),
-      )
-      .limit(1);
-
-    return row?.total ?? 0;
-  },
-);
+      ),
+    listModelRegistry(),
+  ]);
+  return estimateModelCredits(
+    models,
+    nodes.map((node) => node.value),
+  );
+};

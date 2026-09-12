@@ -59,9 +59,13 @@ test("영속 채팅의 한글 스트림과 다시 열기", async ({ page }) => {
       .getByRole("button", { name: "전송", exact: true })
       .filter({ visible: true })
       .click();
-    await expect(page.getByText(answer, { exact: true })).toBeVisible();
+    await expect(
+      page.locator("article").getByText(answer, { exact: true }),
+    ).toBeVisible();
     await page.reload();
-    await expect(page.getByText(answer, { exact: true })).toBeVisible();
+    await expect(
+      page.locator("article").getByText(answer, { exact: true }),
+    ).toBeVisible();
   } finally {
     await sql`delete from chats where id=${chat}`;
     await sql`delete from workflows where id=${workflow}`;

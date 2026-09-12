@@ -132,16 +132,18 @@ function TemporaryWorkflowCreditEstimate() {
   const { hasChatNode, estimatedCredits } = useMemo(() => {
     const chatNodes = nodes.filter((node) => node.type === "chatNode");
 
-    const estimatedCreditsValue = chatNodes.reduce((sum, node) => {
-      const modelId = node.data.content?.value;
-      if (typeof modelId !== "string") return sum;
-
+    let estimatedCreditsValue: number | null = 0;
+    for (const node of chatNodes) {
+      const reference = node.data.content?.value;
       const option = node.data.content?.options?.find(
-        (item) => item.value === modelId,
+        (item) => item.value === reference || item.legacyValue === reference,
       );
-      const price = typeof option?.price === "number" ? option.price : 0;
-      return sum + Math.max(0, price);
-    }, 0);
+      if (!option?.selectable || typeof option.price !== "number") {
+        estimatedCreditsValue = null;
+        break;
+      }
+      estimatedCreditsValue += option.price;
+    }
 
     return {
       hasChatNode: chatNodes.length > 0,
@@ -153,7 +155,9 @@ function TemporaryWorkflowCreditEstimate() {
 
   return (
     <span className="text-end text-[10px] text-muted-foreground">
-      {t("input.credits", { count: estimatedCredits.toLocaleString() })}
+      {estimatedCredits === null
+        ? t("input.creditsUnavailable")
+        : t("input.credits", { count: estimatedCredits.toLocaleString() })}
     </span>
   );
 }
@@ -161,11 +165,12 @@ function TemporaryWorkflowCreditEstimate() {
 function PersistentWorkflowCreditEstimate() {
   const estimatedCredits = useChatStore((s) => s.estimatedCredits);
   const t = useTranslations<AppMessageKeys>("Chat");
-  if (estimatedCredits == null) return null;
 
   return (
     <span className="text-end text-[10px] text-muted-foreground">
-      {t("input.credits", { count: estimatedCredits.toLocaleString() })}
+      {estimatedCredits === null
+        ? t("input.creditsUnavailable")
+        : t("input.credits", { count: estimatedCredits.toLocaleString() })}
     </span>
   );
 }

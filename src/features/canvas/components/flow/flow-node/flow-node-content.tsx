@@ -25,6 +25,7 @@ import { type FlowNodeData } from "@/db/types/sidebar-nodes";
 import { DocumentReferenceDialog } from "@/features/canvas/components/flow/document-reference/document-reference-dialog";
 import { useCanvasReactFlow } from "@/features/canvas/hooks/use-canvas-react-flow";
 import { useCanvasStore } from "@/features/canvas/store/canvas-store";
+import { ModelSelect } from "@/features/models/components/model-select";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 
 export function FlowNodeContent({
@@ -56,6 +57,17 @@ export function FlowNodeContent({
     handleValueChange(value);
     toast.success(t("canvas.node.savedToast"));
   };
+
+  if (content.type === "select" && nodeType === "chatNode") {
+    return (
+      <ModelSelect
+        value={content.value}
+        options={content.options}
+        onChange={handleValueChange}
+        placeholder={content.placeholder}
+      />
+    );
+  }
 
   if (content.type === "select") {
     return (

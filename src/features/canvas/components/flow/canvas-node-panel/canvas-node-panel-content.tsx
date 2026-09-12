@@ -42,6 +42,7 @@ import {
   handleCountRefine,
   pruneEdgesForHandleCount,
 } from "@/features/canvas/utils/canvas-node-panel";
+import { ModelSelect } from "@/features/models/components/model-select";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { sanitizeString } from "@/lib/utils";
 
@@ -411,6 +412,17 @@ function ContentContentFormField({
 
         switch (content.type) {
           case "select":
+            if (content.optionsSource === "ai_models") {
+              contentInput = (
+                <ModelSelect
+                  value={field.value}
+                  options={content.options}
+                  onChange={field.onChange}
+                  placeholder={content.placeholder}
+                />
+              );
+              break;
+            }
             contentInput = (
               <Select
                 onValueChange={field.onChange}

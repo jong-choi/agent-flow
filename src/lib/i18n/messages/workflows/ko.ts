@@ -1,4 +1,17 @@
 const message = {
+  modelRegistry: {
+    choose: "모델 선택",
+    unknown: "알 수 없는 모델",
+    retired: "은퇴한 모델",
+    candidate: "검증 대기",
+    unavailable: "현재 사용 불가",
+    deprecated: "은퇴 예정",
+    active: "사용 가능",
+    priceUnknown: "가격 확인 필요",
+    credits: "실행 1회 · {count} 크레딧",
+    appLimits: "서비스 입력 {input} / 출력 {output} 토큰",
+    providerContext: "제공사 컨텍스트 {count} 토큰",
+  },
   meta: {
     workflowsTitle: "워크플로우",
     workflowFallbackTitle: "워크플로우",
