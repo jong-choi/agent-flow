@@ -12,8 +12,6 @@ import {
   providerHealth,
 } from "../src/db/schema/ai-maintenance";
 import { aiModels } from "../src/db/schema/ai-models";
-import { releaseExpiredModelCredits } from "../src/lib/ai/billing";
-import { runAiCall } from "../src/lib/ai/execution";
 import {
   applyCatalog,
   planCatalog,
@@ -50,13 +48,6 @@ async function main() {
       throw Error(
         "Writes require local DB; production worker must be explicitly enabled at deployment",
       );
-  }
-  if (command === "reconcile-credits") {
-    if (!apply) throw Error("Use --apply to release expired reservations");
-    console.log({
-      released: await runAiCall(() => releaseExpiredModelCredits()),
-    });
-    return;
   }
   if (command === "status") {
     console.log(

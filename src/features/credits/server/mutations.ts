@@ -33,7 +33,7 @@ const toDateKey = (value: Date) =>
     value,
   );
 
-export const revalidateCreditTags = (
+const revalidateCreditTags = (
   userId: string,
   options?: { includeAttendance?: boolean },
 ) => {

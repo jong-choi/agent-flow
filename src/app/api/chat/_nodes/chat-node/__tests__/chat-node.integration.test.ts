@@ -13,12 +13,8 @@ import {
   resolveAiModel,
 } from "@/app/api/chat/_nodes/chat-node/models";
 import { type AiModel } from "@/db/schema";
+import { spendCreditsByUserId } from "@/features/credits/server/mutations";
 import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
-import {
-  releaseModelCredits,
-  reserveModelCredits,
-  settleModelCredits,
-} from "@/lib/ai/billing";
 import {
   finishModelExecution,
   getModelByReference,
@@ -27,18 +23,12 @@ import {
 
 vi.mock("@/lib/ai/maintenance/state-store", () => ({
   availabilityMap: vi.fn(),
-  assertModelAdmission: vi.fn(),
-  recordObservation: vi.fn(),
 }));
 
 vi.mock("@/lib/ai/execution", () => ({
   runAiCall: (operation: (signal: AbortSignal) => Promise<unknown>) =>
     operation(new AbortController().signal),
   aiFetch: vi.fn(),
-  observeModelCall: (
-    operation: (signal: AbortSignal) => Promise<unknown>,
-    options: { signal: AbortSignal },
-  ) => operation(options.signal),
 }));
 
 const baseModel: AiModel = {
@@ -125,18 +115,11 @@ vi.mock("@/features/credits/server/queries", () => ({
 }));
 
 vi.mock("@/features/credits/server/mutations", () => ({
-  revalidateCreditTags: vi.fn(),
+  spendCreditsByUserId: vi.fn(),
 }));
 
 vi.mock("@langchain/google", () => ({
   ChatGoogle: vi.fn(),
-}));
-
-vi.mock("@/lib/ai/billing", () => ({
-  reserveModelCredits: vi.fn(),
-  settleModelCredits: vi.fn(),
-  releaseModelCredits: vi.fn(),
-  releaseExpiredModelCredits: vi.fn(),
 }));
 
 beforeEach(() => {
@@ -147,12 +130,10 @@ beforeEach(() => {
   } as Awaited<ReturnType<typeof startModelExecution>>);
   vi.mocked(finishModelExecution).mockResolvedValue(undefined);
   vi.mocked(getCreditBalanceByUserId).mockResolvedValue(9999);
-  vi.mocked(reserveModelCredits).mockResolvedValue({
-    id: "execution",
-    cached: null,
+  vi.mocked(spendCreditsByUserId).mockResolvedValue({
+    ok: true,
+    balance: 9999,
   });
-  vi.mocked(settleModelCredits).mockResolvedValue(undefined);
-  vi.mocked(releaseModelCredits).mockResolvedValue(undefined);
 });
 
 afterEach(() => vi.unstubAllEnvs());
@@ -272,12 +253,15 @@ describe("chatNode (integration)", () => {
     expect(messagesArg).toHaveLength(1);
     expect(messagesArg[0]).toMatchObject({ content: input });
     expect(result.outputMap?.[nodeId]).toBe("hello world");
-    expect(settleModelCredits).toHaveBeenCalledWith(
-      "execution",
-      expect.any(Array),
-      `모델 사용 : ${baseModel.name} (${baseModel.provider})`,
+    expect(vi.mocked(spendCreditsByUserId)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-id",
+        amount: baseModel.price,
+        category: "workflow",
+        title: "워크플로우 실행",
+        description: `모델 사용 : ${baseModel.name} (${baseModel.provider})`,
+      }),
     );
-    expect(releaseModelCredits).toHaveBeenCalledWith("execution");
   });
 
   it("멀티턴: 이전 메시지를 포함해 invoke를 호출한다", async () => {

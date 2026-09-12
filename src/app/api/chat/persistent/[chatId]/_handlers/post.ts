@@ -2,7 +2,6 @@ import { z } from "zod";
 import { apiErrorResponse } from "@/app/api/_errors/api-error";
 import { insertChatMessage } from "@/features/chats/server/mutations";
 import { getChatById } from "@/features/chats/server/queries";
-import { acquireChatSession } from "@/lib/ai/chat-session";
 
 const chatMessageSchema = z.object({
   message: z.string(),
@@ -12,10 +11,8 @@ export async function POST(
   request: Request,
   { params }: RouteContext<"/api/chat/persistent/[chatId]">,
 ) {
-  let release: (() => Promise<void>) | undefined;
   try {
     const { chatId } = await params;
-    release = await acquireChatSession(chatId);
 
     const json = await request.json();
     const parsed = chatMessageSchema.safeParse(json);
@@ -38,7 +35,5 @@ export async function POST(
   } catch (error) {
     console.error("POST /api/chat/persistent/[chatId] error:", error);
     return apiErrorResponse(error);
-  } finally {
-    await release?.();
   }
 }

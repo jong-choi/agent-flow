@@ -26,7 +26,6 @@ export const CHAT_STREAM_HEADERS = {
 export function createChatStream(options: {
   signal: AbortSignal;
   events: (signal: AbortSignal) => AsyncIterable<unknown>;
-  onFinally?: () => Promise<void>;
   onComplete?: (
     answer: string,
     modelMessages: StoredMessage[],
@@ -63,30 +62,6 @@ export function createChatStream(options: {
             "messages" in output &&
             Array.isArray(output.messages)
           ) {
-            const nodeId = source.metadata.langgraph_node;
-            if (nodeId && !answers.has(nodeId)) {
-              const text = output.messages
-                .filter(isBaseMessage)
-                .map((m) => getAnswerText(m.content))
-                .join("\n\n");
-              answers.set(nodeId, text);
-              emit({
-                type: "chatNode",
-                event: "on_chat_model_start",
-                langgraph_node: nodeId,
-              });
-              emit({
-                type: "chatNode",
-                event: "on_chat_model_stream",
-                langgraph_node: nodeId,
-                chunk: { content: text },
-              });
-              emit({
-                type: "chatNode",
-                event: "on_chat_model_end",
-                langgraph_node: nodeId,
-              });
-            }
             for (const message of output.messages)
               if (isBaseMessage(message))
                 generated.set(
@@ -144,11 +119,7 @@ export function createChatStream(options: {
           });
         }
       } finally {
-        try {
-          await options.onFinally?.();
-        } finally {
-          if (!cancelled) controller.close();
-        }
+        if (!cancelled) controller.close();
       }
     },
     cancel() {

@@ -5,9 +5,6 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
-  // Keep release builds within the bounded local/CI builder memory budget.
-  experimental: { cpus: 1, webpackMemoryOptimizations: true },
-  typescript: { ignoreBuildErrors: process.env.NEXT_BUILD_TYPECHECKED === "1" },
   reactCompiler: true,
   cacheComponents: true,
   images: {

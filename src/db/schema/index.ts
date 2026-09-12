@@ -9,5 +9,3 @@ export * from "@/db/schema/chat";
 export * from "@/db/schema/secrets";
 
 export * from "./ai-maintenance";
-
-export * from "./ai-billing";

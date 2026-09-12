@@ -173,7 +173,12 @@ export const seedAiModels = async () => {
       },
       {
         appMaxOutputTokens: profile.provider === "groq" ? 512 : 4096,
-        metadata: { thinkingLevel: profile.thinkingLevel },
+        metadata: {
+          thinkingLevel: profile.thinkingLevel,
+          ...("titlePriority" in profile
+            ? { titlePriority: profile.titlePriority }
+            : {}),
+        },
         requireFreeAccess: profile.provider !== "google",
       },
     );

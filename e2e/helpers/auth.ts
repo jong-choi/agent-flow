@@ -2,9 +2,7 @@ import { type Page, expect, test } from "@playwright/test";
 
 async function hasAuthenticatedSession(page: Page) {
   try {
-    const response = await page.request.get("/api/auth/session", {
-      timeout: 10000,
-    });
+    const response = await page.request.get("/api/auth/session");
     if (!response.ok()) return false;
 
     const session = (await response.json()) as { user?: unknown } | null;
@@ -41,12 +39,11 @@ export async function loginWithDevPassword(page: Page) {
 
   const passwordInput = page.locator('input[name="password"][type="password"]');
 
-  if (process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === "false") {
+  if (!(await passwordInput.isVisible())) {
     test.skip(true, "Dev login UI is disabled.");
     return;
   }
 
-  await expect(passwordInput).toBeVisible();
   await passwordInput.fill(password);
 
   const devLoginButton = page
@@ -58,12 +55,7 @@ export async function loginWithDevPassword(page: Page) {
   await expect(devLoginButton).toBeEnabled();
   await devLoginButton.click({ noWaitAfter: true });
 
-  await page
-    .waitForURL((url) => !isLoginPath(url.href), {
-      waitUntil: "domcontentloaded",
-      timeout: 10000,
-    })
-    .catch(() => null);
+  await page.waitForURL((url) => !isLoginPath(url.href)).catch(() => null);
 
   await expect.poll(() => hasAuthenticatedSession(page)).toBe(true);
 

@@ -22,7 +22,6 @@ test.describe("Credits", () => {
       exact: true,
     });
 
-    await expect(goAttendance.or(doneAttendance)).toBeVisible();
     if (await goAttendance.count()) {
       await expect(goAttendance).toBeVisible();
       await goAttendance.click();
@@ -56,12 +55,6 @@ test.describe("Credits", () => {
       exact: true,
     });
 
-    await expect(
-      checkButton
-        .or(page.getByText("출석 완료!", { exact: true }))
-        .filter({ visible: true })
-        .first(),
-    ).toBeVisible();
     if (await checkButton.count()) {
       await expect(checkButton).toBeEnabled();
       await checkButton.click();

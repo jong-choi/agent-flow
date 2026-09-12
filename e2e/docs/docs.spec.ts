@@ -12,9 +12,7 @@ test.describe("Docs: /docs", () => {
 
     await expect(page.getByText("문서 관리").first()).toBeVisible();
 
-    const searchInput = page
-      .getByPlaceholder("문서 제목으로 검색")
-      .filter({ visible: true });
+    const searchInput = page.getByPlaceholder("문서 제목으로 검색");
     await expect(searchInput).toBeVisible();
 
     const query = `search-${Date.now()}`;

@@ -39,5 +39,3 @@ jobs:
       - run: npm run test:models:registry
       - run: npm run test:ai:history
       - run: npm run test:models:maintenance
-      - run: npm run test:models:release -- fresh
-      - run: npm run test:models:release -- legacy

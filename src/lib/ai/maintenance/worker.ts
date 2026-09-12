@@ -11,7 +11,6 @@ import {
   noticeSnapshots,
 } from "@/db/schema/ai-maintenance";
 import { aiModels } from "@/db/schema/ai-models";
-import { releaseExpiredModelCredits } from "../billing";
 import { normalizeProviderError } from "../error";
 import { aiFetch, runAiCall } from "../execution";
 import { applyCatalog } from "./catalog-store";
@@ -228,10 +227,8 @@ export async function runMaintenanceTick(
     try {
       if (options.execute) await options.execute(key, signal);
       else if (key === "probes") await runDueProbes(signal, now);
-      else if (key === "retirements") {
-        await runAiCall(() => releaseExpiredModelCredits(new Date(now)));
-        await applyScheduledRetirements(now);
-      } else if (key.startsWith("notice:"))
+      else if (key === "retirements") await applyScheduledRetirements(now);
+      else if (key.startsWith("notice:"))
         await monitorNotice(key.split(":")[1] as Provider, signal);
       else {
         const [, provider, mode] = key.split(":");

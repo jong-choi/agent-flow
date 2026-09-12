@@ -6,7 +6,7 @@ on:
 
 concurrency:
   group: deploy-production
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -152,13 +152,11 @@ jobs:
             git fetch --prune --depth=1 origin main
             git reset --hard origin/main
 
-            docker compose -f "$COMPOSE_FILE" --profile maintenance build agentflow-maintenance
-            docker compose -f "$COMPOSE_FILE" --profile maintenance run --rm --no-deps -e AI_MAINTENANCE_ENABLED=false agentflow-maintenance npm run models:release -- check
             echo "🏗️  Building images (pull latest base images)..."
             docker compose -f "$COMPOSE_FILE" build --pull
 
             echo "▶️  Starting services..."
-            docker compose -f "$COMPOSE_FILE" up -d --remove-orphans agentflow-app
+            docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
 
             rm -f "$GIT_ASKPASS"
             unset GIT_ASKPASS
