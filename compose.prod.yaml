@@ -36,6 +36,7 @@ services:
       BRAVE_API_KEY: ${BRAVE_API_KEY}
       SEARXNG_API_KEY: ${SEARXNG_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY}
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY}
       AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID}
       AUTH_URL: ${AUTH_URL}
       BASE_URL: ${BASE_URL}
@@ -49,6 +50,25 @@ services:
     ports:
       - "3040:3000"
 
+    networks:
+      - npm-network
+
+  agentflow-maintenance:
+    profiles: ["maintenance"]
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 0.5
+    build:
+      context: .
+      dockerfile: maintenance.Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY}
+      AI_MAINTENANCE_ENABLED: ${AI_MAINTENANCE_ENABLED:-false}
+      NODE_OPTIONS: --max-old-space-size=256
+    restart: "no"
     networks:
       - npm-network
 

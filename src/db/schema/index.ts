@@ -7,3 +7,5 @@ export * from "@/db/schema/credit";
 export * from "@/db/schema/documents";
 export * from "@/db/schema/chat";
 export * from "@/db/schema/secrets";
+
+export * from "./ai-maintenance";

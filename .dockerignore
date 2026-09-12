@@ -4,6 +4,7 @@ out
 
 # project
 docs
+.local
 
 # deps
 node_modules

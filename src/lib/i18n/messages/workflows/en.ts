@@ -1,4 +1,31 @@
 const message = {
+  modelRegistry: {
+    retryAt: "Next check: {time}",
+    freeVerificationRequired: "Free access needs verification",
+    chooseReplacement: "Choose replacement",
+    creditUnit: "credits",
+    replaceAll: "Replace all in this workflow",
+
+    thinking: "Thinking: {level}",
+    thinkingLevels: {
+      default: "Default",
+      minimal: "Minimal",
+      low: "Low",
+      medium: "Medium",
+      high: "High",
+    },
+    choose: "Choose a model",
+    unknown: "Unknown model",
+    retired: "Retired model",
+    candidate: "Pending verification",
+    unavailable: "Currently unavailable",
+    deprecated: "Deprecated",
+    active: "Available",
+    priceUnknown: "Price unavailable",
+    credits: "{count} credits per run",
+    appLimits: "App input {input} / output {output} tokens",
+    providerContext: "Provider context: {count} tokens",
+  },
   meta: {
     workflowsTitle: "Workflows",
     workflowFallbackTitle: "Workflow",

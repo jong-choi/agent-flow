@@ -2,7 +2,7 @@ import { getEncoding } from "js-tiktoken";
 import { HumanMessage } from "@langchain/core/messages";
 import {
   createApiError,
-  mapUnknownToApiTypedError,
+  mapProviderErrorToApi,
 } from "@/app/api/_errors/api-error";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
@@ -13,9 +13,16 @@ import {
 import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
 import { spendCreditsByUserId } from "@/features/credits/server/mutations";
 import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
+import { runAiCall } from "@/lib/ai/execution";
+import { prepareModelMessages, tagModelMessage } from "@/lib/ai/history";
+import { assertCompleteAnswer, getAnswerText } from "@/lib/ai/message";
+import { getModelLimits } from "@/lib/ai/registry";
+import {
+  finishModelExecution,
+  startModelExecution,
+} from "@/lib/ai/registry-store";
 
 const o200kBaseEncoding = getEncoding("o200k_base");
-const CHAT_NODE_MAX_O200K_TOKENS = 8000;
 
 /**
  * 채팅 모델 실행 노드
@@ -41,14 +48,16 @@ export const chatNode = async (
     });
   }
 
-  const aiModel = await resolveAiModel(modelId);
+  const aiModel =
+    state.modelsByNode?.[nodeId] ?? (await resolveAiModel(modelId));
   if (!aiModel) {
     throw createApiError("invalidModel", {
       message: `Unknown model: ${modelId}`,
     });
   }
 
-  const price = Math.max(0, aiModel.price ?? 0);
+  const price = aiModel.price!;
+  const limits = getModelLimits(aiModel);
 
   const configurable = config.configurable as
     | Record<string, unknown>
@@ -88,8 +97,9 @@ export const chatNode = async (
     messages.push(newMessage);
   }
 
+  const preparedMessages = prepareModelMessages(messages, aiModel);
   const o200kBaseTokens = o200kBaseEncoding.encode(
-    messages
+    preparedMessages
       .map((message) => {
         const content = message.content;
         if (typeof content === "string") {
@@ -100,47 +110,65 @@ export const chatNode = async (
       .join("\n\n"),
   ).length;
 
-  if (o200kBaseTokens > CHAT_NODE_MAX_O200K_TOKENS) {
+  if (o200kBaseTokens > limits.input) {
     throw createApiError("rateLimitExceeded", {
-      message: `Request too large for model limit (o200k_base). Limit ${CHAT_NODE_MAX_O200K_TOKENS}, requested ${o200kBaseTokens}.`,
+      message: `Request too large for model limit (o200k_base). Limit ${limits.input}, requested ${o200kBaseTokens}.`,
     });
   }
 
-  let response;
+  const execution = await startModelExecution(aiModel, {
+    userId: userId ?? undefined,
+    threadId:
+      typeof configurable?.thread_id === "string"
+        ? configurable.thread_id
+        : undefined,
+    nodeId,
+  });
+  let completed = false;
   try {
-    response = await chatModel.invoke(messages);
-  } catch (error) {
-    throw mapUnknownToApiTypedError(error);
-  }
+    let response;
+    try {
+      response = await runAiCall(
+        (signal) => chatModel.invoke(preparedMessages, { signal }),
+        { signal: config.signal, observe: { model: aiModel } },
+      );
+      assertCompleteAnswer(response);
+    } catch (error) {
+      throw mapProviderErrorToApi(error);
+    }
 
-  const content = response.content;
+    const output = getAnswerText(response.content);
 
-  let output: string;
+    if (price > 0 && userId) {
+      const description = `모델 사용 : ${aiModel.name} (${aiModel.provider})`;
 
-  if (typeof content === "string") {
-    output = content;
-  } else {
-    output = content
-      .filter((b) => b.type === "text")
-      .map((b) => ("text" in b ? (b.text as string) : ""))
-      .join("");
-  }
+      const spendResult = await spendCreditsByUserId({
+        userId,
+        amount: price,
+        category: "workflow",
+        title: "워크플로우 실행",
+        description,
+      });
 
-  if (price > 0 && userId) {
-    const description = `모델 사용 : ${modelId}`;
+      if (!spendResult.ok && spendResult.reason === "insufficient_credit") {
+        throw createApiError("insufficientCredit");
+      }
+    }
 
-    const spendResult = await spendCreditsByUserId({
-      userId,
-      amount: price,
-      category: "workflow",
-      title: "워크플로우 실행",
-      description,
-    });
-
-    if (!spendResult.ok && spendResult.reason === "insufficient_credit") {
-      throw createApiError("insufficientCredit");
+    completed = true;
+    return {
+      messages: [tagModelMessage(response, aiModel)],
+      outputMap: { [nodeId]: output },
+    };
+  } finally {
+    try {
+      await finishModelExecution(
+        execution.id,
+        completed ? "succeeded" : "failed",
+      );
+    } catch (error) {
+      if (completed) throw error;
+      console.error("Could not finalize failed model execution", execution.id);
     }
   }
-
-  return { messages: [response], outputMap: { [nodeId]: output } };
 };

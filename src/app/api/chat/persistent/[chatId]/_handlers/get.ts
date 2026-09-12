@@ -1,37 +1,24 @@
-import {
-  AIMessage,
-  HumanMessage,
-  SystemMessage,
-} from "@langchain/core/messages";
-import {
-  apiErrorResponse,
-  mapUnknownToApiTypedError,
-} from "@/app/api/_errors/api-error";
+import { RemoveMessage } from "@langchain/core/messages";
+import { REMOVE_ALL_MESSAGES } from "@langchain/langgraph";
+import { apiErrorResponse } from "@/app/api/_errors/api-error";
 import {
   buildInputTree,
   buildStateGraph,
 } from "@/app/api/chat/_engines/build-state-graph";
 import { persistentCheckpointer } from "@/app/api/chat/_engines/handle-connect";
 import {
-  type ClientStreamEvent,
-  langgraphStreamEventSchema,
-} from "@/app/api/chat/_types/chat-events";
-import { mapLanggraphEventToClientEvent } from "@/app/api/chat/_utils/map-stream-event-to-client";
+  CHAT_STREAM_HEADERS,
+  createChatStream,
+} from "@/app/api/chat/_utils/create-chat-stream";
 import { getSidebarNodesWithOptions } from "@/features/canvas/server/queries";
 import { buildFlowGraphFromWorkflow } from "@/features/canvas/utils/workflow-graph";
 import { insertChatMessage } from "@/features/chats/server/mutations";
 import {
   getChatById,
-  getChatMessagesByChatId,
+  getChatExecutionMessages,
   getWorkflowWithGraphForChat,
 } from "@/features/chats/server/queries";
-
-const toBaseMessage = (role: string, content: string) => {
-  if (role === "user") return new HumanMessage(content);
-  if (role === "assistant") return new AIMessage(content);
-  if (role === "system") return new SystemMessage(content);
-  return null;
-};
+import { restoreChatMessage } from "@/lib/ai/history";
 
 /**
  * 영속 채팅 실행 GET 요청
@@ -74,12 +61,8 @@ export async function GET(
       });
     }
 
-    const messages = await getChatMessagesByChatId(chatId);
-    const messageList = messages
-      .map((message) => toBaseMessage(message.role, message.content))
-      .filter((message): message is NonNullable<typeof message> =>
-        Boolean(message),
-      );
+    const messages = await getChatExecutionMessages(chatId);
+    const messageList = messages.flatMap(restoreChatMessage);
 
     const lastUserMessage = [...messages]
       .reverse()
@@ -87,7 +70,10 @@ export async function GET(
     const initialInput = lastUserMessage?.content ?? "";
 
     const state = {
-      messages: messageList,
+      messages: [
+        new RemoveMessage({ id: REMOVE_ALL_MESSAGES }),
+        ...messageList,
+      ],
       initialInput,
       outputMap: {},
       inputTree: buildInputTree({ nodes, edges }),
@@ -96,108 +82,31 @@ export async function GET(
     const graph = buildStateGraph({ nodes, edges });
     const app = graph.compile({ checkpointer: persistentCheckpointer });
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        const streamingChunkMap = new Map<string, string>();
-        const completedMessageMap = new Map<string, string>();
-        const emitEvent = (params: ClientStreamEvent) => {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(params)}\n\n`),
-          );
-        };
-        const encoder = new TextEncoder();
-
-        try {
-          for await (const chunk of app.streamEvents(
-            state,
-            {
-              version: "v2",
-              configurable: { thread_id: chatId, user_id: chat.userId },
-              durability: "exit",
-            },
-            {
-              excludeTags: ["langsmith:hidden"],
-            },
-          )) {
-            const parsed = langgraphStreamEventSchema.safeParse(chunk);
-            if (!parsed.success) {
-              continue;
-            }
-
-            const event = parsed.data.event;
-            const { type, langgraph_node } = parsed.data.metadata;
-
-            if (type === "chatNode") {
-              const nodeId = langgraph_node;
-              if (typeof nodeId !== "string") {
-                continue;
-              }
-              if (event === "on_chat_model_start") {
-                if (!streamingChunkMap.has(nodeId)) {
-                  streamingChunkMap.set(nodeId, "");
-                }
-                if (!completedMessageMap.has(nodeId)) {
-                  completedMessageMap.set(nodeId, "");
-                }
-              } else if (event === "on_chat_model_stream") {
-                const content = parsed.data.data?.chunk?.content;
-                if (typeof content !== "string") {
-                  continue;
-                }
-                const currentContent = streamingChunkMap.get(nodeId) ?? "";
-                streamingChunkMap.set(nodeId, currentContent + content);
-              } else if (event === "on_chat_model_end") {
-                const completedContent = streamingChunkMap.get(nodeId) ?? "";
-                if (!completedMessageMap.has(nodeId)) {
-                  completedMessageMap.set(nodeId, completedContent);
-                } else {
-                  completedMessageMap.set(nodeId, completedContent);
-                }
-              }
-            }
-
-            const streamEvent = mapLanggraphEventToClientEvent(parsed.data);
-            if (streamEvent) {
-              emitEvent(streamEvent);
-            }
-          }
-
-          const aiMessageContent = Array.from(
-            completedMessageMap.values(),
-          ).join("\n\n");
-          if (aiMessageContent.trim().length > 0) {
-            await insertChatMessage({
-              chatId,
-              role: "assistant",
-              content: aiMessageContent,
-            });
-          }
-        } catch (error) {
-          console.error("SSE stream error:", error);
-          const mappedError = mapUnknownToApiTypedError(error);
-          emitEvent({
-            type: "endNode",
-            event: "on_chain_end",
-            error: {
-              message: mappedError.message,
-              type: mappedError.type,
-              code: mappedError.code,
-            },
+    const stream = createChatStream({
+      signal: request.signal,
+      events: (signal) =>
+        app.streamEvents(
+          state,
+          {
+            version: "v2",
+            signal,
+            configurable: { thread_id: chatId, user_id: chat.userId },
+            durability: "exit",
+          },
+          { excludeTags: ["langsmith:hidden"] },
+        ),
+      onComplete: async (content, modelMessages) => {
+        if (content.trim())
+          await insertChatMessage({
+            chatId,
+            role: "assistant",
+            content,
+            modelMessages,
           });
-          controller.close();
-          return;
-        }
       },
     });
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        "X-Accel-Buffering": "no",
-      },
-    });
+    return new Response(stream, { headers: CHAT_STREAM_HEADERS });
   } catch (error) {
     console.error("GET /api/chat/persistent/[chatId] error:", error);
     return apiErrorResponse(error);

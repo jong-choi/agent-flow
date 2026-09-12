@@ -1,8 +1,13 @@
 import { z } from "zod";
 import { HumanMessage } from "@langchain/core/messages";
-import { apiErrorResponse } from "@/app/api/_errors/api-error";
-import { getSmallestModel } from "@/app/api/chat/_nodes/chat-node/models";
+import {
+  apiErrorResponse,
+  mapProviderErrorToApi,
+} from "@/app/api/_errors/api-error";
+import { getTitleModel } from "@/app/api/chat/_nodes/chat-node/models";
 import { getChatById } from "@/features/chats/server/queries";
+import { runAiCall } from "@/lib/ai/execution";
+import { getAnswerText } from "@/lib/ai/message";
 
 const titleRequestSchema = z.object({
   message: z.string().trim().min(1).max(4000),
@@ -30,7 +35,7 @@ export async function POST(
 
     await getChatById(chatId);
 
-    const model = getSmallestModel();
+    const { model: selectedModel, llm: model } = await getTitleModel();
     const prompt = [
       "Create one short, concise title from the user's message.",
       "Respect the user's language; generate the title in the same language as the message.",
@@ -39,18 +44,13 @@ export async function POST(
       `Message: ${message}`,
     ].join("\n");
 
-    const response = await model.invoke([new HumanMessage(prompt)]);
-
-    if (typeof response.content !== "string") {
-      return apiErrorResponse({
-        status: 500,
-        type: "server_error",
-        code: "internal_error",
-        message: "Failed to generate title.",
-      });
-    }
-
-    const title = response.content.trim();
+    const response = await runAiCall(
+      (signal) => model.invoke([new HumanMessage(prompt)], { signal }),
+      { signal: request.signal, observe: { model: selectedModel } },
+    ).catch((error: unknown) => {
+      throw mapProviderErrorToApi(error);
+    });
+    const title = getAnswerText(response.content).trim();
 
     if (!title) {
       return apiErrorResponse({

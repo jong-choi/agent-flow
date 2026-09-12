@@ -1,4 +1,31 @@
 const message = {
+  modelRegistry: {
+    retryAt: "다음 확인: {time}",
+    freeVerificationRequired: "무료 접근 확인 필요",
+    chooseReplacement: "대체 모델 선택",
+    creditUnit: "크레딧",
+    replaceAll: "이 워크플로우에서 모두 변경",
+
+    thinking: "추론: {level}",
+    thinkingLevels: {
+      default: "기본",
+      minimal: "최소",
+      low: "낮음",
+      medium: "보통",
+      high: "높음",
+    },
+    choose: "모델 선택",
+    unknown: "알 수 없는 모델",
+    retired: "은퇴한 모델",
+    candidate: "검증 대기",
+    unavailable: "현재 사용 불가",
+    deprecated: "은퇴 예정",
+    active: "사용 가능",
+    priceUnknown: "가격 확인 필요",
+    credits: "실행 1회 · {count} 크레딧",
+    appLimits: "서비스 입력 {input} / 출력 {output} 토큰",
+    providerContext: "제공사 컨텍스트 {count} 토큰",
+  },
   meta: {
     workflowsTitle: "워크플로우",
     workflowFallbackTitle: "워크플로우",

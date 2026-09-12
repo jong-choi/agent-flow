@@ -40,6 +40,7 @@ export const langgraphStreamEventSchema = z
       .loose(),
     data: z
       .object({
+        output: z.unknown().optional(),
         chunk: z
           .object({
             content: z.unknown().optional(),

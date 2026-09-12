@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { type ApiErrorPayload } from "@/app/api/_types/api-error";
 import { clientStreamEventSchema } from "@/app/api/chat/_types/chat-events";
 import { type NodeType } from "@/features/canvas/constants/node-types";
+import { usePendingChunkBuffer } from "@/features/chats/hooks/use-pending-chunk-buffer";
 import { useUpdateChatTitleIfMissingMutation } from "@/features/chats/lib/query/mutations";
 import { useChatStore } from "@/features/chats/store/chat-store";
 import { createHumanMessage } from "@/features/chats/utils/chat-message";
@@ -157,9 +158,10 @@ function useChatEventSource() {
   const resetRunningNodes = useChatStore((s) => s.resetRunningNodes);
   const eventSourceRef = useRef<EventSource | null>(null);
   const streamErrorShownRef = useRef(false);
-  const { appendPendingChunk, resetPendingChunks } = usePendingChunkBuffer({
-    appendStreamingChunk,
-  });
+  const { appendPendingChunk, resetPendingChunks, flushPendingChunks } =
+    usePendingChunkBuffer({
+      appendStreamingChunk,
+    });
 
   const closeEventSource = useCallback(() => {
     if (!eventSourceRef.current) {
@@ -276,6 +278,7 @@ function useChatEventSource() {
           if (data.error) {
             notifyStreamErrorOnce(data.error);
           }
+          flushPendingChunks();
           flushStreamingToMessages();
           setIsStreaming(false);
           resetRunningNodes();
@@ -297,6 +300,7 @@ function useChatEventSource() {
     appendPendingChunk,
     closeEventSource,
     finishRunningNode,
+    flushPendingChunks,
     flushStreamingToMessages,
     initStreamingChunk,
     mode,
@@ -311,60 +315,4 @@ function useChatEventSource() {
   ]);
 
   return { openEventSource, closeEventSource };
-}
-
-/**
- * 노드별로 스트리밍 delta를 버퍼링하고, animation frame 단위로 한 번에 처리합니다.
- * reset 함수를 통해 대기 중인 chunk를 비울 수 있습니다.
- */
-function usePendingChunkBuffer({
-  appendStreamingChunk,
-}: {
-  appendStreamingChunk: (params: { nodeId: string; delta: string }) => void;
-}) {
-  const pendingChunkMapRef = useRef<Record<string, string>>({});
-  const pendingChunkRafRef = useRef<number | null>(null);
-
-  const appendPendingChunk = useCallback(
-    (nodeId: string, delta: string) => {
-      pendingChunkMapRef.current[nodeId] =
-        (pendingChunkMapRef.current[nodeId] ?? "") + delta;
-      if (pendingChunkRafRef.current !== null) {
-        return;
-      }
-
-      pendingChunkRafRef.current = requestAnimationFrame(() => {
-        pendingChunkRafRef.current = null;
-        const pendingChunkMap = pendingChunkMapRef.current;
-        const pendingEntries = Object.entries(pendingChunkMap);
-        if (pendingEntries.length === 0) {
-          return;
-        }
-
-        pendingChunkMapRef.current = {};
-
-        for (const [nodeId, delta] of pendingEntries) {
-          if (!delta) continue;
-          appendStreamingChunk({ nodeId, delta });
-        }
-      });
-    },
-    [appendStreamingChunk],
-  );
-
-  const resetPendingChunks = useCallback(() => {
-    if (pendingChunkRafRef.current !== null) {
-      cancelAnimationFrame(pendingChunkRafRef.current);
-      pendingChunkRafRef.current = null;
-    }
-    pendingChunkMapRef.current = {};
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      resetPendingChunks();
-    };
-  }, [resetPendingChunks]);
-
-  return { appendPendingChunk, resetPendingChunks };
 }

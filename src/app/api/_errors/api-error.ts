@@ -3,11 +3,13 @@ import {
   type ApiErrorType,
   apiErrorPayloadSchema,
 } from "@/app/api/_types/api-error";
+import { normalizeProviderError } from "@/lib/ai/error";
 
 class ApiTypedError extends Error {
   readonly status: number;
   readonly type: ApiErrorType;
   readonly code: ApiErrorCode;
+  provider?: ReturnType<typeof normalizeProviderError>;
 
   constructor({
     status,
@@ -170,6 +172,31 @@ export const mapUnknownToApiTypedError = (error: unknown): ApiTypedError => {
   return createApiError("internalError");
 };
 
+/** Preserve diagnostics server-side without exposing upstream bodies or credentials. */
+export const mapProviderErrorToApi = (error: unknown): ApiTypedError => {
+  if (isApiTypedError(error)) return error;
+  const provider = normalizeProviderError(error);
+  const status =
+    provider.category === "cancelled"
+      ? 499
+      : provider.category === "timeout"
+        ? 504
+        : provider.category === "quota"
+          ? 429
+          : 502;
+  const message =
+    provider.category === "cancelled"
+      ? "Request cancelled."
+      : provider.category === "timeout"
+        ? "Model request timed out."
+        : provider.category === "quota"
+          ? "Model usage limit reached. Please try again later."
+          : "Model request failed.";
+  return Object.assign(createApiError("providerError", { status, message }), {
+    provider,
+  });
+};
+
 export const apiErrorResponse = (
   error: unknown,
   init?: {
@@ -190,7 +217,12 @@ export const apiErrorResponse = (
     },
     {
       status,
-      headers: init?.headers,
+      headers: {
+        ...(mapped.provider?.retryAfter
+          ? { "Retry-After": mapped.provider.retryAfter }
+          : {}),
+        ...Object.fromEntries(new Headers(init?.headers)),
+      },
     },
   );
 };

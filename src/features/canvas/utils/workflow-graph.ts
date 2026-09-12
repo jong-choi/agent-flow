@@ -28,7 +28,14 @@ export const buildFlowGraphFromWorkflow = ({
     const content = baseContent ? { ...baseContent } : null;
 
     if (content) {
-      content.value = node.value ?? null;
+      const model =
+        node.type === "chatNode"
+          ? content.options?.find(
+              (option) =>
+                option.id === node.value || option.legacyValue === node.value,
+            )
+          : undefined;
+      content.value = model?.value ?? node.value ?? null;
       content.referenceId = node.contentReferenceId ?? null;
     }
 

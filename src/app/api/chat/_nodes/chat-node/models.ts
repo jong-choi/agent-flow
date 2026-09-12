@@ -1,51 +1,43 @@
-import { ChatGoogle } from "@langchain/google-gauth";
-import { ChatGroq } from "@langchain/groq";
-import { type AiModel } from "@/db/schema";
-import { getActiveAiModels } from "@/features/chats/server/queries";
+import type { AiModel } from "@/db/schema";
+import {
+  createProviderModel,
+  supportedThinkingLevels,
+} from "@/lib/ai/adapters";
+import { availabilityMap } from "@/lib/ai/maintenance/state-store";
+import { isSelectableModel } from "@/lib/ai/registry";
+import {
+  getModelByReference,
+  listModelRegistry,
+} from "@/lib/ai/registry-store";
+import { selectTitleModel } from "@/lib/ai/title-policy";
 
-const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-
-export const resolveAiModel = async (
-  modelId: string,
-): Promise<AiModel | null> => {
-  //서버에 캐싱된 데이터를 활용
-  const models = await getActiveAiModels();
-  const model = models.find((m) => m.modelId === modelId);
-  if (!model) return null;
-  return model;
-};
-
-export const getSmallestModel = () => {
-  return new ChatGoogle({
-    model: "gemma-3n-e2b-it",
-    apiKey: GOOGLE_AI_API_KEY,
+export async function resolveAiModel(
+  reference: string,
+): Promise<AiModel | null> {
+  const model = await getModelByReference(reference);
+  return model && isSelectableModel(model) ? model : null;
+}
+export const createChatModel = createProviderModel;
+export async function getTitleModel() {
+  const models = await listModelRegistry();
+  const availability = await availabilityMap(models);
+  const model = selectTitleModel(
+    models.filter((m) => availability.get(m.id)?.available),
+  );
+  if (!model) throw new Error("No available title model configured");
+  const levels = supportedThinkingLevels(model.provider, model.upstreamModelId);
+  const result = createProviderModel({
+    ...model,
+    appMaxOutputTokens: 512,
+    metadata: {
+      ...model.metadata,
+      thinkingLevel: levels.includes("minimal")
+        ? "minimal"
+        : levels.includes("low")
+          ? "low"
+          : "default",
+    },
   });
-};
-
-const chatModelBuilders = {
-  google: (aiModel: AiModel) =>
-    new ChatGoogle({
-      model: aiModel.modelId,
-      maxOutputTokens: aiModel.metadata?.maxOutputTokens || 8192,
-      apiKey: GOOGLE_AI_API_KEY,
-    }),
-  groq: (aiModel: AiModel) =>
-    new ChatGroq({
-      model: aiModel.modelId,
-      maxTokens: aiModel.metadata?.maxOutputTokens || 8192,
-      apiKey: GROQ_API_KEY,
-    }),
-} as const;
-
-const isSupportedProvider = (
-  provider: string,
-): provider is keyof typeof chatModelBuilders => {
-  return provider in chatModelBuilders;
-};
-
-export const createChatModel = (aiModel: AiModel) => {
-  if (!isSupportedProvider(aiModel.provider)) return null;
-
-  return chatModelBuilders[aiModel.provider](aiModel);
-};
+  if (!result) throw new Error("Title model provider is unsupported");
+  return { model, llm: result };
+}

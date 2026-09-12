@@ -1,7 +1,10 @@
 import { db } from "@/db/client";
 import { type AiModelInsert, aiModels } from "@/db/schema/ai-models";
+import { initialFreeCandidates } from "@/lib/ai/maintenance/initial-candidates";
+import { initialProviderModels } from "@/lib/ai/onboarding";
+import { upsertCatalogModel } from "@/lib/ai/registry-store";
 
-const aiModelsData: AiModelInsert[] = [
+const aiModelsData: Omit<AiModelInsert, "upstreamModelId">[] = [
   {
     modelId: "gemma-3-1b-it",
     name: "Gemma 3 (1B, IT)",
@@ -149,19 +152,35 @@ export const seedAiModels = async () => {
     for (const model of aiModelsData) {
       await tx
         .insert(aiModels)
-        .values(model)
-        .onConflictDoUpdate({
-          target: aiModels.modelId,
-          set: {
-            name: model.name,
-            order: model.order,
-            provider: model.provider,
-            contextWindow: model.contextWindow,
-            price: model.price,
-            isActive: model.isActive,
-            metadata: model.metadata,
-          },
+        .values({
+          ...model,
+          upstreamModelId: model.modelId,
+          lifecycle: "candidate",
+          isActive: false,
+        })
+        .onConflictDoNothing({
+          target: [aiModels.provider, aiModels.upstreamModelId],
         });
     }
   });
+  for (const profile of [...initialProviderModels, ...initialFreeCandidates]) {
+    await upsertCatalogModel(
+      {
+        provider: profile.provider,
+        upstreamModelId: profile.upstreamModelId,
+        displayName: profile.name,
+        metadata: {},
+      },
+      {
+        appMaxOutputTokens: profile.provider === "groq" ? 512 : 4096,
+        metadata: {
+          thinkingLevel: profile.thinkingLevel,
+          ...("titlePriority" in profile
+            ? { titlePriority: profile.titlePriority }
+            : {}),
+        },
+        requireFreeAccess: profile.provider !== "google",
+      },
+    );
+  }
 };

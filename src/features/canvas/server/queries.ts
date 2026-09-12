@@ -14,7 +14,9 @@ import {
 } from "@/db/schema";
 import { type SidebarNodeData } from "@/db/types/sidebar-nodes";
 import { canvasTags } from "@/features/canvas/server/cache/tags";
-import { getActiveAiModels } from "@/features/chats/server/queries";
+import { availabilityMap } from "@/lib/ai/maintenance/state-store";
+import { toModelOption } from "@/lib/ai/registry";
+import { listModelRegistry } from "@/lib/ai/registry-store";
 import { type AppMessageKeys } from "@/lib/i18n/messages";
 import { type Locale, routing } from "@/lib/i18n/routing";
 
@@ -159,16 +161,18 @@ const getLocalizedSidebarNodesCached = cache(async (locale: Locale) => {
 export const getSidebarNodes = async (locale: Locale = routing.defaultLocale) =>
   getLocalizedSidebarNodesCached(locale);
 
-const getActiveAiModelOptionsCached = cache(async () => {
-  "use cache";
-  cacheTag(canvasTags.activeAiModels());
-
-  return (await getActiveAiModels()).map((aiModel) => ({
-    id: aiModel.id,
-    value: aiModel.modelId,
-    price: aiModel.price ?? 0,
+const getAiModelOptions = async () => {
+  const models = await listModelRegistry();
+  const states = await availabilityMap(models);
+  return models.map((model) => ({
+    ...toModelOption(model),
+    selectable: states.get(model.id)?.available ?? false,
+    availabilityReason: states.get(model.id)?.reason,
+    nextProbeAt: states.get(model.id)?.nextProbeAt
+      ? new Date(states.get(model.id)!.nextProbeAt!).toISOString()
+      : null,
   }));
-});
+};
 
 const hydrateSidebarNodeOptions = async (
   nodes: SidebarNodeData[],
@@ -179,9 +183,7 @@ const hydrateSidebarNodeOptions = async (
       node.content.optionsSource === "ai_models",
   );
 
-  const aiModelOptions = needsAiModels
-    ? await getActiveAiModelOptionsCached()
-    : null;
+  const aiModelOptions = needsAiModels ? await getAiModelOptions() : null;
 
   return nodes.map((node) => {
     if (node.type === "documentNode" && node.content?.type === "select") {
@@ -211,15 +213,7 @@ const hydrateSidebarNodeOptions = async (
   });
 };
 
-const getSidebarNodesWithOptionsLocalizedCached = cache(
-  async (locale: Locale) => {
-    "use cache";
-    cacheTag(canvasTags.sidebarNodes(locale));
-
-    const nodes = await getLocalizedSidebarNodesCached(locale);
-    return hydrateSidebarNodeOptions(nodes);
-  },
-);
-
-export const getSidebarNodesWithOptions = async (locale: Locale = "en") =>
-  getSidebarNodesWithOptionsLocalizedCached(locale);
+export const getSidebarNodesWithOptions = async (locale: Locale = "en") => {
+  const nodes = await getLocalizedSidebarNodesCached(locale);
+  return hydrateSidebarNodeOptions(nodes);
+};

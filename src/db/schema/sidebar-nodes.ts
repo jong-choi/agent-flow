@@ -61,23 +61,44 @@ export type SidebarNodeHandle = typeof sidebarNodeHandles.$inferSelect;
 export type SidebarNodeHandleInsert = typeof sidebarNodeHandles.$inferInsert;
 
 const sidebarNodesSelectSchema = createSelectSchema(sidebarNodes);
-const sidebarNodeContentsBaseSelectSchema = createSelectSchema(sidebarNodeContents);
-const sidebarNodeContentsSelectSchema = sidebarNodeContentsBaseSelectSchema.extend({
-  label: z.string().optional(),
-  placeholder: z.string().optional(),
-  dialogTitle: z.string().optional(),
-  dialogDescription: z.string().optional(),
-  options: z
-    .array(
-      z.object({
-        id: z.string(),
-        value: z.string(),
-        price: z.number().int().nonnegative().optional(),
-      }),
-    )
-    .optional(),
-  referenceId: z.string().nullable().optional(),
-});
+const sidebarNodeContentsBaseSelectSchema =
+  createSelectSchema(sidebarNodeContents);
+const sidebarNodeContentsSelectSchema =
+  sidebarNodeContentsBaseSelectSchema.extend({
+    label: z.string().optional(),
+    placeholder: z.string().optional(),
+    dialogTitle: z.string().optional(),
+    dialogDescription: z.string().optional(),
+    options: z
+      .array(
+        z.object({
+          id: z.string(),
+          value: z.string(),
+          price: z.number().int().nonnegative().nullable().optional(),
+          legacyValue: z.string().optional(),
+          label: z.string().optional(),
+          provider: z.string().optional(),
+          upstreamModelId: z.string().optional(),
+          description: z.string().optional(),
+          thinkingLevel: z
+            .enum(["default", "minimal", "low", "medium", "high"])
+            .optional(),
+          replacementModelId: z.string().nullable().optional(),
+          retirementReason: z.string().nullable().optional(),
+          availabilityReason: z.string().nullable().optional(),
+          nextProbeAt: z.string().nullable().optional(),
+          selectable: z.boolean().optional(),
+          lifecycle: z.string().optional(),
+          health: z.string().optional(),
+          inputLimit: z.number().optional(),
+          outputLimit: z.number().optional(),
+          contextWindow: z.number().nullable().optional(),
+          capabilities: z.array(z.string()).optional(),
+        }),
+      )
+      .optional(),
+    referenceId: z.string().nullable().optional(),
+  });
 const sidebarNodeHandlesSelectSchema = createSelectSchema(sidebarNodeHandles);
 
 export const sidebarNodeInformationQuerySchema = z.object({

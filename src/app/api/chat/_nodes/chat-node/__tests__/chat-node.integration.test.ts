@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AIMessage,
   type BaseMessage,
   HumanMessage,
 } from "@langchain/core/messages";
-import { ChatGoogle } from "@langchain/google-gauth";
+import { ChatGoogle } from "@langchain/google";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
 import { chatNode } from "@/app/api/chat/_nodes/chat-node";
@@ -13,9 +13,23 @@ import {
   resolveAiModel,
 } from "@/app/api/chat/_nodes/chat-node/models";
 import { type AiModel } from "@/db/schema";
-import { getActiveAiModels } from "@/features/chats/server/queries";
 import { spendCreditsByUserId } from "@/features/credits/server/mutations";
 import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
+import {
+  finishModelExecution,
+  getModelByReference,
+  startModelExecution,
+} from "@/lib/ai/registry-store";
+
+vi.mock("@/lib/ai/maintenance/state-store", () => ({
+  availabilityMap: vi.fn(),
+}));
+
+vi.mock("@/lib/ai/execution", () => ({
+  runAiCall: (operation: (signal: AbortSignal) => Promise<unknown>) =>
+    operation(new AbortController().signal),
+  aiFetch: vi.fn(),
+}));
 
 const baseModel: AiModel = {
   id: "model-id",
@@ -28,6 +42,22 @@ const baseModel: AiModel = {
   isActive: true,
   metadata: { maxOutputTokens: 2048 },
   createdAt: new Date(),
+  upstreamModelId: "gemma-3-1b-it",
+  description: null,
+  replacementModelId: null,
+  retirementAt: null,
+  retirementReason: null,
+  retirementSourceUrl: null,
+  promotionBlocked: false,
+  requireFreeAccess: false,
+  lifecycle: "active",
+  entitlement: "unknown",
+  health: "healthy",
+  catalogMetadata: {},
+  catalogCheckedAt: null,
+  appMaxInputTokens: 8000,
+  appMaxOutputTokens: null,
+  updatedAt: new Date(),
 };
 
 const buildState = ({
@@ -74,8 +104,10 @@ const buildConfig = ({
   return config;
 };
 
-vi.mock("@/features/chats/server/queries", () => ({
-  getActiveAiModels: vi.fn(),
+vi.mock("@/lib/ai/registry-store", () => ({
+  getModelByReference: vi.fn(),
+  startModelExecution: vi.fn(),
+  finishModelExecution: vi.fn(),
 }));
 
 vi.mock("@/features/credits/server/queries", () => ({
@@ -86,12 +118,17 @@ vi.mock("@/features/credits/server/mutations", () => ({
   spendCreditsByUserId: vi.fn(),
 }));
 
-vi.mock("@langchain/google-gauth", () => ({
+vi.mock("@langchain/google", () => ({
   ChatGoogle: vi.fn(),
 }));
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.stubEnv("GOOGLE_AI_API_KEY", "fixture-key");
+  vi.mocked(startModelExecution).mockResolvedValue({
+    id: "execution",
+  } as Awaited<ReturnType<typeof startModelExecution>>);
+  vi.mocked(finishModelExecution).mockResolvedValue(undefined);
   vi.mocked(getCreditBalanceByUserId).mockResolvedValue(9999);
   vi.mocked(spendCreditsByUserId).mockResolvedValue({
     ok: true,
@@ -99,9 +136,11 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => vi.unstubAllEnvs());
+
 describe("chat-node models (unit)", () => {
   it("resolveAiModel은 modelId에 맞는 모델을 반환한다", async () => {
-    vi.mocked(getActiveAiModels).mockResolvedValue([baseModel]);
+    vi.mocked(getModelByReference).mockResolvedValue(baseModel);
 
     const result = await resolveAiModel("gemma-3-1b-it");
 
@@ -142,7 +181,7 @@ describe("chatNode (integration)", () => {
     const modelId = "missing-model";
     const state = buildState({ nodeId, inputNodeId, input: "안녕" });
     const config = buildConfig({ nodeId, modelId });
-    vi.mocked(getActiveAiModels).mockResolvedValue([]);
+    vi.mocked(getModelByReference).mockResolvedValue(null);
 
     await expect(() => chatNode(state, config)).rejects.toThrow(
       `Unknown model: ${modelId}`,
@@ -154,13 +193,11 @@ describe("chatNode (integration)", () => {
     const state = buildState({ nodeId, inputNodeId, input: "안녕" });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([
-      {
-        ...baseModel,
-        modelId,
-        provider: "anthropic",
-      },
-    ]);
+    vi.mocked(getModelByReference).mockResolvedValue({
+      ...baseModel,
+      modelId,
+      provider: "anthropic",
+    });
 
     await expect(() => chatNode(state, config)).rejects.toThrow(
       "Unsupported provider: anthropic",
@@ -172,7 +209,7 @@ describe("chatNode (integration)", () => {
     const state = buildState({ nodeId, inputNodeId, input: "안녕" });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockRejectedValue(new Error("invoke failed"));
 
@@ -183,8 +220,8 @@ describe("chatNode (integration)", () => {
     vi.mocked(ChatGoogle).mockImplementation(MockChatGoogle);
 
     await expect(() => chatNode(state, config)).rejects.toMatchObject({
-      code: "internal_error",
-      type: "server_error",
+      code: "provider_error",
+      type: "provider_error",
     });
   });
 
@@ -194,7 +231,7 @@ describe("chatNode (integration)", () => {
     const state = buildState({ nodeId, inputNodeId, input });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockResolvedValue({
       content: [
@@ -222,7 +259,7 @@ describe("chatNode (integration)", () => {
         amount: baseModel.price,
         category: "workflow",
         title: "워크플로우 실행",
-        description: `모델 사용 : ${modelId}`,
+        description: `모델 사용 : ${baseModel.name} (${baseModel.provider})`,
       }),
     );
   });
@@ -242,7 +279,7 @@ describe("chatNode (integration)", () => {
     });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockResolvedValue({ content: "ok" });
 
@@ -278,7 +315,7 @@ describe("chatNode (integration)", () => {
     });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockResolvedValue({ content: "ok" });
 
@@ -316,7 +353,7 @@ describe("chatNode (integration)", () => {
     });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockResolvedValue({ content: "ok" });
 
@@ -347,7 +384,7 @@ describe("chatNode (integration)", () => {
     });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const invoke = vi.fn().mockResolvedValue({ content: "최종 응답" });
 
@@ -368,7 +405,7 @@ describe("chatNode (integration)", () => {
     const state = buildState({ nodeId, inputNodeId, input });
     const config = buildConfig({ nodeId, modelId });
 
-    vi.mocked(getActiveAiModels).mockResolvedValue([{ ...baseModel, modelId }]);
+    vi.mocked(getModelByReference).mockResolvedValue({ ...baseModel, modelId });
 
     const response = new AIMessage("ok");
     const invoke = vi.fn().mockResolvedValue(response);
@@ -381,6 +418,10 @@ describe("chatNode (integration)", () => {
 
     const result = await chatNode(state, config);
 
-    expect(result.messages).toEqual([response]);
+    expect(result.messages?.[0].content).toEqual(response.content);
+    expect(result.messages?.[0].additional_kwargs.agentflowModel).toEqual({
+      provider: baseModel.provider,
+      upstreamModelId: baseModel.upstreamModelId,
+    });
   });
 });

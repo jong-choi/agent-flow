@@ -45,6 +45,7 @@ const message = {
     chatPanelTitle: "채팅 다이얼로그",
   },
   input: {
+    creditsUnavailable: "모델 또는 가격 확인 필요",
     placeholder: "메시지를 입력하세요...",
     noMessage: "메시지를 입력하여 채팅을 시작하세요",
     credits: "{count} 크레딧",

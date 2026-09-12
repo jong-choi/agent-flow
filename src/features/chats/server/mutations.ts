@@ -1,5 +1,6 @@
 import { revalidateTag } from "next/cache";
 import "server-only";
+import type { StoredMessage } from "@langchain/core/messages";
 import { createApiError } from "@/app/api/_errors/api-error";
 import { db } from "@/db/client";
 import { chatMessages } from "@/db/schema";
@@ -16,15 +17,17 @@ export const insertChatMessage = async ({
   chatId,
   role,
   content,
+  modelMessages,
 }: {
   chatId: string;
   role: "user" | "assistant" | "system";
   content: string;
+  modelMessages?: StoredMessage[];
 }) => {
   const chat = await getChatById(chatId);
   const [message] = await db
     .insert(chatMessages)
-    .values({ chatId: chat.id, role, content })
+    .values({ chatId: chat.id, role, content, modelMessages })
     .returning({
       id: chatMessages.id,
       chatId: chatMessages.chatId,

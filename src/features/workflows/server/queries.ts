@@ -1,19 +1,20 @@
 import { cache } from "react";
 import { cacheTag } from "next/cache";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import "server-only";
 import { db } from "@/db/client";
 import {
+  type CursorOptions,
   buildCursorOrderBy,
   buildCursorWhere,
-  type CursorOptions,
   toCursorTimestamp,
 } from "@/db/query/cursor";
-import { aiModels } from "@/db/schema/ai-models";
 import { workflowEdges, workflowNodes, workflows } from "@/db/schema/workflows";
 import { getUserId } from "@/features/auth/server/queries";
-import { chatTags } from "@/features/chats/server/cache/tags";
 import { workflowTags } from "@/features/workflows/server/cache/tags";
+import { availabilityMap } from "@/lib/ai/maintenance/state-store";
+import { estimateModelCredits } from "@/lib/ai/registry";
+import { listModelRegistry } from "@/lib/ai/registry-store";
 
 const normalizeLimit = (limit: number | undefined, fallback = 6) => {
   const parsed = typeof limit === "number" ? Math.trunc(limit) : fallback;
@@ -153,95 +154,98 @@ export const getOwnedWorkflowsPage = async (
   return getOwnedWorkflowsPageCached(ownerId, cursor, dir, limit);
 };
 
-const getOwnedWorkflowsPageCached = cache(async (
-  ownerId: string,
-  cursor: string,
-  dir: "next" | "prev",
-  limit: number,
-): Promise<OwnedWorkflowPage> => {
-  "use cache";
-  cacheTag(workflowTags.allByUser(ownerId));
-  cacheTag(workflowTags.listByUser(ownerId));
+const getOwnedWorkflowsPageCached = cache(
+  async (
+    ownerId: string,
+    cursor: string,
+    dir: "next" | "prev",
+    limit: number,
+  ): Promise<OwnedWorkflowPage> => {
+    "use cache";
+    cacheTag(workflowTags.allByUser(ownerId));
+    cacheTag(workflowTags.listByUser(ownerId));
 
-  const whereClause = eq(workflows.ownerId, ownerId);
+    const whereClause = eq(workflows.ownerId, ownerId);
 
-  let cursorAnchor: { id: string; updatedAt: string } | null = null;
-  if (cursor) {
-    const [row] = await db
-      .select({
-        id: workflows.id,
-        updatedAt: toCursorTimestamp(workflows.updatedAt),
-      })
-      .from(workflows)
-      .where(and(whereClause, eq(workflows.id, cursor)))
-      .limit(1);
-    cursorAnchor = row ?? null;
-  }
+    let cursorAnchor: { id: string; updatedAt: string } | null = null;
+    if (cursor) {
+      const [row] = await db
+        .select({
+          id: workflows.id,
+          updatedAt: toCursorTimestamp(workflows.updatedAt),
+        })
+        .from(workflows)
+        .where(and(whereClause, eq(workflows.id, cursor)))
+        .limit(1);
+      cursorAnchor = row ?? null;
+    }
 
-  const appliedDir = cursorAnchor && dir === "prev" ? "prev" : "next";
-  const orderBy = buildCursorOrderBy(
-    [
-      { value: workflows.updatedAt, direction: "desc" },
-      { value: workflows.id, direction: "desc" },
-    ],
-    appliedDir,
-  );
-
-  let listWhere = whereClause;
-  if (cursorAnchor) {
-    const cursorWhere = buildCursorWhere(
+    const appliedDir = cursorAnchor && dir === "prev" ? "prev" : "next";
+    const orderBy = buildCursorOrderBy(
       [
-        {
-          value: workflows.updatedAt,
-          cursor: cursorAnchor.updatedAt,
-          direction: "desc",
-        },
-        {
-          value: workflows.id,
-          cursor: cursorAnchor.id,
-          direction: "desc",
-        },
+        { value: workflows.updatedAt, direction: "desc" },
+        { value: workflows.id, direction: "desc" },
       ],
       appliedDir,
     );
-    if (cursorWhere) {
-      const mergedWhere = and(whereClause, cursorWhere);
-      if (mergedWhere) {
-        listWhere = mergedWhere;
+
+    let listWhere = whereClause;
+    if (cursorAnchor) {
+      const cursorWhere = buildCursorWhere(
+        [
+          {
+            value: workflows.updatedAt,
+            cursor: cursorAnchor.updatedAt,
+            direction: "desc",
+          },
+          {
+            value: workflows.id,
+            cursor: cursorAnchor.id,
+            direction: "desc",
+          },
+        ],
+        appliedDir,
+      );
+      if (cursorWhere) {
+        const mergedWhere = and(whereClause, cursorWhere);
+        if (mergedWhere) {
+          listWhere = mergedWhere;
+        }
       }
     }
-  }
 
-  const rows = await db
-    .select({
-      id: workflows.id,
-      title: workflows.title,
-      description: workflows.description,
-      updatedAt: workflows.updatedAt,
-    })
-    .from(workflows)
-    .where(listWhere)
-    .orderBy(...orderBy)
-    .limit(limit + 1);
+    const rows = await db
+      .select({
+        id: workflows.id,
+        title: workflows.title,
+        description: workflows.description,
+        updatedAt: workflows.updatedAt,
+      })
+      .from(workflows)
+      .where(listWhere)
+      .orderBy(...orderBy)
+      .limit(limit + 1);
 
-  const hasMore = rows.length > limit;
-  const slicedRows = rows.slice(0, limit);
-  const items = appliedDir === "prev" ? [...slicedRows].reverse() : slicedRows;
-  const hasPrev = appliedDir === "prev" ? hasMore : Boolean(cursorAnchor);
-  const hasNext = appliedDir === "prev" ? Boolean(cursorAnchor) : hasMore;
-  const prevCursor = hasPrev ? items[0]?.id ?? null : null;
-  const nextCursor = hasNext ? items[items.length - 1]?.id ?? null : null;
+    const hasMore = rows.length > limit;
+    const slicedRows = rows.slice(0, limit);
+    const items =
+      appliedDir === "prev" ? [...slicedRows].reverse() : slicedRows;
+    const hasPrev = appliedDir === "prev" ? hasMore : Boolean(cursorAnchor);
+    const hasNext = appliedDir === "prev" ? Boolean(cursorAnchor) : hasMore;
+    const prevCursor = hasPrev ? (items[0]?.id ?? null) : null;
+    const nextCursor = hasNext ? (items[items.length - 1]?.id ?? null) : null;
 
-  return {
-    items,
-    pageInfo: {
-      hasPrev,
-      hasNext,
-      prevCursor,
-      nextCursor,
-    },
-  };
-});
+    return {
+      items,
+      pageInfo: {
+        hasPrev,
+        hasNext,
+        prevCursor,
+        nextCursor,
+      },
+    };
+  },
+);
 
 export const getOwnedWorkflowById = async (workflowId: string) => {
   const ownerId = await getUserId();
@@ -300,32 +304,28 @@ export const getOwnedWorkflowChatCreditEstimate = async (
     throw new Error("워크플로우에 대한 접근 권한이 없습니다.");
   }
 
-  return getOwnedWorkflowChatCreditEstimateCached(trimmedWorkflowId);
+  return getWorkflowChatCreditEstimate(trimmedWorkflowId);
 };
 
-const getOwnedWorkflowChatCreditEstimateCached = cache(
-  async (workflowId: string) => {
-    "use cache";
-    cacheTag(workflowTags.graphByWorkflow(workflowId));
-    cacheTag(workflowTags.metaByWorkflow(workflowId));
-    cacheTag(chatTags.activeAiModels());
-
-    const totalSql = sql<number>`
-    coalesce(sum(coalesce(${aiModels.price}, 0)), 0)
-  `.mapWith(Number);
-
-    const [row] = await db
-      .select({ total: totalSql })
+const getWorkflowChatCreditEstimate = async (workflowId: string) => {
+  const [nodes, models] = await Promise.all([
+    db
+      .select({ value: workflowNodes.value })
       .from(workflowNodes)
-      .leftJoin(aiModels, eq(workflowNodes.value, aiModels.modelId))
       .where(
         and(
           eq(workflowNodes.workflowId, workflowId),
           eq(workflowNodes.type, "chatNode"),
         ),
-      )
-      .limit(1);
-
-    return row?.total ?? 0;
-  },
-);
+      ),
+    listModelRegistry(),
+  ]);
+  const states = await availabilityMap(models);
+  return estimateModelCredits(
+    models.map((m) => ({
+      ...m,
+      isActive: m.isActive && (states.get(m.id)?.available ?? false),
+    })),
+    nodes.map((node) => node.value),
+  );
+};
