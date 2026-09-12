@@ -1,0 +1,38 @@
+name: Verify (no deployment)
+
+on:
+  pull_request:
+  push:
+    branches: ["codex/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: agentflow
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: agentflow_test
+        ports: ["55432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U agentflow -d agentflow_test"
+          --health-interval 2s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://agentflow:ci-only-password@127.0.0.1:55432/agentflow_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run typegen
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm test -- --run
+      - run: npm run test:ai:queue

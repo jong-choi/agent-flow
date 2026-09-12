@@ -17,6 +17,12 @@ import { getActiveAiModels } from "@/features/chats/server/queries";
 import { spendCreditsByUserId } from "@/features/credits/server/mutations";
 import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
 
+vi.mock("@/lib/ai/execution", () => ({
+  runAiCall: (operation: (signal: AbortSignal) => Promise<unknown>) =>
+    operation(new AbortController().signal),
+  aiFetch: vi.fn(),
+}));
+
 const baseModel: AiModel = {
   id: "model-id",
   modelId: "gemma-3-1b-it",
@@ -183,8 +189,8 @@ describe("chatNode (integration)", () => {
     vi.mocked(ChatGoogle).mockImplementation(MockChatGoogle);
 
     await expect(() => chatNode(state, config)).rejects.toMatchObject({
-      code: "internal_error",
-      type: "server_error",
+      code: "provider_error",
+      type: "provider_error",
     });
   });
 

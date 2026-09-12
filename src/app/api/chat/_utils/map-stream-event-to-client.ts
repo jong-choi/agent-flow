@@ -2,6 +2,7 @@ import {
   type ClientStreamEvent,
   type LanggraphStreamEvent,
 } from "@/app/api/chat/_types/chat-events";
+import { getAnswerText } from "@/lib/ai/message";
 
 export const mapLanggraphEventToClientEvent = (
   source: LanggraphStreamEvent,
@@ -16,7 +17,7 @@ export const mapLanggraphEventToClientEvent = (
 
     if (event === "on_chat_model_stream") {
       const content = data?.chunk?.content;
-      if (typeof content !== "string") {
+      if (typeof content !== "string" && !Array.isArray(content)) {
         return null;
       }
 
@@ -24,7 +25,7 @@ export const mapLanggraphEventToClientEvent = (
         type,
         event,
         langgraph_node,
-        chunk: { content },
+        chunk: { content: getAnswerText(content) },
       };
     }
 

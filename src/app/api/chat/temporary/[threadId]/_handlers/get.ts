@@ -1,7 +1,4 @@
-import {
-  apiErrorResponse,
-  mapUnknownToApiTypedError,
-} from "@/app/api/_errors/api-error";
+import { apiErrorResponse } from "@/app/api/_errors/api-error";
 import { buildStateGraph } from "@/app/api/chat/_engines/build-state-graph";
 import {
   checkpointer,
@@ -9,10 +6,9 @@ import {
   threadContextManager,
 } from "@/app/api/chat/_engines/handle-connect";
 import {
-  type ClientStreamEvent,
-  langgraphStreamEventSchema,
-} from "@/app/api/chat/_types/chat-events";
-import { mapLanggraphEventToClientEvent } from "@/app/api/chat/_utils/map-stream-event-to-client";
+  CHAT_STREAM_HEADERS,
+  createChatStream,
+} from "@/app/api/chat/_utils/create-chat-stream";
 import { getUserId } from "@/features/auth/server/queries";
 
 /**
@@ -54,64 +50,23 @@ export async function GET(
     const graph = buildStateGraph(threadContext.graph);
     const app = graph.compile({ checkpointer });
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        const emitEvent = (params: ClientStreamEvent) => {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(params)}\n\n`),
-          );
-        };
-        const encoder = new TextEncoder();
-
-        try {
-          for await (const chunk of app.streamEvents(
-            state,
-            {
-              version: "v2",
-              configurable: { thread_id: threadId, user_id: userId },
-              durability: "exit", // 랭그래프 종료 시점에만 상태 업데이트
-            },
-            {
-              excludeTags: ["langsmith:hidden"],
-            },
-          )) {
-            const parsed = langgraphStreamEventSchema.safeParse(chunk);
-            if (!parsed.success) {
-              continue;
-            }
-            const streamEvent = mapLanggraphEventToClientEvent(parsed.data);
-            if (streamEvent) {
-              emitEvent(streamEvent);
-            }
-          }
-        } catch (error) {
-          console.error("SSE stream error:", error);
-          const mappedError = mapUnknownToApiTypedError(error);
-          emitEvent({
-            type: "endNode",
-            event: "on_chain_end",
-            error: {
-              message: mappedError.message,
-              type: mappedError.type,
-              code: mappedError.code,
-            },
-          });
-          controller.close();
-          return;
-        }
-      },
+    const stream = createChatStream({
+      signal: request.signal,
+      events: (signal) =>
+        app.streamEvents(
+          state,
+          {
+            version: "v2",
+            signal,
+            configurable: { thread_id: threadId, user_id: userId },
+            durability: "exit",
+          },
+          { excludeTags: ["langsmith:hidden"] },
+        ),
     });
-
     resetIdleTimer(threadId);
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        "X-Accel-Buffering": "no",
-      },
-    });
+    return new Response(stream, { headers: CHAT_STREAM_HEADERS });
   } catch (error) {
     console.error("GET /api/chat/temporary/[threadId] error:", error);
     return apiErrorResponse(error);

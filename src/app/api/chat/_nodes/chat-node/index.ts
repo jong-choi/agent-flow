@@ -2,7 +2,7 @@ import { getEncoding } from "js-tiktoken";
 import { HumanMessage } from "@langchain/core/messages";
 import {
   createApiError,
-  mapUnknownToApiTypedError,
+  mapProviderErrorToApi,
 } from "@/app/api/_errors/api-error";
 import { type FlowRunnableConfig } from "@/app/api/chat/_constants/runnable-config";
 import { type FlowStateAnnotation } from "@/app/api/chat/_engines/flow-state";
@@ -13,6 +13,8 @@ import {
 import { findSingleNodeInput } from "@/app/api/chat/_utils/find-single-node-input";
 import { spendCreditsByUserId } from "@/features/credits/server/mutations";
 import { getCreditBalanceByUserId } from "@/features/credits/server/queries";
+import { runAiCall } from "@/lib/ai/execution";
+import { getAnswerText } from "@/lib/ai/message";
 
 const o200kBaseEncoding = getEncoding("o200k_base");
 const CHAT_NODE_MAX_O200K_TOKENS = 8000;
@@ -108,23 +110,15 @@ export const chatNode = async (
 
   let response;
   try {
-    response = await chatModel.invoke(messages);
+    response = await runAiCall(
+      (signal) => chatModel.invoke(messages, { signal }),
+      { signal: config.signal },
+    );
   } catch (error) {
-    throw mapUnknownToApiTypedError(error);
+    throw mapProviderErrorToApi(error);
   }
 
-  const content = response.content;
-
-  let output: string;
-
-  if (typeof content === "string") {
-    output = content;
-  } else {
-    output = content
-      .filter((b) => b.type === "text")
-      .map((b) => ("text" in b ? (b.text as string) : ""))
-      .join("");
-  }
+  const output = getAnswerText(response.content);
 
   if (price > 0 && userId) {
     const description = `모델 사용 : ${modelId}`;
